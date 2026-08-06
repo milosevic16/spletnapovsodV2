@@ -92,7 +92,7 @@ export interface ContactTopic {
 
 export const nav: NavItem[] = [
   { target: 'reference', label: 'Reference' },
-  { target: 'paketi', label: 'Kaj je vključeno' },
+  { target: 'paketi', label: 'Kaj vključuje storitev' },
   { target: 'razlike', label: 'Zakaj mi' },
   { target: 'kontakt', label: 'Kontakt' },
 ]
@@ -103,14 +103,15 @@ export const hero: Hero = {
   titleAccent: 'Hitre',
   lead: 'Izdelujemo vse od osnovnih predstavitvenih strani do naprednih spletnih sistemov z rezervacijami in Stripe plačili. Poskrbimo za oblikovanje, razvoj, tehnično osnovo in objavo na vaši domeni.',
   foldGloss: 'Isti naslov vidita obiskovalec in Google.',
-  ctaPrimary: { label: 'Povprašajte po ponudbi', target: 'kontakt' },
+  ctaPrimary: { label: 'Naročite izdelek', target: 'kontakt' },
   ctaSecondary: { label: 'Oglejte si reference', target: 'reference' },
 }
 
 export const invisible = {
   kicker: 'Kaj dobite',
-  title: 'Tradicija in izkušnje se splačajo.',
-  quote: 'Spletna stran ni zgolj tisto, kar vidite, temveč tudi tisto, česar ne.',
+  title: 'Tradicija in izkušnje.',
+  quote:
+    'Spletna stran ni zgolj tisto, kar vidite, temveč se pomemben del skriva tudi v tistem, česar ne.',
   intro:
     'V ozadju mora biti urejeno vse: tisto, kar vas naredi vidne na Googlu, tisto, kar varno sprejema oddane obrazce, ter piškotki in politika zasebnosti, da stran ustreza zakonodaji.',
   humanLabel: 'Kar vidite',
@@ -143,12 +144,12 @@ export const invisible = {
 }
 
 export const references = {
-  kicker: 'Prejšnja dela',
+  kicker: 'Reference',
   /** Screen-reader suffix on each reference link (target="_blank" warning). */
   newWindowNote: 'odpre se v novem zavihku',
-  title: 'Reference, ki delujejo.',
+  title: 'Nekaj uspešnih prejšnjih projektov',
   intro:
-    'Od osebnih predstavitev do pravnih pisarn in forenzičnih podjetij — pokrivamo vse sektorje in se prilagodimo vsebini. Vsaka stran je oblikovana zanjo, nobena ni predloga.',
+    'Od osebnih predstavitev, pravnih pisarn, forenzičnih podjetij in apartmajskih nastanitev pokrivamo vse sektorje in se prilagodimo vsebini. Vsaka stran je oblikovana posebej za namen projekta in ni predloga.',
   items: [
     {
       id: 'lemur',

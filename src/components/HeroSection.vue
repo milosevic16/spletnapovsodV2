@@ -135,8 +135,10 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
   text-underline-offset: 0.25em;
 }
 
+/* The <title> dimension line is a desktop device: on a phone it costs a whole
+   screen before the reader reaches the work. Still in the markup for crawlers. */
 .hero__fold {
-  margin-top: clamp(2.5rem, 2rem + 3vw, 4.5rem);
+  display: none;
 }
 
 .hero__aside {
@@ -249,6 +251,10 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
   .hero__aside {
     display: block;
     padding-top: 1rem;
+  }
+  .hero__fold {
+    display: block;
+    margin-top: clamp(2.5rem, 2rem + 3vw, 4.5rem);
   }
 }
 </style>

@@ -297,8 +297,19 @@ onUnmounted(() => fx.dispose())
 
 /* --- desktop: staggered editorial grid ----------------------------------- */
 @media (min-width: 900px) {
+  /* Desktop: the trailing fade turns from horizontal to vertical — the last
+     card dissolves into the page so the list reads as continuing past a cut.
+     The fade only ever covers EMPTY card fill (see the reserve below the last
+     card's text) — no readable text may sit under a gradient. */
   .refs__strip-wrap::after {
-    display: none;
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    height: 10rem;
+    background: linear-gradient(to bottom, rgb(247 244 238 / 0), var(--surface) 72%);
+    background: linear-gradient(to bottom, rgb(from var(--surface) r g b / 0), var(--surface) 72%);
   }
 
   .refs__grid {
@@ -306,7 +317,14 @@ onUnmounted(() => fx.dispose())
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 2.5rem 3rem;
     overflow: visible;
-    padding-bottom: 0;
+    padding-bottom: 2rem;
+  }
+
+  /* Empty paper under the last card's text, so the fade has card to dissolve
+     rather than page-on-page (a gradient to --surface over --surface is
+     invisible — that was the first attempt). */
+  .refs__cell:last-child .refcard__body {
+    padding-bottom: 6.5rem;
   }
 
   .refs__cell {

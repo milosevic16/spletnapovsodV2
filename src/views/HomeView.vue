@@ -73,8 +73,10 @@ useHead({
   <SiteMasthead />
   <main id="main">
     <HeroSection />
-    <XraySection />
+    <!-- References before the invisible-work band (owner's call): the proof
+         lands before the argument. -->
     <ReferencesSection />
+    <XraySection />
     <PillarsSection />
     <DifferentiatorsSection />
     <ContactSection />
