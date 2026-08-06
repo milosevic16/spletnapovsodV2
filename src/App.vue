@@ -28,8 +28,20 @@ function onDocumentClick(e: MouseEvent) {
   router.push(url.pathname + url.search + url.hash)
 }
 
-onMounted(() => document.addEventListener('click', onDocumentClick))
-onUnmounted(() => document.removeEventListener('click', onDocumentClick))
+/** The veil (index.html) is a pure-CSS timed sequence that finishes on its
+ *  own; this only removes the spent node. Timing = the CSS timeline's end
+ *  (1.8s hide keyframe) + slack — never load-bearing. */
+const VEIL_CLEANUP_MS = 2600
+let veilTimer = 0
+
+onMounted(() => {
+  document.addEventListener('click', onDocumentClick)
+  veilTimer = window.setTimeout(() => document.getElementById('veil')?.remove(), VEIL_CLEANUP_MS)
+})
+onUnmounted(() => {
+  document.removeEventListener('click', onDocumentClick)
+  clearTimeout(veilTimer)
+})
 </script>
 
 <template>

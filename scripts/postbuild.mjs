@@ -3,10 +3,16 @@
  * deploy. If a guard fails, fix the page — never weaken the assertion.
  *
  *   1. Per-page head assertions (lang, title, h1, canonical, hreflang, OG).
- *   2. Honesty guard: the x-ray panel's machine layer must equal the real head.
+ *   2. Honesty guard (REZ 1:1): every `data-fact` node in the emitted HTML
+ *      must byte-equal its artifact (head line / robots line / netlify.toml
+ *      header / shipped file), AND every fact enumerated in
+ *      src/lib/machine-facts.ts must be displayed — bidirectional, so the cut
+ *      scene can neither lie nor silently lose a fact.
  *   3. Content guard: every copy string from src/content/home.ts must be
  *      present in the emitted HTML (evaluated, not regexed, so it can't drift).
- *   4. sitemap.xml + robots.txt generated FROM the emitted HTML.
+ *   4. sitemap.xml + robots.txt generated FROM the emitted HTML; the robots
+ *      AI-bot list comes from machine-facts.ts — the scene and the file are
+ *      the same list by construction.
  */
 import { readdirSync, readFileSync, writeFileSync, mkdtempSync, rmSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
@@ -21,11 +27,31 @@ const fail = (page, msg) => failures.push(`${page}: ${msg}`)
 
 // Text-NODE escaping as Vue SSR performs it: & < > only — quotes stay raw.
 const escapeText = (s) => s.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+const unescapeText = (s) =>
+  s.replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&quot;', '"').replaceAll('&amp;', '&')
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
 /** Attribute-order-agnostic: find tags matching all given attribute regexes. */
 const findTags = (html, tagRe, ...attrRes) =>
   [...html.matchAll(tagRe)].map((m) => m[0]).filter((t) => attrRes.every((re) => re.test(t)))
 const attr = (tag, name) => new RegExp(`\\s${name}="([^"]*)"`).exec(tag)?.[1]
+
+/** Bundle a TS module (with the app's @ alias) and import its evaluated exports. */
+async function importTs(entry, label) {
+  const tmp = mkdtempSync(join(tmpdir(), `sp-${label}-`))
+  const outfile = join(tmp, `${label}.mjs`)
+  await esbuild({
+    entryPoints: [join(process.cwd(), entry)],
+    bundle: true,
+    format: 'esm',
+    platform: 'neutral',
+    alias: { '@': join(process.cwd(), 'src') },
+    outfile,
+  })
+  const mod = await import(pathToFileURL(outfile).href)
+  rmSync(tmp, { recursive: true, force: true })
+  return mod
+}
 
 // --------------------------------------------------------------------------
 // Collect pages
@@ -38,13 +64,14 @@ if (htmlFiles.length === 0) {
 
 const pages = htmlFiles.map((file) => {
   const html = readFileSync(join(dist, file), 'utf8')
-  // Assert against the HEAD only — the x-ray panel repeats head-like strings in the body.
+  // Assert against the HEAD only — the cut scene's ledger repeats head lines in the body.
   const head = html.slice(0, html.indexOf('</head>'))
   const links = [...head.matchAll(/<link[^>]*>/g)].map((m) => m[0])
   const metas = [...head.matchAll(/<meta[^>]*>/g)].map((m) => m[0])
   return {
     file,
     html,
+    head,
     lang: /<html[^>]*\slang="([^"]*)"/.exec(html)?.[1],
     title: /<title[^>]*>([^<]*)<\/title>/.exec(head)?.[1]?.trim(),
     canonical: attr(links.find((l) => /rel="canonical"/.test(l)) ?? '', 'href'),
@@ -107,36 +134,94 @@ for (const p of pages) {
 }
 
 // --------------------------------------------------------------------------
-// 2. Honesty guard — the x-ray machine layer equals the real head
+// 2. Honesty guard — every displayed machine fact byte-equals its artifact
 // --------------------------------------------------------------------------
 const home = pages.find((p) => p.file === 'index.html')
-if (home && home.title && home.canonical) {
-  const bodyOnly = home.html.slice(home.html.indexOf('<body'))
-  const titleLine = escapeText(`<title>${home.title}</title>`)
-  const canonicalLine = escapeText(`<link rel="canonical" href="${home.canonical}">`)
-  if (!bodyOnly.includes(titleLine)) {
-    fail('index.html', 'x-ray machine layer does not show the real <title> line')
+const machineFacts = await importTs('src/lib/machine-facts.ts', 'facts')
+const { factLines, AI_BOTS } = machineFacts
+
+// robots.txt content is built here (written in step 4) so the guard checks
+// the SAME string the file will carry.
+const robotsContent = `User-agent: *
+Allow: /
+
+${AI_BOTS.map((bot) => `User-agent: ${bot}\nAllow: /`).join('\n\n')}
+
+Sitemap: ${SITE_ORIGIN}/sitemap.xml
+`
+
+const netlifyToml = readFileSync(join(process.cwd(), 'netlify.toml'), 'utf8')
+
+if (home) {
+  const displayed = [...home.html.matchAll(/<code[^>]*\sdata-fact="([^"]+)"[^>]*>([\s\S]*?)<\/code>/g)].map(
+    (m) => ({ id: m[1], text: unescapeText(m[2]) }),
+  )
+  const displayedIds = new Set(displayed.map((d) => d.id))
+  const factById = new Map(factLines.map((f) => [f.id, f]))
+
+  // (a) every displayed node matches an enumerated fact, verbatim
+  for (const d of displayed) {
+    const f = factById.get(d.id)
+    if (!f) {
+      fail('index.html', `data-fact "${d.id}" is not enumerated in machine-facts.ts`)
+      continue
+    }
+    if (d.text !== f.text) {
+      fail('index.html', `data-fact "${d.id}" displays "${d.text}" ≠ fact "${f.text}"`)
+    }
   }
-  if (!bodyOnly.includes(canonicalLine)) {
-    fail('index.html', 'x-ray machine layer does not show the real canonical line')
+
+  // (b) every enumerated fact is displayed at least once (bidirectional)
+  for (const f of factLines) {
+    if (!displayedIds.has(f.id)) fail('index.html', `fact "${f.id}" is enumerated but never displayed`)
   }
+
+  // (c) every fact matches its real artifact
+  for (const f of factLines) {
+    switch (f.artifact) {
+      case 'head': {
+        if (!home.head.includes(f.text)) {
+          fail('index.html', `head fact "${f.id}" not found verbatim in the emitted <head>: ${f.text}`)
+        }
+        break
+      }
+      case 'robots': {
+        if (!robotsContent.includes(f.text)) {
+          fail('index.html', `robots fact "${f.id}" not in generated robots.txt: ${f.text}`)
+        }
+        break
+      }
+      case 'netlify-header': {
+        const idx = f.text.indexOf(': ')
+        const name = f.text.slice(0, idx)
+        const value = f.text.slice(idx + 2)
+        const m = new RegExp(`${escapeRe(name)}\\s*=\\s*"([^"]*)"`).exec(netlifyToml)
+        if (!m) fail('index.html', `header fact "${f.id}": ${name} not pinned in netlify.toml`)
+        else if (m[1] !== value) {
+          fail('index.html', `header fact "${f.id}": displayed value "${value}" ≠ netlify.toml "${m[1]}"`)
+        }
+        break
+      }
+      case 'dist-file': {
+        if (!existsSync(join(dist, f.text.replace(/^\//, '')))) {
+          fail('index.html', `file fact "${f.id}": dist${f.text} does not exist`)
+        }
+        break
+      }
+      default:
+        fail('index.html', `fact "${f.id}" has unknown artifact kind "${f.artifact}"`)
+    }
+  }
+  console.log(
+    `postbuild: honesty guard checked ${displayed.length} displayed fact node(s) against ${factLines.length} enumerated fact(s)`,
+  )
 }
 
 // --------------------------------------------------------------------------
 // 3. Content guard — every visible copy string is in the emitted HTML
 // --------------------------------------------------------------------------
 if (home) {
-  const tmp = mkdtempSync(join(tmpdir(), 'sp-content-'))
-  const outfile = join(tmp, 'home.mjs')
-  await esbuild({
-    entryPoints: [join(process.cwd(), 'src', 'content', 'home.ts')],
-    bundle: true,
-    format: 'esm',
-    platform: 'neutral',
-    outfile,
-  })
-  const content = await import(pathToFileURL(outfile).href)
-  rmSync(tmp, { recursive: true, force: true })
+  const content = await importTs('src/content/home.ts', 'content')
 
   const collect = (root, skipKeys) => {
     const out = new Set()
@@ -192,31 +277,9 @@ const sitemap =
   `\n</urlset>\n`
 writeFileSync(join(dist, 'sitemap.xml'), sitemap)
 
-// Answer engines are a goal — AI/LLM bots are explicitly welcome.
-const robots = `User-agent: *
-Allow: /
-
-User-agent: GPTBot
-Allow: /
-
-User-agent: ClaudeBot
-Allow: /
-
-User-agent: anthropic-ai
-Allow: /
-
-User-agent: PerplexityBot
-Allow: /
-
-User-agent: CCBot
-Allow: /
-
-User-agent: Google-Extended
-Allow: /
-
-Sitemap: ${SITE_ORIGIN}/sitemap.xml
-`
-writeFileSync(join(dist, 'robots.txt'), robots)
+// Answer engines are a goal — AI/LLM bots are explicitly welcome. The list
+// lives in machine-facts.ts: the cut scene shows the same bots this file allows.
+writeFileSync(join(dist, 'robots.txt'), robotsContent)
 
 // --------------------------------------------------------------------------
 if (failures.length) {

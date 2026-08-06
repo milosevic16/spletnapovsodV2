@@ -1,4 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect x="9" y="9" width="21" height="21" fill="#2E6E5E"/>
-  <rect x="2" y="2" width="21" height="21" fill="#F7F4EE" stroke="#232620" stroke-width="1.5"/>
+  <!-- REZ 1:1 — the sheet, cut by the plane; below the cut, poché. -->
+  <rect x="3" y="3" width="26" height="26" fill="#F5F2EB" stroke="#1A1C1E" stroke-width="2"/>
+  <rect x="3" y="17.5" width="26" height="11.5" fill="#1A1C1E"/>
+  <rect x="0" y="14.7" width="32" height="2.6" fill="#B03B22"/>
 </svg>

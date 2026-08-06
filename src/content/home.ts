@@ -20,16 +20,17 @@ export interface Hero {
   /** Accented prefix of `title` (must match exactly — the component falls back to the plain title if not). */
   titleAccent: string
   lead: string
-  /** Gloss for the hero fold Prerez (its annotation is the real <title>, derived). */
-  foldGloss: string
   ctaPrimary: { label: string; target: string }
   ctaSecondary: { label: string; target: string }
 }
 
-export interface InvisibleItem {
+/** One chamber of the cut scene's below-grade section drawing. */
+export interface Chamber {
+  /** Machine identifier — pairs with chamberFacts in src/lib/machine-facts.ts. */
   id: string
   label: string
-  detail: string
+  /** The human sentence — gloss rule: no fact without its plain-Slovenian gloss. */
+  gloss: string
 }
 
 export interface Reference {
@@ -59,11 +60,11 @@ export interface Pillar {
   kicker: string
   title: string
   summary: string
-  /** Mono artifact label in the ledger row — what the pillar produces (evidence, not jargon). */
+  /** Datum-caps value line under the chapter head — what the pillar produces (evidence, not jargon). */
   artifact: string
   points: { label: string; detail: string }[]
-  /** Optional Prerez under the open pillar — annotation must stay a verifiable fact. */
-  prerez?: { annotation: string; gloss: string }
+  /** Optional callout under the chapter — annotation must stay a verifiable fact. */
+  note?: { annotation: string; gloss: string }
 }
 
 export interface Differentiator {
@@ -71,7 +72,7 @@ export interface Differentiator {
   title: string
   body: string
   footnote?: string
-  /** The Prerez instrument for this claim: measured value + plain-Slovenian gloss. */
+  /** The spec-panel value cell for this claim: measured value + plain-Slovenian gloss. */
   measure: { annotation: string; gloss: string; ticks?: string[] }
 }
 
@@ -97,17 +98,31 @@ export const nav: NavItem[] = [
   { target: 'kontakt', label: 'Kontakt' },
 ]
 
+/** Chrome strings — level rail (desktop), top strip + menu overlay (phone). */
+export const datum = {
+  brandAriaLabel: 'SpletnaPovsod — domov',
+  navAriaLabel: 'Glavna navigacija',
+  menuLabel: 'Meni',
+  menuCloseLabel: 'Zapri meni',
+}
+
 export const hero: Hero = {
   kicker: 'Izdelava spletnih strani · Slovenija',
   title: 'Hitre, dostopne in profesionalne spletne strani.',
   titleAccent: 'Hitre',
   lead: 'Izdelujemo vse od osnovnih predstavitvenih strani do naprednih spletnih sistemov z rezervacijami in Stripe plačili. Poskrbimo za oblikovanje, razvoj, tehnično osnovo in objavo na vaši domeni.',
-  foldGloss: 'Isti naslov vidita obiskovalec in Google.',
   ctaPrimary: { label: 'Naročite izdelek', target: 'kontakt' },
   ctaSecondary: { label: 'Oglejte si reference', target: 'reference' },
 }
 
-export const invisible = {
+/**
+ * The cut scene (»Prerezna ravnina«) — the page cuts itself open. Above the
+ * plane: the facade (this page's own visible surface). Below: the section —
+ * chambers whose mono lines are REAL emitted bytes from machine-facts.ts.
+ * Successor of the former invisible-work section; the four owner-derived
+ * items survive verbatim as chamber glosses.
+ */
+export const cut = {
   kicker: 'Kaj dobite',
   title: 'Tradicija in izkušnje.',
   quote:
@@ -119,28 +134,45 @@ export const invisible = {
   machineGloss: 'Te nevidne vrstice odločajo, ali vas Google in ChatGPT sploh najdeta.',
   outro:
     'Vse to je vključeno že v osnovnem paketu. S tem se vam ni treba ukvarjati — naj to za vas uredijo profesionalci z izkušnjami.',
-  items: [
+  /** aria-label of the cut's range grip. */
+  gripLabel: 'Globina reza',
+  /** aria-valuetext suffix — »42 % pod površino«. */
+  gripUnit: '% pod površino',
+  /** The excavation ledger after the scene — every machine line, copyable. */
+  ledgerKicker: 'Zapisnik',
+  ledgerTitle: 'Zapisano v datotekah strani',
+  chambers: [
+    {
+      id: 'head',
+      label: 'Glava dokumenta',
+      gloss: 'Naslov, opis in kanonična povezava — vrstice, ki jih iskalnik prebere najprej.',
+    },
     {
       id: 'seo-foundation',
       label: 'Vidnost na Googlu',
-      detail: 'Tehnična osnova, ki jo iskalniki zahtevajo, vgrajena od prvega dne.',
-    },
-    {
-      id: 'forms',
-      label: 'Delujoči obrazci',
-      detail: 'Povpraševanja varno prispejo v vaš nabiralnik, neželena pošta pa ne.',
+      gloss: 'Tehnična osnova, ki jo iskalniki zahtevajo, vgrajena od prvega dne.',
     },
     {
       id: 'compliance',
       label: 'Piškotki in zasebnost',
-      detail: 'Stran usklajena z evropsko zakonodajo — brez pravnih presenečenj.',
+      gloss: 'Stran usklajena z evropsko zakonodajo — brez pravnih presenečenj.',
+    },
+    {
+      id: 'forms',
+      label: 'Delujoči obrazci',
+      gloss: 'Povpraševanja varno prispejo v vaš nabiralnik, neželena pošta pa ne.',
+    },
+    {
+      id: 'material',
+      label: 'Material',
+      gloss: 'Pisave in slike, pripravljene vnaprej in za vsako napravo posebej.',
     },
     {
       id: 'hosting',
       label: 'Objava na vaši domeni',
-      detail: 'Postavitev, gostovanje in certifikat HTTPS — ključe dobite vi.',
+      gloss: 'Postavitev, gostovanje in certifikat HTTPS — ključe dobite vi.',
     },
-  ] satisfies InvisibleItem[],
+  ] satisfies Chamber[],
 }
 
 export const references = {
@@ -150,6 +182,15 @@ export const references = {
   title: 'Nekaj uspešnih prejšnjih projektov',
   intro:
     'Od osebnih predstavitev, pravnih pisarn, forenzičnih podjetij in apartmajskih nastanitev pokrivamo vse sektorje in se prilagodimo vsebini. Vsaka stran je oblikovana posebej za namen projekta in ni predloga.',
+  /** The compact plate index — the hurried owner's scan path (all three, one screen). */
+  indexTitle: 'Vsi trije projekti',
+  /** Title-block sheet label — »LIST 2 · Lemur Legal«. */
+  sheetLabel: 'LIST',
+  /** Directed plate navigation (desktop). */
+  prevLabel: 'Prejšnji projekt',
+  nextLabel: 'Naslednji projekt',
+  /** Caption of the material legend drawn from each client's real sampled palette. */
+  inksLabel: 'Barve projekta',
   items: [
     {
       id: 'lemur',
@@ -359,7 +400,7 @@ export const pillars = {
             'Ko nekdo deli vašo povezavo, se pokažeta slika in naslov — ne gola povezava, ki je nihče ne odpre.',
         },
       ],
-      prerez: {
+      note: {
         annotation: 'Core Web Vitals · berljivo brez JavaScripta',
         gloss: 'Merila, po katerih Google razvršča strani — vgrajena v zasnovo, ne dodana naknadno.',
       },

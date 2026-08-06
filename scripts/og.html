@@ -1,93 +1,133 @@
 <!DOCTYPE html>
 <!-- Source for public/og.jpg — rendered by scripts/build-og.mjs via headless Edge
-     so the type is the site's real Fraunces (opsz variable), not a substitute cut. -->
+     so the type is the site's real variable Archivo (wght+wdth), not a substitute.
+     The image IS the signature: the composed 45/55 section drawing — the same
+     drawing the cut scene rests at. Colors mirror tokens.css by hand. -->
 <html lang="sl">
   <head>
     <meta charset="UTF-8" />
     <style>
       @font-face {
-        font-family: 'Fraunces Variable';
+        font-family: 'Archivo Variable';
         font-weight: 100 900;
-        src: url(../public/fonts/fraunces-latin-opsz-normal.woff2) format('woff2-variations');
+        font-stretch: 62% 125%;
+        src: url(../public/fonts/archivo-latin-standard-normal.woff2) format('woff2-variations');
       }
       @font-face {
-        font-family: 'IBM Plex Mono';
+        font-family: 'Chivo Mono';
         font-weight: 400;
-        src: url(../public/fonts/ibm-plex-mono-latin-400-normal.woff2) format('woff2');
+        src: url(../public/fonts/chivo-mono-latin-400-normal.woff2) format('woff2');
       }
       * { margin: 0; box-sizing: border-box; }
       body {
         width: 1200px;
         height: 630px;
-        background: #191d1b;
+        background: #f5f2eb;
         position: relative;
         overflow: hidden;
       }
-      .under {
+      /* FACADE — above the cut (45%). */
+      .facade {
         position: absolute;
-        left: 118px;
-        top: 118px;
-        width: 994px;
-        height: 424px;
-        background: #232a27;
-      }
-      .seam {
-        position: absolute;
-        left: 146px;
-        top: 494px;
-        height: 48px;
-        line-height: 48px;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 24px;
-        color: #7fbfab;
-      }
-      .paper {
-        position: absolute;
-        left: 90px;
-        top: 90px;
-        width: 994px;
-        height: 404px;
-        background: #f7f4ee;
-        border: 1px solid #dcd6c9;
-        padding: 64px 56px;
+        inset: 0 0 55% 0;
+        padding: 52px 64px 0;
       }
       .kicker {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 21px;
-        letter-spacing: 0.12em;
-        color: #5a5f56;
+        font-family: 'Archivo Variable', sans-serif;
+        font-stretch: 74%;
+        font-weight: 500;
+        font-size: 20px;
+        letter-spacing: 0.13em;
+        color: #50555a;
       }
       h1 {
-        margin-top: 28px;
-        font-family: 'Fraunces Variable', serif;
-        font-weight: 500;
-        font-size: 74px;
-        line-height: 1.12;
+        margin-top: 20px;
+        font-family: 'Archivo Variable', sans-serif;
+        font-stretch: 115%;
+        font-weight: 275;
+        font-size: 64px;
+        line-height: 1.05;
         letter-spacing: -0.015em;
-        color: #232620;
-        max-width: 15ch;
+        color: #1a1c1e;
+        max-width: 22ch;
       }
       h1 em {
         font-style: normal;
-        color: #2e6e5e;
+        color: #b03b22;
+      }
+      /* THE CUT. */
+      .plane {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 45%;
+        height: 4px;
+        margin-top: -2px;
+        background: #b03b22;
+      }
+      .plane::before,
+      .plane::after {
+        content: '';
+        position: absolute;
+        top: -5px;
+        width: 14px;
+        height: 14px;
+        background: #b03b22;
+      }
+      .plane::before { left: 0; }
+      .plane::after { right: 0; }
+      /* SECTION — below the cut (55%): poché with real machine lines. */
+      .below {
+        position: absolute;
+        inset: 45% 0 0 0;
+        background: #1a1c1e;
+        padding: 44px 64px 0;
+      }
+      .mlabel {
+        font-family: 'Archivo Variable', sans-serif;
+        font-stretch: 74%;
+        font-weight: 500;
+        font-size: 20px;
+        letter-spacing: 0.13em;
+        color: #c6c9c3;
+      }
+      .lines {
+        margin-top: 26px;
+        font-family: 'Chivo Mono', monospace;
+        font-size: 23px;
+        line-height: 1.75;
+        color: #c6c9c3;
       }
       .wordmark {
         position: absolute;
-        right: 56px;
-        bottom: 48px;
-        font-family: 'Fraunces Variable', serif;
+        right: 64px;
+        bottom: 40px;
+        font-family: 'Archivo Variable', sans-serif;
+        font-stretch: 74%;
         font-weight: 600;
-        font-size: 30px;
-        color: #232620;
+        font-size: 26px;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: #f5f2eb;
+        padding: 12px 18px;
+        border: 1px solid #414a50;
+        border-right-width: 5px;
       }
     </style>
   </head>
   <body>
-    <div class="under"></div>
-    <div class="seam">spletnapovsod.si</div>
-    <div class="paper">
+    <div class="facade">
       <div class="kicker">IZDELAVA SPLETNIH STRANI · SLOVENIJA</div>
       <h1><em>Hitre</em>, dostopne in profesionalne spletne strani.</h1>
+    </div>
+    <div class="plane"></div>
+    <div class="below">
+      <div class="mlabel">KAR VIDI GOOGLE</div>
+      <div class="lines">
+        &lt;title&gt;SpletnaPovsod — Izdelava spletnih strani&lt;/title&gt;<br />
+        &lt;link rel="canonical" href="https://spletnapovsod.si/"&gt;<br />
+        User-agent: ClaudeBot · Allow: /
+      </div>
       <div class="wordmark">SpletnaPovsod</div>
     </div>
   </body>

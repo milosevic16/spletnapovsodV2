@@ -15,47 +15,60 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
-/* html AND body carry the underlay color: iOS Safari paints the status-bar
-   strip and overscroll by SAMPLING the page background, not the theme-color
-   meta. The app root paints the paper surface on top. */
+/* html AND body carry the sheet color: iOS Safari paints the status-bar strip
+   and overscroll by SAMPLING the page background, not the theme-color meta.
+   The below-grade finale is an element, so overscroll stays paper at both ends. */
 html,
 body {
-  background: var(--panel);
+  background: var(--list);
 }
 
 body {
   min-height: 100vh;
   font-family: var(--font-text);
-  font-size: 1rem;
-  line-height: 1.65;
-  color: var(--ink);
+  font-size: var(--m1-20);
+  line-height: 1.68;
+  color: var(--grafit);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
 
 #app {
-  background: var(--surface);
+  background: var(--list);
 }
 
+/* The fixed level rail (SiteDatum) owns the left 4rem on desktop; content
+   sits beside it. On phones the datum is a top strip instead. */
+@media (min-width: 900px) {
+  #app {
+    padding-left: 4rem;
+  }
+}
+
+/* Display: Archivo Expanded at light weight — monumentality through size and
+   width, never boldness. */
 h1,
-h2,
-h3 {
+h2 {
   font-family: var(--font-display);
-  font-weight: 500;
-  line-height: 1.15;
+  font-weight: 275;
+  font-stretch: var(--wdth-monument);
+  line-height: 1.04;
   letter-spacing: -0.015em;
 }
 
 h1 {
-  font-size: var(--fs-h1);
+  font-size: var(--m1-1);
 }
 h2 {
-  font-size: var(--fs-h2);
+  font-size: var(--m1-5);
 }
 h3 {
-  font-size: var(--fs-h3);
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-stretch: 100%;
+  font-size: var(--m1-10);
   line-height: 1.25;
+  letter-spacing: -0.005em;
 }
 
 p {
@@ -83,63 +96,70 @@ textarea {
 }
 
 ::selection {
-  background: var(--accent);
+  background: var(--rez);
   color: #fff;
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--rez);
   outline-offset: 2px;
 }
 
-/* On dark (underlay) surfaces the accent ring fails 3:1 (2.85:1 on --panel,
-   2.45:1 on --panel-inset — measured); the on-dark accent passes at 8.06:1. */
-.masthead :focus-visible,
-.xray :focus-visible,
+/* Below grade the red pencil shifts to its on-dark voice (ring 5.50:1 zemlja,
+   4.78:1 zemlja-2 — measured; the paper-world --rez would sit at ~2.7:1). */
 .contact :focus-visible,
-.footer :focus-visible {
-  outline-color: var(--accent-on-dark);
+.footer :focus-visible,
+[data-world='zemlja'] :focus-visible {
+  outline-color: var(--rez-na-temnem);
 }
 
-/* Anchor targets: clear of the sticky masthead — which is sticky only ≥900px,
-   so phones get just a breath of air, not an 80px hole. */
+/* Anchor targets: the datum strip is fixed on phones (top strip) and a side
+   rail on desktop — phones need clearance for the strip, desktop only a breath. */
 [id] {
-  scroll-margin-top: 1rem;
+  scroll-margin-top: 4rem;
 }
 @media (min-width: 900px) {
   [id] {
-    scroll-margin-top: 5rem;
+    scroll-margin-top: 1.5rem;
   }
 }
 
 /* --- shared utilities ---------------------------------------------------- */
 
 .container {
-  max-width: 72rem;
+  max-width: 76rem;
   margin-inline: auto;
   padding-inline: var(--gutter);
 }
 
-.kicker {
-  font-family: var(--font-mono);
-  font-size: var(--fs-kicker);
-  font-weight: 400;
+/* Datum labels — the drawing hand's narrow register. Archivo Narrow caps,
+   NEVER mono (honesty contract: mono is reserved for machine emissions). */
+.datum {
+  font-family: var(--font-display);
+  font-stretch: var(--wdth-datum);
+  font-weight: 500;
+  font-size: var(--fs-datum);
   text-transform: uppercase;
-  letter-spacing: 0.11em;
-  color: var(--ink-2);
+  letter-spacing: 0.13em;
+  color: var(--grafit-2);
 }
 
-.kicker--on-dark {
-  color: var(--accent-on-dark);
+.datum--on-dark {
+  color: var(--papir-dim);
 }
 
-.annot {
+/* Machine emissions — Chivo Mono. HONESTY CONTRACT: this class may carry only
+   genuine, checkable machine bytes (head lines, robots lines, header names,
+   URLs, file names). The build guard asserts the data-fact nodes byte-equal
+   the emitted artifacts. If it is mono, it is checkable. */
+.emisija {
   font-family: var(--font-mono);
-  font-size: var(--fs-annot);
-  letter-spacing: 0.02em;
+  font-size: var(--fs-mono);
+  letter-spacing: 0.01em;
+  overflow-wrap: anywhere;
 }
 
-/* Visually hidden (screen-reader text); becomes visible when focused (skip link). */
+/* Visually hidden (screen-reader text). */
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -157,9 +177,9 @@ textarea {
   top: 0.75rem;
   z-index: 100;
   padding: 0.6rem 1rem;
-  background: var(--surface);
-  color: var(--ink);
-  border: 1px solid var(--accent);
+  background: var(--list);
+  color: var(--grafit);
+  border: 1px solid var(--rez);
   font-weight: 600;
   text-decoration: none;
   transform: translateY(-300%);
@@ -168,7 +188,8 @@ textarea {
   transform: none;
 }
 
-/* Reduced motion: the styled static page IS the finished design. This global
+/* Reduced motion: the styled static page IS the finished design — a section
+   drawing is a finished artifact, not a paused animation. This global
    kill-switch is the floor under per-effect early returns, not a replacement. */
 @media (prefers-reduced-motion: reduce) {
   *,

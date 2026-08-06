@@ -5,7 +5,7 @@
  * Edge at the standard Windows path).
  *
  * og.jpg: scripts/og.html rendered by headless Edge — real browser text
- * engine, the site's own variable Fraunces. Icon: pure-rect SVG via resvg.
+ * engine, the site's own variable Archivo. Icon: pure-rect SVG via resvg.
  */
 import { readFileSync, writeFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
@@ -39,11 +39,12 @@ await png.clone().jpeg({ quality: 88, mozjpeg: true }).toFile(join(root, 'public
 await png.clone().png().toFile(join(root, 'public/og.png'))
 rmSync(tmpPng)
 
-// Apple touch icon: the seam mark on the underlay ground (180×180) — rects only.
+// Apple touch icon: the REZ mark — the sheet, cut by the plane (180×180), rects only.
 const icon = `<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180">
-  <rect width="180" height="180" fill="#191D1B"/>
-  <rect x="62" y="62" width="86" height="86" fill="#2E6E5E"/>
-  <rect x="32" y="32" width="86" height="86" fill="#F7F4EE"/>
+  <rect width="180" height="180" fill="#F5F2EB"/>
+  <rect x="30" y="30" width="120" height="120" fill="none" stroke="#1A1C1E" stroke-width="8"/>
+  <rect x="34" y="96" width="112" height="50" fill="#1A1C1E"/>
+  <rect x="14" y="83" width="152" height="13" fill="#B03B22"/>
 </svg>`
 writeFileSync(
   join(root, 'public/apple-touch-icon.png'),

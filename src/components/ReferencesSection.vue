@@ -1,351 +1,446 @@
 <script setup lang="ts">
 /**
- * Portfolio references on two-layer cards (Dvojna plast): paper card over a
- * dark under-layer whose exposed bottom strip prints the site's REAL live URL.
- * Phone: scroll-snap touch strip, trailing-edge fade only. Desktop: staggered
- * editorial grid. Touch gets the hover-lift as a one-shot on arrival.
+ * Plošče — the portfolio as sticky-stacked drawing plates: LIST 2/3/4, each a
+ * full-viewport sheet burying the last (native scroll, zero touch listeners,
+ * touch-native by construction). The compact index above is the hurried
+ * owner's scan path AND the keyboard/SR-canonical route to all three live
+ * sites — so the theatre below can never trap anyone.
+ *
+ * Client-ink grounding: each plate's edge band + material legend derive from
+ * that client's REAL sampled palette (`inks` in content) — »vsaka stran je
+ * oblikovana posebej« demonstrated, not asserted. Inks never sit under text.
+ *
+ * Buried plates get `inert` (focus can never land under a later sheet); the
+ * cover test runs on a rAF-throttled scroll read, desktop only.
  */
 import { onMounted, onUnmounted, ref } from 'vue'
 import { references } from '@/content/home'
-import { createFx, prefersReducedMotion, canHover } from '@/lib/fx'
+import { createFx, prefersReducedMotion } from '@/lib/fx'
 
-const strip = ref<HTMLElement | null>(null)
 const fx = createFx()
+const stack = ref<HTMLElement | null>(null)
 
-const LIFT_STAGGER_MS = 90
+const sizes = '(min-width: 900px) min(62vw, 56rem), calc(100vw - 2.5rem)'
+
+function goTo(refId: string) {
+  const slot = document.getElementById(`plate-${refId}`)
+  slot?.scrollIntoView({ behavior: prefersReducedMotion() ? 'instant' : 'smooth', block: 'start' })
+}
 
 onMounted(() => {
-  // One-shot arrival lift = the touch twin of the pointer hover. Never wired
-  // where hover exists; never hides anything (cards rest complete).
-  if (canHover() || prefersReducedMotion() || !('IntersectionObserver' in window)) return
-  const host = strip.value
-  if (!host) return
-  const cards = Array.from(host.querySelectorAll<HTMLElement>('.refcard__paper'))
-  if (!cards.length) return
-  const io = fx.io(
-    (entries) => {
-      if (!entries.some((e) => e.isIntersecting)) return
-      io.disconnect()
-      cards.forEach((card, i) => {
-        fx.setTimeout(() => {
-          fx.anim(
-            card,
-            [
-              { transform: 'translate(0, 0)' },
-              { transform: 'translate(-3px, -3px)' },
-              { transform: 'translate(0, 0)' },
-            ],
-            { duration: 600, easing: 'ease-in-out', fill: 'none' },
-          )
-        }, i * LIFT_STAGGER_MS)
-      })
-    },
-    { threshold: 0.25 },
-  )
-  io.observe(host)
+  // inert-on-buried — desktop sticky theatre only; the index carries every
+  // link in normal flow, so this can only ever remove redundant tab stops.
+  if (!('inert' in HTMLElement.prototype)) return
+  const mq = matchMedia('(min-width: 900px)')
+  const plates = Array.from(stack.value?.querySelectorAll<HTMLElement>('.plate') ?? [])
+  if (plates.length < 2) return
+  let scheduled = false
+  const applyCover = () => {
+    scheduled = false
+    for (let i = 0; i < plates.length - 1; i++) {
+      const covered = mq.matches && plates[i + 1]!.getBoundingClientRect().top <= 1
+      plates[i]!.inert = covered
+    }
+  }
+  const onScroll = () => {
+    if (scheduled) return
+    scheduled = true
+    fx.raf(applyCover)
+  }
+  fx.on(window, 'scroll', onScroll, { passive: true })
+  fx.on(mq as unknown as EventTarget, 'change', applyCover as EventListener)
+  applyCover()
 })
 
 onUnmounted(() => fx.dispose())
 </script>
 
 <template>
-  <section id="reference" class="refs">
-    <div class="container">
-      <p class="kicker">{{ references.kicker }}</p>
-      <h2 class="refs__title">{{ references.title }}</h2>
-      <p class="refs__intro">{{ references.intro }}</p>
-    </div>
+  <section id="reference" class="plates">
+    <header class="container plates__head">
+      <p class="datum">{{ references.kicker }}</p>
+      <h2 class="plates__title">{{ references.title }}</h2>
+      <p class="plates__intro">{{ references.intro }}</p>
 
-    <div ref="strip" class="refs__strip-wrap">
-      <ul class="container refs__grid">
-        <li v-for="r in references.items" :key="r.id" class="refs__cell" :data-ref="r.id">
-          <!-- Stretched link: only the site name is the link, so it announces
-               "Lemur Legal — lemur.legal…" instead of the whole card (~200
-               chars); the ::after still makes the entire card clickable. -->
-          <div class="refcard">
-            <span class="refcard__under" aria-hidden="true">
-              <span class="refcard__seam annot">{{ r.urlLabel }}</span>
-            </span>
-            <div class="refcard__paper">
+      <!-- The index: all three live sites, one screen, plain rows. -->
+      <div class="plates__index">
+        <p class="datum plates__index-title">{{ references.indexTitle }}</p>
+        <ol class="plates__index-list">
+          <li v-for="(r, i) in references.items" :key="r.id" class="plates__index-row">
+            <a :href="r.url" target="_blank" rel="noopener" class="plates__index-link">
+              <span class="datum plates__index-sheet" aria-hidden="true"
+                >{{ references.sheetLabel }} {{ i + 2 }}</span
+              >
+              <span class="plates__index-name">{{ r.name }}</span>
+              <span class="emisija plates__index-url" aria-hidden="true">{{ r.urlLabel }}</span>
+              <span class="visually-hidden">— {{ r.urlLabel }}, {{ references.newWindowNote }}</span>
+            </a>
+          </li>
+        </ol>
+      </div>
+    </header>
+
+    <ul ref="stack" class="plates__stack">
+      <li
+        v-for="(r, i) in references.items"
+        :id="`plate-${r.id}`"
+        :key="r.id"
+        class="plates__slot"
+      >
+        <article class="plate">
+          <!-- The client's real sampled palette as the plate's edge band. -->
+          <span class="plate__band" aria-hidden="true">
+            <span
+              v-for="ink in r.inks"
+              :key="ink"
+              class="plate__band-seg"
+              :style="{ background: ink }"
+            ></span>
+          </span>
+
+          <div class="plate__sheet">
+            <div class="plate__media">
               <picture>
                 <source
                   type="image/avif"
                   :srcset="r.image.widths.map((w) => `/img/refs/${r.id}-${w}.avif ${w}w`).join(', ')"
-                  sizes="(min-width: 900px) 560px, min(82vw, 26rem)"
+                  :sizes="sizes"
                 />
                 <source
                   type="image/webp"
                   :srcset="r.image.widths.map((w) => `/img/refs/${r.id}-${w}.webp ${w}w`).join(', ')"
-                  sizes="(min-width: 900px) 560px, min(82vw, 26rem)"
+                  :sizes="sizes"
                 />
                 <img
                   :src="`/img/refs/${r.id}-${r.image.widths[0]}.jpg`"
                   :srcset="r.image.widths.map((w) => `/img/refs/${r.id}-${w}.jpg ${w}w`).join(', ')"
-                  sizes="(min-width: 900px) 560px, min(82vw, 26rem)"
+                  :sizes="sizes"
                   :width="r.image.width"
                   :height="r.image.height"
                   :alt="r.alt"
                   loading="lazy"
                   decoding="async"
-                  class="refcard__shot"
+                  class="plate__shot"
                 />
               </picture>
-              <div class="refcard__body">
-                <h3 class="refcard__name">
-                  <a :href="r.url" target="_blank" rel="noopener" class="refcard__link">
-                    {{ r.name }}
-                    <span class="visually-hidden">
-                      — {{ r.urlLabel }}, {{ references.newWindowNote }}
-                    </span>
-                  </a>
-                </h3>
-                <p class="refcard__sector">{{ r.sector }}</p>
-                <p class="refcard__desc">{{ r.description }}</p>
-                <span class="refcard__inks" aria-hidden="true">
-                  <span
-                    v-for="ink in r.inks"
-                    :key="ink"
-                    class="refcard__ink"
-                    :style="{ background: ink }"
-                  ></span>
-                </span>
-                <p class="refcard__proof">{{ r.proof }}</p>
-              </div>
             </div>
+
+            <div class="plate__body">
+              <!-- Stretched link: only the name is the link; the ::after makes
+                   the whole sheet clickable without a 200-char accessible name. -->
+              <h3 class="plate__name">
+                <a :href="r.url" target="_blank" rel="noopener" class="plate__link">
+                  {{ r.name }}
+                  <span class="visually-hidden">
+                    — {{ r.urlLabel }}, {{ references.newWindowNote }}
+                  </span>
+                </a>
+              </h3>
+              <p class="datum plate__sector">{{ r.sector }}</p>
+              <p class="plate__desc">{{ r.description }}</p>
+              <p class="plate__proof">{{ r.proof }}</p>
+            </div>
+
+            <footer class="plate__tb">
+              <span class="datum plate__tb-sheet" aria-hidden="true"
+                >{{ references.sheetLabel }} {{ i + 2 }} · {{ r.name }}</span
+              >
+              <span class="emisija plate__tb-url" aria-hidden="true">{{ r.urlLabel }}</span>
+              <span class="plate__legend" aria-hidden="true">
+                <span class="datum plate__legend-title">{{ references.inksLabel }}</span>
+                <span v-for="ink in r.inks" :key="ink" class="plate__chip">
+                  <span class="plate__chip-swatch" :style="{ background: ink }"></span>
+                  <span class="emisija plate__chip-hex">{{ ink }}</span>
+                </span>
+              </span>
+              <span class="plate__tb-nav">
+                <button
+                  v-if="i > 0"
+                  type="button"
+                  class="datum plate__nav-btn"
+                  @click="goTo(references.items[i - 1]!.id)"
+                >
+                  {{ references.prevLabel }}
+                </button>
+                <button
+                  v-if="i < references.items.length - 1"
+                  type="button"
+                  class="datum plate__nav-btn"
+                  @click="goTo(references.items[i + 1]!.id)"
+                >
+                  {{ references.nextLabel }}
+                </button>
+              </span>
+            </footer>
           </div>
-        </li>
-      </ul>
-    </div>
+        </article>
+      </li>
+    </ul>
   </section>
 </template>
 
 <style scoped>
-.refs {
-  padding-block: var(--section-y);
+.plates {
+  padding-top: var(--section-y);
 }
 
-.refs__title {
+.plates__title {
   margin-top: 1rem;
 }
 
-.refs__intro {
+.plates__intro {
   margin-top: 1.25rem;
-  color: var(--ink-2);
+  color: var(--grafit-2);
 }
 
-/* --- phone: scroll-snap touch strip -------------------------------------- */
-.refs__strip-wrap {
-  position: relative;
+/* --- the index ------------------------------------------------------------ */
+.plates__index {
   margin-top: 2.5rem;
+  border-top: 1px solid var(--mreza-strong);
 }
 
-.refs__grid {
+.plates__index-title {
+  padding-top: 0.75rem;
+}
+
+.plates__index-list {
   list-style: none;
+  margin-top: 0.5rem;
+}
+
+.plates__index-link {
   display: flex;
-  gap: 1.25rem;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scroll-padding-inline: var(--gutter);
-  padding-bottom: 0.5rem;
-  -webkit-overflow-scrolling: touch;
+  align-items: baseline;
+  gap: 1rem;
+  min-height: 44px;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--mreza);
+  text-decoration: none;
+  transition: color var(--t-micro) var(--ease-out);
 }
 
-.refs__cell {
-  flex: 0 0 82vw;
-  max-width: 26rem;
-  scroll-snap-align: start;
+.plates__index-link:hover .plates__index-name {
+  color: var(--rez);
 }
 
-/* Trailing-edge fade only — the leading edge never eats the card just
-   scrolled to. Pure decoration, ignores pointer events. */
-.refs__strip-wrap::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  right: 0;
-  width: 2.5rem;
-  /* fallback literal = --surface at alpha 0; the relative-color line below
-     tracks the token where supported */
-  background: linear-gradient(to right, rgb(247 244 238 / 0), var(--surface));
-  background: linear-gradient(to right, rgb(from var(--surface) r g b / 0), var(--surface));
-  pointer-events: none;
+.plates__index-sheet {
+  flex: 0 0 3.6rem;
 }
 
-/* --- the two-layer card -------------------------------------------------- */
-.refcard {
+.plates__index-name {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.05rem;
+  transition: color var(--t-micro) var(--ease-out);
+}
+
+.plates__index-url {
+  margin-left: auto;
+  color: var(--grafit-2);
+}
+
+/* --- the sticky stack ----------------------------------------------------- */
+.plates__stack {
+  list-style: none;
+  margin-top: 3rem;
+}
+
+.plates__slot {
+  /* phone: plain flow */
+}
+
+.plate {
   position: relative;
-  display: block;
-  height: 100%;
-  padding: 0 4px 28px 0;
+  display: flex;
+  background: var(--list);
+  border-top: 1px solid var(--grafit);
 }
 
-.refcard__link {
-  color: inherit;
+.plate__band {
+  flex: 0 0 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.plate__band-seg {
+  flex: 1;
+}
+
+.plate__sheet {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem 1.25rem 0;
+}
+
+.plate__media {
+  border: 1px solid var(--mreza-strong);
+}
+
+.plate__shot {
+  width: 100%;
+  height: auto;
+}
+
+.plate__body {
+  padding: 1.25rem 0 1.5rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.plate__name {
+  font-family: var(--font-display);
+  font-stretch: var(--wdth-monument);
+  font-weight: 300;
+  font-size: clamp(1.6rem, 1.2rem + 2vw, 2.6rem);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.plate__link {
   text-decoration: none;
 }
 
-/* Stretched link — the whole card stays clickable while only the name is the
-   link. Its containing block is .refcard__paper (the nearest positioned
-   ancestor), so the negative insets extend the hit area over the exposed
-   seam as well. */
-.refcard__link::after {
+/* Stretched link — whole sheet clickable, name announces cleanly. */
+.plate__link::after {
   content: '';
   position: absolute;
-  inset: 0 -4px -28px 0;
+  inset: 0;
   z-index: 1;
 }
 
-.refcard__under {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  right: 0;
-  bottom: 0;
-  background: var(--panel);
+.plate__sector {
+  margin-top: 0.25rem;
 }
 
-.refcard__seam {
-  position: absolute;
-  left: 0.75rem;
-  right: 0.5rem;
-  bottom: 0;
-  height: 28px;
-  line-height: 28px;
-  color: var(--accent-on-dark);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.plate__desc {
+  margin-top: 0.5rem;
+  max-width: 44ch;
 }
 
-.refcard__paper {
-  position: relative;
+/* The plate's single red annotation. */
+.plate__proof {
+  margin-top: 0.35rem;
+  font-size: 0.92rem;
+  font-style: italic;
+  color: var(--rez);
+  max-width: 44ch;
+}
+
+/* --- title block ---------------------------------------------------------- */
+.plate__tb {
+  margin-top: auto;
   display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: var(--surface-2);
-  border: 1px solid var(--hairline);
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--mreza-strong);
 }
 
-.refcard__shot {
-  width: 100%;
-  height: auto;
-  border-bottom: 1px solid var(--hairline);
+.plate__tb-url {
+  color: var(--grafit-2);
 }
 
-.refcard__body {
-  display: grid;
+.plate__legend {
+  display: none;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.plate__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.plate__chip-swatch {
+  width: 12px;
+  height: 12px;
+  border: 1px solid rgb(26 28 30 / 0.25);
+}
+
+.plate__chip-hex {
+  font-size: 0.62rem;
+  color: var(--grafit-2);
+}
+
+.plate__tb-nav {
+  margin-left: auto;
+  display: none;
   gap: 0.5rem;
-  padding: 1.25rem;
+  position: relative;
+  z-index: 2; /* above the stretched link */
 }
 
-.refcard__name {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1.25rem;
-  line-height: 1.25;
-  letter-spacing: 0;
-  color: var(--ink);
+.plate__nav-btn {
+  min-height: 44px;
+  padding: 0 0.9rem;
+  background: none;
+  border: 1px solid var(--mreza-strong);
+  color: var(--grafit);
+  cursor: pointer;
+  transition: border-color var(--t-micro) var(--ease-out), color var(--t-micro) var(--ease-out);
 }
 
-.refcard__sector {
-  font-family: var(--font-mono);
-  font-size: var(--fs-kicker);
-  text-transform: uppercase;
-  letter-spacing: 0.11em;
-  color: var(--ink-2);
+.plate__nav-btn:hover {
+  border-color: var(--rez);
+  color: var(--rez);
 }
 
-.refcard__desc {
-  font-size: 0.95rem;
-  color: var(--ink);
-  max-width: 38ch;
-}
-
-.refcard__inks {
-  display: flex;
-  gap: 0.4rem;
-  margin-top: 0.35rem;
-}
-
-.refcard__ink {
-  width: 14px;
-  height: 14px;
-  border: 1px solid rgb(35 38 32 / 0.18);
-}
-
-.refcard__proof {
-  margin-top: 0.35rem;
-  font-size: 0.85rem;
-  color: var(--ink-2);
-  max-width: 38ch;
-}
-
-/* Pointer devices: the motif's lift on hover (CSS-only, media-gated). */
-@media (hover: hover) {
-  .refcard__paper {
-    transition:
-      transform var(--t-lift) var(--ease-out),
-      border-color var(--t-lift) var(--ease-out);
-  }
-  .refcard:hover .refcard__paper,
-  .refcard:focus-within .refcard__paper {
-    transform: translate(-3px, -3px);
-    border-color: var(--accent);
-  }
-}
-
-/* --- desktop: staggered editorial grid ----------------------------------- */
+/* --- desktop: the sticky theatre ------------------------------------------ */
 @media (min-width: 900px) {
-  /* Desktop: the trailing fade turns from horizontal to vertical — the last
-     card dissolves into the page so the list reads as continuing past a cut.
-     The fade only ever covers EMPTY card fill (see the reserve below the last
-     card's text) — no readable text may sit under a gradient. */
-  .refs__strip-wrap::after {
-    top: auto;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: auto;
-    height: 10rem;
-    background: linear-gradient(to bottom, rgb(247 244 238 / 0), var(--surface) 72%);
-    background: linear-gradient(to bottom, rgb(from var(--surface) r g b / 0), var(--surface) 72%);
+  /* Each slot is taller than its plate, so the plate pins while the next
+     sheet arrives to bury it — the REF mechanism, pure CSS. */
+  .plates__slot {
+    height: 150svh;
+  }
+  .plates__slot:last-child {
+    height: 100svh;
   }
 
-  .refs__grid {
+  .plate {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    overflow: hidden;
+  }
+
+  .plate__sheet {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 2.5rem 3rem;
-    overflow: visible;
-    padding-bottom: 2rem;
+    grid-template-columns: minmax(0, 62fr) minmax(0, 38fr);
+    grid-template-rows: 1fr auto;
+    gap: 1.5rem 3rem;
+    align-items: center;
+    padding: 2rem clamp(1.5rem, 3vw, 3.5rem) 0;
   }
 
-  /* Empty paper under the last card's text, so the fade has card to dissolve
-     rather than page-on-page (a gradient to --surface over --surface is
-     invisible — that was the first attempt). */
-  .refs__cell:last-child .refcard__body {
-    padding-bottom: 6.5rem;
-  }
-
-  .refs__cell {
-    flex: none;
-    max-width: none;
-  }
-
-  .refs__cell[data-ref='mercpeter'] {
+  .plate__media {
     grid-column: 1;
-    grid-row: 1 / span 2;
-    /* natural height — the card must not stretch to the combined row height */
-    align-self: start;
+    grid-row: 1;
+    max-width: 56rem;
   }
-  .refs__cell[data-ref='lemur'] {
+
+  .plate__body {
     grid-column: 2;
     grid-row: 1;
-    margin-top: 4.5rem;
+    align-self: center;
+    padding: 0;
   }
-  .refs__cell[data-ref='bloctopus'] {
-    grid-column: 2;
+
+  .plate__tb {
+    grid-column: 1 / -1;
     grid-row: 2;
+  }
+
+  .plate__legend {
+    display: inline-flex;
+  }
+
+  .plate__tb-nav {
+    display: inline-flex;
   }
 }
 </style>
