@@ -6,40 +6,45 @@
 
    The world: drafting paper, graphite line, solid poché, 45° section hatch,
    red pencil. Depth is DRAWN (line weight, hatch, poché) — zero drop shadows
-   anywhere on the site. Darkness is spent once, below grade (contact+footer).
+   anywhere on the site.
+
+   SCALE AND RHYTHM ARE THE APPROVED LAYOUT'S — sizes, spacing and timings
+   below are carried over unchanged so the REZ skin never moves the layout.
+   Only color, type family and line treatment are the redesign's.
 --------------------------------------------------------------------------- */
 
 :root {
-  /* The sheet (above the cut) */
+  /* The sheet (the human layer) */
   --list: #f5f2eb; /* drafting-paper page ground; grafit on it 15.29:1 */
-  --list-2: #ece8de; /* alternate storey band for calm passages; grafit 13.97:1, grafit-2 6.16:1 */
+  --list-2: #ece8de; /* one step darker — alternating bands, card fills; grafit 13.97:1, grafit-2 6.16:1 */
   --mreza: #d9d3c6; /* sheet frames, drawing hairlines (1.33:1 vs list — line duty, never text) */
   --mreza-strong: #b3ac9c; /* emphasized rules (2.02:1 vs list — line duty, never text) */
-  --grafit: #1a1c1e; /* ink: all text, and poché — the solid fill of cut matter */
+  --grafit: #1a1c1e; /* ink: all text; and poché — the solid fill of cut matter */
   --grafit-2: #50555a; /* secondary text; 6.74:1 list, 6.16:1 list-2 */
 
-  /* The cut (one red, never sprinkled, never a status color) */
-  --rez: #b03b22; /* THE cut: cut plane, grips, primary CTA; text 5.37:1 list / 4.91:1 list-2; white on it 6.01:1 */
-  --rez-deep: #93301b; /* pressed/hover step; white on it 7.84:1 */
-  --rez-na-temnem: #e4694a; /* the cut's voice below grade; 5.50:1 zemlja, 4.78:1 zemlja-2, 5.22:1 grafit */
+  /* The machine layer (poché bands: masthead, x-ray, card under-edges) */
+  --grafit-inset: #24282c; /* inset ON the poché, one step lighter (1.15:1 — border defines it); list 13.28:1, papir-dim 8.87:1 */
+  --crta-na-temnem: #414a50; /* the dark world's hairline (line duty only, never text) */
+  --papir-dim: #c6c9c3; /* secondary text on dark; 10.21:1 grafit, 10.75:1 zemlja, 9.33:1 zemlja-2 */
 
-  /* Below grade (contact + footer only) */
+  /* The cut (one red, never sprinkled, never a status color) */
+  --rez: #b03b22; /* THE cut: cut lines, marks, focus, primary CTA; text 5.37:1 list / 4.91:1 list-2 / 5.08:1 vodni; white on it 6.01:1 */
+  --rez-deep: #93301b; /* pressed/hover step; white on it 7.84:1 */
+  --rez-na-temnem: #e4694a; /* the cut's voice on dark; 5.22:1 grafit, 5.50:1 zemlja, 4.78:1 zemlja-2 */
+  --rez-vodni: #f4eae6; /* quiet wash — open disclosure ground; grafit on it 14.45:1, grafit-2 6.37:1 */
+
+  /* Below grade (the closing bands: contact + footer) */
   --zemlja: #14171a; /* the earth; list on it 16.09:1 */
   --zemlja-2: #1f242a; /* insets on dark go lighter; list 13.97:1, papir-dim 9.33:1 */
-  --papir-dim: #c6c9c3; /* secondary text on dark; 10.75:1 zemlja, 9.33:1 zemlja-2 */
-  --crta-na-temnem: #414a50; /* the dark world's hairline (line duty only, never text) */
 
   /* Status (functional only — never brand accents; icon + text always) */
   --ok-na-temnem: #8fc7a6; /* form success on zemlja-2: 8.10:1 */
   --err-na-temnem: #f0a48a; /* form error on zemlja-2: 7.72:1 — rust, deliberately NOT --rez */
-  --ok: #38715a; /* success on paper: 5.11:1 on list */
-  --err: #8a3a1e; /* error on paper: 6.94:1 on list */
 
   /* Type — one lettering hand (Archivo width axis), one human voice, one
      machine voice. The "<family> fallback" entries are fontaine's generated
      metric-matched faces (size-adjust/ascent/descent over the local base) —
-     they MUST be named in the stack or the swap reflows the page (verified:
-     without them the generated faces are dead weight in the CSS). */
+     they MUST be named in the stack or the swap reflows the page. */
   --font-display: 'Archivo Variable', 'Archivo Variable fallback', Arial, sans-serif;
   --font-text: 'Source Serif 4 Variable', 'Source Serif 4 Variable fallback', Georgia, serif;
   --font-mono: 'Chivo Mono', 'Chivo Mono fallback', 'Courier New', monospace;
@@ -48,28 +53,21 @@
   --wdth-monument: 115%; /* display: light-monumental, wide */
   --wdth-datum: 74%; /* instrument labels: narrow caps */
 
-  /* Scale — sizes named as drawing scales. Instruments never scale. */
-  --m1-1: clamp(2.8rem, 1.4rem + 6.5vw, 6.75rem); /* M 1:1 — the h1, tracking -0.015em */
-  --m1-5: clamp(1.9rem, 1.3rem + 2.6vw, 3.4rem); /* M 1:5 — scene titles (h2) */
-  --m1-10: clamp(1.2rem, 1.05rem + 0.7vw, 1.6rem); /* M 1:10 — chapter heads (h3) */
-  --m1-20: clamp(1.02rem, 0.98rem + 0.28vw, 1.15rem); /* M 1:20 — serif body */
-  --fs-lead: clamp(1.12rem, 1.02rem + 0.6vw, 1.4rem); /* serif lead paragraph */
-  --fs-datum: 0.72rem; /* Archivo Narrow caps instrument labels — unscaled at every viewport */
-  --fs-mono: 0.78rem; /* Chivo Mono machine emissions — unscaled */
+  /* Fluid scale by role — UNCHANGED from the approved layout */
+  --fs-h1: clamp(2.1rem, 1.3rem + 3.6vw, 3.6rem);
+  --fs-h2: clamp(1.5rem, 1.15rem + 1.6vw, 2.2rem);
+  --fs-h3: clamp(1.125rem, 1.05rem + 0.4vw, 1.35rem);
+  --fs-lead: clamp(1.05rem, 1rem + 0.35vw, 1.2rem);
+  --fs-kicker: 0.72rem; /* instrument labels — they do not scale */
+  --fs-annot: 0.75rem; /* annotations on Prerez lines and card seams */
 
-  /* Rhythm */
-  --section-y: clamp(4.5rem, 3rem + 6vw, 9rem);
-  --gutter: clamp(1.25rem, 4vw, 4.5rem);
-  --frame: clamp(0.75rem, 2.2vw, 2rem); /* sheet-frame inset from viewport edges */
-  --measure: 64ch;
+  /* Rhythm — UNCHANGED from the approved layout */
+  --section-y: clamp(4rem, 3rem + 5vw, 7.5rem);
+  --gutter: clamp(1.25rem, 4vw, 4rem);
+  --measure: 66ch;
 
-  /* (The cut scene's boundary var --cut-n lives in CutSection.vue — the
-     component owns its resting 55 declaration.) */
-
-  /* Motion — one-shot doctrine; constants paired with JS via getComputedStyle
-     where timings must agree */
-  --t-draw: 900ms; /* SVG stroke / rule draws */
-  --t-step: 300ms; /* STANDARD-tier stepped cut transition */
-  --t-micro: 200ms; /* hover/press micro-feedback */
+  /* Motion — UNCHANGED from the approved layout */
+  --t-draw: 800ms; /* Prerez line draw */
+  --t-lift: 200ms; /* card hover lift */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }

@@ -1,6 +1,10 @@
 /* ---------------------------------------------------------------------------
    Base reset, global typography, shared utilities.
    Token definitions: tokens.css · Font faces: fonts.css
+
+   Structure, sizes and spacing are the approved layout's, unchanged. What the
+   REZ skin changes here: the palette, the three type registers, and the line
+   treatment.
 --------------------------------------------------------------------------- */
 
 *,
@@ -15,19 +19,20 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
-/* html AND body carry the sheet color: iOS Safari paints the status-bar strip
-   and overscroll by SAMPLING the page background, not the theme-color meta.
-   The below-grade finale is an element, so overscroll stays paper at both ends. */
+/* html AND body carry the poché color: iOS Safari paints the status-bar strip
+   and overscroll by SAMPLING the page background, not the theme-color meta —
+   and the masthead that meets the strip is a dark band. The app root paints
+   the paper surface on top. */
 html,
 body {
-  background: var(--list);
+  background: var(--grafit);
 }
 
 body {
   min-height: 100vh;
   font-family: var(--font-text);
-  font-size: var(--m1-20);
-  line-height: 1.68;
+  font-size: 1rem;
+  line-height: 1.65;
   color: var(--grafit);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -37,36 +42,28 @@ body {
   background: var(--list);
 }
 
-/* The fixed level rail (SiteDatum) owns the left 4rem on desktop; content
-   sits beside it. On phones the datum is a top strip instead. */
-@media (min-width: 900px) {
-  #app {
-    padding-left: 4rem;
-  }
-}
-
 /* Display: Archivo Expanded at light weight — monumentality through size and
-   width, never boldness. */
+   width, never boldness. h3 steps down to normal width at text weight. */
 h1,
 h2 {
   font-family: var(--font-display);
-  font-weight: 275;
+  font-weight: 300;
   font-stretch: var(--wdth-monument);
-  line-height: 1.04;
+  line-height: 1.15;
   letter-spacing: -0.015em;
 }
 
 h1 {
-  font-size: var(--m1-1);
+  font-size: var(--fs-h1);
 }
 h2 {
-  font-size: var(--m1-5);
+  font-size: var(--fs-h2);
 }
 h3 {
   font-family: var(--font-display);
   font-weight: 500;
   font-stretch: 100%;
-  font-size: var(--m1-10);
+  font-size: var(--fs-h3);
   line-height: 1.25;
   letter-spacing: -0.005em;
 }
@@ -105,68 +102,74 @@ textarea {
   outline-offset: 2px;
 }
 
-/* Below grade the red pencil shifts to its on-dark voice (ring 5.50:1 zemlja,
-   4.78:1 zemlja-2 — measured; the paper-world --rez would sit at ~2.7:1). */
+/* On the dark bands the red pencil shifts to its on-dark voice (ring 5.22:1
+   on grafit, 5.50:1 on zemlja — measured; the paper-world --rez sits at
+   ~2.7:1 there). */
+.masthead :focus-visible,
+.xray :focus-visible,
 .contact :focus-visible,
 .footer :focus-visible {
   outline-color: var(--rez-na-temnem);
 }
 
-/* Anchor targets AND tab-focus targets clear the fixed phone strip: [id] via
-   scroll-margin, everything else (links/buttons/inputs without ids that the
-   browser scrolls into view on focus) via root scroll-padding. Desktop's rail
-   sits left, so only a breath is needed. */
-html {
-  scroll-padding-top: calc(4.5rem + env(safe-area-inset-top, 0px));
-}
+/* Anchor targets: clear of the sticky masthead — which is sticky only ≥900px,
+   so phones get just a breath of air, not an 80px hole. */
 [id] {
-  scroll-margin-top: calc(4rem + env(safe-area-inset-top, 0px));
+  scroll-margin-top: 1rem;
 }
 @media (min-width: 900px) {
-  html {
-    scroll-padding-top: 1.5rem;
-  }
   [id] {
-    scroll-margin-top: 1.5rem;
+    scroll-margin-top: 5rem;
   }
 }
 
 /* --- shared utilities ---------------------------------------------------- */
 
 .container {
-  max-width: 76rem;
+  max-width: 72rem;
   margin-inline: auto;
   padding-inline: var(--gutter);
 }
 
-/* Datum labels — the drawing hand's narrow register. Archivo Narrow caps,
-   NEVER mono (honesty contract: mono is reserved for machine emissions). */
-.datum {
+/* Instrument labels — the drawing hand's narrow register. Archivo Narrow caps,
+   NEVER mono: mono is reserved for machine emissions (see .emisija). */
+.kicker {
   font-family: var(--font-display);
   font-stretch: var(--wdth-datum);
+  font-size: var(--fs-kicker);
   font-weight: 500;
-  font-size: var(--fs-datum);
   text-transform: uppercase;
-  letter-spacing: 0.13em;
+  letter-spacing: 0.11em;
   color: var(--grafit-2);
 }
 
-.datum--on-dark {
+.kicker--on-dark {
   color: var(--papir-dim);
 }
 
-/* Machine emissions — Chivo Mono. HONESTY CONTRACT: this class may carry only
-   genuine, checkable machine bytes (head lines, robots lines, header names,
-   URLs, file names). The build guard asserts the data-fact nodes byte-equal
-   the emitted artifacts. If it is mono, it is checkable. */
+/* Annotations on Prerez lines, ledger rows, card labels — claims, so the
+   narrow register, not mono. No case transform: these strings carry real
+   artifact names (sitemap.xml, JSON-LD) whose case is part of the name. */
+.annot {
+  font-family: var(--font-display);
+  font-stretch: var(--wdth-datum);
+  font-weight: 500;
+  font-size: var(--fs-annot);
+  letter-spacing: 0.04em;
+}
+
+/* Machine emissions — Chivo Mono. THE HONESTY CONTRACT: this class may carry
+   only genuine, checkable machine bytes (emitted head lines, robots lines,
+   URLs, file names). The build guard asserts every data-fact node byte-equals
+   its artifact. If it is mono, it is checkable. */
 .emisija {
   font-family: var(--font-mono);
-  font-size: var(--fs-mono);
+  font-size: var(--fs-annot);
   letter-spacing: 0.01em;
   overflow-wrap: anywhere;
 }
 
-/* Visually hidden (screen-reader text). */
+/* Visually hidden (screen-reader text); becomes visible when focused (skip link). */
 .visually-hidden {
   position: absolute;
   width: 1px;

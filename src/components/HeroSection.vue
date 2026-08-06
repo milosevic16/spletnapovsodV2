@@ -1,12 +1,10 @@
 <script setup lang="ts">
-/**
- * Fasada — the monumental opening sheet the veil parts onto. Calm by design:
- * zero JS, zero effects; the drama is scale, width-axis type and the one red
- * poché block. The vodni znak (watermark) prints the page's REAL <title> at
- * watermark opacity — a checkable fact planting the invisible-layer thesis
- * before the cut scene arrives (aria-hidden: pure decoration).
- */
-import { hero, meta } from '@/content/home'
+import { hero, nav, meta } from '@/content/home'
+import { SITE_ORIGIN } from '@/lib/constants'
+import PrerezLine from './PrerezLine.vue'
+
+const titleTag = `<title>${meta.title}</title>`
+const canonicalLabel = SITE_ORIGIN.replace('https://', '')
 
 // h1 renders from the content module — the accent span is derived, so a copy
 // edit can never silently diverge from the real title.
@@ -17,40 +15,78 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
 
 <template>
   <section class="hero">
-    <div class="container hero__wrap">
-      <p class="datum hero__kicker">{{ hero.kicker }}</p>
-      <h1 class="hero__title">
-        <span v-if="titleAccent" class="hero__hl">{{ titleAccent }}</span>{{ titleRest }}
-      </h1>
-      <p class="hero__lead">{{ hero.lead }}</p>
-      <div class="hero__cta">
-        <a :href="`#${hero.ctaPrimary.target}`" class="hero__btn">{{ hero.ctaPrimary.label }}</a>
-        <a :href="`#${hero.ctaSecondary.target}`" class="hero__more">{{
-          hero.ctaSecondary.label
-        }}</a>
+    <div class="container hero__grid">
+      <div class="hero__copy">
+        <p class="kicker hero__kicker">{{ hero.kicker }}</p>
+        <h1 class="hero__title">
+          <span v-if="titleAccent" class="hero__hl">{{ titleAccent }}</span>{{ titleRest }}
+        </h1>
+        <p class="hero__lead">{{ hero.lead }}</p>
+        <div class="hero__cta">
+          <a :href="`#${hero.ctaPrimary.target}`" class="hero__btn">{{ hero.ctaPrimary.label }}</a>
+          <a :href="`#${hero.ctaSecondary.target}`" class="hero__more">{{
+            hero.ctaSecondary.label
+          }}</a>
+        </div>
+      </div>
+
+      <!-- Honest self-map: this page's own sections as a wireframe, on the
+           two-layer card whose seam prints the real domain. Decorative for
+           screen readers (the masthead nav carries the same links). -->
+      <div class="hero__aside" aria-hidden="true">
+        <div class="layercard">
+          <div class="layercard__under">
+            <span class="layercard__seam emisija">{{ canonicalLabel }}</span>
+          </div>
+          <div class="layercard__paper">
+            <div class="wireframe">
+              <div class="wireframe__block wireframe__block--hero">
+                <span class="wireframe__label">Domov</span>
+                <span class="wireframe__bar wireframe__bar--wide"></span>
+                <span class="wireframe__bar"></span>
+                <span class="wireframe__chip"></span>
+              </div>
+              <div class="wireframe__row">
+                <div v-for="i in 3" :key="i" class="wireframe__block wireframe__block--card">
+                  <span v-if="i === 1" class="wireframe__label">{{ nav[0]!.label }}</span>
+                  <span class="wireframe__bar wireframe__bar--thin"></span>
+                </div>
+              </div>
+              <div class="wireframe__block">
+                <span class="wireframe__label">{{ nav[1]!.label }}</span>
+                <span class="wireframe__bar"></span>
+                <span class="wireframe__bar wireframe__bar--wide"></span>
+              </div>
+              <div class="wireframe__block wireframe__block--rez">
+                <span class="wireframe__label">{{ nav[3]!.label }}</span>
+                <span class="wireframe__bar wireframe__bar--thin"></span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-    <p class="hero__watermark" aria-hidden="true">{{ meta.title }}</p>
+
+    <div class="container hero__fold">
+      <!-- The annotation IS the page's real <title> tag — an emission, so it
+           renders in mono and verbatim, never case-transformed. -->
+      <PrerezLine emission :annotation="titleTag" :gloss="hero.foldGloss" />
+    </div>
   </section>
 </template>
 
 <style scoped>
 .hero {
-  position: relative;
-  overflow: hidden;
-  min-height: 88svh;
-  display: flex;
-  align-items: center;
-  padding-block: clamp(5rem, 4rem + 6vw, 8rem) clamp(3rem, 2rem + 4vw, 6rem);
-  border-bottom: 1px solid var(--mreza);
+  padding-top: clamp(2.5rem, 2rem + 4vw, 5.5rem);
 }
 
-.hero__wrap {
-  width: 100%;
+.hero__grid {
+  display: grid;
+  gap: 2.5rem;
 }
 
 .hero__kicker {
-  margin-bottom: clamp(1.25rem, 1rem + 1.5vw, 2.5rem);
+  margin-bottom: 1.25rem;
 }
 
 .hero__title {
@@ -58,41 +94,34 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
 }
 
 .hero__hl {
+  font-style: normal;
   color: var(--rez);
 }
 
 .hero__lead {
-  margin-top: clamp(1.5rem, 1.2rem + 1.5vw, 2.5rem);
+  margin-top: 1.5rem;
   font-size: var(--fs-lead);
-  line-height: 1.6;
-  max-width: 56ch;
-  color: var(--grafit);
+  max-width: 62ch;
 }
 
 .hero__cta {
-  margin-top: clamp(2rem, 1.5rem + 2vw, 3rem);
+  margin-top: 2rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-/* The one solid red poché block on the sheet. */
 .hero__btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 3.5rem;
-  padding: 0.85rem 2.25rem;
+  min-height: 3.25rem;
+  padding: 0.75rem 1.75rem;
   background: var(--rez);
-  color: #fff; /* 6.01:1 on --rez — measured */
-  font-family: var(--font-display);
-  font-stretch: var(--wdth-datum);
+  color: #fff;
   font-weight: 600;
-  font-size: 0.95rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
   text-decoration: none;
-  transition: background var(--t-micro) var(--ease-out);
+  transition: background var(--t-lift) var(--ease-out);
 }
 
 .hero__btn:hover {
@@ -105,41 +134,131 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
   font-weight: 600;
   color: var(--rez);
   text-decoration: underline;
-  text-underline-offset: 0.3em;
+  text-underline-offset: 0.25em;
 }
 
-/* Vodni znak — the real <title>, printed into the paper along the sheet edge.
-   Decorative watermark (aria-hidden), deliberately below any contrast duty. */
-.hero__watermark {
+/* The <title> dimension line is a desktop device: on a phone it costs a whole
+   screen before the reader reaches the work. Still in the markup for crawlers. */
+.hero__fold {
+  display: none;
+}
+
+.hero__aside {
+  display: none;
+}
+
+/* --- the two-layer card (Dvojna plast) ----------------------------------- */
+.layercard {
+  position: relative;
+  padding: 0 4px 28px 0;
+}
+
+.layercard__under {
   position: absolute;
-  top: 50%;
-  right: calc(-1 * clamp(0.5rem, 1.5vw, 1rem));
-  transform: translateY(-50%);
-  writing-mode: vertical-rl;
-  font-family: var(--font-display);
-  font-stretch: var(--wdth-monument);
-  font-weight: 275;
-  font-size: clamp(3rem, 2rem + 6vw, 7rem);
-  line-height: 1;
+  top: 8px;
+  left: 8px;
+  right: 0;
+  bottom: 0;
+  background: var(--grafit);
+}
+
+.layercard__seam {
+  position: absolute;
+  left: 0.75rem;
+  bottom: 0;
+  height: 28px;
+  line-height: 28px;
+  color: var(--papir-dim);
   white-space: nowrap;
-  color: var(--grafit);
-  opacity: 0.05;
-  pointer-events: none;
-  user-select: none;
-  max-width: none;
+}
+
+.layercard__paper {
+  position: relative;
+  background: var(--list-2);
+  border: 1px solid var(--mreza);
+  padding: 1.5rem;
+}
+
+/* --- wireframe self-map -------------------------------------------------- */
+.wireframe {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.wireframe__block {
+  border: 1px solid var(--mreza-strong);
+  padding: 0.7rem 0.8rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.wireframe__block--rez {
+  border-color: var(--rez);
+}
+
+.wireframe__row {
+  display: flex;
+  gap: 0.6rem;
+}
+.wireframe__row .wireframe__block {
+  flex: 1;
+}
+
+.wireframe__label {
+  font-family: var(--font-display);
+  font-stretch: var(--wdth-datum);
+  font-weight: 500;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--grafit-2);
+}
+
+.wireframe__bar {
+  height: 3px;
+  width: 55%;
+  background: var(--mreza-strong);
+}
+.wireframe__bar--wide {
+  width: 80%;
+}
+.wireframe__bar--thin {
+  width: 40%;
+}
+
+.wireframe__chip {
+  width: 34%;
+  height: 12px;
+  background: var(--rez);
 }
 
 @media (min-width: 640px) {
   .hero__cta {
     flex-direction: row;
     align-items: center;
-    gap: 2rem;
+    gap: 1.75rem;
   }
   .hero__btn {
     align-self: flex-start;
   }
   .hero__more {
     align-self: center;
+  }
+}
+
+@media (min-width: 900px) {
+  .hero__grid {
+    grid-template-columns: 7fr 5fr;
+    gap: 4rem;
+    align-items: start;
+  }
+  .hero__aside {
+    display: block;
+    padding-top: 1rem;
+  }
+  .hero__fold {
+    display: block;
+    margin-top: clamp(2.5rem, 2rem + 3vw, 4.5rem);
   }
 }
 </style>

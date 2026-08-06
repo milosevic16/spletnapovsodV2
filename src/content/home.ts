@@ -20,17 +20,16 @@ export interface Hero {
   /** Accented prefix of `title` (must match exactly — the component falls back to the plain title if not). */
   titleAccent: string
   lead: string
+  /** Gloss for the hero fold Prerez (its annotation is the real <title>, derived). */
+  foldGloss: string
   ctaPrimary: { label: string; target: string }
   ctaSecondary: { label: string; target: string }
 }
 
-/** One chamber of the cut scene's below-grade section drawing. */
-export interface Chamber {
-  /** Machine identifier — pairs with chamberFacts in src/lib/machine-facts.ts. */
+export interface InvisibleItem {
   id: string
   label: string
-  /** The human sentence — gloss rule: no fact without its plain-Slovenian gloss. */
-  gloss: string
+  detail: string
 }
 
 export interface Reference {
@@ -60,11 +59,11 @@ export interface Pillar {
   kicker: string
   title: string
   summary: string
-  /** Datum-caps value line under the chapter head — what the pillar produces (evidence, not jargon). */
+  /** Mono artifact label in the ledger row — what the pillar produces (evidence, not jargon). */
   artifact: string
   points: { label: string; detail: string }[]
-  /** Optional callout under the chapter — annotation must stay a verifiable fact. */
-  note?: { annotation: string; gloss: string }
+  /** Optional Prerez under the open pillar — annotation must stay a verifiable fact. */
+  prerez?: { annotation: string; gloss: string }
 }
 
 export interface Differentiator {
@@ -72,7 +71,7 @@ export interface Differentiator {
   title: string
   body: string
   footnote?: string
-  /** The spec-panel value cell for this claim: measured value + plain-Slovenian gloss. */
+  /** The Prerez instrument for this claim: measured value + plain-Slovenian gloss. */
   measure: { annotation: string; gloss: string; ticks?: string[] }
 }
 
@@ -98,33 +97,17 @@ export const nav: NavItem[] = [
   { target: 'kontakt', label: 'Kontakt' },
 ]
 
-/** Chrome strings — level rail (desktop), top strip + menu overlay (phone). */
-export const datum = {
-  brandAriaLabel: 'SpletnaPovsod — domov',
-  navAriaLabel: 'Glavna navigacija',
-  menuLabel: 'Meni',
-  menuCloseLabel: 'Zapri meni',
-  /** Decorative title-block stamp in the menu overlay (aria-hidden). */
-  sheetStamp: 'SPLETNAPOVSOD · MERILO 1 : 1',
-}
-
 export const hero: Hero = {
   kicker: 'Izdelava spletnih strani · Slovenija',
   title: 'Hitre, dostopne in profesionalne spletne strani.',
   titleAccent: 'Hitre',
   lead: 'Izdelujemo vse od osnovnih predstavitvenih strani do naprednih spletnih sistemov z rezervacijami in plačili Stripe. Poskrbimo za oblikovanje, razvoj, tehnično osnovo in objavo na vaši domeni.',
+  foldGloss: 'Isti naslov vidita obiskovalec in Google.',
   ctaPrimary: { label: 'Naročite izdelek', target: 'kontakt' },
   ctaSecondary: { label: 'Oglejte si reference', target: 'reference' },
 }
 
-/**
- * The cut scene (»Prerezna ravnina«) — the page cuts itself open. Above the
- * plane: the facade (this page's own visible surface). Below: the section —
- * chambers whose mono lines are REAL emitted bytes from machine-facts.ts.
- * Successor of the former invisible-work section; the four owner-derived
- * items survive verbatim as chamber glosses.
- */
-export const cut = {
+export const invisible = {
   kicker: 'Kaj dobite',
   title: 'Tradicija in izkušnje.',
   quote:
@@ -136,45 +119,28 @@ export const cut = {
   machineGloss: 'Te nevidne vrstice odločajo, ali vas Google in ChatGPT sploh najdeta.',
   outro:
     'Vse to je vključeno že v osnovnem paketu. S tem se vam ni treba ukvarjati — naj to za vas uredijo profesionalci z izkušnjami.',
-  /** aria-label of the cut's range grip. */
-  gripLabel: 'Globina reza',
-  /** aria-valuetext suffix — »42 % pod površino«. */
-  gripUnit: '% pod površino',
-  /** The excavation ledger after the scene — every machine line, copyable. */
-  ledgerKicker: 'Zapisnik',
-  ledgerTitle: 'Zapisano v datotekah strani',
-  chambers: [
-    {
-      id: 'head',
-      label: 'Glava dokumenta',
-      gloss: 'Naslov, opis in kanonična povezava — vrstice, ki jih iskalnik prebere najprej.',
-    },
+  items: [
     {
       id: 'seo-foundation',
       label: 'Vidnost na Googlu',
-      gloss: 'Tehnična osnova, ki jo iskalniki zahtevajo, vgrajena od prvega dne.',
-    },
-    {
-      id: 'compliance',
-      label: 'Piškotki in zasebnost',
-      gloss: 'Stran usklajena z evropsko zakonodajo — brez pravnih presenečenj.',
+      detail: 'Tehnična osnova, ki jo iskalniki zahtevajo, vgrajena od prvega dne.',
     },
     {
       id: 'forms',
       label: 'Delujoči obrazci',
-      gloss: 'Povpraševanja varno prispejo v vaš nabiralnik, neželena pošta pa ne.',
+      detail: 'Povpraševanja varno prispejo v vaš nabiralnik, neželena pošta pa ne.',
     },
     {
-      id: 'material',
-      label: 'Material',
-      gloss: 'Pisave in slike, pripravljene vnaprej in za vsako napravo posebej.',
+      id: 'compliance',
+      label: 'Piškotki in zasebnost',
+      detail: 'Stran usklajena z evropsko zakonodajo — brez pravnih presenečenj.',
     },
     {
       id: 'hosting',
       label: 'Objava na vaši domeni',
-      gloss: 'Postavitev, gostovanje in certifikat HTTPS — ključe dobite vi.',
+      detail: 'Postavitev, gostovanje in certifikat HTTPS — ključe dobite vi.',
     },
-  ] satisfies Chamber[],
+  ] satisfies InvisibleItem[],
 }
 
 export const references = {
@@ -184,15 +150,6 @@ export const references = {
   title: 'Nekaj uspešnih prejšnjih projektov',
   intro:
     'Od osebnih predstavitev, pravnih pisarn, forenzičnih podjetij in apartmajskih nastanitev pokrivamo vse sektorje in se prilagodimo vsebini. Vsaka stran je oblikovana posebej za namen projekta in ni predloga.',
-  /** The compact plate index — the hurried owner's scan path (one screen; count derives from the list). */
-  indexTitle: 'Vsi projekti',
-  /** Title-block sheet label — »LIST 2 · Lemur Legal«. */
-  sheetLabel: 'LIST',
-  /** Directed plate navigation (desktop). */
-  prevLabel: 'Prejšnji projekt',
-  nextLabel: 'Naslednji projekt',
-  /** Caption of the material legend drawn from each client's real sampled palette. */
-  inksLabel: 'Barve projekta',
   items: [
     {
       id: 'lemur',
@@ -205,7 +162,7 @@ export const references = {
       proof: 'Uredniška tipografija in stroga struktura za zahtevno pravno občinstvo.',
       inks: ['#D2DDD7', '#131220', '#7F59F5', '#1FC49A', '#C4823A'],
       alt: 'Posnetek naslovnice spletne strani Lemur Legal',
-      image: { width: 1552, height: 776, widths: [560, 776, 1104, 1552] },
+      image: { width: 776, height: 388, widths: [560, 776] },
     },
     {
       id: 'mercpeter',
@@ -218,7 +175,7 @@ export const references = {
       proof: 'Interaktivno središče, ki deluje brezhibno tudi na telefonu.',
       inks: ['#ECE9E2', '#26282C', '#D2453E', '#B4AEA1'],
       alt: 'Posnetek naslovnice spletne strani Petra Merca',
-      image: { width: 1792, height: 896, widths: [560, 840, 1184, 1792] },
+      image: { width: 1184, height: 592, widths: [560, 840, 1184] },
     },
     {
       id: 'bloctopus',
@@ -231,7 +188,7 @@ export const references = {
       proof: 'Zaupanja vredna predstavitev za občutljivo panogo.',
       inks: ['#1A2B38', '#1FC496', '#F2F6F4'],
       alt: 'Posnetek naslovnice spletne strani Bloctopus Intelligence',
-      image: { width: 1792, height: 896, widths: [560, 840, 1184, 1792] },
+      image: { width: 1184, height: 592, widths: [560, 840, 1184] },
     },
   ] satisfies Reference[],
 }
@@ -251,7 +208,7 @@ export const comparison = {
   intro:
     'Večina slovenskih ponudnikov gradi na WordPressu, pogosto na kupljeni predlogi. Mi gradimo statične strani: stran se izriše ob objavi in obiskovalcu postrežemo gotovo datoteko. Razlika ni v videzu — je v tem, kaj se dogaja pod površino.',
   oursLabel: 'Statična stran',
-  theirsLabel: 'Predloga za WordPress',
+  theirsLabel: 'WordPress predloga',
   rows: [
     {
       id: 'how-built',
@@ -301,10 +258,8 @@ export const pillars = {
     'Trije stebri, na katerih stoji vsaka stran, ki jo izdelamo — od najmanjše do največje.',
   items: [
     {
-      // Kickers name the structural system each chapter draws (the concept
-      // bans decorative numbering — levels carry names, not numerals).
       id: 'design',
-      kicker: 'Nosilna konstrukcija',
+      kicker: 'Steber 1',
       title: 'Unikaten dizajn',
       artifact: '100 % po meri',
       summary:
@@ -336,7 +291,7 @@ export const pillars = {
     },
     {
       id: 'security',
-      kicker: 'Ovoj stavbe',
+      kicker: 'Steber 2',
       title: 'Varnost, hitrost, skladnost',
       artifact: 'HTTPS · GDPR · piškotki',
       summary:
@@ -372,7 +327,7 @@ export const pillars = {
     },
     {
       id: 'seo',
-      kicker: 'Instalacije',
+      kicker: 'Steber 3',
       title: 'Google in AI vidnost',
       artifact: 'sitemap.xml · JSON-LD',
       summary:
@@ -404,7 +359,7 @@ export const pillars = {
             'Ko nekdo deli vašo povezavo, se pokažeta slika in naslov — ne gola povezava, ki je nihče ne odpre.',
         },
       ],
-      note: {
+      prerez: {
         annotation: 'Core Web Vitals · berljivo brez JavaScripta',
         gloss: 'Merila, po katerih Google razvršča strani — vgrajena v zasnovo, ne dodana naknadno.',
       },
@@ -493,8 +448,6 @@ export const contact = {
     messageLabel: 'Sporočilo',
     submitLabel: 'Pošljite povpraševanje',
     privacyNote: 'Podatke uporabimo izključno za odgovor na vaše povpraševanje.',
-    /** Honeypot label — aria-hidden, humans never see it. */
-    hpLabel: 'Pustite prazno',
     /**
      * Interaction-only strings — rendered after user actions, so the build's
      * content guard (which asserts copy exists in the STATIC HTML) skips any
@@ -516,7 +469,6 @@ export const contact = {
 export const footer = {
   tagline: 'Hitre, dostopne in profesionalne spletne strani.',
   emailLabel: 'Pišite nam',
-  navAriaLabel: 'Navigacija v nogi',
   /** Colophon contract: only mechanically verifiable claims (SSG, no analytics). */
   colophon: {
     annotation: 'statična stran · brez sledilnih piškotkov',
@@ -535,8 +487,6 @@ export const notFound = {
   heading: '404 — ta stran ne obstaja',
   body: 'Naslov je napačen ali pa je bila stran odstranjena.',
   homeLabel: 'Na domačo stran',
-  /** Decorative title-block stamp (aria-hidden). */
-  stamp: 'SPLETNAPOVSOD · LIST 404',
 }
 
 export const meta = {

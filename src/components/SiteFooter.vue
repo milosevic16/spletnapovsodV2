@@ -1,10 +1,7 @@
 <script setup lang="ts">
-/**
- * The footer shares the earth with the contact finale — the drawing's final
- * stamp. On phones this nav is the page's complete in-flow navigation.
- */
 import { nav, footer } from '@/content/home'
 import { CONTACT_EMAIL } from '@/lib/constants'
+import PrerezLine from './PrerezLine.vue'
 
 // Baked at prerender; patched client-side only across a New Year boundary.
 const year = new Date().getFullYear()
@@ -13,32 +10,30 @@ const year = new Date().getFullYear()
 <template>
   <footer class="footer">
     <div class="container">
+      <!-- Colophon contract: every annotation here must stay mechanically
+           verifiable against the shipped artifact (SSG output, no analytics,
+           no tracking cookies). If that ever changes, change the content FIRST. -->
+      <PrerezLine on-dark :annotation="footer.colophon.annotation" :gloss="footer.colophon.gloss" />
+
       <div class="footer__cols">
         <div class="footer__brand">
           <span class="footer__wordmark">SpletnaPovsod</span>
           <p class="footer__tagline">{{ footer.tagline }}</p>
         </div>
 
-        <nav class="footer__nav" :aria-label="footer.navAriaLabel">
+        <nav class="footer__nav" aria-label="Navigacija v nogi">
           <a v-for="item in nav" :key="item.target" :href="`#${item.target}`" class="footer__link">
             {{ item.label }}
           </a>
         </nav>
 
-        <div class="footer__contact">
-          <span class="datum datum--on-dark">{{ footer.emailLabel }}</span>
-          <a :href="`mailto:${CONTACT_EMAIL}`" class="emisija footer__mail">{{ CONTACT_EMAIL }}</a>
-        </div>
+        <p class="footer__mail">
+          <span class="footer__mail-label">{{ footer.emailLabel }}</span>
+          <a :href="`mailto:${CONTACT_EMAIL}`" class="footer__mail-link emisija">{{
+            CONTACT_EMAIL
+          }}</a>
+        </p>
       </div>
-
-      <!-- Colophon contract: every annotation here must stay mechanically
-           verifiable against the shipped artifact (SSG output, no analytics,
-           no tracking cookies). If that ever changes, change the content FIRST.
-           Claims, not emissions — so Narrow caps, never mono. -->
-      <p class="footer__colophon">
-        <span class="datum footer__colophon-annot">{{ footer.colophon.annotation }}</span>
-        <span class="footer__colophon-gloss">{{ footer.colophon.gloss }}</span>
-      </p>
 
       <p class="footer__legal">© {{ year }} SpletnaPovsod</p>
     </div>
@@ -48,93 +43,79 @@ const year = new Date().getFullYear()
 <style scoped>
 .footer {
   background: var(--zemlja);
-  color: var(--list);
+  color: var(--papir-dim);
+  padding-block: 3rem 2.5rem;
   border-top: 1px solid var(--crta-na-temnem);
-  /* viewport-fit=cover: the legal line clears the iOS home indicator. */
-  padding-block: clamp(2.5rem, 2rem + 2vw, 4rem)
-    calc(clamp(1.5rem, 1rem + 1.5vw, 2.5rem) + env(safe-area-inset-bottom, 0px));
 }
 
 .footer__cols {
+  margin-top: 2.5rem;
   display: grid;
   gap: 2rem;
 }
 
 .footer__wordmark {
   font-family: var(--font-display);
-  font-stretch: var(--wdth-datum);
   font-weight: 600;
-  font-size: 1rem;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
+  font-size: 1.05rem;
+  color: var(--list);
 }
 
 .footer__tagline {
-  margin-top: 0.6rem;
-  color: var(--papir-dim);
-  font-size: 0.95rem;
-  max-width: 32ch;
+  margin-top: 0.4rem;
+  font-size: 0.9rem;
+  max-width: 34ch;
 }
 
 .footer__nav {
-  display: grid;
-  align-content: start;
-  gap: 0.1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.75rem;
 }
 
 .footer__link {
-  display: inline-block;
-  padding: 0.7rem 0; /* 44px+ targets — the phone's primary nav */
+  font-family: var(--font-display);
+  font-stretch: var(--wdth-datum);
+  font-weight: 500;
+  font-size: var(--fs-kicker);
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  color: var(--papir-dim);
   text-decoration: none;
-  color: var(--list);
+  padding: 0.85rem 0; /* 44px+ tap target — the only nav phones get */
 }
 
 .footer__link:hover {
   color: var(--rez-na-temnem);
 }
 
-.footer__contact {
+.footer__mail {
   display: grid;
-  align-content: start;
-  gap: 0.4rem;
+  gap: 0.3rem;
 }
 
-.footer__mail {
+.footer__mail-label {
+  font-size: 0.9rem;
+}
+
+.footer__mail-link {
   display: inline-block;
-  padding-block: 0.6rem;
+  padding-block: 0.75rem; /* 44px+ tap target */
   color: var(--rez-na-temnem);
   text-decoration: underline;
   text-underline-offset: 0.3em;
 }
 
-.footer__colophon {
-  margin-top: 2.5rem;
-  border-top: 1px solid var(--crta-na-temnem);
-  padding-top: 1rem;
-  display: grid;
-  gap: 0.3rem;
-  max-width: none;
-}
-
-.footer__colophon-annot {
-  color: var(--papir-dim);
-}
-
-.footer__colophon-gloss {
-  font-size: 0.9rem;
-  color: var(--papir-dim);
-}
-
 .footer__legal {
-  margin-top: 1.5rem;
+  margin-top: 2.5rem;
   font-size: 0.8rem;
-  color: var(--papir-dim);
 }
 
 @media (min-width: 900px) {
   .footer__cols {
     grid-template-columns: 2fr 1fr 1fr;
     gap: 3rem;
+    align-items: start;
   }
 }
 </style>

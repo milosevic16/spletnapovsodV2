@@ -2,13 +2,12 @@
 import { useHead } from '@unhead/vue'
 import { meta } from '@/content/home'
 import { SITE_ORIGIN, SITE_NAME, CONTACT_EMAIL } from '@/lib/constants'
-import SiteDatum from '@/components/SiteDatum.vue'
+import SiteMasthead from '@/components/SiteMasthead.vue'
 import HeroSection from '@/components/HeroSection.vue'
+import XraySection from '@/components/XraySection.vue'
 import ReferencesSection from '@/components/ReferencesSection.vue'
-import CutSection from '@/components/CutSection.vue'
-import CompareSection from '@/components/CompareSection.vue'
 import PillarsSection from '@/components/PillarsSection.vue'
-import SpecSection from '@/components/SpecSection.vue'
+import DifferentiatorsSection from '@/components/DifferentiatorsSection.vue'
 import ContactSection from '@/components/ContactSection.vue'
 import SiteFooter from '@/components/SiteFooter.vue'
 
@@ -71,17 +70,15 @@ useHead({
 </script>
 
 <template>
-  <SiteDatum />
+  <SiteMasthead />
   <main id="main">
-    <!-- The descent: fasada → plates → the cut → the argument → the chapters
-         → the spec panel → below grade. References before the cut (owner's
-         call): the proof lands before the argument. -->
     <HeroSection />
+    <!-- References before the invisible-work band (owner's call): the proof
+         lands before the argument. -->
     <ReferencesSection />
-    <CutSection />
-    <CompareSection />
+    <XraySection />
     <PillarsSection />
-    <SpecSection />
+    <DifferentiatorsSection />
     <ContactSection />
   </main>
   <SiteFooter />
