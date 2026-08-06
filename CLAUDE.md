@@ -20,7 +20,13 @@ Vite 8 (rolldown) + Vue 3.5 + vue-router 5 + vite-ssg 28 + @unhead/vue **2** + T
   so no emitted `vite.config.js` can shadow `vite.config.ts`.
 - Prerender: serial (`concurrency: 1`), flat output (`dist/404.html`, not `404/index.html`).
 - unhead v2 owns `htmlAttrs` at prerender — `lang="sl"` is declared in `App.vue` `useHead`;
-  the shell attribute alone gets overwritten to `en`.
+  the shell attribute alone gets overwritten to `en`. **It also owns the viewport meta**:
+  its server default replaces the shell's authored one, silently dropping
+  `viewport-fit=cover` — the full viewport meta is declared in `App.vue` `useHead` too.
+- **Fontaine fallbacks must be NAMED in the token stacks** (`'<family> fallback'` after
+  the real family) or they are dead weight and every swap reflows the page. Per family,
+  latin-ext faces are declared FIRST in `fonts.css` so the latin-derived fallback
+  metrics (last-declared under the shared fallback family name) win the cascade.
 
 ## Design system — "REZ 1 : 1"
 
@@ -99,11 +105,14 @@ interaction). Compare-section SVGs stroke-draw once; rest state in stylesheet is
 JS hides via inline style only. Reduced motion: global kill-switch + per-effect early
 returns; the static page is a finished section drawing.
 
-**The veil** (`index.html`, inline): pure-CSS timed sequence ≤1.8s — sheet holds 0.5s,
-red line draws 0.6s, halves part 0.6s revealing the hero; CANNOT hang by construction
-(no JS dependency; the app only removes the spent node at 2.6s). `<noscript>` and
-reduced-motion drop it entirely. `%IZRIS%` = real build date via the `sp-build-date`
-plugin in `vite.config.ts` (system fonts only, no images).
+**The veil** (`index.html`, inline): pure-CSS timed sequence ≤1.8s — the framed sheet
+holds 0.5s, the red line draws 0.6s, the halves (each carrying its part of the sheet
+frame) part 0.6s revealing the hero; CANNOT hang by construction (no JS dependency; the
+app only removes the spent node at 2.6s). `<noscript>` and reduced-motion drop it
+entirely. The IZRIS token is stamped with the real build date **in
+`scripts/postbuild.mjs`** (a vite `transformIndexHtml` hook does NOT survive vite-ssg's
+render — verified the hard way) and a guard blocks the build if the token remains.
+System fonts only, no images, literal hex colors (the bundled CSS hasn't loaded yet).
 
 **Buried-plate focus**: sticky plates get `inert` while fully covered (rAF-throttled
 scroll check, desktop only); the plate INDEX above the stack is the keyboard/SR-canonical
@@ -145,8 +154,11 @@ generates `sitemap.xml` + `robots.txt` FROM the emitted HTML (AI bots from `AI_B
 If a guard fails, fix the page, never weaken the assertion.
 
 One-off scripts (committed, NOT part of the host build):
-- `scripts/build-reference-images.mjs` — portfolio screenshots → AVIF/WebP/JPEG variants.
-  Refresh ritual in its header. Lemur's crop starts below its rotating intro line.
+- `scripts/build-reference-images.mjs` — portfolio screenshots (2× density) →
+  AVIF/WebP/JPEG variants up to 1792w. Refresh ritual in its header; lemur's crop starts
+  below its rotating intro line. **Post-launch refreshes must bump filename versions** —
+  /img/* ships an immutable year-long cache header, so same-name refreshes never reach
+  repeat visitors.
 - `scripts/build-og.mjs` + `scripts/og.html` — og.jpg via headless Edge (real variable
   Archivo); the image IS the signature: the composed 45/55 cut drawing. Touch icon +
   favicon carry the same mark (sheet, red plane, poché below).
@@ -188,9 +200,12 @@ Netlify free plan + private repo: **no Co-Authored-By trailers in commits**.
   verbatim. Revert if the pauses were deliberate.
 - **More references** would deepen the plates theatre — three sticky sheets is the
   minimum that reads as a sequence. Fabricated placeholder cards are not an option.
-- **Reference screenshots** are reused from the first build (1184px crops). The plates
-  mount them larger; a re-shoot at 2× per the script's ritual would sharpen retina
-  rendering — needs the three live sites up.
+- **Pillar kickers** were renamed from »Steber 1/2/3« to structural-system names
+  (Nosilna konstrukcija / Ovoj stavbe / Instalacije) — the concept bans decorative
+  numbering. Needs sign-off with the rest of the copy.
+- **»Naročite izdelek«** (owner's own wording from the Popravki document) reads as a
+  product-shop button next to the izdelava framing — linguistically »Naročite izdelavo«
+  would fit better. Owner's call; shipped verbatim as supplied.
 - **Further sales devices** proposed and deliberately not built: free speed/SEO audit,
   committed response times, testimonials, price table, partner programme, FAQ, directory
   listings. Each is an owner decision.
