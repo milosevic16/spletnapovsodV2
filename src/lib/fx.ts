@@ -7,6 +7,7 @@ export interface Fx {
   raf(cb: FrameRequestCallback): number
   setTimeout(cb: () => void, ms: number): number
   io(cb: IntersectionObserverCallback, opts?: IntersectionObserverInit): IntersectionObserver
+  ro(cb: ResizeObserverCallback): ResizeObserver
   on<K extends keyof WindowEventMap>(
     target: Window,
     type: K,
@@ -21,7 +22,7 @@ export interface Fx {
 export function createFx(): Fx {
   const rafs = new Set<number>()
   const timers = new Set<number>()
-  const observers = new Set<IntersectionObserver>()
+  const observers = new Set<{ disconnect(): void }>()
   const listeners: Array<[EventTarget, string, EventListener, AddEventListenerOptions | undefined]> = []
   const anims = new Set<Animation>()
 
@@ -44,6 +45,11 @@ export function createFx(): Fx {
     },
     io(cb, opts) {
       const o = new IntersectionObserver(cb, opts)
+      observers.add(o)
+      return o
+    },
+    ro(cb) {
+      const o = new ResizeObserver(cb)
       observers.add(o)
       return o
     },

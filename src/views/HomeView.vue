@@ -4,7 +4,7 @@ import { meta } from '@/content/home'
 import { SITE_ORIGIN, SITE_NAME, CONTACT_EMAIL } from '@/lib/constants'
 import SiteMasthead from '@/components/SiteMasthead.vue'
 import StatementSection from '@/components/StatementSection.vue'
-import XraySection from '@/components/XraySection.vue'
+import TraditionSection from '@/components/TraditionSection.vue'
 import WorkCarousel from '@/components/WorkCarousel.vue'
 import PillarsSection from '@/components/PillarsSection.vue'
 import DifferentiatorsSection from '@/components/DifferentiatorsSection.vue'
@@ -76,7 +76,7 @@ useHead({
     <!-- The work carousel before the invisible-work band (owner's call): the
          proof lands before the argument. -->
     <WorkCarousel />
-    <XraySection />
+    <TraditionSection />
     <PillarsSection />
     <DifferentiatorsSection />
     <ContactSection />

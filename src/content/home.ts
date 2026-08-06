@@ -112,6 +112,13 @@ export const invisible = {
   humanLabel: 'Kar vidite',
   machineLabel: 'Kar vidi Google',
   machineGloss: 'Te nevidne vrstice odločajo, ali vas Google in ChatGPT sploh najdeta.',
+  /**
+   * Interaction-only: names a control that exists ONLY once the section
+   * hydrates. Skipped by the content guard, like the form's strings.
+   */
+  feedback: {
+    scanLabel: 'Povlecite za primerjavo kode in izrisane strani',
+  },
   outro:
     'Vse to je vključeno že v osnovnem paketu. S tem se vam ni treba ukvarjati — naj to za vas uredijo profesionalci z izkušnjami.',
   items: [
