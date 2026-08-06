@@ -232,6 +232,10 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
   background: var(--rez);
 }
 
+/* The hero's arrival settle lives in base.css: it is a page-level device that
+   must key to the veil's timeline, and Vue's scoped :global() drops the
+   descendant class (verified — it compiled to a bare html[data-intro]). */
+
 @media (min-width: 640px) {
   .hero__cta {
     flex-direction: row;

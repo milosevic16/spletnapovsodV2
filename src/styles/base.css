@@ -198,6 +198,75 @@ textarea {
   transform: none;
 }
 
+/* --- the arrival settle -------------------------------------------------- */
+/* The page arrives BEHIND the parting sheet: the chrome lands, then the hero
+   rises its last few pixels as the halves clear, so the opening reads as
+   composed rather than merely uncovered.
+
+   Gated on html[data-intro], which index.html sets inline at first paint and
+   App.vue clears once the intro is spent — so it plays once per hard load and
+   never on SPA navigation back to home. With JS off the flag never appears and
+   the page is simply, fully there: the h1 never waits on JavaScript.
+
+   DELAYS ARE KEYED TO THE VEIL TIMELINE in index.html (cut draws 0.40–1.02s,
+   halves part 1.02–1.64s, veil hidden 1.80s, node removed 2.60s). Change one,
+   change the other — each side names the other in a comment.
+
+   Under reduced motion the block does not exist at all (per-effect early
+   return); the global kill-switch below is the floor under it. */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-intro] .masthead__row {
+    animation: settle-down 0.5s var(--ease-out) 0.98s both;
+  }
+
+  html[data-intro] .hero__kicker,
+  html[data-intro] .hero__title,
+  html[data-intro] .hero__lead,
+  html[data-intro] .hero__cta,
+  html[data-intro] .hero__aside {
+    animation: settle-up 0.55s var(--ease-out) both;
+  }
+  html[data-intro] .hero__kicker {
+    animation-delay: 1.06s;
+  }
+  html[data-intro] .hero__title {
+    animation-delay: 1.14s;
+  }
+  html[data-intro] .hero__lead {
+    animation-delay: 1.24s;
+  }
+  html[data-intro] .hero__cta {
+    animation-delay: 1.32s;
+  }
+  html[data-intro] .hero__aside {
+    animation-delay: 1.4s;
+  }
+}
+
+/* Last keyframe equals the stylesheet's resting state, so clearing the flag
+   at 2.6s can never produce a jump. */
+@keyframes settle-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes settle-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Reduced motion: the styled static page IS the finished design — a section
    drawing is a finished artifact, not a paused animation. This global
    kill-switch is the floor under per-effect early returns, not a replacement. */

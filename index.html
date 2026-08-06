@@ -55,16 +55,45 @@
       #veil .v-bot::before {
         bottom: clamp(0.75rem, 2.2vw, 2rem);
       }
+      /* The wordmark sits ON the cut line: each half carries a copy at the
+         same viewport position and clips it, so the name is severed by the
+         cut and its two halves leave with the sheet. */
+      #veil .v-mark {
+        position: absolute;
+        left: 0;
+        right: 0;
+        margin: 0;
+        text-align: center;
+        white-space: nowrap;
+        font-family: Arial, Helvetica, sans-serif;
+        font-weight: 700;
+        font-size: clamp(1.5rem, 6.2vw, 3.75rem);
+        line-height: 1;
+        letter-spacing: 0.2em;
+        text-indent: 0.2em; /* balances the trailing letter-space */
+        color: #1a1c1e;
+        opacity: 0;
+        animation: v-mark-in 0.45s ease-out 0.12s forwards;
+      }
+      #veil .v-top .v-mark {
+        top: 100%;
+        transform: translateY(-50%);
+      }
+      #veil .v-bot .v-mark {
+        top: 0;
+        transform: translateY(-50%);
+      }
       #veil .v-top {
         top: 0;
         border-bottom: 1px solid #1a1c1e; /* the cut face, revealed as the sheet parts */
-        animation: v-part-up 0.6s cubic-bezier(0.55, 0, 0.55, 0.2) 1.15s forwards;
+        animation: v-part-up 0.62s cubic-bezier(0.7, 0, 0.35, 1) 1.02s forwards;
       }
       #veil .v-bot {
         bottom: 0;
         border-top: 1px solid #1a1c1e;
-        animation: v-part-down 0.6s cubic-bezier(0.55, 0, 0.55, 0.2) 1.15s forwards;
+        animation: v-part-down 0.62s cubic-bezier(0.7, 0, 0.35, 1) 1.02s forwards;
       }
+      /* The cut draws from the centre outwards — the knife enters the name. */
       #veil .v-line {
         position: absolute;
         top: calc(50% - 1px);
@@ -73,8 +102,28 @@
         height: 2px;
         background: #b03b22;
         transform: scaleX(0);
-        transform-origin: left center;
-        animation: v-cut 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.5s forwards;
+        /* Draws, holds through the parting as the instrument that made the
+           cut, then lifts — never blinks off with the veil. */
+        animation:
+          v-cut 0.62s cubic-bezier(0.22, 1, 0.36, 1) 0.4s forwards,
+          v-line-out 0.26s ease-out 1.5s forwards;
+      }
+      /* Square end ticks — the cut plane's own drawing convention. They ride
+         in with the line, then leave with it. */
+      #veil .v-line::before,
+      #veil .v-line::after {
+        content: '';
+        position: absolute;
+        top: -3px;
+        width: 8px;
+        height: 8px;
+        background: #b03b22;
+      }
+      #veil .v-line::before {
+        left: clamp(0.75rem, 2.2vw, 2rem);
+      }
+      #veil .v-line::after {
+        right: clamp(0.75rem, 2.2vw, 2rem);
       }
       #veil .v-tb {
         position: absolute;
@@ -85,12 +134,19 @@
         border: 1px solid #d9d3c6;
         border-right-width: 3px;
         font-family: Arial, Helvetica, sans-serif;
-        font-size: 0.68rem;
-        letter-spacing: 0.13em;
+        font-size: clamp(0.52rem, 1.3vw, 0.68rem);
+        letter-spacing: 0.12em;
+        white-space: nowrap; /* a title block is one ruled line, never two */
         color: #1a1c1e;
       }
       @keyframes v-cut {
         to { transform: scaleX(1); }
+      }
+      @keyframes v-mark-in {
+        to { opacity: 1; }
+      }
+      @keyframes v-line-out {
+        to { opacity: 0; }
       }
       @keyframes v-part-up {
         to { transform: translateY(-101%); }
@@ -105,6 +161,13 @@
         #veil { display: none; }
       }
     </style>
+    <script>
+      // Marks the FIRST paint of a hard load, so the page's settle (the
+      // staggered arrival behind the parting sheet) plays once and never again
+      // on SPA navigation. App.vue clears it when the intro is spent. With JS
+      // off the attribute never appears and the page is simply, fully there.
+      document.documentElement.dataset.intro = ''
+    </script>
     <noscript>
       <style>
         #veil { display: none; }
@@ -113,8 +176,11 @@
   </head>
   <body>
     <div id="veil" aria-hidden="true">
-      <div class="v-half v-top"></div>
-      <div class="v-half v-bot"><p class="v-tb">SPLETNAPOVSOD&ensp;·&ensp;LIST 1&ensp;·&ensp;MERILO 1 : 1&ensp;·&ensp;IZRIS %IZRIS%</p></div>
+      <div class="v-half v-top"><p class="v-mark">SPLETNAPOVSOD</p></div>
+      <div class="v-half v-bot">
+        <p class="v-mark">SPLETNAPOVSOD</p>
+        <p class="v-tb">SPLETNAPOVSOD&ensp;·&ensp;LIST 1&ensp;·&ensp;MERILO 1 : 1&ensp;·&ensp;IZRIS %IZRIS%</p>
+      </div>
       <div class="v-line"></div>
     </div>
     <div id="app"><!--app-html--></div>

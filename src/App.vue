@@ -37,14 +37,20 @@ function onDocumentClick(e: MouseEvent) {
 }
 
 /** The veil (index.html) is a pure-CSS timed sequence that finishes on its
- *  own; this only removes the spent node. Timing = the CSS timeline's end
- *  (1.8s hide keyframe) + slack — never load-bearing. */
+ *  own; this only removes the spent node and clears the `data-intro` flag that
+ *  scopes the page's arrival settle. Timing = the CSS timeline's end (1.8s
+ *  hide keyframe) + the longest settle delay + slack — never load-bearing,
+ *  and clearing the flag is what keeps the settle from replaying on SPA
+ *  navigation back to the home route. */
 const VEIL_CLEANUP_MS = 2600
 let veilTimer = 0
 
 onMounted(() => {
   document.addEventListener('click', onDocumentClick)
-  veilTimer = window.setTimeout(() => document.getElementById('veil')?.remove(), VEIL_CLEANUP_MS)
+  veilTimer = window.setTimeout(() => {
+    document.getElementById('veil')?.remove()
+    delete document.documentElement.dataset.intro
+  }, VEIL_CLEANUP_MS)
 })
 onUnmounted(() => {
   document.removeEventListener('click', onDocumentClick)
