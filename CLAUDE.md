@@ -43,11 +43,40 @@ Chosen by a 4-concept / 3-judge panel (unanimous). Identity built from the owner
      Component: `src/components/PrerezLine.vue`.
   2. **Dvojna plast** — paper card offset off a dark under-layer; the exposed bottom strip
      prints a real machine fact (live URLs on reference cards, the domain on the hero card).
+- Trailing fades mark "there is more": horizontal on the phone reference strip, vertical at the
+  bottom of the desktop reference grid. A fade needs something to dissolve — a gradient to
+  `--surface` drawn over `--surface` is invisible, so the desktop one falls across the last
+  card, which reserves empty paper below its text for exactly that. **No readable text may ever
+  sit under a gradient**; extend that reserve rather than letting the fade climb into copy.
 - Square corners everywhere; `border-radius: 999px` only on the genuine pill (x-ray segmented
   control). PON·TOR·SRE ticks and the numbered "Kaj sledi?" steps are the ONLY sequences allowed
   to number themselves — everything else is unordered and stays unnumbered.
 - The x-ray machine layer derives from the same constants/content as the real head, and the
   build guard asserts equality — it can never be allowed to drift (it is the honesty device).
+
+## Page order (as shipped)
+
+Masthead → hero → **reference** → **nevidno** (invisible work) → paketi → razlike → kontakt →
+footer. References deliberately precede the invisible-work band (owner's call): the proof lands
+before the argument. Section anchors are ids, so the order can be changed in `HomeView.vue`
+alone — nav, sitemap and head follow automatically.
+
+## The no-fabricated-numbers rule (load-bearing)
+
+Every mono annotation, comparison cell and measurement on this page must be a fact that can be
+checked against the shipped artifact or against how the architecture works. **Never a
+performance number we have not measured in the field.** The competitor this positioning answers
+(web-net.si) wins its WordPress comparison on "0.4 s vs 3.5 s, 9× faster" — those are *their*
+measurements and must not be borrowed. Two consequences already live in the code:
+
+- the SEO pillar's Prerez says "Core Web Vitals", not a number of seconds
+  (`src/content/home.ts`, `pillars.items[seo].prerez`);
+- "Zakaj ne WordPress?" is fought on **structure** — built once vs rebuilt per visit, no
+  plugins, no database, bespoke vs template, what a crawler reads without running code
+  (`comparison` in the content module, rendered by `ArchitectureCompare.vue`).
+
+Once real field data exists (CWV in Search Console, ~28-day lag), numbers may enter — sourced
+and dated, never from a lab run.
 
 ## Content
 
@@ -100,6 +129,20 @@ Netlify free plan + private repo: **no Co-Authored-By trailers in commits**.
   (everything routes through `src/lib/fx.ts`, disposed on unmount).
 - Form changes: submit for real once the Web3Forms key exists; verify honeypot + <2s reject.
 - Console free of new errors.
+
+## Open with the owner (asked, not yet answered)
+
+- **Two commas** in the owner-supplied references intro were corrected rather than copied
+  verbatim (no comma between a fronted phrase and its main clause; none before a coordinating
+  "in"). Revert if the pauses were deliberate.
+- **The desktop reference fade** costs the last card its seam URL, which the other two still
+  print. Keep the effect, shorten it, or drop it.
+- **More references** would make the "there is more" fade honest by construction — right now the
+  grid holds three. Fabricated placeholder cards are not an option.
+- **Further sales devices** were proposed and deliberately not built: a free speed/SEO audit of
+  the visitor's current site (needs a Lighthouse backend), committed response times, client
+  testimonials, a price table, a partner/referral programme, an FAQ, and directory listings
+  (info-slovenija.si). Each is an owner decision, several are business commitments.
 
 ## Owner checklist (launch blockers)
 
