@@ -74,8 +74,17 @@ One-off scripts (committed, NOT part of the host build):
 
 ## Deploy (when the owner is ready)
 
-GitHub → Netlify, pinned in `netlify.toml` (build command, publish dir, Node 24, headers,
-404 redirect). Netlify free plan + private repo: **no Co-Authored-By trailers in commits**.
+GitHub holds the source; **Netlify does all the building and deploying**. Push to the
+production branch and Netlify builds from source — that push IS the deploy.
+
+**There is deliberately no GitHub-side deploy** and there must never be one: no
+`.github/workflows`, no GitHub Pages, no Actions build. Two builders drift, and the host's
+git integration is the whole pipeline. GitHub's only job here is to store the repo and
+notify Netlify. (Verified empty: no `.github/` directory, 0 Actions workflows, Pages off.)
+
+Everything the build needs is pinned in `netlify.toml` (build command, publish dir, Node 24,
+headers, 404 redirect) — that file is the deploy config and must stay.
+Netlify free plan + private repo: **no Co-Authored-By trailers in commits**.
 `VITE_WEB3FORMS_KEY` is a public-by-design client key: lives in Netlify env +
 `SECRETS_SCAN_OMIT_KEYS`, never committed. Post-deploy checklist lives in the global rules
 (marker-grep the served bundle, AI-UA curl, GSC + Bing sitemap submission).
