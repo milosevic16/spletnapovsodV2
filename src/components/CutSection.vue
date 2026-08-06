@@ -495,6 +495,22 @@ onUnmounted(() => fx.dispose())
   color: var(--papir-dim);
 }
 
+/* Short viewports: the in-scene chambers go label-only so the drawing never
+   clips its own text — the ledger right below is the canonical, complete
+   rendering of every gloss and byte on every screen. */
+@media (max-height: 700px) {
+  .cut__chamber-gloss {
+    display: none;
+  }
+  .cut__chambers {
+    gap: 0.5rem;
+    bottom: 5rem;
+  }
+  .cut__chamber {
+    padding: 0.45rem 0.7rem;
+  }
+}
+
 /* --- the plane ------------------------------------------------------------ */
 .cut__plane {
   position: absolute;

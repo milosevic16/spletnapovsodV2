@@ -45,20 +45,27 @@ function openMenu() {
   window.scrollTo({ top: scrollYBefore, behavior: 'instant' })
 }
 
-function closeMenu() {
-  menu.value?.close()
-}
-
-/** dialog 'close' fires for Escape AND close() — single unlock path. */
-function onDialogClose() {
+function unlockScroll() {
   document.documentElement.style.overflow = ''
   document.body.style.overflow = ''
   window.scrollTo({ top: scrollYBefore, behavior: 'instant' })
 }
 
+function closeMenu() {
+  // Unlock directly — the dialog's queued 'close' event can be deferred in
+  // throttled/background documents; the button/link path must not wait on it.
+  unlockScroll()
+  menu.value?.close()
+}
+
+/** Escape closes the dialog natively — this is that path's unlock. */
+function onDialogClose() {
+  unlockScroll()
+}
+
 onUnmounted(() => {
   fx.dispose()
-  onDialogClose()
+  unlockScroll()
 })
 </script>
 
