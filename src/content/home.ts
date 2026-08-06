@@ -14,7 +14,6 @@ export interface NavItem {
 }
 
 export interface Hero {
-  kicker: string
   /** The h1 — single source; components render it, never restate it. */
   title: string
   /** Accented prefix of `title` (must match exactly — the component falls back to the plain title if not). */
@@ -96,7 +95,6 @@ export const nav: NavItem[] = [
 ]
 
 export const hero: Hero = {
-  kicker: 'Izdelava spletnih strani · Slovenija',
   title: 'Hitre, dostopne in profesionalne spletne strani.',
   titleAccent: 'Hitre',
   lead: 'Izdelujemo vse od osnovnih predstavitvenih strani do naprednih spletnih sistemov z rezervacijami in plačili Stripe. Poskrbimo za oblikovanje, razvoj, tehnično osnovo in objavo na vaši domeni.',

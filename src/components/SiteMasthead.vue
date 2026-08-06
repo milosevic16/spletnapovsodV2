@@ -41,8 +41,8 @@ import { nav } from '@/content/home'
 </template>
 
 <style scoped>
+/* Transparent: the wash painted on #app runs unbroken through the chrome. */
 .masthead {
-  background: var(--list);
   color: var(--grafit);
 }
 

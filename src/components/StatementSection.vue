@@ -1,11 +1,11 @@
 <script setup lang="ts">
 /**
- * The opening band: deliberately SHORT, so the work stage below is already in
- * the first screen rather than a scroll away. The page's subject is the client
- * sites, not this paragraph.
+ * The opening band: headline left, the lead and the calls to action stacked
+ * on the right. Deliberately SHORT, so the work stage below is already in the
+ * first screen — the page's subject is the client sites, not this paragraph.
  *
  * No JS: the only motion here is the arrival settle in base.css, once per
- * hard load.
+ * hard load. The warm top wash it sits in is painted on #app (base.css).
  */
 import { hero } from '@/content/home'
 
@@ -19,12 +19,11 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
 <template>
   <section class="stmt">
     <div class="container stmt__grid">
-      <p class="kicker stmt__kicker">{{ hero.kicker }}</p>
-      <p class="stmt__lead">{{ hero.lead }}</p>
-
       <h1 class="stmt__title">
         <span v-if="titleAccent" class="stmt__hl">{{ titleAccent }}</span>{{ titleRest }}
       </h1>
+
+      <p class="stmt__lead">{{ hero.lead }}</p>
 
       <div class="stmt__cta">
         <a :href="`#${hero.ctaPrimary.target}`" class="stmt__btn">{{ hero.ctaPrimary.label }}</a>
@@ -47,19 +46,21 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
   gap: 1.35rem;
 }
 
-.stmt__lead {
-  font-size: var(--fs-lead);
-  line-height: 1.55;
-  max-width: 46ch;
-  color: var(--grafit-2);
-}
-
 .stmt__title {
   max-width: 18ch;
 }
 
 .stmt__hl {
+  /* Display size, so the 3:1 large-text floor applies — 3.78:1 at the wash's
+     full strength, and only improves down the fade. */
   color: var(--rez);
+}
+
+.stmt__lead {
+  font-size: var(--fs-lead);
+  line-height: 1.55;
+  max-width: 46ch;
+  color: var(--grafit-2);
 }
 
 .stmt__cta {
@@ -91,11 +92,14 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
   background: var(--rez-deep);
 }
 
+/* The one token the wash required adapting: --rez at this size measures
+   3.78:1 on the wash at full strength, under the 4.5 floor for body text.
+   --rez-deep holds 4.93:1 there and stays on-brand. */
 .stmt__more {
   align-self: flex-start;
   padding: 0.65rem 0; /* 44px+ tap target with the 1rem line box */
   font-weight: 600;
-  color: var(--rez);
+  color: var(--rez-deep);
   text-decoration: underline;
   text-underline-offset: 0.3em;
 }
@@ -111,9 +115,8 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
   }
 }
 
-/* Desktop: lead high on the right, headline beneath it, CTA anchored left.
-   The band stays short, but every element gets its own air — the kicker is
-   pushed clear of the wordmark above it, and the two columns never crowd. */
+/* Desktop: the claim holds the left column across both rows; the qualifier
+   and the actions stack on the right, so the eye reads claim → detail → act. */
 @media (min-width: 900px) {
   .stmt {
     padding-top: 2.5rem;
@@ -121,42 +124,32 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
   }
 
   /* 24 columns want a SMALL column gap: at 2.5rem the 23 gutters ate 920 of
-     1312px and left ~16px per column, which is what crushed the CTA onto two
-     lines. Air belongs in the row gap. */
+     1312px and left ~16px per column, which crushed the CTA onto two lines. */
   .stmt__grid {
     grid-template-columns: repeat(24, minmax(0, 1fr));
     column-gap: 1rem;
-    row-gap: 2.75rem;
+    row-gap: 2.25rem;
     align-items: start;
   }
 
-  .stmt__kicker {
-    grid-column: 1 / span 9;
-    grid-row: 1;
-    align-self: start;
-    padding-top: 0.4rem;
+  .stmt__title {
+    grid-column: 1 / span 12;
+    grid-row: 1 / span 2;
+    max-width: none;
+    font-size: clamp(2.2rem, 0.9rem + 2.8vw, 3.2rem);
   }
 
   .stmt__lead {
-    grid-column: 13 / span 11;
+    grid-column: 14 / span 11;
     grid-row: 1;
     font-size: 1rem;
     line-height: 1.65;
   }
 
-  .stmt__title {
-    grid-column: 10 / span 15;
-    grid-row: 2;
-    max-width: none;
-    font-size: clamp(2.2rem, 0.9rem + 2.8vw, 3.2rem);
-  }
-
   .stmt__cta {
-    grid-column: 1 / span 9;
+    grid-column: 14 / span 11;
     grid-row: 2;
-    align-self: end;
     margin-top: 0;
-    padding-bottom: 0.4rem;
   }
 }
 </style>

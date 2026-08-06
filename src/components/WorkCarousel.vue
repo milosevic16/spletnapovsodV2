@@ -383,11 +383,14 @@ onUnmounted(() => {
    property in any browser, so a gradient whose stop we swapped would cut
    rather than fade. Transitioning the solid colour underneath a static
    gradient sidesteps that entirely and needs no @property registration. */
+/* The section paints NOTHING itself — it only owns the animating property, and
+   `inherits: true` carries each interpolated frame down to the head and the
+   stage. Painting the ground here instead laid solid colour under the head,
+   whose own paper top then cut the page's warm wash off at a hard line.
+   The registered --stage is what animates (see tokens.css); the children just
+   read it. Slightly longer than the plate's 520ms entrance (SWAP_IN_MS), so
+   the environment settles just AFTER the subject lands. */
 .work {
-  background-color: var(--stage);
-  /* The registered --stage is what animates (see tokens.css); background-color
-     just reads it. Slightly longer than the plate's 520ms entrance
-     (SWAP_IN_MS), so the environment settles just AFTER the subject lands. */
   transition: --stage 760ms var(--ease-out);
   /* Closes back to the site's own graphite, so the adaptive ground never
      meets the next section on a hard edge. */
@@ -398,18 +401,29 @@ onUnmounted(() => {
    static — only the colour beneath it moves. It fades to PAPER-AT-ALPHA-0,
    never the `transparent` keyword, which interpolates through transparent
    black and lays a muddy grey band across the middle. */
+/* Transparent at the top so the page's warm wash runs straight through, then
+   the project's ground fades IN over it, reaching full strength exactly at the
+   head's bottom edge — where the stage begins in the same colour, so the join
+   is invisible. Fading the ground in (rather than fading paper out) is what
+   keeps the wash unbroken: there is no opaque paper to cut it. */
+/* The fade gets its own runway BELOW the copy. Starting it at 34% put the
+   intro's last line on a mid-grey at 2.29:1 against a 4.5 floor — the wash
+   crossing body copy, which no screenshot review would have caught. The deep
+   bottom padding keeps the text in the top half; the ground only begins to
+   come up once the copy has ended. */
 .work__head {
-  padding-block: clamp(3rem, 2.5rem + 3vw, 5rem) clamp(5.5rem, 4rem + 7vw, 10rem);
+  padding-block: clamp(3rem, 2.5rem + 3vw, 5rem) clamp(8rem, 6rem + 8vw, 14rem);
+  /* Literal fallback = --grafit at alpha 0, for engines without relative colour. */
+  background-image: linear-gradient(to bottom, rgb(26 28 30 / 0) 64%, var(--stage) 100%);
   background-image: linear-gradient(
     to bottom,
-    var(--list) 0,
-    var(--list) 44%,
-    rgb(245 242 235 / 0) 100%
+    rgb(from var(--stage) r g b / 0) 64%,
+    var(--stage) 100%
   );
 }
 
-/* Transparent: the section beneath is already painted in the project ground. */
 .work__stage {
+  background-color: var(--stage);
   padding-block: clamp(1.5rem, 1rem + 2vw, 3rem);
   padding-inline: var(--gutter);
 }

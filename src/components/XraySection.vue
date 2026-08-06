@@ -164,7 +164,6 @@ onUnmounted(() => fx.dispose())
 
       <div class="xray__instrument" :class="{ 'xray__instrument--live': hydrated }">
         <div ref="humanLayer" class="xray__layer xray__layer--human">
-          <p class="xray__mini-kicker kicker">{{ hero.kicker }}</p>
           <p class="xray__mini-title">{{ hero.title }}</p>
           <p class="xray__mini-lead">{{ hero.lead }}</p>
           <span class="xray__mini-btn">{{ hero.ctaPrimary.label }}</span>
