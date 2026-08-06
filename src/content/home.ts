@@ -147,6 +147,17 @@ export const references = {
   kicker: 'Reference',
   /** Screen-reader suffix on each reference link (target="_blank" warning). */
   newWindowNote: 'odpre se v novem zavihku',
+  /**
+   * Carousel control labels. These name affordances that exist ONLY once the
+   * carousel hydrates — with JS off every plate is visible in flow and there
+   * are no controls — so they live under the `feedback` key the content guard
+   * skips by contract, exactly like the form's interaction strings.
+   */
+  feedback: {
+    prevLabel: 'Prejšnji projekt',
+    nextLabel: 'Naslednji projekt',
+    pickLabel: 'Izberite projekt',
+  },
   title: 'Nekaj uspešnih prejšnjih projektov',
   intro:
     'Od osebnih predstavitev, pravnih pisarn, forenzičnih podjetij in apartmajskih nastanitev pokrivamo vse sektorje in se prilagodimo vsebini. Vsaka stran je oblikovana posebej za namen projekta in ni predloga.',

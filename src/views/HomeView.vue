@@ -3,9 +3,9 @@ import { useHead } from '@unhead/vue'
 import { meta } from '@/content/home'
 import { SITE_ORIGIN, SITE_NAME, CONTACT_EMAIL } from '@/lib/constants'
 import SiteMasthead from '@/components/SiteMasthead.vue'
-import HeroSection from '@/components/HeroSection.vue'
+import StatementSection from '@/components/StatementSection.vue'
 import XraySection from '@/components/XraySection.vue'
-import ReferencesSection from '@/components/ReferencesSection.vue'
+import WorkCarousel from '@/components/WorkCarousel.vue'
 import PillarsSection from '@/components/PillarsSection.vue'
 import DifferentiatorsSection from '@/components/DifferentiatorsSection.vue'
 import ContactSection from '@/components/ContactSection.vue'
@@ -72,10 +72,10 @@ useHead({
 <template>
   <SiteMasthead />
   <main id="main">
-    <HeroSection />
-    <!-- References before the invisible-work band (owner's call): the proof
-         lands before the argument. -->
-    <ReferencesSection />
+    <StatementSection />
+    <!-- The work carousel before the invisible-work band (owner's call): the
+         proof lands before the argument. -->
+    <WorkCarousel />
     <XraySection />
     <PillarsSection />
     <DifferentiatorsSection />
