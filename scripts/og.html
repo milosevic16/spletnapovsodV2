@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<!-- Source for public/og.jpg — rendered by scripts/build-og.mjs via headless Edge
+     so the type is the site's real Fraunces (opsz variable), not a substitute cut. -->
+<html lang="sl">
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      @font-face {
+        font-family: 'Fraunces Variable';
+        font-weight: 100 900;
+        src: url(../public/fonts/fraunces-latin-opsz-normal.woff2) format('woff2-variations');
+      }
+      @font-face {
+        font-family: 'IBM Plex Mono';
+        font-weight: 400;
+        src: url(../public/fonts/ibm-plex-mono-latin-400-normal.woff2) format('woff2');
+      }
+      * { margin: 0; box-sizing: border-box; }
+      body {
+        width: 1200px;
+        height: 630px;
+        background: #191d1b;
+        position: relative;
+        overflow: hidden;
+      }
+      .under {
+        position: absolute;
+        left: 118px;
+        top: 118px;
+        width: 994px;
+        height: 424px;
+        background: #232a27;
+      }
+      .seam {
+        position: absolute;
+        left: 146px;
+        top: 494px;
+        height: 48px;
+        line-height: 48px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 24px;
+        color: #7fbfab;
+      }
+      .paper {
+        position: absolute;
+        left: 90px;
+        top: 90px;
+        width: 994px;
+        height: 404px;
+        background: #f7f4ee;
+        border: 1px solid #dcd6c9;
+        padding: 64px 56px;
+      }
+      .kicker {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 21px;
+        letter-spacing: 0.12em;
+        color: #5a5f56;
+      }
+      h1 {
+        margin-top: 28px;
+        font-family: 'Fraunces Variable', serif;
+        font-weight: 500;
+        font-size: 74px;
+        line-height: 1.12;
+        letter-spacing: -0.015em;
+        color: #232620;
+        max-width: 15ch;
+      }
+      h1 em {
+        font-style: normal;
+        color: #2e6e5e;
+      }
+      .wordmark {
+        position: absolute;
+        right: 56px;
+        bottom: 48px;
+        font-family: 'Fraunces Variable', serif;
+        font-weight: 600;
+        font-size: 30px;
+        color: #232620;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="under"></div>
+    <div class="seam">spletnapovsod.si</div>
+    <div class="paper">
+      <div class="kicker">IZDELAVA SPLETNIH STRANI · SLOVENIJA</div>
+      <h1><em>Hitre</em>, dostopne in profesionalne spletne strani.</h1>
+      <div class="wordmark">SpletnaPovsod</div>
+    </div>
+  </body>
+</html>

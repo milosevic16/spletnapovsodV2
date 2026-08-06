@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "target": "ES2023",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2023"],
+    "strict": true,
+    "skipLibCheck": true,
+    "types": ["node"],
+    // emitDeclarationOnly: composite requires emit, but a plain emit would write
+    // vite.config.js next to vite.config.ts — and the .js would SHADOW the .ts
+    // (resolves first), silently dropping ssgOptions. Declarations only, out of the way.
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "outDir": "node_modules/.tsbuild/node"
+  },
+  "include": ["vite.config.ts", "scripts/**/*.mjs"]
+}

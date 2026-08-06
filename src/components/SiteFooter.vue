@@ -1,0 +1,119 @@
+<script setup lang="ts">
+import { nav, footer } from '@/content/home'
+import { CONTACT_EMAIL } from '@/lib/constants'
+import PrerezLine from './PrerezLine.vue'
+
+// Baked at prerender; patched client-side only across a New Year boundary.
+const year = new Date().getFullYear()
+</script>
+
+<template>
+  <footer class="footer">
+    <div class="container">
+      <!-- Colophon contract: every annotation here must stay mechanically
+           verifiable against the shipped artifact (SSG output, no analytics,
+           no tracking cookies). If that ever changes, change the content FIRST. -->
+      <PrerezLine on-dark :annotation="footer.colophon.annotation" :gloss="footer.colophon.gloss" />
+
+      <div class="footer__cols">
+        <div class="footer__brand">
+          <span class="footer__wordmark">SpletnaPovsod</span>
+          <p class="footer__tagline">{{ footer.tagline }}</p>
+        </div>
+
+        <nav class="footer__nav" aria-label="Navigacija v nogi">
+          <a v-for="item in nav" :key="item.target" :href="`#${item.target}`" class="footer__link">
+            {{ item.label }}
+          </a>
+        </nav>
+
+        <p class="footer__mail">
+          <span class="footer__mail-label">{{ footer.emailLabel }}</span>
+          <a :href="`mailto:${CONTACT_EMAIL}`" class="footer__mail-link annot">{{
+            CONTACT_EMAIL
+          }}</a>
+        </p>
+      </div>
+
+      <p class="footer__legal">© {{ year }} SpletnaPovsod</p>
+    </div>
+  </footer>
+</template>
+
+<style scoped>
+.footer {
+  background: var(--panel);
+  color: var(--paper-dim);
+  padding-block: 3rem 2.5rem;
+  border-top: 1px solid var(--underlay-line);
+}
+
+.footer__cols {
+  margin-top: 2.5rem;
+  display: grid;
+  gap: 2rem;
+}
+
+.footer__wordmark {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--surface);
+}
+
+.footer__tagline {
+  margin-top: 0.4rem;
+  font-size: 0.9rem;
+  max-width: 34ch;
+}
+
+.footer__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.75rem;
+}
+
+.footer__link {
+  font-family: var(--font-mono);
+  font-size: var(--fs-kicker);
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  color: var(--paper-dim);
+  text-decoration: none;
+  padding: 0.85rem 0; /* 44px+ tap target — the only nav phones get */
+}
+
+.footer__link:hover {
+  color: var(--accent-on-dark);
+}
+
+.footer__mail {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.footer__mail-label {
+  font-size: 0.9rem;
+}
+
+.footer__mail-link {
+  display: inline-block;
+  padding-block: 0.75rem; /* 44px+ tap target */
+  color: var(--accent-on-dark);
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+}
+
+.footer__legal {
+  margin-top: 2.5rem;
+  font-size: 0.8rem;
+}
+
+@media (min-width: 900px) {
+  .footer__cols {
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 3rem;
+    align-items: start;
+  }
+}
+</style>

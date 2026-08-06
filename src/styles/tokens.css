@@ -1,0 +1,51 @@
+/* ---------------------------------------------------------------------------
+   Pod površino — design tokens. Every color has a named job; every ratio below
+   was computed numerically (scripts kept in session scratchpad, re-runnable).
+   AA floors: 4.5:1 text, 3:1 large text/UI — measured against the DARKEST
+   surface each token can sit on.
+--------------------------------------------------------------------------- */
+
+:root {
+  /* The human layer (paper) */
+  --surface: #f7f4ee; /* page paper; ink on it 13.97:1 */
+  --surface-2: #efeae2; /* one step darker — card fills, alternating bands; ink 12.81:1, ink-2 5.47:1 */
+  --hairline: #dcd6c9; /* default rules & card borders (1.32:1 vs surface — line, no AA duty) */
+  --hairline-strong: #b8b1a0; /* emphasized rules; line only, never text */
+  --ink: #232620; /* primary text — warm black, faint green cast */
+  --ink-2: #5a5f56; /* secondary text; 5.97:1 surface, 5.47:1 surface-2 */
+
+  /* The underlay (machine layer) */
+  --panel: #191d1b; /* masthead, footer, x-ray band, card under-edges; paper on it 15.52:1 */
+  --panel-inset: #232a27; /* lighter inset ON the panel (insets carrying accent text go lighter) */
+  --underlay-line: #33413b; /* the underlay's own hairline (1.59:1 vs panel — decorative) */
+  --paper-dim: #c9ccc4; /* secondary text on dark bands; 10.48:1 on panel */
+
+  /* Accent — one hue, every job */
+  --accent: #2e6e5e; /* deep viridian: CTAs, marks, focus; text 5.45:1 surface / 5.00:1 surface-2 / 5.05:1 soft; white label on it 5.99:1 */
+  --accent-deep: #275e50; /* pressed/hover step of the accent; white on it 7.03:1 */
+  --accent-on-dark: #7fbfab; /* the accent's voice in the underlay; 8.06:1 panel, 6.94:1 inset */
+  --accent-soft: #e4eee9; /* quiet wash — open accordion ground, success ground; ink on it 12.93:1 */
+
+  /* Type */
+  --font-display: 'Fraunces Variable', Georgia, serif;
+  --font-text: 'Public Sans Variable', Arial, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+
+  /* Fluid scale by role */
+  --fs-h1: clamp(2.1rem, 1.3rem + 3.6vw, 3.6rem);
+  --fs-h2: clamp(1.5rem, 1.15rem + 1.6vw, 2.2rem);
+  --fs-h3: clamp(1.125rem, 1.05rem + 0.4vw, 1.35rem);
+  --fs-lead: clamp(1.05rem, 1rem + 0.35vw, 1.2rem);
+  --fs-kicker: 0.72rem; /* mono kickers — instrument labels, they do not scale */
+  --fs-annot: 0.75rem; /* mono annotations on Prerez lines and card seams */
+
+  /* Rhythm */
+  --section-y: clamp(4rem, 3rem + 5vw, 7.5rem);
+  --gutter: clamp(1.25rem, 4vw, 4rem);
+  --measure: 66ch;
+
+  /* Motion (referenced by JS through getComputedStyle where timing must pair) */
+  --t-draw: 800ms; /* Prerez line draw */
+  --t-lift: 200ms; /* card hover lift */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}

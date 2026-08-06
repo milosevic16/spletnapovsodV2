@@ -1,0 +1,63 @@
+# Pinned build: the host builds from source on every push to the production branch.
+# Node is pinned so a stale host default can never break the SSG build.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "24"
+  # The Web3Forms access key ships in the client bundle by design (public client key).
+  # It still lives in a Netlify env var (VITE_WEB3FORMS_KEY), never in the repo.
+  SECRETS_SCAN_OMIT_KEYS = "VITE_WEB3FORMS_KEY"
+
+# --- Headers ---------------------------------------------------------------
+# Header rules match the REQUEST path, not the served file: every HTML-serving
+# path gets its own no-cache rule so no browser holds a stale shell pointing at
+# long-gone fingerprinted bundles.
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    Content-Security-Policy = "frame-ancestors 'none'"
+
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/404.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/fonts/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/img/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# --- Redirects -------------------------------------------------------------
+# First match wins. Everything unknown is a REAL 404, never a Home bounce.
+
+[[redirects]]
+  from = "/*"
+  to = "/404.html"
+  status = 404
