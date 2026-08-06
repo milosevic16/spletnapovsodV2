@@ -135,6 +135,8 @@ export const invisible = {
 
 export const references = {
   kicker: 'Prejšnja dela',
+  /** Screen-reader suffix on each reference link (target="_blank" warning). */
+  newWindowNote: 'odpre se v novem zavihku',
   title: 'Reference, ki delujejo.',
   intro:
     'Od osebnih predstavitev do pravnih pisarn in forenzičnih podjetij — pokrivamo vse sektorje in se prilagodimo vsebini. Vsaka stran je oblikovana zanjo, nobena ni predloga.',

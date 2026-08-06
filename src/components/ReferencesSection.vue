@@ -59,11 +59,14 @@ onUnmounted(() => fx.dispose())
     <div ref="strip" class="refs__strip-wrap">
       <ul class="container refs__grid">
         <li v-for="r in references.items" :key="r.id" class="refs__cell" :data-ref="r.id">
-          <a :href="r.url" target="_blank" rel="noopener" class="refcard">
+          <!-- Stretched link: only the site name is the link, so it announces
+               "Lemur Legal — lemur.legal…" instead of the whole card (~200
+               chars); the ::after still makes the entire card clickable. -->
+          <div class="refcard">
             <span class="refcard__under" aria-hidden="true">
               <span class="refcard__seam annot">{{ r.urlLabel }}</span>
             </span>
-            <span class="refcard__paper">
+            <div class="refcard__paper">
               <picture>
                 <source
                   type="image/avif"
@@ -87,10 +90,17 @@ onUnmounted(() => fx.dispose())
                   class="refcard__shot"
                 />
               </picture>
-              <span class="refcard__body">
-                <span class="refcard__name">{{ r.name }}</span>
-                <span class="refcard__sector">{{ r.sector }}</span>
-                <span class="refcard__desc">{{ r.description }}</span>
+              <div class="refcard__body">
+                <h3 class="refcard__name">
+                  <a :href="r.url" target="_blank" rel="noopener" class="refcard__link">
+                    {{ r.name }}
+                    <span class="visually-hidden">
+                      — {{ r.urlLabel }}, {{ references.newWindowNote }}
+                    </span>
+                  </a>
+                </h3>
+                <p class="refcard__sector">{{ r.sector }}</p>
+                <p class="refcard__desc">{{ r.description }}</p>
                 <span class="refcard__inks" aria-hidden="true">
                   <span
                     v-for="ink in r.inks"
@@ -99,10 +109,10 @@ onUnmounted(() => fx.dispose())
                     :style="{ background: ink }"
                   ></span>
                 </span>
-                <span class="refcard__proof">{{ r.proof }}</span>
-              </span>
-            </span>
-          </a>
+                <p class="refcard__proof">{{ r.proof }}</p>
+              </div>
+            </div>
+          </div>
         </li>
       </ul>
     </div>
@@ -168,7 +178,22 @@ onUnmounted(() => fx.dispose())
   display: block;
   height: 100%;
   padding: 0 4px 28px 0;
+}
+
+.refcard__link {
+  color: inherit;
   text-decoration: none;
+}
+
+/* Stretched link — the whole card stays clickable while only the name is the
+   link. Its containing block is .refcard__paper (the nearest positioned
+   ancestor), so the negative insets extend the hit area over the exposed
+   seam as well. */
+.refcard__link::after {
+  content: '';
+  position: absolute;
+  inset: 0 -4px -28px 0;
+  z-index: 1;
 }
 
 .refcard__under {
@@ -218,6 +243,8 @@ onUnmounted(() => fx.dispose())
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 1.25rem;
+  line-height: 1.25;
+  letter-spacing: 0;
   color: var(--ink);
 }
 
@@ -262,7 +289,7 @@ onUnmounted(() => fx.dispose())
       border-color var(--t-lift) var(--ease-out);
   }
   .refcard:hover .refcard__paper,
-  .refcard:focus-visible .refcard__paper {
+  .refcard:focus-within .refcard__paper {
     transform: translate(-3px, -3px);
     border-color: var(--accent);
   }
