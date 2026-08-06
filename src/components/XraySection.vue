@@ -48,15 +48,14 @@ function applyState(instant = false) {
     el.setAttribute('aria-hidden', String(!isActive))
     if (isActive) {
       el.style.visibility = ''
-      el.style.position = ''
     } else {
-      // Collapse the inactive layer out of flow AFTER the wipe (same constant).
+      // Hide the spent layer from AT and tab order after the wipe (same
+      // constant). It deliberately keeps its grid cell: both layers share one
+      // cell once live, so the instrument's height is the taller of the two
+      // and NOTHING below the toggle can move. Taking it out of flow instead
+      // threw the ledger 440px down and back on every tap — measured.
       fx.setTimeout(() => {
-        if (active.value !== key) {
-          el.style.visibility = 'hidden'
-          el.style.position = 'absolute'
-          el.style.inset = '0'
-        }
+        if (active.value !== key) el.style.visibility = 'hidden'
       }, instant ? 0 : WIPE_MS)
     }
   }
@@ -163,7 +162,7 @@ onUnmounted(() => fx.dispose())
         </button>
       </div>
 
-      <div class="xray__instrument">
+      <div class="xray__instrument" :class="{ 'xray__instrument--live': hydrated }">
         <div ref="humanLayer" class="xray__layer xray__layer--human">
           <p class="xray__mini-kicker kicker">{{ hero.kicker }}</p>
           <p class="xray__mini-title">{{ hero.title }}</p>
@@ -270,6 +269,15 @@ onUnmounted(() => fx.dispose())
   margin-top: 1.5rem;
   display: grid;
   gap: 1.5rem;
+}
+
+/* Once the toggle is live, the two layers share ONE grid cell and swap by
+   clip-path alone. The instrument then measures the taller layer at all
+   times, so toggling cannot move the ledger or anything else below it.
+   Gated on `hydrated`: with JS off there is no toggle, the layers stay
+   stacked in flow, and BOTH are fully visible in the static HTML. */
+.xray__instrument--live > .xray__layer {
+  grid-area: 1 / 1;
 }
 
 .xray__layer--human {
@@ -390,11 +398,16 @@ onUnmounted(() => fx.dispose())
     margin-top: 2.5rem;
   }
 
-  /* Desktop always shows both layers — neutralize any phone inline state. */
+  /* Desktop always shows both layers side by side — neutralize the phone's
+     inline state AND its single-cell overlay (the flag survives a resize). */
   .xray__layer {
     clip-path: none !important;
     visibility: visible !important;
     position: static !important;
+  }
+
+  .xray__instrument--live > .xray__layer {
+    grid-area: auto;
   }
 
   .xray__seam {
