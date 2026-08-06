@@ -19,7 +19,7 @@ useHead({
       <h1>{{ notFound.heading }}</h1>
       <p>{{ notFound.body }}</p>
       <p><a href="/" class="nf__home">{{ notFound.homeLabel }}</a></p>
-      <p class="nf__tb" aria-hidden="true">SPLETNAPOVSOD · LIST 404</p>
+      <p class="nf__tb" aria-hidden="true">{{ notFound.stamp }}</p>
     </div>
   </main>
 </template>

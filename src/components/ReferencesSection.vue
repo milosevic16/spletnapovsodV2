@@ -219,8 +219,10 @@ onUnmounted(() => fx.dispose())
   transition: color var(--t-micro) var(--ease-out);
 }
 
-.plates__index-link:hover .plates__index-name {
-  color: var(--rez);
+/* Hover deepens the line, not the red — --rez is the cut and the CTA, never
+   a generic interactive color (red discipline). */
+.plates__index-link:hover {
+  border-bottom-color: var(--grafit);
 }
 
 .plates__index-sheet {
@@ -256,10 +258,18 @@ onUnmounted(() => fx.dispose())
   border-top: 1px solid var(--grafit);
 }
 
+/* Phone art direction: the client's palette runs as a horizontal strip along
+   the sheet's top edge (the vertical band is a desktop device), the LIST
+   label leads large, media runs edge to edge. Not a shrunk desktop plate. */
 .plate__band {
-  flex: 0 0 8px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  z-index: 1;
 }
 
 .plate__band-seg {
@@ -272,11 +282,11 @@ onUnmounted(() => fx.dispose())
   min-width: 0;
   display: flex;
   flex-direction: column;
-  padding: 1.25rem 1.25rem 0;
+  padding: 1.5rem 0 0;
 }
 
 .plate__media {
-  border: 1px solid var(--mreza-strong);
+  border-block: 1px solid var(--mreza-strong);
 }
 
 .plate__shot {
@@ -285,7 +295,7 @@ onUnmounted(() => fx.dispose())
 }
 
 .plate__body {
-  padding: 1.25rem 0 1.5rem;
+  padding: 1.25rem var(--gutter) 1.5rem;
   display: grid;
   gap: 0.5rem;
 }
@@ -294,7 +304,7 @@ onUnmounted(() => fx.dispose())
   font-family: var(--font-display);
   font-stretch: var(--wdth-monument);
   font-weight: 300;
-  font-size: clamp(1.6rem, 1.2rem + 2vw, 2.6rem);
+  font-size: clamp(2rem, 1.2rem + 4.5vw, 2.6rem);
   line-height: 1.1;
   letter-spacing: -0.01em;
 }
@@ -332,6 +342,7 @@ onUnmounted(() => fx.dispose())
 /* --- title block ---------------------------------------------------------- */
 .plate__tb {
   margin-top: auto;
+  margin-inline: var(--gutter);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -386,8 +397,7 @@ onUnmounted(() => fx.dispose())
 }
 
 .plate__nav-btn:hover {
-  border-color: var(--rez);
-  color: var(--rez);
+  border-color: var(--grafit);
 }
 
 /* --- desktop: the sticky theatre ------------------------------------------ */
@@ -406,6 +416,27 @@ onUnmounted(() => fx.dispose())
     top: 0;
     height: 100svh;
     overflow: hidden;
+  }
+
+  /* Desktop: the ink band returns to the sheet's left edge, in flow. */
+  .plate__band {
+    position: static;
+    flex: 0 0 8px;
+    width: 8px;
+    height: auto;
+    flex-direction: column;
+  }
+
+  .plate__media {
+    border: 1px solid var(--mreza-strong);
+  }
+
+  .plate__tb {
+    margin-inline: 0;
+  }
+
+  .plate__name {
+    font-size: clamp(1.6rem, 1.2rem + 2vw, 2.6rem);
   }
 
   .plate__sheet {

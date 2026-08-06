@@ -4,3 +4,6 @@ dist/
 .env.local
 *.local
 .DS_Store
+
+# headless-Edge scratch profiles (capture tooling)
+scripts/edge-tmp*/

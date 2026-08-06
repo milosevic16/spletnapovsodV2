@@ -108,17 +108,24 @@ textarea {
 /* Below grade the red pencil shifts to its on-dark voice (ring 5.50:1 zemlja,
    4.78:1 zemlja-2 — measured; the paper-world --rez would sit at ~2.7:1). */
 .contact :focus-visible,
-.footer :focus-visible,
-[data-world='zemlja'] :focus-visible {
+.footer :focus-visible {
   outline-color: var(--rez-na-temnem);
 }
 
-/* Anchor targets: the datum strip is fixed on phones (top strip) and a side
-   rail on desktop — phones need clearance for the strip, desktop only a breath. */
+/* Anchor targets AND tab-focus targets clear the fixed phone strip: [id] via
+   scroll-margin, everything else (links/buttons/inputs without ids that the
+   browser scrolls into view on focus) via root scroll-padding. Desktop's rail
+   sits left, so only a breath is needed. */
+html {
+  scroll-padding-top: calc(4.5rem + env(safe-area-inset-top, 0px));
+}
 [id] {
-  scroll-margin-top: 4rem;
+  scroll-margin-top: calc(4rem + env(safe-area-inset-top, 0px));
 }
 @media (min-width: 900px) {
+  html {
+    scroll-padding-top: 1.5rem;
+  }
   [id] {
     scroll-margin-top: 1.5rem;
   }

@@ -104,13 +104,15 @@ export const datum = {
   navAriaLabel: 'Glavna navigacija',
   menuLabel: 'Meni',
   menuCloseLabel: 'Zapri meni',
+  /** Decorative title-block stamp in the menu overlay (aria-hidden). */
+  sheetStamp: 'SPLETNAPOVSOD · MERILO 1 : 1',
 }
 
 export const hero: Hero = {
   kicker: 'Izdelava spletnih strani · Slovenija',
   title: 'Hitre, dostopne in profesionalne spletne strani.',
   titleAccent: 'Hitre',
-  lead: 'Izdelujemo vse od osnovnih predstavitvenih strani do naprednih spletnih sistemov z rezervacijami in Stripe plačili. Poskrbimo za oblikovanje, razvoj, tehnično osnovo in objavo na vaši domeni.',
+  lead: 'Izdelujemo vse od osnovnih predstavitvenih strani do naprednih spletnih sistemov z rezervacijami in plačili Stripe. Poskrbimo za oblikovanje, razvoj, tehnično osnovo in objavo na vaši domeni.',
   ctaPrimary: { label: 'Naročite izdelek', target: 'kontakt' },
   ctaSecondary: { label: 'Oglejte si reference', target: 'reference' },
 }
@@ -182,8 +184,8 @@ export const references = {
   title: 'Nekaj uspešnih prejšnjih projektov',
   intro:
     'Od osebnih predstavitev, pravnih pisarn, forenzičnih podjetij in apartmajskih nastanitev pokrivamo vse sektorje in se prilagodimo vsebini. Vsaka stran je oblikovana posebej za namen projekta in ni predloga.',
-  /** The compact plate index — the hurried owner's scan path (all three, one screen). */
-  indexTitle: 'Vsi trije projekti',
+  /** The compact plate index — the hurried owner's scan path (one screen; count derives from the list). */
+  indexTitle: 'Vsi projekti',
   /** Title-block sheet label — »LIST 2 · Lemur Legal«. */
   sheetLabel: 'LIST',
   /** Directed plate navigation (desktop). */
@@ -203,7 +205,7 @@ export const references = {
       proof: 'Uredniška tipografija in stroga struktura za zahtevno pravno občinstvo.',
       inks: ['#D2DDD7', '#131220', '#7F59F5', '#1FC49A', '#C4823A'],
       alt: 'Posnetek naslovnice spletne strani Lemur Legal',
-      image: { width: 776, height: 388, widths: [560, 776] },
+      image: { width: 1552, height: 776, widths: [560, 776, 1104, 1552] },
     },
     {
       id: 'mercpeter',
@@ -216,7 +218,7 @@ export const references = {
       proof: 'Interaktivno središče, ki deluje brezhibno tudi na telefonu.',
       inks: ['#ECE9E2', '#26282C', '#D2453E', '#B4AEA1'],
       alt: 'Posnetek naslovnice spletne strani Petra Merca',
-      image: { width: 1184, height: 592, widths: [560, 840, 1184] },
+      image: { width: 1792, height: 896, widths: [560, 840, 1184, 1792] },
     },
     {
       id: 'bloctopus',
@@ -229,7 +231,7 @@ export const references = {
       proof: 'Zaupanja vredna predstavitev za občutljivo panogo.',
       inks: ['#1A2B38', '#1FC496', '#F2F6F4'],
       alt: 'Posnetek naslovnice spletne strani Bloctopus Intelligence',
-      image: { width: 1184, height: 592, widths: [560, 840, 1184] },
+      image: { width: 1792, height: 896, widths: [560, 840, 1184, 1792] },
     },
   ] satisfies Reference[],
 }
@@ -249,7 +251,7 @@ export const comparison = {
   intro:
     'Večina slovenskih ponudnikov gradi na WordPressu, pogosto na kupljeni predlogi. Mi gradimo statične strani: stran se izriše ob objavi in obiskovalcu postrežemo gotovo datoteko. Razlika ni v videzu — je v tem, kaj se dogaja pod površino.',
   oursLabel: 'Statična stran',
-  theirsLabel: 'WordPress predloga',
+  theirsLabel: 'Predloga za WordPress',
   rows: [
     {
       id: 'how-built',
@@ -267,7 +269,7 @@ export const comparison = {
       id: 'maintenance',
       criterion: 'Vzdrževanje',
       ours: 'Ni vtičnikov, ki bi jih bilo treba posodabljati.',
-      theirs: 'Redne posodobitve; zamujena je odprta vrata.',
+      theirs: 'Redne posodobitve; vsaka zamujena pusti odprta vrata.',
     },
     {
       id: 'database',
@@ -299,8 +301,10 @@ export const pillars = {
     'Trije stebri, na katerih stoji vsaka stran, ki jo izdelamo — od najmanjše do največje.',
   items: [
     {
+      // Kickers name the structural system each chapter draws (the concept
+      // bans decorative numbering — levels carry names, not numerals).
       id: 'design',
-      kicker: 'Steber 1',
+      kicker: 'Nosilna konstrukcija',
       title: 'Unikaten dizajn',
       artifact: '100 % po meri',
       summary:
@@ -332,7 +336,7 @@ export const pillars = {
     },
     {
       id: 'security',
-      kicker: 'Steber 2',
+      kicker: 'Ovoj stavbe',
       title: 'Varnost, hitrost, skladnost',
       artifact: 'HTTPS · GDPR · piškotki',
       summary:
@@ -368,7 +372,7 @@ export const pillars = {
     },
     {
       id: 'seo',
-      kicker: 'Steber 3',
+      kicker: 'Instalacije',
       title: 'Google in AI vidnost',
       artifact: 'sitemap.xml · JSON-LD',
       summary:
@@ -489,6 +493,8 @@ export const contact = {
     messageLabel: 'Sporočilo',
     submitLabel: 'Pošljite povpraševanje',
     privacyNote: 'Podatke uporabimo izključno za odgovor na vaše povpraševanje.',
+    /** Honeypot label — aria-hidden, humans never see it. */
+    hpLabel: 'Pustite prazno',
     /**
      * Interaction-only strings — rendered after user actions, so the build's
      * content guard (which asserts copy exists in the STATIC HTML) skips any
@@ -501,8 +507,8 @@ export const contact = {
       invalidEmail: 'Vnesite veljaven e-naslov.',
       /** Stem — the component appends the names of the missing fields. */
       required: 'Izpolnite še:',
-      /** Noun form of the topic field for the enumeration above. */
-      topicShort: 'vrsta projekta',
+      /** Accusative — appended after the »Izpolnite še:« stem in the enumeration. */
+      topicShort: 'vrsto projekta',
     },
   },
 }
@@ -510,6 +516,7 @@ export const contact = {
 export const footer = {
   tagline: 'Hitre, dostopne in profesionalne spletne strani.',
   emailLabel: 'Pišite nam',
+  navAriaLabel: 'Navigacija v nogi',
   /** Colophon contract: only mechanically verifiable claims (SSG, no analytics). */
   colophon: {
     annotation: 'statična stran · brez sledilnih piškotkov',
@@ -528,6 +535,8 @@ export const notFound = {
   heading: '404 — ta stran ne obstaja',
   body: 'Naslov je napačen ali pa je bila stran odstranjena.',
   homeLabel: 'Na domačo stran',
+  /** Decorative title-block stamp (aria-hidden). */
+  stamp: 'SPLETNAPOVSOD · LIST 404',
 }
 
 export const meta = {

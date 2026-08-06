@@ -19,14 +19,18 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import { contact } from '@/content/home'
 import { CONTACT_EMAIL } from '@/lib/constants'
-import { createFx } from '@/lib/fx'
+import { createFx, prefersReducedMotion } from '@/lib/fx'
 
 const fx = createFx()
 const sending = ref(false)
 const status = ref<'idle' | 'success' | 'error'>('idle')
 const statusText = ref('')
 const progressEl = ref<HTMLElement | null>(null)
+const groundEl = ref<HTMLElement | null>(null)
 const clock = ref('')
+
+/** »Temeljenje« — the ground line draws itself once on arrival. */
+const GROUND_DRAW_MS = 900
 
 const name = ref('')
 const email = ref('')
@@ -60,6 +64,29 @@ onMounted(() => {
     }, 60_000 - (Date.now() % 60_000) + 250)
   }
   schedule()
+
+  // »Temeljenje« — one-shot: the crossing draws left→right on arrival. Rest
+  // state in the stylesheet is DRAWN; JS hides via inline style only, so
+  // crawlers, JS-off and reduced-motion all get the finished crossing.
+  const ground = groundEl.value
+  if (!ground || prefersReducedMotion() || !('IntersectionObserver' in window)) return
+  ground.style.clipPath = 'inset(0 100% 0 0)'
+  const io = fx.io(
+    (entries) => {
+      if (!entries.some((e) => e.isIntersecting)) return
+      io.disconnect()
+      fx.anim(ground, [{ clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0 0 0)' }], {
+        duration: GROUND_DRAW_MS,
+        easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+        fill: 'none',
+      })
+      fx.setTimeout(() => {
+        ground.style.clipPath = ''
+      }, GROUND_DRAW_MS)
+    },
+    { threshold: 0.9 },
+  )
+  io.observe(ground)
 })
 
 function startProgress() {
@@ -89,6 +116,7 @@ function focusField(id: string) {
 }
 
 async function onSubmit() {
+  if (sending.value) return // aria-disabled pattern: focus stays on the button
   status.value = 'idle'
   statusText.value = ''
   invalidFields.value = new Set()
@@ -166,7 +194,7 @@ onUnmounted(() => fx.dispose())
 <template>
   <section id="kontakt" class="contact">
     <!-- KOTA 0 — the ground line. Everything above rested on this. -->
-    <div class="contact__ground" aria-hidden="true"></div>
+    <div ref="groundEl" class="contact__ground" aria-hidden="true"></div>
 
     <div class="contact__earth">
       <div class="container contact__grid">
@@ -260,7 +288,7 @@ onUnmounted(() => fx.dispose())
 
           <!-- Honeypot — invisible to people, irresistible to bots. -->
           <div class="form__hp" aria-hidden="true">
-            <label for="f-botcheck">Pustite prazno</label>
+            <label for="f-botcheck">{{ contact.form.hpLabel }}</label>
             <input
               id="f-botcheck"
               v-model="botcheck"
@@ -271,7 +299,14 @@ onUnmounted(() => fx.dispose())
             />
           </div>
 
-          <button class="form__submit" type="submit" :disabled="sending">
+          <!-- aria-disabled, not :disabled — a disabled control drops keyboard/
+               SR focus to body mid-request; onSubmit early-returns instead. -->
+          <button
+            class="form__submit"
+            :class="{ 'form__submit--sending': sending }"
+            type="submit"
+            :aria-disabled="sending || undefined"
+          >
             <span ref="progressEl" class="form__progress" aria-hidden="true"></span>
             {{ sending ? contact.form.feedback.submitting : contact.form.submitLabel }}
           </button>
@@ -524,11 +559,11 @@ onUnmounted(() => fx.dispose())
   transition: background var(--t-micro) var(--ease-out);
 }
 
-.form__submit:hover:not(:disabled) {
+.form__submit:hover:not(.form__submit--sending) {
   background: var(--rez-deep);
 }
 
-.form__submit:disabled {
+.form__submit--sending {
   cursor: default;
   opacity: 0.85;
 }

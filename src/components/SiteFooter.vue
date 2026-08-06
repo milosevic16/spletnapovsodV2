@@ -19,7 +19,7 @@ const year = new Date().getFullYear()
           <p class="footer__tagline">{{ footer.tagline }}</p>
         </div>
 
-        <nav class="footer__nav" aria-label="Navigacija v nogi">
+        <nav class="footer__nav" :aria-label="footer.navAriaLabel">
           <a v-for="item in nav" :key="item.target" :href="`#${item.target}`" class="footer__link">
             {{ item.label }}
           </a>
@@ -50,7 +50,9 @@ const year = new Date().getFullYear()
   background: var(--zemlja);
   color: var(--list);
   border-top: 1px solid var(--crta-na-temnem);
-  padding-block: clamp(2.5rem, 2rem + 2vw, 4rem) clamp(1.5rem, 1rem + 1.5vw, 2.5rem);
+  /* viewport-fit=cover: the legal line clears the iOS home indicator. */
+  padding-block: clamp(2.5rem, 2rem + 2vw, 4rem)
+    calc(clamp(1.5rem, 1rem + 1.5vw, 2.5rem) + env(safe-area-inset-bottom, 0px));
 }
 
 .footer__cols {

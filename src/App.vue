@@ -5,7 +5,15 @@ import { useHead } from '@unhead/vue'
 import { ui } from '@/content/home'
 
 // unhead owns htmlAttrs at prerender — declare the real lang or it emits "en".
-useHead({ htmlAttrs: { lang: 'sl' } })
+// It ALSO injects a default viewport meta that REPLACES the shell's authored
+// one, silently dropping viewport-fit=cover (verified in dist) — so the full
+// viewport meta is declared here, where unhead is the authority.
+useHead({
+  htmlAttrs: { lang: 'sl' },
+  meta: [
+    { name: 'viewport', content: 'width=device-width, initial-scale=1.0, viewport-fit=cover' },
+  ],
+})
 
 const router = useRouter()
 

@@ -72,24 +72,35 @@ let manualAtScrollY: number | null = null
 let pulsed = false
 let pulseAnims: Animation[] = []
 
+let lastRounded = -1
+
 function applyCut(v: number) {
   cutValue = Math.min(CUT_MAX, Math.max(CUT_MIN, v))
   const vp = viewportEl.value
   if (vp) vp.style.setProperty('--cut-n', String(cutValue))
+  // Reflect into the grip/readout only when the visible integer changes —
+  // no per-frame attribute churn while the fraction crawls.
+  const rounded = Math.round(cutValue)
+  if (rounded === lastRounded) return
+  lastRounded = rounded
   const grip = gripEl.value
   if (grip) {
-    grip.value = String(Math.round(cutValue))
-    grip.setAttribute('aria-valuetext', `${Math.round(cutValue)} ${cut.gripUnit}`)
+    grip.value = String(rounded)
+    grip.setAttribute('aria-valuetext', `${rounded} ${cut.gripUnit}`)
   }
   const x = xhairEl.value?.querySelector('.cut__xhair-val')
-  if (x) x.textContent = `${Math.round(cutValue)} %`
+  if (x) x.textContent = `${rounded} %`
 }
 
 function sceneProgress(): number {
   const scene = sceneEl.value
-  if (!scene) return 0.5
+  const vp = viewportEl.value
+  if (!scene || !vp) return 0.5
   const rect = scene.getBoundingClientRect()
-  const span = rect.height - window.innerHeight
+  // The sticky travel is scene height minus the VIEWPORT ELEMENT's height
+  // (100svh) — window.innerHeight drifts from svh while the iOS toolbar
+  // retracts, which would silently rescale the knife.
+  const span = rect.height - vp.offsetHeight
   if (span <= 0) return 0.5
   return Math.min(1, Math.max(0, -rect.top / span))
 }
@@ -155,6 +166,7 @@ onMounted(() => {
   const startStandard = () => {
     mode = 'standard'
     viewportEl.value?.classList.add('cut__viewport--stepped')
+    viewportEl.value?.classList.add('cut__viewport--drive')
     fx.on(window, 'scroll', standardDrive, { passive: true })
     standardDrive()
   }
@@ -174,6 +186,8 @@ onMounted(() => {
     drive()
     fx.raf(loop)
   }
+
+  if (tier === 'full') viewportEl.value?.classList.add('cut__viewport--drive')
 
   const io = fx.io(
     (entries) => {
@@ -217,10 +231,16 @@ onMounted(() => {
     const xh = xhairEl.value
     if (vp && xh) {
       vp.classList.add('cut__viewport--fine')
+      // Rect cached on entry (the viewport is sticky — stable while hovered);
+      // BOTH axes compensated: the sticky viewport is offset by the rail on X.
+      let vpRect = { left: 0, top: 0 }
+      fx.on(vp, 'pointerenter', () => {
+        vpRect = vp.getBoundingClientRect()
+        xh.style.setProperty('opacity', '1')
+      })
       fx.on(vp, 'pointermove', ((e: PointerEvent) => {
-        xh.style.transform = `translate(${e.clientX}px, ${e.clientY - vp.getBoundingClientRect().top}px)`
+        xh.style.transform = `translate(${e.clientX - vpRect.left}px, ${e.clientY - vpRect.top}px)`
       }) as EventListener)
-      fx.on(vp, 'pointerenter', () => xh.style.setProperty('opacity', '1'))
       fx.on(vp, 'pointerleave', () => xh.style.setProperty('opacity', '0'))
     }
   }
@@ -240,19 +260,20 @@ onUnmounted(() => fx.dispose())
 
     <div ref="sceneEl" class="cut__scene">
       <div ref="viewportEl" class="cut__viewport">
-        <!-- FACADE — what you see: this page's own surface, 1:1. -->
+        <!-- FACADE — what you see: this page's own surface, 1:1. A DRAWING of
+             the hero, not a second hero: aria-hidden (screen readers already
+             have the real one) and nothing focusable — focus must never land
+             inside a layer the clip has visually removed. -->
         <div class="cut__facade">
           <p class="datum cut__layer-label">{{ cut.humanLabel }}</p>
-          <div class="cut__facade-copy">
+          <div class="cut__facade-copy" aria-hidden="true">
             <p class="datum cut__facade-kicker">{{ hero.kicker }}</p>
             <!-- Non-heading by design: the real h1 lives in the hero. -->
             <p class="cut__facade-title">
               <span v-if="facadeAccent" class="cut__facade-hl">{{ facadeAccent }}</span
               >{{ facadeRest }}
             </p>
-            <a :href="`#${hero.ctaPrimary.target}`" class="cut__facade-btn">
-              {{ hero.ctaPrimary.label }}
-            </a>
+            <span class="cut__facade-btn">{{ hero.ctaPrimary.label }}</span>
           </div>
         </div>
 
@@ -351,6 +372,10 @@ onUnmounted(() => fx.dispose())
 /* --- the scene ------------------------------------------------------------ */
 .cut__scene {
   height: 240svh;
+  /* iOS toolbar-retracted: the visual viewport can exceed 100svh — the band
+     below the pinned viewport must read as the excavation continuing (the
+     ledger follows in the same ground), never as a flash of raw paper. */
+  background: var(--grafit);
 }
 
 .cut__viewport {
@@ -362,13 +387,36 @@ onUnmounted(() => fx.dispose())
   border-top: 1px solid var(--grafit);
 }
 
-/* STANDARD tier: the cut moves in five eased steps. */
+/* The sheet frame — the drawing's own edge, above both layers. */
+.cut__viewport::after {
+  content: '';
+  position: absolute;
+  inset: var(--frame);
+  border: 1px solid var(--mreza);
+  mix-blend-mode: normal;
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* STANDARD tier: the cut moves in five eased steps — labels ride the plane,
+   so they ease with it (a label snapping while the plane glides reads broken). */
 .cut__viewport--stepped .cut__facade,
 .cut__viewport--stepped .cut__below,
-.cut__viewport--stepped .cut__plane {
+.cut__viewport--stepped .cut__plane,
+.cut__viewport--stepped .cut__layer-label--below,
+.cut__viewport--stepped .cut__mgloss {
   transition:
     clip-path var(--t-step) var(--ease-out),
     transform var(--t-step) var(--ease-out);
+}
+
+/* Layer promotion only while a drive is actually rewriting the clip. */
+.cut__viewport--drive .cut__facade,
+.cut__viewport--drive .cut__below {
+  will-change: clip-path;
+}
+.cut__viewport--drive .cut__plane {
+  will-change: transform;
 }
 
 .cut__viewport--fine {
@@ -489,15 +537,18 @@ onUnmounted(() => fx.dispose())
   max-width: 44ch;
 }
 
+/* The emblem byte is the scene's payload — visible at EVERY width (the whole
+   point is real bytes appearing as the page opens itself; phones included). */
 .cut__chamber-emblem {
-  display: none;
+  display: block;
   margin-top: 0.45rem;
   color: var(--papir-dim);
+  font-size: 0.68rem;
 }
 
-/* Short viewports: the in-scene chambers go label-only so the drawing never
-   clips its own text — the ledger right below is the canonical, complete
-   rendering of every gloss and byte on every screen. */
+/* Short viewports: the in-scene chambers drop the GLOSS (paraphrase) and keep
+   the EMBLEM (the byte is the payload worth the pixels) — the ledger right
+   below remains the canonical, complete rendering of every gloss and byte. */
 @media (max-height: 700px) {
   .cut__chamber-gloss {
     display: none;
@@ -511,19 +562,29 @@ onUnmounted(() => fx.dispose())
   }
 }
 
+/* The fixed phone strip owns the top of the viewport — the facade's layer
+   label steps below it (the strip is opaque; top:1.1rem would vanish). The
+   below-label is excluded: it rides the plane via transform from top:0. */
+@media (max-width: 899px) {
+  .cut__layer-label:not(.cut__layer-label--below) {
+    top: calc(3.5rem + env(safe-area-inset-top, 0px) + 0.9rem);
+  }
+}
+
 /* --- the plane ------------------------------------------------------------ */
+/* Spans frame to frame — its end ticks bite into the sheet frame. */
 .cut__plane {
   position: absolute;
   top: -1px;
-  left: 0;
-  right: 0;
+  left: var(--frame);
+  right: var(--frame);
   height: 2px;
   background: var(--rez);
   transform: translateY(calc((100 - var(--cut-n)) * 1svh));
   pointer-events: none;
+  z-index: 2;
 }
 
-/* Square end ticks biting into the sheet frame. */
 .cut__plane::before,
 .cut__plane::after {
   content: '';
@@ -534,10 +595,10 @@ onUnmounted(() => fx.dispose())
   background: var(--rez);
 }
 .cut__plane::before {
-  left: 0;
+  left: -4px;
 }
 .cut__plane::after {
-  right: 0;
+  right: -4px;
 }
 
 /* --- the grip ------------------------------------------------------------- */

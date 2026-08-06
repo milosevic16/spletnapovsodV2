@@ -108,15 +108,16 @@ const chapters = computed(() =>
   letter-spacing: -0.01em;
 }
 
-/* The chapter's value line — a claim, so Narrow caps, never mono. */
+/* The chapter's value line — a claim, so Narrow, never mono. No uppercase
+   transform: machine names in the strings (sitemap.xml, JSON-LD) must keep
+   their exact case. */
 .chapter__artifact {
   margin-top: 0.75rem;
   font-family: var(--font-display);
   font-stretch: var(--wdth-datum);
   font-weight: 600;
-  font-size: 1rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-size: 1.05rem;
+  letter-spacing: 0.07em;
   color: var(--rez);
 }
 

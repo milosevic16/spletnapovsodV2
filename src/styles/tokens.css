@@ -35,10 +35,14 @@
   --ok: #38715a; /* success on paper: 5.11:1 on list */
   --err: #8a3a1e; /* error on paper: 6.94:1 on list */
 
-  /* Type — one lettering hand (Archivo width axis), one human voice, one machine voice */
-  --font-display: 'Archivo Variable', Arial, sans-serif;
-  --font-text: 'Source Serif 4 Variable', Georgia, serif;
-  --font-mono: 'Chivo Mono', 'Courier New', monospace;
+  /* Type — one lettering hand (Archivo width axis), one human voice, one
+     machine voice. The "<family> fallback" entries are fontaine's generated
+     metric-matched faces (size-adjust/ascent/descent over the local base) —
+     they MUST be named in the stack or the swap reflows the page (verified:
+     without them the generated faces are dead weight in the CSS). */
+  --font-display: 'Archivo Variable', 'Archivo Variable fallback', Arial, sans-serif;
+  --font-text: 'Source Serif 4 Variable', 'Source Serif 4 Variable fallback', Georgia, serif;
+  --font-mono: 'Chivo Mono', 'Chivo Mono fallback', 'Courier New', monospace;
 
   /* Width-axis stops (font-stretch %) — the drawing hand's two registers */
   --wdth-monument: 115%; /* display: light-monumental, wide */
@@ -59,10 +63,8 @@
   --frame: clamp(0.75rem, 2.2vw, 2rem); /* sheet-frame inset from viewport edges */
   --measure: 64ch;
 
-  /* The cut scene's resting boundary — the SECTION layer's share of the
-     viewport (the composed 45/55 drawing: facade 45, section 55). JS
-     (FULL/STANDARD tiers) drives this var; with no JS it IS the design. */
-  --cut: 55%;
+  /* (The cut scene's boundary var --cut-n lives in CutSection.vue — the
+     component owns its resting 55 declaration.) */
 
   /* Motion — one-shot doctrine; constants paired with JS via getComputedStyle
      where timings must agree */

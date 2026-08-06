@@ -1,20 +1,17 @@
 import { fileURLToPath, URL } from 'node:url'
-import { defineConfig, type Plugin } from 'vite'
+import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { FontaineTransform } from 'fontaine'
 import 'vite-ssg' // type augmentation for ssgOptions
 
-/** Stamp the veil's title block with the REAL build date (IZRIS — a drawing
- *  convention filled honestly; never a fabricated value). */
-const buildDate = (): Plugin => ({
-  name: 'sp-build-date',
-  transformIndexHtml: (html) => html.replace('%IZRIS%', new Date().toISOString().slice(0, 10)),
-})
+// The veil's IZRIS build-date stamp lives in scripts/postbuild.mjs — a
+// transformIndexHtml hook here does NOT survive into vite-ssg's rendered
+// route files (verified: dist shipped the raw token). Postbuild also blocks
+// the build if any token remains.
 
 export default defineConfig({
   plugins: [
     vue(),
-    buildDate(),
     // Metric-matched fallback faces (size-adjust/ascent/descent) generated from
     // the real font files — the swap changes glyphs, not geometry (CLS ~0).
     // Order pairs with tokens.css stacks: Archivo↔Arial, Source Serif↔Georgia,

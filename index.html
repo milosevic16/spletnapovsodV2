@@ -17,8 +17,10 @@
          hang (the timeline runs whether or not the app ever boots). The first
          thing this brand ever does is cut. Colors mirror tokens.css
          (--list #F5F2EB, --rez #B03B22, --grafit #1A1C1E, --mreza #D9D3C6) —
-         keep in sync by hand. %IZRIS% is replaced with the real build date by
-         vite.config.ts (a true fact filling the drawing convention honestly). -->
+         keep in sync by hand (the veil paints before the bundled CSS loads,
+         so no var() here). The IZRIS token is stamped with the real build
+         date by scripts/postbuild.mjs, which BLOCKS the build if the token
+         survives (a drawing convention filled honestly, never a placeholder). -->
     <style>
       #veil {
         position: fixed;
@@ -33,6 +35,23 @@
         right: 0;
         height: 50%;
         background: #f5f2eb;
+        overflow: hidden;
+      }
+      /* The sheet frame — each half carries its part, so the frame parts with
+         the cut. Inset mirrors tokens.css --frame. */
+      #veil .v-half::before {
+        content: '';
+        position: absolute;
+        left: clamp(0.75rem, 2.2vw, 2rem);
+        right: clamp(0.75rem, 2.2vw, 2rem);
+        height: 200%;
+        border: 1px solid #d9d3c6;
+      }
+      #veil .v-top::before {
+        top: clamp(0.75rem, 2.2vw, 2rem);
+      }
+      #veil .v-bot::before {
+        bottom: clamp(0.75rem, 2.2vw, 2rem);
       }
       #veil .v-top {
         top: 0;

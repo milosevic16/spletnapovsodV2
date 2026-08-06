@@ -14,10 +14,13 @@ import { createFx } from '@/lib/fx'
 
 const fx = createFx()
 const current = ref('')
+const live = ref(false)
 const menu = ref<HTMLDialogElement | null>(null)
 let scrollYBefore = 0
+let locked = false
 
 onMounted(() => {
+  live.value = true // the MENU button opens a dialog — never a dead control with JS off
   // Scroll-spy: the level whose section occupies the reading band is current.
   if (!('IntersectionObserver' in window)) return
   const io = fx.io(
@@ -39,13 +42,19 @@ function openMenu() {
   if (!d) return
   // Scroll lock, house order: capture first, then overflow hidden, then re-pin.
   scrollYBefore = window.scrollY
+  locked = true
   document.documentElement.style.overflow = 'hidden'
   document.body.style.overflow = 'hidden'
   d.showModal()
   window.scrollTo({ top: scrollYBefore, behavior: 'instant' })
 }
 
+/** IDEMPOTENT: the dialog's queued 'close' event re-runs this after closeMenu
+ *  already did — without the flag, its scrollTo(scrollYBefore) would yank the
+ *  page back AFTER a menu link's fragment navigation landed on the section. */
 function unlockScroll() {
+  if (!locked) return
+  locked = false
   document.documentElement.style.overflow = ''
   document.body.style.overflow = ''
   window.scrollTo({ top: scrollYBefore, behavior: 'instant' })
@@ -98,12 +107,14 @@ onUnmounted(() => {
       </ul>
     </nav>
 
-    <button class="datum-bar__menu datum" type="button" @click="openMenu">
+    <!-- The dialog needs JS — the button appears only once the app is live
+         (never a dead control; the footer nav is the no-JS navigation). -->
+    <button v-if="live" class="datum-bar__menu datum" type="button" @click="openMenu">
       {{ datum.menuLabel }}
     </button>
   </header>
 
-  <dialog ref="menu" class="menu" @close="onDialogClose">
+  <dialog ref="menu" class="menu" :aria-label="datum.navAriaLabel" @close="onDialogClose">
     <div class="menu__sheet">
       <button class="menu__close datum" type="button" @click="closeMenu">
         {{ datum.menuCloseLabel }}
@@ -117,13 +128,15 @@ onUnmounted(() => {
           </li>
         </ul>
       </nav>
-      <p class="menu__tb" aria-hidden="true">SPLETNAPOVSOD · MERILO 1 : 1</p>
+      <p class="menu__tb" aria-hidden="true">{{ datum.sheetStamp }}</p>
     </div>
   </dialog>
 </template>
 
 <style scoped>
 /* --- phone: top strip ----------------------------------------------------- */
+/* viewport-fit=cover: the strip owns the top safe area (notch/Dynamic Island)
+   so the brand and MENU never sit under the status bar. */
 .datum-bar {
   position: fixed;
   top: 0;
@@ -133,7 +146,8 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 3.5rem;
+  height: calc(3.5rem + env(safe-area-inset-top, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
   padding-inline: max(1rem, env(safe-area-inset-left)) max(1rem, env(safe-area-inset-right));
   background: var(--list);
   border-bottom: 1px solid var(--mreza);

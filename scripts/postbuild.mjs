@@ -62,6 +62,18 @@ if (htmlFiles.length === 0) {
   process.exit(1)
 }
 
+// Stamp the veil's IZRIS date HERE, where the final bytes exist — a vite
+// transformIndexHtml hook does not survive into the vite-ssg-rendered route
+// files. replaceAll + a blocking assertion: the one element whose whole point
+// is a checkable true fact must never ship a placeholder.
+const IZRIS_TOKEN = '%' + 'IZRIS%'
+const buildDate = new Date().toISOString().slice(0, 10)
+for (const file of htmlFiles) {
+  const p = join(dist, file)
+  const html = readFileSync(p, 'utf8')
+  if (html.includes(IZRIS_TOKEN)) writeFileSync(p, html.replaceAll(IZRIS_TOKEN, buildDate))
+}
+
 const pages = htmlFiles.map((file) => {
   const html = readFileSync(join(dist, file), 'utf8')
   // Assert against the HEAD only — the cut scene's ledger repeats head lines in the body.
@@ -95,6 +107,7 @@ const pages = htmlFiles.map((file) => {
 // 1. Per-page assertions
 // --------------------------------------------------------------------------
 for (const p of pages) {
+  if (p.html.includes(IZRIS_TOKEN)) fail(p.file, 'unstamped IZRIS token in emitted HTML')
   if (p.lang !== 'sl') fail(p.file, `html lang="${p.lang}" — expected "sl"`)
   if (!p.title) fail(p.file, 'empty or missing <title>')
   if (p.h1s.length !== 1 || !p.h1s[0]) {
