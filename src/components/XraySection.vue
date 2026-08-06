@@ -10,6 +10,7 @@ import { onMounted, onUnmounted, ref } from 'vue'
 import { hero, invisible, meta } from '@/content/home'
 import { SITE_ORIGIN, SITE_NAME } from '@/lib/constants'
 import { createFx, prefersReducedMotion } from '@/lib/fx'
+import ArchitectureCompare from './ArchitectureCompare.vue'
 
 const machineLines = [
   `<html lang="sl">`,
@@ -183,6 +184,8 @@ onUnmounted(() => fx.dispose())
         </li>
       </ul>
       <p class="xray__outro">{{ invisible.outro }}</p>
+
+      <ArchitectureCompare />
     </div>
   </section>
 </template>

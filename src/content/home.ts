@@ -75,6 +75,15 @@ export interface Differentiator {
   measure: { annotation: string; gloss: string; ticks?: string[] }
 }
 
+/** One row of the architecture comparison ("Zakaj ne WordPress?"). */
+export interface CompareRow {
+  id: string
+  criterion: string
+  /** Our side — must stay an architectural FACT, never a benchmark we haven't run. */
+  ours: string
+  theirs: string
+}
+
 export interface ContactTopic {
   /** Machine value — reaches the owner's inbox as-is, stays English-sortable. */
   value: string
@@ -183,6 +192,64 @@ export const references = {
   ] satisfies Reference[],
 }
 
+/**
+ * "Zakaj ne WordPress?" — the comparison closes the invisible-work section.
+ *
+ * HOUSE RULE, do not break: every cell states a STRUCTURAL fact about how the
+ * two architectures work, never a speed number. We have no field data yet, and
+ * a fabricated benchmark in this register would poison the whole page (the same
+ * reason the SEO pillar's Prerez carries no seconds). The footnote keeps the
+ * comparison honest — it is positioning, not a verdict on WordPress.
+ */
+export const comparison = {
+  kicker: 'Pod površino',
+  title: 'Zakaj ne WordPress?',
+  intro:
+    'Večina slovenskih ponudnikov gradi na WordPressu, pogosto na kupljeni predlogi. Mi gradimo statične strani: stran se izriše ob objavi in obiskovalcu postrežemo gotovo datoteko. Razlika ni v videzu — je v tem, kaj se dogaja pod površino.',
+  oursLabel: 'Statična stran',
+  theirsLabel: 'WordPress predloga',
+  rows: [
+    {
+      id: 'how-built',
+      criterion: 'Kako nastane stran',
+      ours: 'Izrisana vnaprej, ob objavi. Obiskovalec dobi že narejeno datoteko.',
+      theirs: 'Sestavljena znova ob vsakem obisku — koda, podatkovna baza, vtičniki.',
+    },
+    {
+      id: 'plugins',
+      criterion: 'Vtičniki',
+      ours: 'Nobenega. Vsaka funkcija je napisana za vašo stran.',
+      theirs: 'Vsaka funkcija svoj vtičnik — in vsak svoje posodobitve.',
+    },
+    {
+      id: 'maintenance',
+      criterion: 'Vzdrževanje',
+      ours: 'Ni vtičnikov, ki bi jih bilo treba posodabljati.',
+      theirs: 'Redne posodobitve; zamujena je odprta vrata.',
+    },
+    {
+      id: 'database',
+      criterion: 'Podatkovna baza',
+      ours: 'Je ni — stran ne more pasti zaradi baze.',
+      theirs: 'Nujna. Ko pade baza, pade stran.',
+    },
+    {
+      id: 'design',
+      criterion: 'Dizajn',
+      ours: 'Narejen za vas, od prve črte.',
+      theirs: 'Predloga, ki jo ima še tisoč drugih strani.',
+    },
+    {
+      id: 'robots',
+      criterion: 'Kaj vidita Google in ChatGPT',
+      ours: 'Celotno vsebino, brez zaganjanja kode.',
+      theirs: 'Odvisno od teme in vtičnikov.',
+    },
+  ] satisfies CompareRow[],
+  footnote:
+    'WordPress ni slab — narejen je za drugačen problem: veliko avtorjev in dnevno objavljanje. Za predstavitveno stran podjetja plačate zapletenost, ki je ne potrebujete.',
+}
+
 export const pillars = {
   kicker: 'Vsi paketi',
   title: 'Kaj vsebujejo vsi paketi?',
@@ -209,6 +276,16 @@ export const pillars = {
           label: 'Do zadnjega odtenka',
           detail: 'Premišljena tipografija, mreža in gibanje — nič ni naključno.',
         },
+        {
+          label: 'Zasnovano za telefon',
+          detail:
+            'Večina obiskovalcev pride s telefona. Tam se dizajn začne, ne konča — in tam ga tudi preverimo.',
+        },
+        {
+          label: 'Dostopno vsem',
+          detail:
+            'Berljive velikosti, dovolj kontrasta, delovanje s tipkovnico — po evropskem standardu dostopnosti.',
+        },
       ],
     },
     {
@@ -230,6 +307,20 @@ export const pillars = {
         {
           label: 'Evropska skladnost',
           detail: 'Piškotki, politika zasebnosti in varnostne glave, urejeni vnaprej.',
+        },
+        {
+          label: 'HTTPS in varnostne glave',
+          detail:
+            'Certifikat in zaščitne glave, ki jih ob pregledu iščejo IT oddelki vaših strank.',
+        },
+        {
+          label: 'Optimizirane slike',
+          detail:
+            'Sodobni formati in prava velikost za vsako napravo — telefon ne prenaša namizne slike.',
+        },
+        {
+          label: 'Nič vzdrževanja',
+          detail: 'Brez vtičnikov ni tedenskih posodobitev in ni računa zanje.',
         },
       ],
     },
@@ -260,6 +351,11 @@ export const pillars = {
           label: 'Prijava v iskalnike',
           detail:
             'Google Search Console in Bing Webmaster Tools — tudi Copilot in ChatGPT črpata iz Bingovega indeksa.',
+        },
+        {
+          label: 'Predogled ob deljenju',
+          detail:
+            'Ko nekdo deli vašo povezavo, se pokažeta slika in naslov — ne gola povezava, ki je nihče ne odpre.',
         },
       ],
       prerez: {
