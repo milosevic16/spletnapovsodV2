@@ -13,6 +13,19 @@
    Only color, type family and line treatment are the redesign's.
 --------------------------------------------------------------------------- */
 
+/* The work stage's adaptive ground — each project's own darkest sampled ink.
+   REGISTERED, and that is load-bearing: an unregistered custom property is
+   substituted at computed-value time, so a `transition: background-color` on a
+   rule reading `var(--stage)` never re-triggers — measured, the colour simply
+   stuck on the first project. Typing it as <color> makes the VALUE itself
+   interpolate, and everything reading it re-resolves each frame.
+   Where @property is unsupported the colour still changes, just instantly. */
+@property --stage {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #1a1c1e;
+}
+
 :root {
   /* The sheet (the human layer) */
   --list: #f5f2eb; /* drafting-paper page ground; grafit on it 15.29:1 */

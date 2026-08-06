@@ -49,6 +49,31 @@ const docketLines = computed(() => {
   return r ? [r.sector, r.proof, r.urlLabel] : []
 })
 
+/** Relative luminance, for picking each project's own darkest sampled ink. */
+function luminance(hex: string): number {
+  const [r, g, b] = [1, 3, 5]
+    .map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
+    .map((c) => (c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)))
+  return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!
+}
+
+/**
+ * The stage takes each project's OWN ground — the darkest colour sampled from
+ * that live site (#131220 violet-black, #26282C charcoal, #1A2B38 navy).
+ * Derived rather than hand-listed, so re-sampling `inks` moves the wallpaper
+ * with it and the two can never drift.
+ *
+ * Measured on all three: --list 12.98–16.55:1, --papir-dim 8.67–11.05:1, and
+ * every midpoint the transition passes through stays 13–15:1 — so no frame of
+ * the fade drops text below AA.
+ */
+const grounds = items.map((r) =>
+  r.inks.slice().sort((a, b) => luminance(a) - luminance(b))[0] ?? '#1A1C1E',
+)
+
+/** Bound on the section, so prerender and hydration agree and nothing jumps. */
+const stageInk = computed(() => grounds[active.value] ?? '#1A1C1E')
+
 function plates(): HTMLElement[] {
   // Read the DOM rather than a captured ref array: v-for function refs re-run
   // on every update, and a stale entry would strand a plate visible.
@@ -208,7 +233,23 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section id="reference" ref="root" class="work" :class="{ 'work--live': live }">
+  <section
+    id="reference"
+    ref="root"
+    class="work"
+    :class="{ 'work--live': live }"
+    :style="{ '--stage': stageInk }"
+  >
+    <!-- The bridge: paper at the top where the copy sits, dissolving into the
+         selected project's own ground by the time it meets the stage. -->
+    <div class="work__head">
+      <div class="container">
+        <p class="kicker">{{ references.kicker }}</p>
+        <h2 class="work__title">{{ references.title }}</h2>
+        <p class="work__intro">{{ references.intro }}</p>
+      </div>
+    </div>
+
     <div
       class="work__stage"
       @mouseenter="hold"
@@ -327,19 +368,48 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <div class="container work__foot">
-      <p class="kicker">{{ references.kicker }}</p>
-      <h2 class="work__title">{{ references.title }}</h2>
-      <p class="work__intro">{{ references.intro }}</p>
-    </div>
   </section>
 </template>
 
 <style scoped>
-/* The stage is the dark field the previews sit on — full-bleed, so the frame
-   reads as a screen rather than a card on a page. */
+/* --- the adaptive ground ----------------------------------------------------
+   THE WHOLE SECTION is painted once, here, in the selected project's own
+   darkest sampled ink. Head and stage are transparent over it, so a colour
+   change is ONE repaint region rather than two, and the seam between them is
+   the same colour by construction — invisible at every point of the fade.
+
+   Why the colour lives on background-COLOR and the fade on a separate,
+   never-changing background-IMAGE: background-image is not an animatable
+   property in any browser, so a gradient whose stop we swapped would cut
+   rather than fade. Transitioning the solid colour underneath a static
+   gradient sidesteps that entirely and needs no @property registration. */
+.work {
+  background-color: var(--stage);
+  /* The registered --stage is what animates (see tokens.css); background-color
+     just reads it. Slightly longer than the plate's 520ms entrance
+     (SWAP_IN_MS), so the environment settles just AFTER the subject lands. */
+  transition: --stage 760ms var(--ease-out);
+  /* Closes back to the site's own graphite, so the adaptive ground never
+     meets the next section on a hard edge. */
+  background-image: linear-gradient(to top, var(--grafit) 0, rgb(26 28 30 / 0) 160px);
+}
+
+/* The bridge from the paper band above into the stage. The gradient itself is
+   static — only the colour beneath it moves. It fades to PAPER-AT-ALPHA-0,
+   never the `transparent` keyword, which interpolates through transparent
+   black and lays a muddy grey band across the middle. */
+.work__head {
+  padding-block: clamp(3rem, 2.5rem + 3vw, 5rem) clamp(5.5rem, 4rem + 7vw, 10rem);
+  background-image: linear-gradient(
+    to bottom,
+    var(--list) 0,
+    var(--list) 44%,
+    rgb(245 242 235 / 0) 100%
+  );
+}
+
+/* Transparent: the section beneath is already painted in the project ground. */
 .work__stage {
-  background: var(--grafit);
   padding-block: clamp(1.5rem, 1rem + 2vw, 3rem);
   padding-inline: var(--gutter);
 }
@@ -414,9 +484,14 @@ onUnmounted(() => {
   max-width: 52ch;
 }
 
+/* Paper, not red: --rez-na-temnem measures 4.44:1 on bloctopus's navy ground,
+   just under the 4.5 floor for text this size. The red stays as a structural
+   mark on the rule, which carries a 3:1 UI floor and passes on all three. */
 .plate__proof {
   font-style: italic;
-  color: var(--rez-na-temnem);
+  color: var(--list);
+  border-left: 2px solid var(--rez-na-temnem);
+  padding-left: 0.7rem;
   max-width: 48ch;
 }
 
@@ -498,10 +573,6 @@ onUnmounted(() => {
 }
 
 /* --- the written record, below the stage ----------------------------------- */
-.work__foot {
-  padding-block: clamp(2.5rem, 2rem + 3vw, 4.5rem);
-}
-
 .work__title {
   margin-top: 1rem;
 }
@@ -509,6 +580,7 @@ onUnmounted(() => {
 .work__intro {
   margin-top: 1.25rem;
   color: var(--grafit-2);
+  max-width: 62ch;
 }
 
 /* --- live: one plate at a time ---------------------------------------------
