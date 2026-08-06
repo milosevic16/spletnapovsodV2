@@ -20,8 +20,6 @@ export interface Hero {
   /** Accented prefix of `title` (must match exactly — the component falls back to the plain title if not). */
   titleAccent: string
   lead: string
-  /** Gloss for the hero fold Prerez (its annotation is the real <title>, derived). */
-  foldGloss: string
   ctaPrimary: { label: string; target: string }
   ctaSecondary: { label: string; target: string }
 }
@@ -102,7 +100,6 @@ export const hero: Hero = {
   title: 'Hitre, dostopne in profesionalne spletne strani.',
   titleAccent: 'Hitre',
   lead: 'Izdelujemo vse od osnovnih predstavitvenih strani do naprednih spletnih sistemov z rezervacijami in plačili Stripe. Poskrbimo za oblikovanje, razvoj, tehnično osnovo in objavo na vaši domeni.',
-  foldGloss: 'Isti naslov vidita obiskovalec in Google.',
   ctaPrimary: { label: 'Naročite izdelek', target: 'kontakt' },
   ctaSecondary: { label: 'Oglejte si reference', target: 'reference' },
 }
@@ -173,7 +170,7 @@ export const references = {
       proof: 'Uredniška tipografija in stroga struktura za zahtevno pravno občinstvo.',
       inks: ['#D2DDD7', '#131220', '#7F59F5', '#1FC49A', '#C4823A'],
       alt: 'Posnetek naslovnice spletne strani Lemur Legal',
-      image: { width: 776, height: 388, widths: [560, 776] },
+      image: { width: 1552, height: 776, widths: [560, 776, 1104, 1552] },
     },
     {
       id: 'mercpeter',
@@ -186,7 +183,7 @@ export const references = {
       proof: 'Interaktivno središče, ki deluje brezhibno tudi na telefonu.',
       inks: ['#ECE9E2', '#26282C', '#D2453E', '#B4AEA1'],
       alt: 'Posnetek naslovnice spletne strani Petra Merca',
-      image: { width: 1184, height: 592, widths: [560, 840, 1184] },
+      image: { width: 1792, height: 896, widths: [560, 840, 1184, 1792] },
     },
     {
       id: 'bloctopus',
@@ -199,7 +196,7 @@ export const references = {
       proof: 'Zaupanja vredna predstavitev za občutljivo panogo.',
       inks: ['#1A2B38', '#1FC496', '#F2F6F4'],
       alt: 'Posnetek naslovnice spletne strani Bloctopus Intelligence',
-      image: { width: 1184, height: 592, widths: [560, 840, 1184] },
+      image: { width: 1792, height: 896, widths: [560, 840, 1184, 1792] },
     },
   ] satisfies Reference[],
 }

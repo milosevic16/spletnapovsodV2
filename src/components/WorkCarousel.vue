@@ -88,20 +88,60 @@ function scheduleAutoplay() {
   window.clearTimeout(autoplayTimer)
   if (prefersReducedMotion() || paused) return
   startProgress()
-  autoplayTimer = window.setTimeout(() => select((active.value + 1) % items.length), AUTOPLAY_MS)
+  autoplayTimer = window.setTimeout(() => select((active.value + 1) % items.length, true, 1), AUTOPLAY_MS)
 }
 
-function select(next: number, restart = true) {
+/**
+ * The swap is directed: the outgoing plate leaves against the travel, the
+ * incoming one arrives with it, so paging reads as movement through a reel
+ * rather than a crossfade. Both run on WAAPI with fill:'none' over the final
+ * inline state, so an interrupted swap can never strand a plate mid-way.
+ */
+const SWAP_IN_MS = 520
+const SWAP_OUT_MS = 420
+const SHIFT = 3
+
+function select(next: number, restart = true, dir = 1) {
   if (next === active.value) return
-  effects[active.value]?.pause()
+  const from = active.value
+  const els = plates()
+  effects[from]?.pause()
   active.value = next
   paint()
+
+  const outEl = els[from]
+  const inEl = els[next]
+  if (outEl && inEl && !prefersReducedMotion()) {
+    // The outgoing plate stays painted for the length of its exit.
+    outEl.style.visibility = 'visible'
+    fx.anim(
+      outEl,
+      [
+        { opacity: 1, transform: 'translateX(0)' },
+        { opacity: 0, transform: `translateX(${-dir * SHIFT}%)` },
+      ],
+      { duration: SWAP_OUT_MS, easing: 'cubic-bezier(0.4,0,1,1)', fill: 'none' },
+    )
+    fx.setTimeout(() => {
+      if (active.value !== from) outEl.style.visibility = 'hidden'
+    }, SWAP_OUT_MS + 20)
+
+    fx.anim(
+      inEl,
+      [
+        { opacity: 0, transform: `translateX(${dir * SHIFT}%)` },
+        { opacity: 1, transform: 'translateX(0)' },
+      ],
+      { duration: SWAP_IN_MS, easing: 'cubic-bezier(0.22,1,0.36,1)', fill: 'none' },
+    )
+  }
+
   effects[next]?.play()
   if (restart) scheduleAutoplay()
 }
 
 function step(delta: number) {
-  select((active.value + delta + items.length) % items.length)
+  select((active.value + delta + items.length) % items.length, true, delta >= 0 ? 1 : -1)
 }
 
 /** Hover/focus holds the carousel still — never yank a plate someone is reading. */
@@ -127,7 +167,8 @@ onMounted(() => {
       continue
     }
     if (r.id === 'lemur') effects[i] = lemurPreview(frame, fx, { inks: r.inks })
-    else if (r.id === 'mercpeter') effects[i] = mercPreview(frame, fx, docketLines.value)
+    else if (r.id === 'mercpeter')
+      effects[i] = mercPreview(frame, fx, { name: r.name, lines: docketLines.value })
     else effects[i] = bloctopusPreview(frame, fx, r.inks[1] ?? '#1FC496')
   }
 
@@ -210,6 +251,19 @@ onUnmounted(() => {
                 class="plate__shot"
               />
             </picture>
+
+            <!-- Mouse convenience: the whole preview opens the project. Kept
+                 out of the tab order and hidden from assistive tech because
+                 the project name below is already the accessible route — a
+                 second stop to the same URL is noise. -->
+            <a
+              :href="r.url"
+              target="_blank"
+              rel="noopener"
+              class="plate__hit"
+              tabindex="-1"
+              aria-hidden="true"
+            ></a>
           </div>
 
           <div class="plate__meta">
@@ -248,7 +302,7 @@ onUnmounted(() => {
               class="work__thumb"
               :class="{ 'work__thumb--on': i === active }"
               :aria-current="i === active ? 'true' : undefined"
-              @click="select(i)"
+              @click="select(i, true, i > active ? 1 : -1)"
             >
               <img :src="`/img/refs/${r.id}-560.jpg`" width="96" height="48" alt=""
                 loading="lazy" decoding="async" />
@@ -317,6 +371,14 @@ onUnmounted(() => {
   display: block;
   width: 100%;
   height: 100%;
+}
+
+/* The whole preview opens the project. Above the ornament layers so the click
+   always lands; the ornament is pointer-events:none anyway. */
+.plate__hit {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
 }
 
 .plate__shot {
