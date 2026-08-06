@@ -1,25 +1,29 @@
 <script setup lang="ts">
 /**
- * Delo — the portfolio as a directed carousel: one large project plate at a
- * time, with a title/sector pair, a thumbnail strip, prev/next controls and an
- * autoplay progress bar. The carousel component vocabulary is conventional;
- * what is ours is what each plate DOES.
+ * Delo — the portfolio as one large, centred preview at a time.
  *
- * Every plate carries the signature motion of the site it shows, rebuilt from
- * our own source repos (see src/lib/slide-effects.ts):
- *   lemur      → chromatic glitch bursts + a console caret
- *   mercpeter  → a caption line that rotates on a ring-timed cycle
- *   bloctopus  → a scan bar sweeping the plate
- * Only the ACTIVE plate's effect runs, so at most one loop is ever live.
+ * The frame is a WINDOW INTO THE RUNNING SITE: each plate shows that client's
+ * real page, and the motion painted inside the frame is that site's own —
+ * lemur's glitch and console, Peter Merc's rotating docket line, Bloctopus's
+ * forensic scan (see src/lib/slide-effects.ts, ported from those sites' own
+ * repos). Nothing animates our chrome; the effects belong to the preview.
  *
- * SSG contract: all three plates, their names, sectors, descriptions, proofs
- * and live links are in the prerendered HTML. JS adds the carousel behaviour
- * on top; with JS off every plate is simply visible in flow.
+ * Only the active plate's effect runs, and the whole stage is
+ * visibility-gated, so at most one loop is ever live.
+ *
+ * SSG contract: all three plates — names, sectors, descriptions, proofs, live
+ * links — are in the prerendered HTML. JS adds the carousel on top; with JS
+ * off every plate is simply visible in flow.
  */
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { references } from '@/content/home'
 import { createFx, prefersReducedMotion } from '@/lib/fx'
-import { glitchTerminal, captionTicker, scanSweep, type SlideEffect } from '@/lib/slide-effects'
+import {
+  lemurPreview,
+  mercPreview,
+  bloctopusPreview,
+  type SlideEffect,
+} from '@/lib/slide-effects'
 
 const fx = createFx()
 const items = references.items
@@ -37,13 +41,32 @@ let autoplayTimer = 0
 let progressAnim: Animation | null = null
 let paused = false
 
-const sizes = '(min-width: 1024px) min(66vw, 60rem), calc(100vw - 2.5rem)'
+const sizes = '(min-width: 900px) min(96vw, 76rem), calc(100vw - 2.5rem)'
 
-/** The rotating lines for the mercpeter plate — real fields, not invented copy. */
-const tickerLines = computed(() => {
+/** Lines the docket rotates — real fields from the content module, never invented. */
+const docketLines = computed(() => {
   const r = items.find((i) => i.id === 'mercpeter')
   return r ? [r.sector, r.proof, r.urlLabel] : []
 })
+
+function plates(): HTMLElement[] {
+  // Read the DOM rather than a captured ref array: v-for function refs re-run
+  // on every update, and a stale entry would strand a plate visible.
+  return Array.from(root.value?.querySelectorAll<HTMLElement>('.plate') ?? [])
+}
+
+/**
+ * Which plate is visible, written as INLINE style — load-bearing, so it must
+ * survive any build transform (this stylesheet has already lost declarations
+ * to the minifier once). CSS supplies only the transition.
+ */
+function paint() {
+  for (const [i, el] of plates().entries()) {
+    const on = i === active.value
+    el.style.opacity = on ? '1' : '0'
+    el.style.visibility = on ? 'visible' : 'hidden'
+  }
+}
 
 function stopProgress() {
   progressAnim?.cancel()
@@ -66,27 +89,6 @@ function scheduleAutoplay() {
   if (prefersReducedMotion() || paused) return
   startProgress()
   autoplayTimer = window.setTimeout(() => select((active.value + 1) % items.length), AUTOPLAY_MS)
-}
-
-/**
- * Which plate is visible, written as INLINE style — the load-bearing part of
- * the carousel, so it must survive any build transform (the stylesheet has
- * already lost declarations to the minifier here once). CSS only supplies the
- * transition; if it were dropped the swap would simply be instant.
- */
-function plates(): HTMLElement[] {
-  // Read the DOM rather than a captured ref array: v-for function refs re-run
-  // on every update, and a stale entry here would silently strand a plate
-  // visible on top of another.
-  return Array.from(root.value?.querySelectorAll<HTMLElement>('.plate') ?? [])
-}
-
-function paint() {
-  for (const [i, el] of plates().entries()) {
-    const on = i === active.value
-    el.style.opacity = on ? '1' : '0'
-    el.style.visibility = on ? 'visible' : 'hidden'
-  }
 }
 
 function select(next: number, restart = true) {
@@ -118,26 +120,18 @@ onMounted(() => {
   live.value = true
   paint()
 
-  const hosts = plates()
   for (const [i, r] of items.entries()) {
-    const host = hosts[i]
-    if (!host || prefersReducedMotion()) {
+    const frame = plates()[i]?.querySelector<HTMLElement>('.plate__frame')
+    if (!frame || prefersReducedMotion()) {
       effects[i] = null
       continue
     }
-    if (r.id === 'lemur') {
-      effects[i] = glitchTerminal(host, fx, {
-        inks: r.inks,
-        caret: host.querySelector<HTMLElement>('[data-caret]'),
-      })
-    } else if (r.id === 'mercpeter') {
-      effects[i] = captionTicker(host, fx)
-    } else {
-      effects[i] = scanSweep(host, fx, { ink: r.inks[1] ?? 'rgb(255 255 255 / 0.5)' })
-    }
+    if (r.id === 'lemur') effects[i] = lemurPreview(frame, fx, { inks: r.inks })
+    else if (r.id === 'mercpeter') effects[i] = mercPreview(frame, fx, docketLines.value)
+    else effects[i] = bloctopusPreview(frame, fx, r.inks[1] ?? '#1FC496')
   }
 
-  // Gate the whole carousel on visibility: nothing animates off-screen.
+  // Nothing animates off-screen.
   if ('IntersectionObserver' in window && root.value) {
     const io = fx.io(
       (entries) => {
@@ -151,7 +145,7 @@ onMounted(() => {
           }
         }
       },
-      { threshold: 0.2 },
+      { threshold: 0.15 },
     )
     io.observe(root.value)
   } else {
@@ -174,25 +168,24 @@ onUnmounted(() => {
 
 <template>
   <section id="reference" ref="root" class="work" :class="{ 'work--live': live }">
-    <div class="container work__head">
-      <p class="kicker">{{ references.kicker }}</p>
-      <h2 class="work__title">{{ references.title }}</h2>
-      <p class="work__intro">{{ references.intro }}</p>
-    </div>
-
-    <div class="container work__stage" @mouseenter="hold" @mouseleave="resume"
-      @focusin="hold" @focusout="resume">
+    <div
+      class="work__stage"
+      @mouseenter="hold"
+      @mouseleave="resume"
+      @focusin="hold"
+      @focusout="resume"
+    >
       <ul class="work__plates">
         <li
           v-for="(r, i) in items"
           :key="r.id"
           class="plate"
           :class="[`plate--${r.id}`, live ? 'plate--stacked' : '']"
-          :data-ink="r.inks[1]"
           :inert="live && i !== active ? true : undefined"
           :aria-hidden="live && i !== active ? 'true' : undefined"
         >
-          <div class="plate__media">
+          <!-- The window. Everything the effects paint lives in here. -->
+          <div class="plate__frame">
             <picture>
               <source
                 type="image/avif"
@@ -217,38 +210,12 @@ onUnmounted(() => {
                 class="plate__shot"
               />
             </picture>
-
-            <!-- lemur: a console strip printing the site's real URL + sector. -->
-            <div v-if="r.id === 'lemur'" class="plate__console" aria-hidden="true">
-              <span class="emisija plate__console-line">{{ r.urlLabel }}</span>
-              <span class="plate__console-line plate__console-line--dim">{{ r.sector }}</span>
-              <span data-caret class="plate__caret"></span>
-            </div>
-
-            <!-- mercpeter: the rotating caption, ring-timed. -->
-            <div v-if="r.id === 'mercpeter'" class="plate__ticker">
-              <span class="plate__ticker-clip">
-                <span data-ticker-item class="plate__ticker-item">{{ tickerLines[0] }}</span>
-              </span>
-              <svg class="plate__ring" viewBox="0 0 18 18" width="15" height="15" aria-hidden="true">
-                <circle cx="9" cy="9" r="7.5" fill="none" stroke="currentColor"
-                  stroke-opacity="0.25" stroke-width="1.5" />
-                <circle data-ticker-ring cx="9" cy="9" r="7.5" fill="none" stroke="currentColor"
-                  stroke-width="1.5" stroke-dasharray="47.12" stroke-dashoffset="47.12"
-                  transform="rotate(-90 9 9)" />
-              </svg>
-              <!-- The lines the ticker cycles, declared for crawlers and read
-                   by the effect — never injected by it. -->
-              <span class="visually-hidden">
-                <span v-for="l in tickerLines" :key="l" data-ticker-line>{{ l }}</span>
-              </span>
-            </div>
           </div>
 
-          <div class="plate__body">
+          <div class="plate__meta">
             <h3 class="plate__name">
               <a :href="r.url" target="_blank" rel="noopener" class="plate__link">
-                <span data-glitch class="plate__name-inner">{{ r.name }}</span>
+                {{ r.name }}
                 <span class="visually-hidden">
                   — {{ r.urlLabel }}, {{ references.newWindowNote }}
                 </span>
@@ -261,34 +228,43 @@ onUnmounted(() => {
         </li>
       </ul>
 
-      <!-- Controls: real buttons, hidden until live so JS-off never sees a
-           dead affordance (the plates are all visible in flow there). -->
+      <!-- Controls appear only once live: with JS off the plates are all in
+           flow and there is nothing to control. -->
       <div v-if="live" class="work__controls">
-        <button type="button" class="work__step" :aria-label="references.feedback.prevLabel"
-          @click="step(-1)">
+        <button
+          type="button"
+          class="work__step"
+          :aria-label="references.feedback.prevLabel"
+          @click="step(-1)"
+        >
           <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none"
-            stroke="currentColor" stroke-width="1.6">
-            <path d="M10 2 4 8l6 6" />
-          </svg>
+            stroke="currentColor" stroke-width="1.6"><path d="M10 2 4 8l6 6" /></svg>
         </button>
 
         <ul class="work__thumbs" :aria-label="references.feedback.pickLabel">
           <li v-for="(r, i) in items" :key="r.id">
-            <button type="button" class="work__thumb" :class="{ 'work__thumb--on': i === active }"
-              :aria-current="i === active ? 'true' : undefined" @click="select(i)">
-              <img :src="`/img/refs/${r.id}-560.jpg`" :width="112" :height="56" alt=""
+            <button
+              type="button"
+              class="work__thumb"
+              :class="{ 'work__thumb--on': i === active }"
+              :aria-current="i === active ? 'true' : undefined"
+              @click="select(i)"
+            >
+              <img :src="`/img/refs/${r.id}-560.jpg`" width="96" height="48" alt=""
                 loading="lazy" decoding="async" />
               <span class="visually-hidden">{{ r.name }}</span>
             </button>
           </li>
         </ul>
 
-        <button type="button" class="work__step" :aria-label="references.feedback.nextLabel"
-          @click="step(1)">
+        <button
+          type="button"
+          class="work__step"
+          :aria-label="references.feedback.nextLabel"
+          @click="step(1)"
+        >
           <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none"
-            stroke="currentColor" stroke-width="1.6">
-            <path d="M6 2l6 6-6 6" />
-          </svg>
+            stroke="currentColor" stroke-width="1.6"><path d="M6 2l6 6-6 6" /></svg>
         </button>
 
         <span class="work__progress" aria-hidden="true">
@@ -296,30 +272,24 @@ onUnmounted(() => {
         </span>
       </div>
     </div>
+
+    <div class="container work__foot">
+      <p class="kicker">{{ references.kicker }}</p>
+      <h2 class="work__title">{{ references.title }}</h2>
+      <p class="work__intro">{{ references.intro }}</p>
+    </div>
   </section>
 </template>
 
 <style scoped>
-.work {
-  padding-block: var(--section-y);
-}
-
-.work__title {
-  margin-top: 1rem;
-}
-
-.work__intro {
-  margin-top: 1.25rem;
-  color: var(--grafit-2);
-}
-
+/* The stage is the dark field the previews sit on — full-bleed, so the frame
+   reads as a screen rather than a card on a page. */
 .work__stage {
-  margin-top: clamp(2rem, 1.5rem + 2vw, 3.5rem);
+  background: var(--grafit);
+  padding-block: clamp(1.5rem, 1rem + 2vw, 3rem);
+  padding-inline: var(--gutter);
 }
 
-/* --- plates ---------------------------------------------------------------
-   JS-off / prerendered: every plate is an ordinary block in the flow, so all
-   three projects read as a list. Once live, they stack into one frame. */
 .work__plates {
   list-style: none;
   display: grid;
@@ -331,11 +301,22 @@ onUnmounted(() => {
   gap: 1.25rem;
 }
 
-.plate__media {
+/* The window into the live site. */
+.plate__frame {
   position: relative;
   overflow: hidden;
-  border: 1px solid var(--mreza-strong);
-  background: var(--grafit);
+  width: 100%;
+  margin-inline: auto;
+  background: #000;
+  line-height: 0;
+}
+
+/* <picture> is inline by default, so a percentage height on the image would
+   resolve against IT (auto) and collapse the shot. Make it fill the frame. */
+.plate__frame picture {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .plate__shot {
@@ -343,12 +324,18 @@ onUnmounted(() => {
   height: auto;
 }
 
+.plate__meta {
+  display: grid;
+  gap: 0.4rem;
+  color: var(--list);
+}
+
 .plate__name {
   font-family: var(--font-display);
   font-stretch: var(--wdth-monument);
   font-weight: 300;
-  font-size: clamp(1.7rem, 1.2rem + 2.4vw, 3rem);
-  line-height: 1.08;
+  font-size: clamp(1.5rem, 1.1rem + 1.8vw, 2.2rem);
+  line-height: 1.1;
   letter-spacing: -0.015em;
 }
 
@@ -356,109 +343,29 @@ onUnmounted(() => {
   text-decoration: none;
 }
 
-/* The glitch host: ghosts are absolutely positioned inside it. */
-.plate__name-inner {
-  position: relative;
-  display: inline-block;
-}
-
 .plate__sector {
-  color: var(--grafit-2);
+  color: var(--papir-dim);
 }
 
 .plate__desc {
-  max-width: 46ch;
+  color: var(--list);
+  max-width: 52ch;
 }
 
 .plate__proof {
   font-style: italic;
-  color: var(--rez);
-  max-width: 44ch;
-}
-
-/* --- lemur: console strip -------------------------------------------------- */
-.plate__console {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 2;
-  display: flex;
-  align-items: baseline;
-  gap: 0.75rem;
-  padding: 0.5rem 0.9rem;
-  background: rgb(19 18 32 / 0.92); /* lemur's own terminal ground */
-  border-top: 1px solid rgb(127 89 245 / 0.4);
-  /* CRT scanlines — decoration only. */
-  background-image: repeating-linear-gradient(
-    0deg,
-    transparent 0 5px,
-    rgb(168 139 255 / 0.05) 5px 6px
-  );
-}
-
-.plate__console-line {
-  color: #a88bff;
-  font-size: 0.68rem;
-}
-
-.plate__console-line--dim {
-  font-family: var(--font-display);
-  font-stretch: var(--wdth-datum);
-  color: #6e6890;
-  font-size: 0.68rem;
-  letter-spacing: 0.06em;
-}
-
-.plate__caret {
-  width: 6px;
-  height: 0.85em;
-  margin-left: auto;
-  background: #a88bff;
-}
-
-/* --- mercpeter: rotating caption ------------------------------------------- */
-.plate__ticker {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.55rem 0.9rem;
-  background: rgb(38 40 44 / 0.92); /* mercpeter's own graphite */
-  color: #ece9e2;
-}
-
-/* The clip box is what makes the swap read as rising from under a mask. */
-.plate__ticker-clip {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  display: block;
-}
-
-.plate__ticker-item {
-  display: block;
-  font-family: var(--font-text);
-  font-style: italic;
-  font-size: 0.82rem;
-  line-height: 1.5;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-}
-
-.plate__ring {
-  flex: 0 0 auto;
-  color: #d2453e; /* mercpeter's own accent */
+  color: var(--rez-na-temnem);
+  max-width: 48ch;
 }
 
 /* --- controls -------------------------------------------------------------- */
 .work__controls {
-  display: none;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .work__thumbs {
@@ -470,28 +377,28 @@ onUnmounted(() => {
 .work__thumb {
   display: block;
   padding: 0;
-  border: 1px solid var(--mreza-strong);
+  border: 1px solid var(--crta-na-temnem);
   background: none;
   cursor: pointer;
   line-height: 0;
-  opacity: 0.45;
+  opacity: 0.4;
   transition:
     opacity var(--t-lift) var(--ease-out),
     border-color var(--t-lift) var(--ease-out);
 }
 
 .work__thumb img {
-  width: 74px;
+  width: 64px;
   height: auto;
 }
 
 .work__thumb:hover {
-  opacity: 0.8;
+  opacity: 0.75;
 }
 
 .work__thumb--on {
   opacity: 1;
-  border-color: var(--rez);
+  border-color: var(--rez-na-temnem);
 }
 
 .work__step {
@@ -501,21 +408,21 @@ onUnmounted(() => {
   width: 44px;
   height: 44px;
   background: none;
-  border: 1px solid var(--mreza-strong);
-  color: var(--grafit);
+  border: 1px solid var(--crta-na-temnem);
+  color: var(--list);
   cursor: pointer;
   transition: border-color var(--t-lift) var(--ease-out);
 }
 
 .work__step:hover {
-  border-color: var(--grafit);
+  border-color: var(--list);
 }
 
 .work__progress {
   display: block;
   width: 5rem;
   height: 1px;
-  background: var(--mreza-strong);
+  background: var(--crta-na-temnem);
   overflow: hidden;
 }
 
@@ -523,20 +430,29 @@ onUnmounted(() => {
   display: block;
   width: 100%;
   height: 100%;
-  background: var(--rez);
+  background: var(--rez-na-temnem);
   transform: scaleX(0);
   transform-origin: left center;
 }
 
+/* --- the written record, below the stage ----------------------------------- */
+.work__foot {
+  padding-block: clamp(2.5rem, 2rem + 3vw, 4.5rem);
+}
+
+.work__title {
+  margin-top: 1rem;
+}
+
+.work__intro {
+  margin-top: 1.25rem;
+  color: var(--grafit-2);
+}
+
 /* --- live: one plate at a time ---------------------------------------------
-   ONE rule block for the stacked state, and the load-bearing part — which
-   plate is visible — is mirrored as an INLINE style from JS (see paint()).
-   Both precautions are the house rule about the minifier, and both were
-   earned here: a `.work--live .plate` ancestor was dropped by the scoped
-   compiler, and then a second `.plate--off` block with the same selector had
-   its opacity/visibility declarations dropped while its grid-area survived.
-   An inline style survives any build transform; if this CSS vanished entirely
-   the plates would still swap correctly. */
+   ONE rule block, single class, no ancestor: the scoped compiler dropped a
+   `.work--live .plate` ancestor here once, and a duplicate-selector block lost
+   its opacity to the minifier. Visibility itself is set inline from paint(). */
 .plate--stacked {
   grid-area: 1 / 1;
   transition:
@@ -549,27 +465,44 @@ onUnmounted(() => {
 }
 
 @media (min-width: 900px) {
-  .plate--stacked {
-    grid-template-columns: minmax(0, 15fr) minmax(0, 9fr);
-    gap: 2.5rem;
-    align-items: center;
-  }
-
-  .plate--stacked .plate__media {
-    aspect-ratio: 16 / 9;
+  /* The preview takes roughly half the visible field and is centred, so the
+     three sites are the subject of the screen. */
+  .plate--stacked .plate__frame {
+    height: min(52vh, 30rem);
+    aspect-ratio: 2 / 1;
+    width: auto;
+    max-width: 100%;
   }
 
   .plate--stacked .plate__shot {
+    width: 100%;
     height: 100%;
     object-fit: cover;
     object-position: top center;
   }
 
-  .work__controls {
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
-    margin-top: 1.75rem;
+  .plate--stacked .plate__meta {
+    max-width: 76rem;
+    margin-inline: auto;
+    width: 100%;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    column-gap: 2.5rem;
+    align-items: start;
+  }
+
+  .plate--stacked .plate__name {
+    grid-column: 1;
+  }
+  .plate--stacked .plate__sector {
+    grid-column: 1;
+  }
+  .plate--stacked .plate__desc {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+  .plate--stacked .plate__proof {
+    grid-column: 2;
+    grid-row: 3;
   }
 }
 </style>

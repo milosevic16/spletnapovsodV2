@@ -1,13 +1,12 @@
 <script setup lang="ts">
 /**
- * The opening statement. Composition follows the agency convention the brief
- * asked for — a small lead set above a large, light headline, asymmetric on a
- * 24-column grid — but the scale, palette and voice are ours: our own type
- * tokens, our own copy, our own cut motif.
+ * The opening band: deliberately SHORT. The lead sits high on the right, the
+ * headline lands under it, and the band ends — so the work stage below is
+ * already in the first screen rather than a scroll away. The page's subject is
+ * the client sites, not this paragraph.
  *
- * Deliberately calm and JS-free: the drama in the first screen belongs to the
- * carousel below it. The only motion here is the arrival settle in base.css,
- * which plays once per hard load.
+ * No JS: the only motion here is the arrival settle in base.css, once per
+ * hard load.
  */
 import { hero, meta } from '@/content/home'
 import PrerezLine from './PrerezLine.vue'
@@ -25,9 +24,6 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
   <section class="stmt">
     <div class="container stmt__grid">
       <p class="kicker stmt__kicker">{{ hero.kicker }}</p>
-
-      <!-- Lead above the headline, in the narrow measure — the eye reads the
-           qualifier, then the claim. -->
       <p class="stmt__lead">{{ hero.lead }}</p>
 
       <h1 class="stmt__title">
@@ -40,39 +36,34 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
           hero.ctaSecondary.label
         }}</a>
       </div>
-    </div>
 
-    <!-- The cut closes the statement and hands off to the work below. Its
-         annotation is the page's real <title>, so it renders as an emission. -->
-    <div class="container stmt__fold">
-      <PrerezLine emission :annotation="titleTag" :gloss="hero.foldGloss" />
+      <!-- The cut closes the band. Its annotation is the page's real <title>,
+           so it renders as an emission. -->
+      <div class="stmt__fold">
+        <PrerezLine emission :annotation="titleTag" :gloss="hero.foldGloss" />
+      </div>
     </div>
   </section>
 </template>
 
 <style scoped>
 .stmt {
-  padding-top: clamp(4rem, 3rem + 5vw, 7rem);
-  padding-bottom: clamp(2rem, 1.5rem + 2vw, 3.5rem);
+  padding-top: 1.5rem;
+  padding-bottom: clamp(1.25rem, 1rem + 1.5vw, 2.25rem);
 }
 
 .stmt__grid {
   display: grid;
-  gap: 1.25rem;
-}
-
-.stmt__kicker {
-  margin-bottom: 0.5rem;
+  gap: 1.1rem;
 }
 
 .stmt__lead {
   font-size: var(--fs-lead);
-  line-height: 1.55;
+  line-height: 1.5;
   max-width: 46ch;
   color: var(--grafit-2);
 }
 
-/* Light and wide — monumentality through size and width, never boldness. */
 .stmt__title {
   max-width: 18ch;
 }
@@ -82,7 +73,7 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
 }
 
 .stmt__cta {
-  margin-top: 0.75rem;
+  margin-top: 0.35rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -134,45 +125,52 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
   }
 }
 
-/* Desktop: the asymmetric 24-column composition — lead in a narrow column on
-   the right, the headline spanning wide beneath it, the CTA row anchored left
-   so the eye travels lead → claim → action. */
+/* Desktop: lead high on the right, headline beneath it, CTA left — and the
+   whole band kept short so the stage clears the fold. */
 @media (min-width: 900px) {
+  .stmt {
+    padding-top: 0;
+  }
+
   .stmt__grid {
     grid-template-columns: repeat(24, minmax(0, 1fr));
     column-gap: 1rem;
-    row-gap: 2.75rem;
+    row-gap: 1.25rem;
     align-items: start;
   }
 
   .stmt__kicker {
-    grid-column: 1 / span 8;
+    grid-column: 1 / span 10;
     grid-row: 1;
-    margin-bottom: 0;
+    align-self: center;
   }
 
   .stmt__lead {
-    grid-column: 14 / span 9;
+    grid-column: 13 / span 11;
     grid-row: 1;
-    font-size: 0.95rem;
-    line-height: 1.65;
+    font-size: 1rem;
+    line-height: 1.6;
   }
 
   .stmt__title {
-    grid-column: 1 / span 21;
+    grid-column: 10 / span 15;
     grid-row: 2;
     max-width: none;
+    font-size: clamp(2.2rem, 0.9rem + 2.8vw, 3.2rem);
   }
 
   .stmt__cta {
-    grid-column: 1 / span 14;
-    grid-row: 3;
+    grid-column: 1 / span 9;
+    grid-row: 2;
+    align-self: end;
     margin-top: 0;
   }
 
   .stmt__fold {
     display: block;
-    margin-top: clamp(2.5rem, 2rem + 3vw, 4rem);
+    grid-column: 1 / span 24;
+    grid-row: 3;
+    margin-top: 0.5rem;
   }
 }
 </style>

@@ -1,18 +1,22 @@
 /**
- * Signature effects for the work carousel — one per reference, each recreating
- * the motion that site actually ships. The mechanics are ported from our own
- * source repos (milosevic16/lemurlegal, milosevic16/petermercspletna); the
- * code here is a rewrite against this project's `fx` tracker and tokens.
+ * In-frame previews for the work carousel.
  *
- * House rules that shape all three:
- *  - Effects READ what the template declares. None of them is the source of
- *    any text — every string is prerendered, so crawlers and JS-off readers
- *    see the complete slide.
- *  - Injected ornament is aria-hidden, pointer-events:none, born hidden via
- *    JS inline style (never CSS), and re-entrancy guarded.
- *  - Only the ACTIVE slide's effect runs. `play()` / `pause()` are driven by
- *    the carousel, so at most one loop is live at a time.
- *  - Everything routes through the caller's tracker and dies with `dispose()`.
+ * THE RULE THAT SHAPES ALL OF THESE: the frame is a window into the running
+ * site. Every effect is painted INSIDE the preview, positioned over the region
+ * of the screenshot where that motion actually happens on the live site — so
+ * the plate reads as the real page running, not as our page decorating itself.
+ * Nothing here ever touches our own headings or chrome.
+ *
+ * The mechanics are ported from the sites' own source repos
+ * (milosevic16/lemurlegal, milosevic16/petermercspletna) and rebuilt against
+ * this project's `fx` tracker.
+ *
+ * Coordinates are percentages of the frame, which shows each screenshot at its
+ * native 2:1 with no cropping — so the overlays land on the real elements.
+ *
+ * House rules held throughout: injected ornament is aria-hidden,
+ * pointer-events:none, born hidden via inline style (never CSS), and
+ * re-entrancy guarded. Only the ACTIVE plate's effect runs.
  */
 import type { Fx } from './fx'
 
@@ -23,144 +27,192 @@ export interface SlideEffect {
 
 const noop: SlideEffect = { play() {}, pause() {} }
 
-/** Marks a host as already decorated, so a remount cannot stack ornament. */
-function claim(host: HTMLElement, key: string): boolean {
-  if (host.querySelector(`:scope > [data-fx="${key}"]`)) return false
-  return true
+/** One ornament layer inside the frame; refuses to stack on remount. */
+function layer(frame: HTMLElement, key: string, css: string): HTMLElement | null {
+  if (frame.querySelector(`:scope > [data-fx="${key}"]`)) return null
+  const el = document.createElement('span')
+  el.setAttribute('aria-hidden', 'true')
+  el.setAttribute('data-fx', key)
+  el.style.cssText = `position:absolute;pointer-events:none;${css}`
+  frame.appendChild(el)
+  return el
 }
 
 /* ---------------------------------------------------------------------------
-   1. lemur.legal — glitch + console
-   Ported from Home.effects.ts "HERO TITLE GLITCH" (chromatic ghosts flashing
-   through random clip slices in hard steps()) and the .console CRT treatment.
-   The ghost colours are the client's OWN sampled inks, passed in from content.
+   lemur.legal — the site glitches its own headline and runs a console.
+   Ported from Home.effects.ts "HERO TITLE GLITCH" + the .console CRT panel.
+   Placement: the headline band sits in the upper ~62% of the crop; the status
+   line runs along the bottom.
 --------------------------------------------------------------------------- */
-export function glitchTerminal(
-  host: HTMLElement,
+export function lemurPreview(
+  frame: HTMLElement,
   fx: Fx,
-  opts: { inks: string[]; caret: HTMLElement | null },
+  opts: { inks: string[] },
 ): SlideEffect {
-  const target = host.querySelector<HTMLElement>('[data-glitch]')
-  if (!target || !claim(host, 'glitch')) return noop
+  // CRT scanlines over the whole frame — the console's own texture.
+  layer(
+    frame,
+    'crt',
+    'inset:0;opacity:0;z-index:2;mix-blend-mode:overlay;' +
+      'background:repeating-linear-gradient(0deg,transparent 0 3px,rgb(168 139 255 / 0.5) 3px 4px);',
+  )
+  // Two chromatic split bands that flash across the headline region, in the
+  // site's own violet and mint.
+  const bands = [opts.inks[2] ?? '#7F59F5', opts.inks[3] ?? '#1FC49A'].map((col, i) =>
+    layer(
+      frame,
+      `band${i}`,
+      `left:0;right:0;top:6%;height:56%;opacity:0;z-index:3;mix-blend-mode:screen;background:${col};`,
+    ),
+  )
+  // The tear bar — a hard horizontal slip, as on the live site.
+  const tear = layer(
+    frame,
+    'tear',
+    'left:0;right:0;top:30%;height:2px;opacity:0;z-index:4;background:#D2DDD7;',
+  )
+  // The console caret, where the site's status line runs.
+  const caret = layer(
+    frame,
+    'caret',
+    'left:2.5%;bottom:4%;width:7px;height:14px;opacity:0;z-index:4;background:#A88BFF;',
+  )
 
-  const text = target.textContent ?? ''
-  // Three chromatic ghosts of the same word, screen-blended — decorative
-  // duplicates of text that already exists in the markup.
-  const ghosts = opts.inks.slice(2, 5).map((col) => {
-    const g = document.createElement('span')
-    g.setAttribute('aria-hidden', 'true')
-    g.setAttribute('data-fx', 'glitch')
-    g.textContent = text
-    g.style.cssText =
-      'position:absolute;top:0;left:0;width:100%;pointer-events:none;opacity:0;' +
-      `font:inherit;letter-spacing:inherit;line-height:inherit;color:${col};mix-blend-mode:screen;`
-    target.appendChild(g)
-    return g
-  })
+  const crt = frame.querySelector<HTMLElement>('[data-fx="crt"]')
+  if (!crt) return noop
 
   const rnd = (a: number, b: number) => a + Math.random() * (b - a)
-  const pct = () => `${(Math.random() * 80 + 5) | 0}%`
-  const slice = (s: string, e: string) => `polygon(0 ${s},100% ${s},100% ${e},0 ${e})`
-
   let running = false
   let caretOn = true
 
   function burst() {
     if (!running) return
-    fx.anim(
-      target!,
-      [
-        { transform: 'none' },
-        { transform: `translateX(${rnd(-7, 7)}px) skewX(${rnd(-4, 4)}deg)`, offset: 0.08 },
-        { transform: `translateX(${rnd(-9, 9)}px) skewX(${rnd(-5, 5)}deg)`, offset: 0.28 },
-        { transform: `translateX(${rnd(-6, 6)}px) skewX(${rnd(-3, 3)}deg)`, offset: 0.56 },
-        { transform: 'none' },
-      ],
-      { duration: 420, easing: 'steps(7,end)', fill: 'none' },
-    )
-    ghosts.forEach((g, i) => {
-      const a = pct()
-      const b = pct()
-      fx.setTimeout(() => {
-        if (!running) return
-        fx.anim(
-          g,
-          [
-            { opacity: 0, transform: 'none', clipPath: 'none' },
-            {
-              opacity: 1,
-              transform: `translateX(${rnd(-11, -6)}px)`,
-              clipPath: slice(a < b ? a : b, a < b ? b : a),
-              offset: 0.05,
-            },
-            { opacity: 0, transform: 'none', clipPath: 'none', offset: 0.34 },
-            {
-              opacity: 0.9,
-              transform: `translateX(${rnd(6, 11)}px)`,
-              clipPath: slice('52%', '88%'),
-              offset: 0.62,
-            },
-            { opacity: 0, transform: 'none', clipPath: 'none' },
-          ],
-          { duration: 420 - i * 10, easing: `steps(${6 - i},end)`, fill: 'none' },
-        )
-      }, i * 55)
-    })
+    for (const [i, b] of bands.entries()) {
+      if (!b) continue
+      const y = rnd(4, 48)
+      b.style.top = `${y}%`
+      b.style.height = `${rnd(6, 22)}%`
+      fx.anim(
+        b,
+        [
+          { opacity: 0, transform: 'translateX(0)' },
+          { opacity: 0.5, transform: `translateX(${rnd(-2.5, -1)}%)`, offset: 0.2 },
+          { opacity: 0, transform: 'translateX(0)', offset: 0.45 },
+          { opacity: 0.4, transform: `translateX(${rnd(1, 2.5)}%)`, offset: 0.7 },
+          { opacity: 0, transform: 'translateX(0)' },
+        ],
+        { duration: 360 - i * 40, easing: `steps(${5 - i},end)`, fill: 'none' },
+      )
+    }
+    if (tear) {
+      tear.style.top = `${rnd(8, 62)}%`
+      fx.anim(
+        tear,
+        [
+          { opacity: 0, height: '1px' },
+          { opacity: 0.9, height: '6px', offset: 0.15 },
+          { opacity: 0.5, height: '2px', offset: 0.6 },
+          { opacity: 0, height: '1px' },
+        ],
+        { duration: 220, easing: 'steps(4,end)', fill: 'none' },
+      )
+    }
   }
 
-  /** Recursive random scheduling — never an infinite loop. */
   function schedule() {
     if (!running) return
     fx.setTimeout(() => {
       if (!running) return
       burst()
       schedule()
-    }, rnd(1400, 3200))
+    }, rnd(1600, 3600))
   }
 
-  /** The console caret: one slow blink, only while this slide is live. */
   function blink() {
-    if (!running || !opts.caret) return
+    if (!running || !caret) return
     caretOn = !caretOn
-    opts.caret.style.opacity = caretOn ? '1' : '0.15'
-    fx.setTimeout(blink, 540)
+    caret.style.opacity = caretOn ? '1' : '0'
+    fx.setTimeout(blink, 560)
   }
 
   return {
     play() {
       if (running) return
       running = true
-      fx.setTimeout(burst, 420)
+      crt.style.opacity = '0.35'
+      if (caret) caret.style.opacity = '1'
+      fx.setTimeout(burst, 500)
       schedule()
       blink()
     },
     pause() {
       running = false
-      for (const g of ghosts) g.style.opacity = '0'
-      if (opts.caret) opts.caret.style.opacity = '1'
+      crt.style.opacity = '0'
+      for (const b of bands) if (b) b.style.opacity = '0'
+      if (tear) tear.style.opacity = '0'
+      if (caret) caret.style.opacity = '0'
     },
   }
 }
 
 /* ---------------------------------------------------------------------------
-   2. mercpeter.netlify.app — the rotating caption strip
-   Ported from Home.effects.ts `_advDocket()` + the `pTick` progress loop:
-   a line swaps on a fixed cycle, rising from under its own clip box, while a
-   ring fills clockwise toward the next swap. Both read the SAME timestamp, so
-   the ring and the rotation can never drift apart.
+   mercpeter.netlify.app — the site rotates a caption in the bar under his
+   name. Ported from Home.effects.ts `_advDocket()` + the `pTick` ring loop:
+   the line rises from under its own clip box, and the ring reads the SAME
+   timestamp as the rotation so the two can never drift apart.
+   Placement: over the name bar, lower-left of the crop.
 --------------------------------------------------------------------------- */
 const TICKER_CYCLE_MS = 3400
-/** 2π · 7.5 — the dasharray of the 15px progress ring. */
+/** 2π · 7.5 — the dasharray of the progress ring. */
 const RING_CIRCUMFERENCE = 47.12
 
-export function captionTicker(host: HTMLElement, fx: Fx): SlideEffect {
-  const item = host.querySelector<HTMLElement>('[data-ticker-item]')
-  const ring = host.querySelector<SVGCircleElement>('[data-ticker-ring]')
-  // The lines are declared in the markup; this reads them, never writes them.
-  const lines = Array.from(host.querySelectorAll<HTMLElement>('[data-ticker-line]')).map(
-    (n) => n.textContent ?? '',
-  )
-  if (!item || lines.length < 2) return noop
+export function mercPreview(frame: HTMLElement, fx: Fx, lines: string[]): SlideEffect {
+  if (lines.length < 2 || frame.querySelector(':scope > [data-fx="docket"]')) return noop
+
+  const bar = document.createElement('span')
+  bar.setAttribute('aria-hidden', 'true')
+  bar.setAttribute('data-fx', 'docket')
+  bar.style.cssText =
+    'position:absolute;left:0;right:0;bottom:0;z-index:3;pointer-events:none;opacity:0;' +
+    'display:flex;align-items:center;gap:0.6rem;padding:0.45rem 0.9rem;' +
+    'background:rgb(38 40 44 / 0.94);color:#ECE9E2;font-size:0.72rem;line-height:1.4;'
+
+  const clip = document.createElement('span')
+  clip.style.cssText = 'flex:1;min-width:0;overflow:hidden;display:block;'
+  const item = document.createElement('span')
+  item.style.cssText =
+    'display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-style:italic;'
+  item.textContent = lines[0]!
+  clip.appendChild(item)
+
+  const ns = 'http://www.w3.org/2000/svg'
+  const svg = document.createElementNS(ns, 'svg')
+  svg.setAttribute('viewBox', '0 0 18 18')
+  svg.setAttribute('width', '13')
+  svg.setAttribute('height', '13')
+  svg.style.cssText = 'flex:0 0 auto;color:#D2453E;'
+  const track = document.createElementNS(ns, 'circle')
+  track.setAttribute('cx', '9')
+  track.setAttribute('cy', '9')
+  track.setAttribute('r', '7.5')
+  track.setAttribute('fill', 'none')
+  track.setAttribute('stroke', 'currentColor')
+  track.setAttribute('stroke-opacity', '0.28')
+  track.setAttribute('stroke-width', '1.6')
+  const ring = document.createElementNS(ns, 'circle')
+  ring.setAttribute('cx', '9')
+  ring.setAttribute('cy', '9')
+  ring.setAttribute('r', '7.5')
+  ring.setAttribute('fill', 'none')
+  ring.setAttribute('stroke', 'currentColor')
+  ring.setAttribute('stroke-width', '1.6')
+  ring.setAttribute('stroke-dasharray', String(RING_CIRCUMFERENCE))
+  ring.setAttribute('stroke-dashoffset', String(RING_CIRCUMFERENCE))
+  ring.setAttribute('transform', 'rotate(-90 9 9)')
+  svg.append(track, ring)
+
+  bar.append(clip, svg)
+  frame.appendChild(bar)
 
   let i = 0
   let at = 0
@@ -171,9 +223,9 @@ export function captionTicker(host: HTMLElement, fx: Fx): SlideEffect {
     if (!running) return
     at = Date.now()
     i = (i + 1) % lines.length
-    item!.textContent = lines[i]!
+    item.textContent = lines[i]!
     fx.anim(
-      item!,
+      item,
       [
         { transform: 'translateY(115%)', opacity: 0 },
         { transform: 'translateY(0)', opacity: 1 },
@@ -185,10 +237,8 @@ export function captionTicker(host: HTMLElement, fx: Fx): SlideEffect {
 
   function tick() {
     if (!running) return
-    if (ring) {
-      const p = Math.min(1, (Date.now() - at) / TICKER_CYCLE_MS)
-      ring.style.strokeDashoffset = (RING_CIRCUMFERENCE * (1 - p)).toFixed(2)
-    }
+    const p = Math.min(1, (Date.now() - at) / TICKER_CYCLE_MS)
+    ring.style.strokeDashoffset = (RING_CIRCUMFERENCE * (1 - p)).toFixed(2)
     raf = fx.raf(tick)
   }
 
@@ -196,6 +246,7 @@ export function captionTicker(host: HTMLElement, fx: Fx): SlideEffect {
     play() {
       if (running) return
       running = true
+      bar.style.opacity = '1'
       at = Date.now()
       fx.setTimeout(advance, TICKER_CYCLE_MS)
       tick()
@@ -204,58 +255,64 @@ export function captionTicker(host: HTMLElement, fx: Fx): SlideEffect {
       running = false
       if (raf) cancelAnimationFrame(raf)
       raf = 0
-      // Rest on the line the markup shipped, so the static and live states agree.
-      if (i !== 0) {
-        i = 0
-        item!.textContent = lines[0]!
-      }
-      if (ring) ring.style.strokeDashoffset = String(RING_CIRCUMFERENCE)
+      bar.style.opacity = '0'
+      i = 0
+      item.textContent = lines[0]!
+      ring.style.strokeDashoffset = String(RING_CIRCUMFERENCE)
     },
   }
 }
 
 /* ---------------------------------------------------------------------------
-   3. bloctopus.net — the scan sweep
+   bloctopus.net — a forensic scan sweeping the dark board, over its own grid.
    Ported from landingAnim.ts `sweepKeyframes()`. The pause lives INSIDE the
-   keyframes: endDelay is inert with iterations:Infinity (active duration is
-   Infinity, so the delay never arrives and sweeps repeat back-to-back).
-   Every keyframe states every property — a property missing from a keyframe
-   gets its own interval list with engine-ambiguous easing.
+   keyframes: endDelay is inert with iterations:Infinity, so the active
+   duration is Infinity and the delay never arrives. Every keyframe states
+   every property — a property missing from one gets its own interval list
+   with engine-ambiguous easing.
 --------------------------------------------------------------------------- */
 const SCAN_SWEEP_MS = 2600
-const SCAN_GAP_MS = 1800
+const SCAN_GAP_MS = 1600
 
-export function scanSweep(host: HTMLElement, fx: Fx, opts: { ink: string }): SlideEffect {
-  if (!claim(host, 'scan')) return noop
-
-  const bar = document.createElement('span')
-  bar.setAttribute('aria-hidden', 'true')
-  bar.setAttribute('data-fx', 'scan')
-  // Born hidden via inline style, never CSS — nothing here can hide content.
-  bar.style.cssText =
-    'position:absolute;left:0;right:0;top:0;height:34%;opacity:0;pointer-events:none;z-index:2;' +
-    `background:linear-gradient(180deg,transparent,${opts.ink},transparent);`
-  host.appendChild(bar)
+export function bloctopusPreview(frame: HTMLElement, fx: Fx, ink: string): SlideEffect {
+  const grid = layer(
+    frame,
+    'grid',
+    'inset:0;opacity:0;z-index:2;' +
+      `background-image:linear-gradient(${ink} 1px,transparent 1px),` +
+      `linear-gradient(90deg,${ink} 1px,transparent 1px);background-size:44px 44px;`,
+  )
+  const bar = layer(
+    frame,
+    'scan',
+    'left:0;right:0;top:0;height:26%;opacity:0;z-index:3;' +
+      `background:linear-gradient(180deg,transparent,${ink},transparent);`,
+  )
+  if (!bar) return noop
 
   const cycle = SCAN_SWEEP_MS + SCAN_GAP_MS
   const f = SCAN_SWEEP_MS / cycle
   const at = (p: number) => `translateY(${p}%)`
-  const frames: Keyframe[] = [
-    { offset: 0, transform: at(-120), opacity: 0, easing: 'ease-in' },
-    { offset: f * 0.28, transform: at(-3), opacity: 0.22, easing: 'linear' },
-    { offset: f * 0.72, transform: at(197), opacity: 0.22, easing: 'ease-out' },
-    { offset: f, transform: at(320), opacity: 0, easing: 'linear' },
-    { offset: 1, transform: at(320), opacity: 0 }, // the hold
-  ]
-
-  const anim = fx.anim(bar, frames, { duration: cycle, iterations: Infinity, fill: 'none' })
+  const anim = fx.anim(
+    bar,
+    [
+      { offset: 0, transform: at(-110), opacity: 0, easing: 'ease-in' },
+      { offset: f * 0.28, transform: at(-3), opacity: 0.3, easing: 'linear' },
+      { offset: f * 0.72, transform: at(300), opacity: 0.3, easing: 'ease-out' },
+      { offset: f, transform: at(420), opacity: 0, easing: 'linear' },
+      { offset: 1, transform: at(420), opacity: 0 }, // the hold
+    ],
+    { duration: cycle, iterations: Infinity, fill: 'none' },
+  )
   anim.pause()
 
   return {
     play() {
+      if (grid) grid.style.opacity = '0.16'
       anim.play()
     },
     pause() {
+      if (grid) grid.style.opacity = '0'
       anim.pause()
     },
   }

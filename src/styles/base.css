@@ -19,13 +19,12 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
-/* html AND body carry the poché color: iOS Safari paints the status-bar strip
+/* html AND body carry the SHEET color: iOS Safari paints the status-bar strip
    and overscroll by SAMPLING the page background, not the theme-color meta —
-   and the masthead that meets the strip is a dark band. The app root paints
-   the paper surface on top. */
+   and the band that meets the strip is now paper, not poché. */
 html,
 body {
-  background: var(--grafit);
+  background: var(--list);
 }
 
 body {
@@ -105,7 +104,6 @@ textarea {
 /* On the dark bands the red pencil shifts to its on-dark voice (ring 5.22:1
    on grafit, 5.50:1 on zemlja — measured; the paper-world --rez sits at
    ~2.7:1 there). */
-.masthead :focus-visible,
 .xray :focus-visible,
 .contact :focus-visible,
 .footer :focus-visible {
@@ -219,27 +217,27 @@ textarea {
     animation: settle-down 0.5s var(--ease-out) 0.98s both;
   }
 
-  html[data-intro] .hero__kicker,
-  html[data-intro] .hero__title,
-  html[data-intro] .hero__lead,
-  html[data-intro] .hero__cta,
-  html[data-intro] .hero__aside {
+  html[data-intro] .stmt__kicker,
+  html[data-intro] .stmt__lead,
+  html[data-intro] .stmt__title,
+  html[data-intro] .stmt__cta,
+  html[data-intro] .work__stage {
     animation: settle-up 0.55s var(--ease-out) both;
   }
-  html[data-intro] .hero__kicker {
+  html[data-intro] .stmt__kicker {
     animation-delay: 1.06s;
   }
-  html[data-intro] .hero__title {
+  html[data-intro] .stmt__lead {
     animation-delay: 1.14s;
   }
-  html[data-intro] .hero__lead {
+  html[data-intro] .stmt__title {
     animation-delay: 1.24s;
   }
-  html[data-intro] .hero__cta {
+  html[data-intro] .stmt__cta {
     animation-delay: 1.32s;
   }
-  html[data-intro] .hero__aside {
-    animation-delay: 1.4s;
+  html[data-intro] .work__stage {
+    animation-delay: 1.42s;
   }
 }
 
