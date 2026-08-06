@@ -19,12 +19,11 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
-/* html AND body carry the WASH: iOS Safari paints the status-bar strip and
-   overscroll by SAMPLING the page background, not the theme-color meta — and
-   the top of the page is the warm wash, not bare paper. */
+/* html AND body carry the SHEET colour: iOS Safari paints the status-bar strip
+   and overscroll by SAMPLING the page background, not the theme-color meta. */
 html,
 body {
-  background: var(--wash);
+  background: var(--list);
 }
 
 body {
@@ -37,15 +36,8 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* The warm top wash. Fades to PAPER-AT-ALPHA-0, never the "transparent"
-   keyword, which interpolates through transparent black and lays a grey cast
-   across the middle. Anchored to the top of the document and gone by the time
-   the work stage arrives; every hero token was measured against it at full
-   strength (see --wash in tokens.css). */
 #app {
-  background-color: var(--list);
-  background-image: linear-gradient(to bottom, var(--wash) 0, rgb(245 242 235 / 0) 74vh);
-  background-repeat: no-repeat;
+  background: var(--list);
 }
 
 /* Display: Archivo Expanded at light weight — monumentality through size and

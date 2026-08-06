@@ -92,14 +92,11 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
   background: var(--rez-deep);
 }
 
-/* The one token the wash required adapting: --rez at this size measures
-   3.78:1 on the wash at full strength, under the 4.5 floor for body text.
-   --rez-deep holds 4.93:1 there and stays on-brand. */
 .stmt__more {
   align-self: flex-start;
   padding: 0.65rem 0; /* 44px+ tap target with the 1rem line box */
   font-weight: 600;
-  color: var(--rez-deep);
+  color: var(--rez); /* 5.37:1 on --list — measured */
   text-decoration: underline;
   text-underline-offset: 0.3em;
 }

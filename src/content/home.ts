@@ -154,8 +154,6 @@ export const references = {
     pickLabel: 'Izberite projekt',
   },
   title: 'Nekaj uspešnih prejšnjih projektov',
-  intro:
-    'Od osebnih predstavitev, pravnih pisarn, forenzičnih podjetij in apartmajskih nastanitev pokrivamo vse sektorje in se prilagodimo vsebini. Vsaka stran je oblikovana posebej za namen projekta in ni predloga.',
   items: [
     {
       id: 'lemur',

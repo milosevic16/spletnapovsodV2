@@ -246,7 +246,6 @@ onUnmounted(() => {
       <div class="container">
         <p class="kicker">{{ references.kicker }}</p>
         <h2 class="work__title">{{ references.title }}</h2>
-        <p class="work__intro">{{ references.intro }}</p>
       </div>
     </div>
 
@@ -589,12 +588,6 @@ onUnmounted(() => {
 /* --- the written record, below the stage ----------------------------------- */
 .work__title {
   margin-top: 1rem;
-}
-
-.work__intro {
-  margin-top: 1.25rem;
-  color: var(--grafit-2);
-  max-width: 62ch;
 }
 
 /* --- live: one plate at a time ---------------------------------------------

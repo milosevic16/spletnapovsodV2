@@ -28,7 +28,6 @@
 
 :root {
   /* The sheet (the human layer) */
-  --wash: #f2c4a4; /* warm top wash, fades into --list; grafit 10.75:1, grafit-2 4.74:1, rez-deep 4.93:1 — every hero token holds AA at full strength */
   --list: #f5f2eb; /* drafting-paper page ground; grafit on it 15.29:1 */
   --list-2: #ece8de; /* one step darker — alternating bands, card fills; grafit 13.97:1, grafit-2 6.16:1 */
   --mreza: #d9d3c6; /* sheet frames, drawing hairlines (1.33:1 vs list — line duty, never text) */
