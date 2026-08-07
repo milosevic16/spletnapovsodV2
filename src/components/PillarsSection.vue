@@ -103,6 +103,13 @@ function show(id: string, from: HTMLElement) {
   // Focus follows the expansion; Escape and the close control lead back out.
   panel.querySelector<HTMLElement>('.pil__close')?.focus({ preventScroll: true })
 
+  const body = panel.querySelector<HTMLElement>('.pil__scroll')
+  const veil = panel.querySelector<HTMLElement>('.pil__veil')
+  // A previous close pinned these to their end states (see close()); hand them
+  // back to the stylesheet before animating, or the panel opens blank.
+  if (body) body.style.opacity = ''
+  if (veil) veil.style.opacity = ''
+
   if (prefersReducedMotion()) return
 
   // FLIP: the panel grows out of the plate the visitor clicked.
@@ -114,7 +121,17 @@ function show(id: string, from: HTMLElement) {
     easing: EASE_OPEN,
     fill: 'none',
   })
-  const body = panel.querySelector<HTMLElement>('.pil__scroll')
+  // The veil arrives WITH the expansion, so at plate size the panel reads as
+  // the plate. EASE_OPEN front-loads it: by the time the text starts fading in
+  // at 45% the veil is already near full, so the copy never sits on a
+  // half-darkened image.
+  if (veil) {
+    fx.anim(veil, [{ opacity: 0 }, { opacity: 1 }], {
+      duration: FLIP_MS,
+      easing: EASE_OPEN,
+      fill: 'none',
+    })
+  }
   if (body) {
     fx.anim(body, [{ opacity: 0 }, { opacity: 0, offset: 0.45 }, { opacity: 1 }], {
       duration: FLIP_MS,
@@ -145,22 +162,59 @@ function close(returnFocus = true) {
   // (which is directly beneath it, so it is revealed exactly where it belongs).
   // An opacity-only fade read as a glitch because it did not undo the FLIP.
   panel.style.transformOrigin = '0 0'
-  fx.anim(panel, [{ transform: 'none' }, { transform: to }], {
+  const flip = fx.anim(panel, [{ transform: 'none' }, { transform: to }], {
     duration: FLIP_MS,
     easing: EASE_CLOSE,
     fill: 'none',
   })
   const body = panel.querySelector<HTMLElement>('.pil__scroll')
-  if (body) {
-    fx.anim(body, [{ opacity: 1 }, { opacity: 0, offset: 0.55 }, { opacity: 0 }], {
-      duration: FLIP_MS,
-      easing: 'ease-in',
-      fill: 'none',
-    })
+  const veil = panel.querySelector<HTMLElement>('.pil__veil')
+
+  /**
+   * Pin an end state inline when its animation lands.
+   *
+   * These rest at full strength in the stylesheet, and `fill: 'none'` snaps a
+   * finished animation straight back to that rest — so between the FLIP
+   * landing and the panel being dropped, the veil returned to 86% graphite
+   * over the plate: a black flash at the very end of every close (reported on
+   * desktop and phone alike). Pinning the last keyframe inline removes the
+   * snap; show() hands both back to the stylesheet before reopening.
+   */
+  const pin = (el: HTMLElement | null, a: Animation) => {
+    if (!el) return
+    a.finished
+      .then(() => {
+        el.style.opacity = '0'
+      })
+      .catch(() => {})
   }
-  // Paired with FLIP_MS above; lands the state even if the animation never
-  // advances (throttled tab).
-  fx.setTimeout(done, FLIP_MS + 40)
+  if (veil) {
+    pin(
+      veil,
+      fx.anim(veil, [{ opacity: 1 }, { opacity: 0 }], {
+        duration: FLIP_MS,
+        easing: EASE_CLOSE,
+        fill: 'none',
+      }),
+    )
+  }
+  if (body) {
+    pin(
+      body,
+      fx.anim(body, [{ opacity: 1 }, { opacity: 0, offset: 0.55 }, { opacity: 0 }], {
+        duration: FLIP_MS,
+        easing: 'ease-in',
+        fill: 'none',
+      }),
+    )
+  }
+
+  // Drop the panel the moment the FLIP lands, so there is no window at all in
+  // which a finished animation is still on screen. The timeout is only the
+  // fallback for a throttled tab, where `finished` may never resolve; done()
+  // is idempotent, so whichever arrives first wins.
+  flip.finished.then(done).catch(done)
+  fx.setTimeout(done, FLIP_MS + 120)
 }
 
 function toggle(id: string, ev: Event) {
@@ -246,7 +300,10 @@ function srcset(id: string, ext: string) {
         </button>
 
         <article :id="`pilp-${p.id}`" class="pil__panel" :aria-label="p.title">
-          <!-- The plate as the panel's ground (and the static page's figure). -->
+          <!-- The plate as the panel's ground (and the static page's figure).
+               The veil is a real element, not a ::after, so the FLIP can fade
+               it: at plate size the panel must look like the plate, or the
+               close ends on a dark rectangle over it. -->
           <figure class="pil__cover" aria-hidden="true">
             <picture>
               <source type="image/avif" :srcset="srcset(p.id, 'avif')" :sizes="sizesCover" />
@@ -262,6 +319,7 @@ function srcset(id: string, ext: string) {
                 decoding="async"
               />
             </picture>
+            <span class="pil__veil"></span>
           </figure>
 
           <div class="pil__scroll">
@@ -560,8 +618,14 @@ function srcset(id: string, ext: string) {
   object-fit: cover;
 }
 
-.pil--live .pil__cover::after {
-  content: '';
+/* Only the wall's panel is veiled; the static figure sits on paper with its
+   text below it and needs none. */
+.pil__veil {
+  display: none;
+}
+
+.pil--live .pil__veil {
+  display: block;
   position: absolute;
   inset: 0;
   background: rgb(26 28 30 / 0.86);
