@@ -32,13 +32,11 @@ export interface InvisibleItem {
 export interface Reference {
   id: string
   name: string
+  /** The one-line description in the stage's bottom-left corner. */
   sector: string
   url: string
   /** Display form of the URL, without scheme. */
   urlLabel: string
-  description: string
-  /** What this build proves about us — one line. */
-  proof: string
   /**
    * "The inks the job ran in" — the site's REAL palette, sampled from its live
    * CSS custom properties (lemur, mercpeter) or rendered pixels (bloctopus,
@@ -89,7 +87,10 @@ export interface ContactTopic {
 
 export const nav: NavItem[] = [
   { target: 'reference', label: 'Reference' },
-  { target: 'paketi', label: 'Kaj vključuje storitev' },
+  // »Paketi« for the narrow four-button strip — matches the section's own
+  // »Kaj vsebujejo vsi paketi?« and the anchor id. (Was »Kaj vključuje
+  // storitev«, which cannot fit a one-row strip on a 320px phone.)
+  { target: 'paketi', label: 'Paketi' },
   { target: 'razlike', label: 'Zakaj mi' },
   { target: 'kontakt', label: 'Kontakt' },
 ]
@@ -146,21 +147,22 @@ export const invisible = {
 }
 
 export const references = {
-  kicker: 'Reference',
   /** Screen-reader suffix on each reference link (target="_blank" warning). */
   newWindowNote: 'odpre se v novem zavihku',
   /**
-   * Carousel control labels. These name affordances that exist ONLY once the
-   * carousel hydrates — with JS off every plate is visible in flow and there
-   * are no controls — so they live under the `feedback` key the content guard
-   * skips by contract, exactly like the form's interaction strings.
+   * Interaction-and-attribute strings. The control labels name affordances
+   * that exist ONLY once the carousel hydrates — with JS off every plate is
+   * visible in flow and there are no controls — so they live under the
+   * `feedback` key the content guard skips by contract, exactly like the
+   * form's interaction strings. regionLabel is the section's aria-label (the
+   * band deliberately carries no visible heading).
    */
   feedback: {
+    regionLabel: 'Reference',
     prevLabel: 'Prejšnji projekt',
     nextLabel: 'Naslednji projekt',
     pickLabel: 'Izberite projekt',
   },
-  title: 'Nekaj uspešnih prejšnjih projektov',
   items: [
     {
       id: 'lemur',
@@ -168,9 +170,6 @@ export const references = {
       sector: 'Pravna pisarna za tehnološko pravo',
       url: 'https://lemur.legal',
       urlLabel: 'lemur.legal',
-      description:
-        'Dvojezična stran specializirane pravne pisarne za kripto, deep tech in obrambno industrijo.',
-      proof: 'Uredniška tipografija in stroga struktura za zahtevno pravno občinstvo.',
       inks: ['#D2DDD7', '#131220', '#7F59F5', '#1FC49A', '#C4823A'],
       alt: 'Posnetek naslovnice spletne strani Lemur Legal',
       image: { width: 1552, height: 776, widths: [560, 776, 1104, 1552] },
@@ -181,9 +180,6 @@ export const references = {
       sector: 'Osebna predstavitev — pravnik in investitor',
       url: 'https://mercpeter.netlify.app',
       urlLabel: 'mercpeter.netlify.app',
-      description:
-        'Osebna stran z interaktivnim zemljevidom delovanja, časovnico kariere in medijskim arhivom.',
-      proof: 'Interaktivno središče, ki deluje brezhibno tudi na telefonu.',
       inks: ['#ECE9E2', '#26282C', '#D2453E', '#B4AEA1'],
       alt: 'Posnetek naslovnice spletne strani Petra Merca',
       image: { width: 1792, height: 896, widths: [560, 840, 1184, 1792] },
@@ -194,10 +190,7 @@ export const references = {
       sector: 'Forenzika kriptovalut',
       url: 'https://bloctopus.net',
       urlLabel: 'bloctopus.net',
-      description:
-        'Predstavitev forenzičnega podjetja z rešenimi primeri in ločenimi potmi za posameznike in podjetja.',
-      proof: 'Zaupanja vredna predstavitev za občutljivo panogo.',
-      inks: ['#1A2B38', '#1FC496', '#F2F6F4'],
+      inks: ['#1A2B38', '#1FC49A', '#F2F6F4'],
       alt: 'Posnetek naslovnice spletne strani Bloctopus Intelligence',
       image: { width: 1792, height: 896, widths: [560, 840, 1184, 1792] },
     },

@@ -1,16 +1,15 @@
 /**
  * Reference-plate image pipeline. Re-run to REFRESH the portfolio screenshots:
  *
- *   1. capture fresh PNGs into capture/ at 2× density (headless Edge):
- *      msedge --headless --disable-gpu --hide-scrollbars --force-device-scale-factor=2 \
- *             --user-data-dir=scripts\edge-tmp --screenshot=capture/<site>-desktop.png \
- *             --window-size=1440,900 --virtual-time-budget=25000 <url>
- *      Expect 2880×1800 output; the DSF flag occasionally no-ops on a cold
- *      profile — re-run the capture until the PNG measures 2880×1800.
- *      (lemur.legal: use capture/lemur-c.png naming or update SOURCES below; its rotating
- *       intro line is mid-animation in every frame — the crop starts below it on purpose.)
+ *   1. node scripts/capture-references.mjs
+ *      (drives installed Edge via puppeteer-core; hides each site's animated
+ *      hero elements so the capture is the site AT REST — the animations are
+ *      re-implemented live in src/lib/slide-effects.ts — and writes
+ *      capture/geometry.json with the measured element boxes the previews
+ *      position themselves by. Expect 2880×1800 PNGs.)
  *   2. node scripts/build-reference-images.mjs
- *   3. commit the regenerated public/img/refs/ outputs.
+ *   3. commit the regenerated public/img/refs/ outputs; if geometry moved,
+ *      re-derive the percentages in slide-effects.ts from geometry.json.
  *
  * POST-LAUNCH refreshes must BUMP the filename version (e.g. lemur-v2-560.avif,
  * updating the content module's widths/id wiring): /img/* ships with an
@@ -31,8 +30,11 @@ mkdirSync(outDir, { recursive: true })
 /** Art-directed 2:1 crops — coordinates in DEVICE px on the 2880×1800 captures
  *  (double the CSS-px framing of the original 1× crops). */
 const SOURCES = [
-  // lemur: right edge stops short of the terminal panel (left edge at x≈847 CSS)
-  { id: 'lemur', file: 'capture/lemur-c.png', crop: { left: 128, top: 624, width: 1552, height: 776 }, widths: [560, 776, 1104, 1552] },
+  // lemur: the full landing composition — glitch intro line (blanked at
+  // capture, re-typed live), headline, CTAs, status dots AND the terminal
+  // console. Top sits 2px under the hexrow so the console's HUD corners stay
+  // whole; geometry.json is the authority for these numbers.
+  { id: 'lemur', file: 'capture/lemur-desktop.png', crop: { left: 48, top: 500, width: 2480, height: 1240 }, widths: [560, 776, 1104, 1552] },
   { id: 'mercpeter', file: 'capture/mercpeter-desktop.png', crop: { left: 128, top: 200, width: 2368, height: 1184 }, widths: [560, 840, 1184, 1792] },
   { id: 'bloctopus', file: 'capture/bloctopus-desktop.png', crop: { left: 192, top: 400, width: 2368, height: 1184 }, widths: [560, 840, 1184, 1792] },
 ]

@@ -3,17 +3,22 @@
  * Delo — the portfolio as one large, centred preview at a time.
  *
  * The frame is a WINDOW INTO THE RUNNING SITE: each plate shows that client's
- * real page, and the motion painted inside the frame is that site's own —
- * lemur's glitch and console, Peter Merc's rotating docket line, Bloctopus's
- * forensic scan (see src/lib/slide-effects.ts, ported from those sites' own
- * repos). Nothing animates our chrome; the effects belong to the preview.
+ * real landing view, and the only motion painted inside the frame is that
+ * site's own, at its own position and timing (src/lib/slide-effects.ts —
+ * ports of the sites' shipped code). Nothing animates our chrome.
  *
- * Only the active plate's effect runs, and the whole stage is
- * visibility-gated, so at most one loop is ever live.
+ * The band is the selected project's STAGE colour — not the site's own
+ * background but a colour drawn from its accent family, deep or bright enough
+ * to make the screenshot pop, entered and left on a clean cutoff against the
+ * paper above and below. Only the ground interpolates on a swap: the corner
+ * labels live per plate with per-plate ink and crossfade WITH their plate,
+ * and the controls sit on a constant graphite chip — measured, an ink
+ * interpolating paper↔graphite dips to 1.1:1 mid-fade, so no text is ever
+ * asked to ride the transition.
  *
- * SSG contract: all three plates — names, sectors, descriptions, proofs, live
+ * SSG contract: all three plates — screenshots, names, sector lines, live
  * links — are in the prerendered HTML. JS adds the carousel on top; with JS
- * off every plate is simply visible in flow.
+ * off every plate is simply visible in flow, stacked.
  */
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { references } from '@/content/home'
@@ -36,43 +41,28 @@ const progressEl = ref<HTMLElement | null>(null)
 /** How long a plate holds before the carousel advances itself. */
 const AUTOPLAY_MS = 7000
 
+/**
+ * Each project's stage: a colour from ITS OWN accent family (never its page
+ * background), plus the one ink that passes on it. Ratios measured 2026-08-07:
+ *   lemur     #6242DC (deepened from their #7F59F5) — paper ink 5.64:1
+ *   mercpeter #BA3730 (deepened from their #D2453E) — paper ink 5.11:1
+ *   bloctopus #1FC49A (their green, verbatim)       — graphite ink 7.67:1
+ */
+const STAGES: Record<string, { ground: string; ink: string }> = {
+  lemur: { ground: '#6242DC', ink: '#F5F2EB' },
+  mercpeter: { ground: '#BA3730', ink: '#F5F2EB' },
+  bloctopus: { ground: '#1FC49A', ink: '#1A1C1E' },
+}
+
+/** Bound on the section, so prerender and hydration agree and nothing jumps. */
+const stageGround = computed(() => STAGES[items[active.value]!.id]?.ground ?? '#1A1C1E')
+
 const effects: (SlideEffect | null)[] = []
 let autoplayTimer = 0
 let progressAnim: Animation | null = null
 let paused = false
 
-const sizes = '(min-width: 900px) min(96vw, 76rem), calc(100vw - 2.5rem)'
-
-/** Lines the docket rotates — real fields from the content module, never invented. */
-const docketLines = computed(() => {
-  const r = items.find((i) => i.id === 'mercpeter')
-  return r ? [r.sector, r.proof, r.urlLabel] : []
-})
-
-/** Relative luminance, for picking each project's own darkest sampled ink. */
-function luminance(hex: string): number {
-  const [r, g, b] = [1, 3, 5]
-    .map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
-    .map((c) => (c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)))
-  return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!
-}
-
-/**
- * The stage takes each project's OWN ground — the darkest colour sampled from
- * that live site (#131220 violet-black, #26282C charcoal, #1A2B38 navy).
- * Derived rather than hand-listed, so re-sampling `inks` moves the wallpaper
- * with it and the two can never drift.
- *
- * Measured on all three: --list 12.98–16.55:1, --papir-dim 8.67–11.05:1, and
- * every midpoint the transition passes through stays 13–15:1 — so no frame of
- * the fade drops text below AA.
- */
-const grounds = items.map((r) =>
-  r.inks.slice().sort((a, b) => luminance(a) - luminance(b))[0] ?? '#1A1C1E',
-)
-
-/** Bound on the section, so prerender and hydration agree and nothing jumps. */
-const stageInk = computed(() => grounds[active.value] ?? '#1A1C1E')
+const sizes = '(min-width: 900px) min(94vw, 78rem), calc(100vw - 2rem)'
 
 function plates(): HTMLElement[] {
   // Read the DOM rather than a captured ref array: v-for function refs re-run
@@ -185,16 +175,18 @@ onMounted(() => {
   live.value = true
   paint()
 
+  // Effects are created in EVERY tier — lemur's rebuilt intro line and status
+  // dots are page content the capture deliberately blanks, so they must exist
+  // even under reduced motion. Each effect gates its own MOTION internally.
   for (const [i, r] of items.entries()) {
     const frame = plates()[i]?.querySelector<HTMLElement>('.plate__frame')
-    if (!frame || prefersReducedMotion()) {
+    if (!frame) {
       effects[i] = null
       continue
     }
-    if (r.id === 'lemur') effects[i] = lemurPreview(frame, fx, { inks: r.inks })
-    else if (r.id === 'mercpeter')
-      effects[i] = mercPreview(frame, fx, { name: r.name, lines: docketLines.value })
-    else effects[i] = bloctopusPreview(frame, fx, r.inks[1] ?? '#1FC496')
+    if (r.id === 'lemur') effects[i] = lemurPreview(frame, fx)
+    else if (r.id === 'mercpeter') effects[i] = mercPreview(frame, fx)
+    else effects[i] = bloctopusPreview(frame, fx)
   }
 
   // Nothing animates off-screen.
@@ -238,207 +230,152 @@ onUnmounted(() => {
     ref="root"
     class="work"
     :class="{ 'work--live': live }"
-    :style="{ '--stage': stageInk }"
+    :style="{ '--stage': stageGround }"
+    :aria-label="references.feedback.regionLabel"
+    @mouseenter="hold"
+    @mouseleave="resume"
+    @focusin="hold"
+    @focusout="resume"
   >
-    <!-- The bridge: paper at the top where the copy sits, dissolving into the
-         selected project's own ground by the time it meets the stage. -->
-    <div class="work__head">
-      <div class="container">
-        <p class="kicker">{{ references.kicker }}</p>
-        <h2 class="work__title">{{ references.title }}</h2>
-      </div>
-    </div>
+    <ul class="work__plates">
+      <li
+        v-for="(r, i) in items"
+        :key="r.id"
+        class="plate"
+        :class="[`plate--${r.id}`, live ? 'plate--stacked' : '']"
+        :style="{ '--plate-ink': STAGES[r.id]?.ink ?? '#F5F2EB' }"
+        :inert="live && i !== active ? true : undefined"
+        :aria-hidden="live && i !== active ? 'true' : undefined"
+      >
+        <!-- The window. Everything the effects paint lives in here. -->
+        <div class="plate__frame">
+          <picture>
+            <source
+              type="image/avif"
+              :srcset="r.image.widths.map((w) => `/img/refs/${r.id}-${w}.avif ${w}w`).join(', ')"
+              :sizes="sizes"
+            />
+            <source
+              type="image/webp"
+              :srcset="r.image.widths.map((w) => `/img/refs/${r.id}-${w}.webp ${w}w`).join(', ')"
+              :sizes="sizes"
+            />
+            <img
+              :src="`/img/refs/${r.id}-${r.image.widths[0]}.jpg`"
+              :srcset="r.image.widths.map((w) => `/img/refs/${r.id}-${w}.jpg ${w}w`).join(', ')"
+              :sizes="sizes"
+              :width="r.image.width"
+              :height="r.image.height"
+              :alt="r.alt"
+              :loading="i === 0 ? 'eager' : 'lazy'"
+              :fetchpriority="i === 0 ? 'high' : undefined"
+              decoding="async"
+              class="plate__shot"
+            />
+          </picture>
 
-    <div
-      class="work__stage"
-      @mouseenter="hold"
-      @mouseleave="resume"
-      @focusin="hold"
-      @focusout="resume"
-    >
-      <ul class="work__plates">
-        <li
-          v-for="(r, i) in items"
-          :key="r.id"
-          class="plate"
-          :class="[`plate--${r.id}`, live ? 'plate--stacked' : '']"
-          :inert="live && i !== active ? true : undefined"
-          :aria-hidden="live && i !== active ? 'true' : undefined"
-        >
-          <!-- The window. Everything the effects paint lives in here. -->
-          <div class="plate__frame">
-            <picture>
-              <source
-                type="image/avif"
-                :srcset="r.image.widths.map((w) => `/img/refs/${r.id}-${w}.avif ${w}w`).join(', ')"
-                :sizes="sizes"
-              />
-              <source
-                type="image/webp"
-                :srcset="r.image.widths.map((w) => `/img/refs/${r.id}-${w}.webp ${w}w`).join(', ')"
-                :sizes="sizes"
-              />
-              <img
-                :src="`/img/refs/${r.id}-${r.image.widths[0]}.jpg`"
-                :srcset="r.image.widths.map((w) => `/img/refs/${r.id}-${w}.jpg ${w}w`).join(', ')"
-                :sizes="sizes"
-                :width="r.image.width"
-                :height="r.image.height"
-                :alt="r.alt"
-                :loading="i === 0 ? 'eager' : 'lazy'"
-                :fetchpriority="i === 0 ? 'high' : undefined"
-                decoding="async"
-                class="plate__shot"
-              />
-            </picture>
+          <!-- Mouse convenience: the whole preview opens the project. Kept
+               out of the tab order and hidden from assistive tech because
+               the corner name is already the accessible route — a second
+               stop to the same URL is noise. -->
+          <a
+            :href="r.url"
+            target="_blank"
+            rel="noopener"
+            class="plate__hit"
+            tabindex="-1"
+            aria-hidden="true"
+          ></a>
+        </div>
 
-            <!-- Mouse convenience: the whole preview opens the project. Kept
-                 out of the tab order and hidden from assistive tech because
-                 the project name below is already the accessible route — a
-                 second stop to the same URL is noise. -->
-            <a
-              :href="r.url"
-              target="_blank"
-              rel="noopener"
-              class="plate__hit"
-              tabindex="-1"
-              aria-hidden="true"
-            ></a>
-          </div>
+        <!-- The band's only text: a short line bottom-left, the site's name
+             bottom-right. Ink is per-plate and constant — labels crossfade
+             with their plate rather than riding the ground transition. -->
+        <div class="plate__corners">
+          <p class="annot plate__sector">{{ r.sector }}</p>
+          <a :href="r.url" target="_blank" rel="noopener" class="plate__name">
+            {{ r.name }}
+            <span class="visually-hidden">
+              — {{ r.urlLabel }}, {{ references.newWindowNote }}
+            </span>
+          </a>
+        </div>
+      </li>
+    </ul>
 
-          <div class="plate__meta">
-            <h3 class="plate__name">
-              <a :href="r.url" target="_blank" rel="noopener" class="plate__link">
-                {{ r.name }}
-                <span class="visually-hidden">
-                  — {{ r.urlLabel }}, {{ references.newWindowNote }}
-                </span>
-              </a>
-            </h3>
-            <p class="annot plate__sector">{{ r.sector }}</p>
-            <p class="plate__desc">{{ r.description }}</p>
-            <p class="plate__proof">{{ r.proof }}</p>
-          </div>
+    <!-- Controls appear only once live: with JS off the plates are all in
+         flow and there is nothing to control. The chip's graphite never
+         changes, so control ink and borders never cross a moving ground. -->
+    <div v-if="live" class="work__controls">
+      <button
+        type="button"
+        class="work__step"
+        :aria-label="references.feedback.prevLabel"
+        @click="step(-1)"
+      >
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none"
+          stroke="currentColor" stroke-width="1.6"><path d="M10 2 4 8l6 6" /></svg>
+      </button>
+
+      <ul class="work__thumbs" :aria-label="references.feedback.pickLabel">
+        <li v-for="(r, i) in items" :key="r.id">
+          <button
+            type="button"
+            class="work__thumb"
+            :class="{ 'work__thumb--on': i === active }"
+            :aria-current="i === active ? 'true' : undefined"
+            @click="select(i, true, i > active ? 1 : -1)"
+          >
+            <img :src="`/img/refs/${r.id}-560.jpg`" width="96" height="48" alt=""
+              loading="lazy" decoding="async" />
+            <span class="visually-hidden">{{ r.name }}</span>
+          </button>
         </li>
       </ul>
 
-      <!-- Controls appear only once live: with JS off the plates are all in
-           flow and there is nothing to control. -->
-      <div v-if="live" class="work__controls">
-        <button
-          type="button"
-          class="work__step"
-          :aria-label="references.feedback.prevLabel"
-          @click="step(-1)"
-        >
-          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none"
-            stroke="currentColor" stroke-width="1.6"><path d="M10 2 4 8l6 6" /></svg>
-        </button>
+      <button
+        type="button"
+        class="work__step"
+        :aria-label="references.feedback.nextLabel"
+        @click="step(1)"
+      >
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none"
+          stroke="currentColor" stroke-width="1.6"><path d="M6 2l6 6-6 6" /></svg>
+      </button>
 
-        <ul class="work__thumbs" :aria-label="references.feedback.pickLabel">
-          <li v-for="(r, i) in items" :key="r.id">
-            <button
-              type="button"
-              class="work__thumb"
-              :class="{ 'work__thumb--on': i === active }"
-              :aria-current="i === active ? 'true' : undefined"
-              @click="select(i, true, i > active ? 1 : -1)"
-            >
-              <img :src="`/img/refs/${r.id}-560.jpg`" width="96" height="48" alt=""
-                loading="lazy" decoding="async" />
-              <span class="visually-hidden">{{ r.name }}</span>
-            </button>
-          </li>
-        </ul>
-
-        <button
-          type="button"
-          class="work__step"
-          :aria-label="references.feedback.nextLabel"
-          @click="step(1)"
-        >
-          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none"
-            stroke="currentColor" stroke-width="1.6"><path d="M6 2l6 6-6 6" /></svg>
-        </button>
-
-        <span class="work__progress" aria-hidden="true">
-          <span ref="progressEl" class="work__progress-fill"></span>
-        </span>
-      </div>
+      <span class="work__progress" aria-hidden="true">
+        <span ref="progressEl" class="work__progress-fill"></span>
+      </span>
     </div>
-
   </section>
 </template>
 
 <style scoped>
-/* --- the adaptive ground ----------------------------------------------------
-   THE WHOLE SECTION is painted once, here, in the selected project's own
-   darkest sampled ink. Head and stage are transparent over it, so a colour
-   change is ONE repaint region rather than two, and the seam between them is
-   the same colour by construction — invisible at every point of the fade.
-
-   Why the colour lives on background-COLOR and the fade on a separate,
-   never-changing background-IMAGE: background-image is not an animatable
-   property in any browser, so a gradient whose stop we swapped would cut
-   rather than fade. Transitioning the solid colour underneath a static
-   gradient sidesteps that entirely and needs no @property registration. */
-/* The section paints NOTHING itself — it only owns the animating property, and
-   `inherits: true` carries each interpolated frame down to the head and the
-   stage. Painting the ground here instead laid solid colour under the head,
-   whose own paper top then cut the page's warm wash off at a hard line.
-   The registered --stage is what animates (see tokens.css); the children just
-   read it. Slightly longer than the plate's 520ms entrance (SWAP_IN_MS), so
-   the environment settles just AFTER the subject lands. */
+/* --- the stage ---------------------------------------------------------------
+   The section IS the band: one solid registered colour (--stage, tokens.css),
+   interpolating on a swap, meeting the paper above and below on a clean
+   cutoff. Slightly longer than the plate's 520ms entrance, so the environment
+   settles just AFTER the subject lands. */
 .work {
-  transition: --stage 760ms var(--ease-out);
-  /* Closes back to the site's own graphite, so the adaptive ground never
-     meets the next section on a hard edge. */
-  background-image: linear-gradient(to top, var(--grafit) 0, rgb(26 28 30 / 0) 160px);
-}
-
-/* The bridge from the paper band above into the stage. The gradient itself is
-   static — only the colour beneath it moves. It fades to PAPER-AT-ALPHA-0,
-   never the `transparent` keyword, which interpolates through transparent
-   black and lays a muddy grey band across the middle. */
-/* Transparent at the top so the page's warm wash runs straight through, then
-   the project's ground fades IN over it, reaching full strength exactly at the
-   head's bottom edge — where the stage begins in the same colour, so the join
-   is invisible. Fading the ground in (rather than fading paper out) is what
-   keeps the wash unbroken: there is no opaque paper to cut it. */
-/* The fade gets its own runway BELOW the copy. Starting it at 34% put the
-   intro's last line on a mid-grey at 2.29:1 against a 4.5 floor — the wash
-   crossing body copy, which no screenshot review would have caught. The deep
-   bottom padding keeps the text in the top half; the ground only begins to
-   come up once the copy has ended. */
-.work__head {
-  padding-block: clamp(3rem, 2.5rem + 3vw, 5rem) clamp(8rem, 6rem + 8vw, 14rem);
-  /* Literal fallback = --grafit at alpha 0, for engines without relative colour. */
-  background-image: linear-gradient(to bottom, rgb(26 28 30 / 0) 64%, var(--stage) 100%);
-  background-image: linear-gradient(
-    to bottom,
-    rgb(from var(--stage) r g b / 0) 64%,
-    var(--stage) 100%
-  );
-}
-
-.work__stage {
   background-color: var(--stage);
-  padding-block: clamp(1.5rem, 1rem + 2vw, 3rem);
+  transition: --stage 760ms var(--ease-out);
+  padding-block: clamp(1.75rem, 1.25rem + 2vw, 3rem) clamp(1.25rem, 1rem + 1.5vw, 2rem);
   padding-inline: var(--gutter);
 }
 
 .work__plates {
   list-style: none;
   display: grid;
-  gap: 3rem;
+  gap: 3.5rem;
 }
 
 .plate {
   display: grid;
-  gap: 1.25rem;
+  gap: 0.9rem;
 }
 
-/* The window into the live site. */
+/* The window into the live site. cqi inside the frame (lemur's rebuilt intro
+   line) needs the frame to be an inline-size container. */
 .plate__frame {
   position: relative;
   overflow: hidden;
@@ -446,6 +383,7 @@ onUnmounted(() => {
   margin-inline: auto;
   background: #000;
   line-height: 0;
+  container-type: inline-size;
 }
 
 /* <picture> is inline by default, so a percentage height on the image would
@@ -469,53 +407,58 @@ onUnmounted(() => {
   height: auto;
 }
 
-.plate__meta {
-  display: grid;
-  gap: 0.4rem;
-  color: var(--list);
+/* --- the corners ------------------------------------------------------------ */
+.plate__corners {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.5rem;
+  color: var(--plate-ink);
+  width: 100%;
+  margin-inline: auto;
+}
+
+.plate__sector {
+  color: var(--plate-ink);
+  max-width: 34ch;
 }
 
 .plate__name {
   font-family: var(--font-display);
-  font-stretch: var(--wdth-monument);
-  font-weight: 300;
-  font-size: clamp(1.5rem, 1.1rem + 1.8vw, 2.2rem);
-  line-height: 1.1;
-  letter-spacing: -0.015em;
-}
-
-.plate__link {
+  font-stretch: var(--wdth-datum);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
   text-decoration: none;
+  white-space: nowrap;
 }
 
-.plate__sector {
-  color: var(--papir-dim);
+.plate__name:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
 }
 
-.plate__desc {
-  color: var(--list);
-  max-width: 52ch;
+.work :focus-visible {
+  outline-color: var(--plate-ink);
 }
 
-/* Paper, not red: --rez-na-temnem measures 4.44:1 on bloctopus's navy ground,
-   just under the 4.5 floor for text this size. The red stays as a structural
-   mark on the rule, which carries a 3:1 UI floor and passes on all three. */
-.plate__proof {
-  font-style: italic;
-  color: var(--list);
-  border-left: 2px solid var(--rez-na-temnem);
-  padding-left: 0.7rem;
-  max-width: 48ch;
-}
-
-/* --- controls -------------------------------------------------------------- */
+/* --- controls: a constant graphite chip -------------------------------------
+   Control ink and hairlines never sit on the interpolating ground. */
 .work__controls {
+  width: fit-content;
+  margin: 1.1rem auto 0;
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-top: 1.25rem;
-  justify-content: center;
+  padding: 0.5rem 0.85rem;
+  background: var(--grafit);
   flex-wrap: wrap;
+  justify-content: center;
+}
+
+.work__controls :focus-visible {
+  outline-color: var(--rez-na-temnem);
 }
 
 .work__thumbs {
@@ -585,11 +528,6 @@ onUnmounted(() => {
   transform-origin: left center;
 }
 
-/* --- the written record, below the stage ----------------------------------- */
-.work__title {
-  margin-top: 1rem;
-}
-
 /* --- live: one plate at a time ---------------------------------------------
    ONE rule block, single class, no ancestor: the scoped compiler dropped a
    `.work--live .plate` ancestor here once, and a duplicate-selector block lost
@@ -606,10 +544,10 @@ onUnmounted(() => {
 }
 
 @media (min-width: 900px) {
-  /* The preview takes roughly half the visible field and is centred, so the
-     three sites are the subject of the screen. */
+  /* The portal is the subject of the screen: as much of the visible field as
+     the band can give it while the corners and controls stay on screen. */
   .plate--stacked .plate__frame {
-    height: min(52vh, 30rem);
+    height: min(62vh, 34rem);
     aspect-ratio: 2 / 1;
     width: auto;
     max-width: 100%;
@@ -622,28 +560,8 @@ onUnmounted(() => {
     object-position: top center;
   }
 
-  .plate--stacked .plate__meta {
-    max-width: 76rem;
-    margin-inline: auto;
-    width: 100%;
-    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-    column-gap: 2.5rem;
-    align-items: start;
-  }
-
-  .plate--stacked .plate__name {
-    grid-column: 1;
-  }
-  .plate--stacked .plate__sector {
-    grid-column: 1;
-  }
-  .plate--stacked .plate__desc {
-    grid-column: 2;
-    grid-row: 1 / span 2;
-  }
-  .plate--stacked .plate__proof {
-    grid-column: 2;
-    grid-row: 3;
+  .plate--stacked .plate__corners {
+    max-width: min(94vw, 78rem);
   }
 }
 </style>

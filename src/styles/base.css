@@ -103,7 +103,7 @@ textarea {
 /* On the dark bands the red pencil shifts to its on-dark voice (ring 5.22:1
    on grafit, 5.50:1 on zemlja — measured; the paper-world --rez sits at
    ~2.7:1 there). */
-.xray :focus-visible,
+.trad :focus-visible,
 .contact :focus-visible,
 .footer :focus-visible {
   outline-color: var(--rez-na-temnem);
@@ -216,14 +216,14 @@ textarea {
     animation: settle-down 0.5s var(--ease-out) 0.98s both;
   }
 
-  html[data-intro] .stmt__kicker,
+  html[data-intro] .stmt__brand,
   html[data-intro] .stmt__lead,
   html[data-intro] .stmt__title,
   html[data-intro] .stmt__cta,
-  html[data-intro] .work__stage {
+  html[data-intro] .work__plates {
     animation: settle-up 0.55s var(--ease-out) both;
   }
-  html[data-intro] .stmt__kicker {
+  html[data-intro] .stmt__brand {
     animation-delay: 1.06s;
   }
   html[data-intro] .stmt__lead {
@@ -235,7 +235,7 @@ textarea {
   html[data-intro] .stmt__cta {
     animation-delay: 1.32s;
   }
-  html[data-intro] .work__stage {
+  html[data-intro] .work__plates {
     animation-delay: 1.42s;
   }
 }

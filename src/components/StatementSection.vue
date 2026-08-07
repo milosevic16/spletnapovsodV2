@@ -1,11 +1,14 @@
 <script setup lang="ts">
 /**
- * The opening band: headline left, the lead and the calls to action stacked
- * on the right. Deliberately SHORT, so the work stage below is already in the
- * first screen — the page's subject is the client sites, not this paragraph.
+ * The opening band, carrying the brand: the SpletnaPovsod mark sits above the
+ * h1 on the left; the lead and the calls to action stack on the right.
+ *
+ * Two alignment locks, both the owner's spec:
+ *   — the wordmark's TOP is the lead's top (row 1, both align-start);
+ *   — the CTA row's BOTTOM is the h1's bottom (row 2, both align-end).
  *
  * No JS: the only motion here is the arrival settle in base.css, once per
- * hard load. The warm top wash it sits in is painted on #app (base.css).
+ * hard load.
  */
 import { hero } from '@/content/home'
 
@@ -19,6 +22,22 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
 <template>
   <section class="stmt">
     <div class="container stmt__grid">
+      <p class="stmt__brand">
+        <!-- Brand mark: the sheet cut by the plane, the site's own motif -->
+        <svg
+          class="stmt__mark"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          fill="none"
+        >
+          <rect x="2.5" y="2.5" width="19" height="19" fill="none" stroke="currentColor"
+            stroke-width="1.5" />
+          <rect x="2.5" y="13" width="19" height="8.5" fill="currentColor" />
+          <rect x="0" y="11.25" width="24" height="1.9" fill="var(--rez)" />
+        </svg>
+        <span class="stmt__wordmark">SpletnaPovsod</span>
+      </p>
+
       <h1 class="stmt__title">
         <span v-if="titleAccent" class="stmt__hl">{{ titleAccent }}</span>{{ titleRest }}
       </h1>
@@ -46,13 +65,35 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
   gap: 1.35rem;
 }
 
+.stmt__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  line-height: 1;
+}
+
+.stmt__mark {
+  width: 1.7rem;
+  height: 1.7rem;
+  flex: 0 0 auto;
+}
+
+.stmt__wordmark {
+  font-family: var(--font-display);
+  font-stretch: var(--wdth-monument);
+  font-weight: 300;
+  font-size: clamp(1.6rem, 1.1rem + 2.4vw, 2.9rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
 .stmt__title {
   max-width: 18ch;
 }
 
 .stmt__hl {
-  /* Display size, so the 3:1 large-text floor applies — 3.78:1 at the wash's
-     full strength, and only improves down the fade. */
+  /* Display size, so the 3:1 large-text floor applies — 5.37:1 on paper. */
   color: var(--rez);
 }
 
@@ -112,41 +153,52 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
   }
 }
 
-/* Desktop: the claim holds the left column across both rows; the qualifier
-   and the actions stack on the right, so the eye reads claim → detail → act. */
+/* Desktop: two columns, two rows. Row 1 aligns START (wordmark top == lead
+   top); row 2 aligns END (h1 bottom == CTA bottom) — the two locks. */
 @media (min-width: 900px) {
   .stmt {
     padding-top: 2.5rem;
     padding-bottom: clamp(2.5rem, 2rem + 2vw, 4rem);
   }
 
-  /* 24 columns want a SMALL column gap: at 2.5rem the 23 gutters ate 920 of
-     1312px and left ~16px per column, which crushed the CTA onto two lines. */
   .stmt__grid {
-    grid-template-columns: repeat(24, minmax(0, 1fr));
-    column-gap: 1rem;
-    row-gap: 2.25rem;
-    align-items: start;
+    grid-template-columns: minmax(0, 12fr) minmax(0, 11fr);
+    column-gap: clamp(2rem, 5vw, 5rem);
+    row-gap: 2rem;
   }
 
-  .stmt__title {
-    grid-column: 1 / span 12;
-    grid-row: 1 / span 2;
-    max-width: none;
-    font-size: clamp(2.2rem, 0.9rem + 2.8vw, 3.2rem);
+  .stmt__brand {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: start;
   }
 
   .stmt__lead {
-    grid-column: 14 / span 11;
+    grid-column: 2;
     grid-row: 1;
+    align-self: start;
     font-size: 1rem;
     line-height: 1.65;
   }
 
-  .stmt__cta {
-    grid-column: 14 / span 11;
+  .stmt__title {
+    grid-column: 1;
     grid-row: 2;
+    align-self: end;
+    max-width: none;
+    font-size: clamp(2.2rem, 0.9rem + 2.8vw, 3.2rem);
+  }
+
+  .stmt__cta {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: end;
     margin-top: 0;
+  }
+
+  .stmt__mark {
+    width: 2.1rem;
+    height: 2.1rem;
   }
 }
 </style>
