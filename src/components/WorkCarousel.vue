@@ -43,25 +43,29 @@ const progressEl = ref<HTMLElement | null>(null)
 const AUTOPLAY_MS = 7000
 
 /**
- * Each project's ground: a pigment from ITS OWN accent family, never its page
- * background. Measured 2026-08-07 against paper ink #F5F2EB, and against each
- * screenshot's mean colour:
+ * Each project's ground: a MUTED relative of its own accent, never its page
+ * background. Measured 2026-08-07 against paper ink #F5F2EB:
  *
- *   lemur     #7A3184 plum      paper 7.22:1  chroma  83   (from their #7F59F5)
- *   mercpeter #BA3730 brick     paper 5.11:1  chroma 138   (from their #D2453E)
- *   bloctopus #0B7A5F viridian  paper 4.74:1  chroma 111   (from their #1FC49A)
+ *   lemur     #4A4457 aubergine-slate  paper 8.33:1  chroma 19  (from #7F59F5)
+ *   mercpeter #54423E warm clay        paper 8.44:1  chroma 22  (from #D2453E)
+ *   bloctopus #3A4A42 deep eucalyptus  paper 8.39:1  chroma 16  (from #1FC49A)
  *
- * Chroma, not brightness, is what makes a screenshot pop here: all three shots
- * are near-neutral (means #9aa6a3, #737372, #203740), so a saturated ground
- * separates by hue. The brick carries only 1.2:1 of VALUE against its shot and
- * reads strongly — which is why the replacements were chosen for pigment depth
- * rather than for luminance, and why the earlier screen-bright violet and mint
- * (low chroma for their brightness) read as generic.
+ * Average chroma 19 against the previous set's 111 — the owner's call, the
+ * pigments read as loud. These sit in the page's own muted family (--grafit-2
+ * is #50555A at chroma 10) while each hue still names its project, and they
+ * keep a real cutoff against the paper page at 8.4:1. Deliberately NOT each
+ * site's own background: the earlier bloctopus candidate #26343A was within 24
+ * of their navy and would have read as a copy of it rather than a companion.
+ *
+ * The consequence, accepted knowingly: muting the grounds flattens the shots
+ * against them — bloctopus's dark navy sits at 1.33:1 here, lemur's pale sage
+ * at 3.71:1. Separation is the FRAME'S HAIRLINE's job now, not the ground's,
+ * which is this project's doctrine anyway (depth is drawn, never shadowed).
  */
 const GROUNDS: Record<string, string> = {
-  lemur: '#7A3184',
-  mercpeter: '#BA3730',
-  bloctopus: '#0B7A5F',
+  lemur: '#4A4457',
+  mercpeter: '#54423E',
+  bloctopus: '#3A4A42',
 }
 
 /** Bound on the section, so prerender and hydration agree and nothing jumps. */
@@ -386,12 +390,21 @@ onUnmounted(() => {
 
 /* The window into the live site. cqi inside the frame (lemur's rebuilt intro
    line) needs the frame to be an inline-size container. */
+/* The drawn edge. With the grounds muted, the shots no longer separate by
+   colour — bloctopus's sits at 1.33:1 against its own ground — so the frame is
+   defined by a LINE, which is how this project draws depth everywhere else
+   (zero shadows sitewide). Paper @0.5 clears the 3:1 UI floor on all three
+   grounds (3.41/3.43/3.42 — the obvious 0.3 measured 2.17) and still reads
+   against the frame's black backing on the inside at 7.69:1. Outline rather
+   than border: it must not eat into the shot or change the frame's box. */
 .plate__frame {
   position: relative;
   overflow: hidden;
   width: 100%;
   margin-inline: auto;
   background: #000;
+  outline: 1px solid rgb(245 242 235 / 0.5);
+  outline-offset: 0;
   line-height: 0;
   container-type: inline-size;
 }
@@ -458,11 +471,12 @@ onUnmounted(() => {
    ink covers all three pigments and every frame between them; the red accent
    would have vanished on the brick.
 
-   Hairlines are paper @0.75 — solved for the 3:1 UI floor on the WORST of the
-   three grounds (viridian 3.37:1, brick 3.52, plum 4.80). The obvious 0.45
-   measured 2.13 on viridian. The progress TRACK deliberately stays below that
-   floor: it is a 1px rail whose meaning is carried entirely by the fill
-   running over it at 4.74–7.22:1. */
+   Hairlines are paper @0.5, the same weight as the frame's drawn edge —
+   3.41/3.43/3.42 on the three grounds, clearing the 3:1 UI floor. They were
+   0.75 while the grounds were bright; against these muted ones that measured
+   5.5:1 and the controls became the loudest line in the band. The progress
+   TRACK deliberately stays below the floor: it is a 1px rail whose meaning is
+   carried entirely by the fill running over it at 8.3:1. */
 .work__controls {
   width: fit-content;
   margin: 1.1rem auto 0;
@@ -482,7 +496,7 @@ onUnmounted(() => {
 .work__thumb {
   display: block;
   padding: 0;
-  border: 1px solid rgb(245 242 235 / 0.75);
+  border: 1px solid rgb(245 242 235 / 0.5);
   background: none;
   cursor: pointer;
   line-height: 0;
@@ -514,7 +528,7 @@ onUnmounted(() => {
   width: 44px;
   height: 44px;
   background: none;
-  border: 1px solid rgb(245 242 235 / 0.75);
+  border: 1px solid rgb(245 242 235 / 0.5);
   color: var(--list);
   cursor: pointer;
   transition: border-color var(--t-lift) var(--ease-out);
