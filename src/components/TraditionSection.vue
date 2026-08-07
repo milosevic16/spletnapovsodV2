@@ -72,6 +72,20 @@ function bandAt(i: number): HTMLElement | undefined {
   return root.value?.querySelectorAll<HTMLElement>('.asm__band')[i]
 }
 
+/**
+ * Point the leader at the probed layer's centre.
+ *
+ * Measured, not computed from the index: the layers have DIFFERENT thicknesses
+ * now, so the old (n + 0.5) × 25% arithmetic — which assumed four equal bands —
+ * would aim at the wrong place on three of the four.
+ */
+function placeLeader() {
+  const asm = root.value?.querySelector<HTMLElement>('.asm')
+  const band = bandAt(layer.value)
+  if (!asm || !band) return
+  asm.style.setProperty('--lead-y', `${band.offsetTop + band.offsetHeight / 2}px`)
+}
+
 /** Vertical tablist: arrows move and select, Home/End jump to the ends. */
 function onLayerKeys(e: KeyboardEvent) {
   const n = invisible.items.length
@@ -123,8 +137,17 @@ const blocks = computed(() => [
   },
 ])
 
-let scheduled = false
-let syncScheduled = false
+/**
+ * Pending frame ids, NOT "is one pending" booleans.
+ *
+ * A boolean set here and cleared inside the callback latches permanently if
+ * that frame is never delivered — a throttled or hidden tab is enough — and
+ * every later request is then dropped, so the section stops re-pinning for
+ * good with nothing to signal it (measured: a stale pin survived a forced
+ * resize because the flag was stuck). Cancel-and-reschedule has no such state.
+ */
+let measureRaf = 0
+let syncRaf = 0
 let sweeping = false
 
 /**
@@ -192,6 +215,8 @@ function syncCode() {
     if (worst < 0.5) break
   }
 
+  // The bands are sized in fr, so any relayout moves the leader's target.
+  placeLeader()
   measure()
 }
 
@@ -200,7 +225,6 @@ function syncCode() {
  * coordinates, and the parallax both layers share.
  */
 function measure() {
-  scheduled = false
   const el = root.value
   const layer = codeLayer.value
   const st = stage.value
@@ -222,19 +246,20 @@ function measure() {
 }
 
 function onScroll() {
-  if (scheduled) return
-  scheduled = true
-  fx.raf(measure)
+  if (measureRaf) cancelAnimationFrame(measureRaf)
+  measureRaf = fx.raf(() => {
+    measureRaf = 0
+    measure()
+  })
 }
 
 /** Coalesce the observer's bursts into one sync per frame. The sync is
     idempotent, so no "we are writing" guard is needed — and such a guard would
     drop the genuine resize that lands in the same window. */
 function scheduleSync() {
-  if (syncScheduled) return
-  syncScheduled = true
-  fx.raf(() => {
-    syncScheduled = false
+  if (syncRaf) cancelAnimationFrame(syncRaf)
+  syncRaf = fx.raf(() => {
+    syncRaf = 0
     syncCode()
   })
 }
@@ -281,7 +306,10 @@ onMounted(() => {
   // tabs — and measuring before that re-render pins the markup to a layout
   // that is about to vanish (measured: 136.8px of permanent drift).
   measure()
-  nextTick(syncCode)
+  nextTick(() => {
+    placeLeader()
+    syncCode()
+  })
 
   fx.on(window, 'scroll', onScroll, { passive: true })
   fx.on(
@@ -307,7 +335,12 @@ onMounted(() => {
   // Re-pin explicitly rather than leaning on the ResizeObserver: this one is
   // a state change we own, so it should not depend on observing its own
   // side effect.
-  watch(layer, () => nextTick(scheduleSync))
+  watch(layer, () =>
+    nextTick(() => {
+      placeLeader()
+      scheduleSync()
+    }),
+  )
 
   if (reduced || !('IntersectionObserver' in window)) return
 
@@ -369,7 +402,7 @@ onUnmounted(() => {
                real, so the markup layer's <article id="…"> depicts a tag we
                actually ship. -->
           <template v-else-if="b.kind === 'assembly'">
-            <div class="asm" :style="{ '--sel': layer }">
+            <div class="asm">
               <div
                 class="asm__stack"
                 :role="live ? 'tablist' : undefined"
@@ -396,10 +429,16 @@ onUnmounted(() => {
                   @click="live && (layer = n)"
                 >
                   <span class="asm__fill" aria-hidden="true"></span>
-                  <!-- The cut plane marking the probed layer: the site's own
-                       motif, red rule with square end ticks. -->
+                  <!-- The cut planes bounding the probed layer: the site's own
+                       motif, red rules with square end ticks, drawn at the
+                       layer's interfaces so they never cross its name. -->
                   <span class="asm__plane" aria-hidden="true"></span>
-                  <span v-if="live" class="visually-hidden">{{ item.label }}</span>
+                  <!-- Named in the drawing, expanded in the callout: the shared
+                       word is what ties a layer to the text it opens. -->
+                  <span class="asm__band-label">{{ item.label }}</span>
+                  <!-- Leader terminal. Hollow reads as available, filled as
+                       taken — the drawing's own way of saying "press me". -->
+                  <span class="asm__node" aria-hidden="true"></span>
                 </component>
 
                 <!-- Swings to the probed layer; positioned from --sel alone. -->
@@ -624,11 +663,16 @@ onUnmounted(() => {
   gap: 2rem;
 }
 
+/* Layers of a real build-up are not equal slabs: a membrane is thin, a
+   substrate is thick. These fractions are what stop the drawing reading as a
+   bar chart — and they are why the leader is MEASURED rather than stepped in
+   quarters. The floor on each band keeps the thinnest above the 44px tap
+   target once the fractions are applied. */
 .asm__stack {
   position: relative;
   display: grid;
-  grid-auto-rows: 1fr; /* equal bands — the leader's 25% steps depend on it */
-  min-height: clamp(17rem, 46vw, 26rem);
+  grid-template-rows: 1.4fr 0.72fr 0.95fr 1.95fr;
+  min-height: clamp(20rem, 54vw, 28rem);
   border: 1px solid var(--crta-na-temnem);
   /* The leader reaches out of this box. */
   overflow: visible;
@@ -663,8 +707,10 @@ onUnmounted(() => {
 
 .asm__band {
   position: relative;
-  display: block;
+  display: flex;
+  align-items: center;
   width: 100%;
+  min-height: 44px;
   padding: 0;
   margin: 0;
   border: 0;
@@ -678,6 +724,12 @@ onUnmounted(() => {
 
 .asm__band:last-of-type {
   border-bottom: 0;
+}
+
+/* The interface onto the substrate is the drawing's ground line — heavier, the
+   way a section marks the boundary you build on. */
+.asm__band--3 {
+  border-top: 2px solid var(--crta-na-temnem);
 }
 
 button.asm__band {
@@ -696,43 +748,51 @@ button.asm__band {
   opacity: 0.5;
 }
 
+/* SCALE contrast, not just pitch: a 3px lamination against a 22px poché is
+   what makes two fills read as different MATERIALS rather than the same
+   material drawn twice. */
+
+/* Structure — 45° section hatch. */
 .asm__band--0 {
   background: var(--grafit-inset);
 }
 .asm__band--0 .asm__fill {
   background: repeating-linear-gradient(
     45deg,
-    transparent 0 9px,
-    rgb(245 242 235 / 0.34) 9px 10px
+    transparent 0 10px,
+    rgb(245 242 235 / 0.34) 10px 11px
   );
 }
 
+/* Membrane — a thin laminated sheet, ruled very fine. */
 .asm__band--1 {
-  background: #1f2327;
+  background: #1e2226;
 }
 .asm__band--1 .asm__fill {
-  background:
-    repeating-linear-gradient(45deg, transparent 0 9px, rgb(245 242 235 / 0.3) 9px 10px),
-    repeating-linear-gradient(-45deg, transparent 0 9px, rgb(245 242 235 / 0.3) 9px 10px);
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0 2px,
+    rgb(245 242 235 / 0.3) 2px 3px
+  );
 }
 
+/* Granular fill — stipple, the drafting convention for loose material. */
 .asm__band--2 {
   background: #191d21;
 }
 .asm__band--2 .asm__fill {
-  background-image: radial-gradient(rgb(245 242 235 / 0.5) 1px, transparent 1.2px);
-  background-size: 9px 9px;
+  background-image: radial-gradient(rgb(245 242 235 / 0.55) 1px, transparent 1.3px);
+  background-size: 8px 8px;
 }
 
+/* Substrate — coarse cross-hatched poché, the mass everything sits on. */
 .asm__band--3 {
   background: var(--zemlja);
 }
 .asm__band--3 .asm__fill {
-  background: repeating-linear-gradient(
-    90deg,
-    transparent 0 5px,
-    rgb(245 242 235 / 0.24) 5px 6px
-  );
+  background:
+    repeating-linear-gradient(45deg, transparent 0 21px, rgb(245 242 235 / 0.26) 21px 23px),
+    repeating-linear-gradient(-45deg, transparent 0 21px, rgb(245 242 235 / 0.26) 21px 23px);
 }
 
 button.asm__band:hover .asm__fill,
@@ -740,50 +800,93 @@ button.asm__band:hover .asm__fill,
   opacity: 1;
 }
 
-/* The cut plane through the probed layer: red rule, square end ticks. */
+/* --- naming and the terminal ------------------------------------------------
+   The band names its layer and the callout expands it; that shared word is the
+   link between the drawing and the text. The terminal is the affordance —
+   hollow means available, filled means probed. */
+.asm__band-label {
+  position: relative;
+  z-index: 1;
+  padding: 0.5rem 2.9rem 0.5rem clamp(0.9rem, 3vw, 1.4rem);
+  font-family: var(--font-display);
+  font-stretch: var(--wdth-datum);
+  font-weight: 500;
+  font-size: var(--fs-kicker);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--papir-dim); /* >= 8.87:1 on every band ground */
+  transition: color var(--t-lift) var(--ease-out);
+}
+
+.asm__band--on .asm__band-label,
+button.asm__band:hover .asm__band-label {
+  color: var(--list);
+}
+
+.asm__node {
+  position: absolute;
+  z-index: 1;
+  right: clamp(0.9rem, 3vw, 1.4rem);
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  margin-top: -4.5px;
+  border: 1px solid var(--papir-dim);
+  transition:
+    background var(--t-lift) var(--ease-out),
+    border-color var(--t-lift) var(--ease-out);
+}
+
+button.asm__band:hover .asm__node {
+  border-color: var(--list);
+}
+
+.asm__band--on .asm__node {
+  background: var(--rez-na-temnem);
+  border-color: var(--rez-na-temnem);
+}
+
+/* The cut planes BOUNDING the probed layer — drawn at its two interfaces, so
+   they mark the layer without crossing its name. Square end ticks at the left,
+   the site's own cut motif. */
 .asm__plane {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  height: 2px;
-  background: var(--rez-na-temnem);
+  inset: 0;
+  z-index: 2;
+  border-top: 2px solid var(--rez-na-temnem);
+  border-bottom: 2px solid var(--rez-na-temnem);
   opacity: 0;
-  transform: scaleX(0.82);
-  transition:
-    opacity var(--t-lift) var(--ease-out),
-    transform 320ms var(--ease-out);
+  transition: opacity var(--t-lift) var(--ease-out);
   pointer-events: none;
 }
 .asm__plane::before,
 .asm__plane::after {
   content: '';
   position: absolute;
-  top: -3px;
+  left: 0;
   width: 8px;
   height: 8px;
   background: var(--rez-na-temnem);
 }
 .asm__plane::before {
-  left: 0;
+  top: 0;
 }
 .asm__plane::after {
-  right: 0;
+  bottom: 0;
 }
 
 .asm__band--on .asm__plane {
   opacity: 1;
-  transform: scaleX(1);
 }
 
-/* Swings between layers on --sel alone: bands are equal, so each centre is
-   (n + 0.5) × 25%. One transition, no per-frame work. */
+/* Aimed by placeLeader() at the probed band's measured centre — the layers
+   have different thicknesses, so there is no index arithmetic that would do. */
 .asm__leader {
   position: absolute;
   left: 100%;
   width: var(--asm-gap);
   height: 1px;
-  top: calc((var(--sel, 0) + 0.5) * 25%);
+  top: var(--lead-y, 50%);
   background: var(--rez-na-temnem);
   transition: top 380ms var(--ease-out);
   pointer-events: none;
@@ -811,6 +914,15 @@ button.asm__band:hover .asm__fill,
    presence depended on which band was probed (measured). */
 .asm__callout:not([hidden]) + .asm__callout:not([hidden]) {
   margin-top: 1.75rem;
+}
+
+/* Phones lose the leader, so the link becomes proximity plus this rule in the
+   same red as the probed layer's cut planes directly above it. */
+@media (max-width: 899.98px) {
+  .asm__callouts {
+    border-top: 2px solid var(--rez-na-temnem);
+    padding-top: 1.35rem;
+  }
 }
 
 .asm__label {
