@@ -5,17 +5,17 @@
  * A red cut line divides the VIEWPORT. Everything above it is the rendered
  * page; everything below it is the markup a crawler receives.
  *
- * THE SCROLL IS THE KNIFE. The visitor arrives on raw markup and reads it with
- * no line in sight; once the section holds ~65% of the screen, further
- * scrolling drives the cut down the viewport through an asymmetric S-curve —
- * a slow press while the eye settles, a fast rip through the middle, a long
- * deceleration over the last fifth so the transformation stays legible. The
- * state is a pure function of scroll: scrubbing back re-opens the markup near
- * the section's start (and only there — the window sits at the top of the
- * section, so re-reading the layers below never un-renders them), there are
- * no timers and nothing to strand, and the line itself exists exactly while a
- * split exists on screen. The grip overrides the mapping; scrolling more than
- * a hand's width takes the knife back.
+ * THREE ACTS. First the visitor simply READS: they arrive on raw markup with
+ * no line in sight and scroll through a big chunk of it undisturbed. Then,
+ * once they have pushed TRIGGER_VH past the section's start — a commitment,
+ * not a graze — the scan fires ONCE: a single decisive sweep down the screen,
+ * eased by an asymmetric S-curve (slow press, fast rip, soft landing), that
+ * converts everything it passes. Then the line RESTS low on the viewport and
+ * becomes an instrument: content entering from below crosses it and converts
+ * as the visitor scrolls on, and the grip drags it anywhere — the dragged
+ * position simply stays, because after the one sweep there is no mapping to
+ * fight the reader's hand. Scrolling back up never un-renders what the scan
+ * already converted.
  *
  * Three rules hold it together:
  *
@@ -50,43 +50,38 @@ const grip = ref<HTMLInputElement | null>(null)
 const live = ref(false)
 
 /**
- * The scrub window. START_VH: conversion begins when the stage's top reaches
- * this fraction of the viewport — i.e. once the section holds ~65% of the
- * screen; above that the visitor simply reads raw markup, and the line does
- * not exist yet. TRAVEL_VH: how much scrolling the full conversion takes, in
- * viewport heights — ~600px on a desktop screen, long enough to feel like a
- * scrub, short enough to finish while the section still fills the screen.
+ * The scan fires once the reader has scrolled this far PAST the section's
+ * start, in viewport heights. By then they have traversed ~1.25 screens of
+ * raw markup — a big chunk read on its own terms, and a scroll depth that
+ * says "carry on", not a graze.
  */
-const START_VH = 0.35
-const TRAVEL_VH = 0.75
+const TRIGGER_VH = 0.25
+/** Where the line rests after the scan: low, with a strip of code still
+    arriving beneath it, so the instrument stays visible and invites the drag. */
+const PARK = 90
+/** One decisive pass down the screen. */
+const SWEEP_MS = 1250
 
 /**
- * The wipe's response to scroll: p^A / (p^A + (1−p)^B), an asymmetric S-curve.
- * Measured points at A=1.8, B=1.4 — the first tenth of the travel yields 2%
- * of the wipe (the line lands on the section's edge and presses), 30–70% of
- * the travel rips through 16%→74%, and the last fifth decelerates through the
- * final 14% so the eye keeps hold of what just happened.
+ * The sweep's TIME easing: t^A / (t^A + (1−t)^B), an asymmetric S-curve.
+ * Measured points at A=1.8, B=1.4 — the first tenth of the time yields 2% of
+ * the travel (the line appears and presses), the middle rips (30–70% of the
+ * time covers 16%→74%), and the last fifth decelerates through the final 14%
+ * so the eye keeps hold of what just happened.
  */
 const CURVE_A = 1.8
 const CURVE_B = 1.4
 
-function wipe(p: number): number {
-  if (p <= 0) return 0
-  if (p >= 1) return 1
-  const rise = Math.pow(p, CURVE_A)
-  return rise / (rise + Math.pow(1 - p, CURVE_B))
+function wipe(t: number): number {
+  if (t <= 0) return 0
+  if (t >= 1) return 1
+  const rise = Math.pow(t, CURVE_A)
+  return rise / (rise + Math.pow(1 - t, CURVE_B))
 }
 
-/**
- * A hand on the grip beats the scroll mapping — until the reader scrolls
- * further than this, which hands the knife back. The tolerance (the original
- * REZ grip's own constant) keeps a trackpad's incidental jitter from
- * snatching the line out from under a drag.
- */
-const MANUAL_SCROLL_TOLERANCE = 24
-let manual = false
-let manualAnchorY = 0
 let reduced = false
+let swept = false
+let sweeping = false
 
 /**
  * Per-block parallax, as a multiplier in [-1, 1] of AMPLITUDE. The detail
@@ -274,12 +269,12 @@ function measure() {
   const vh = window.innerHeight
   const rect = st.getBoundingClientRect()
 
-  // The scroll is the knife — unless a hand is on the grip, or reduced motion
-  // keeps the page finished. Progress runs 0→1 across TRAVEL_VH of scrolling
-  // starting at START_VH, shaped by wipe().
-  if (!manual && !reduced) {
-    const p = (START_VH * vh - rect.top) / (TRAVEL_VH * vh)
-    scanPct.value = wipe(Math.min(1, Math.max(0, p))) * 100
+  // The one-shot trigger is a scroll-depth condition checked wherever measure
+  // runs — no observer to arm, nothing to strand: a reader who reaches the
+  // depth gets the scan, however they got there.
+  if (!swept && !reduced && rect.top <= -TRIGGER_VH * vh) {
+    swept = true
+    sweep()
   }
   cutting.value = scanPct.value > 0.5 && scanPct.value < 99.5
 
@@ -300,10 +295,6 @@ function onScroll() {
   if (measureRaf) cancelAnimationFrame(measureRaf)
   measureRaf = fx.raf(() => {
     measureRaf = 0
-    // Scrolling past the tolerance takes the knife back from the grip.
-    if (manual && Math.abs(window.scrollY - manualAnchorY) > MANUAL_SCROLL_TOLERANCE) {
-      manual = false
-    }
     measure()
   })
 }
@@ -322,11 +313,32 @@ function scheduleSync() {
 function onGrip() {
   const g = grip.value
   if (!g) return
-  // A hand on the control always wins; the anchor marks where it took hold.
-  manual = true
-  manualAnchorY = window.scrollY
+  // A hand on the control always wins — it cancels a running sweep, and the
+  // dragged position simply STAYS: after the one scan there is no mapping
+  // waiting to snatch the line back.
+  sweeping = false
   scanPct.value = Number(g.value)
   measure()
+}
+
+/**
+ * The scan: one decisive pass from the top of the screen down to PARK,
+ * converting everything it crosses, eased by wipe() over SWEEP_MS.
+ * Self-driven, because the reader may have stopped scrolling by the time the
+ * trigger depth is reached.
+ */
+function sweep() {
+  sweeping = true
+  const t0 = performance.now()
+  const step = (now: number) => {
+    if (!sweeping) return
+    const t = Math.min(1, (now - t0) / SWEEP_MS)
+    scanPct.value = wipe(t) * PARK
+    measure()
+    if (t < 1) fx.raf(step)
+    else sweeping = false
+  }
+  fx.raf(step)
 }
 
 onMounted(() => {
@@ -335,10 +347,11 @@ onMounted(() => {
   const st = stage.value
   if (!el || !st) return
 
-  // Reduced motion keeps the finished page and a live control — the scroll
-  // mapping never runs, so only the grip writes the cut. Everyone else gets
-  // the state their scroll position implies, computed by the first measure().
+  // Reduced motion keeps the finished page and a live control — the scan
+  // never fires, so only the grip writes the cut. Everyone else arrives on
+  // the raw markup and reads it until the trigger depth.
   reduced = prefersReducedMotion()
+  if (!reduced) scanPct.value = 0
 
   // The first pin waits for the hydrated DOM. Hydration REPLACES this
   // section's layout — the four callouts collapse to one, the bands become
@@ -381,11 +394,10 @@ onMounted(() => {
     }),
   )
 
-  // No trigger, no timer, no safety net: the cut is a pure function of the
-  // scroll position, so there is no state to strand and nothing to arm.
 })
 
 onUnmounted(() => {
+  sweeping = false
   fx.dispose()
 })
 </script>
@@ -1015,10 +1027,14 @@ button.asm__band:hover .asm__node {
   pointer-events: auto;
 }
 
+/* The thumb rides WITH the line: min (0, line at the screen top) at the
+   rail's top, max (100, line at the bottom) at its bottom — so dragging down
+   moves the cut down, one vector, no translation in the reader's head. The
+   previous `direction: rtl` reversed exactly this and made the control read
+   backwards (the owner caught it). */
 .trad__grip {
   flex: 1;
   writing-mode: vertical-lr;
-  direction: rtl;
   width: 44px;
   background: transparent;
   cursor: ns-resize;
