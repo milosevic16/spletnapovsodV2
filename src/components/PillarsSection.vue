@@ -31,14 +31,35 @@ const open = ref<string | null>(null)
 let invoker: HTMLElement | null = null
 
 const items = pillars.items
-const OPEN_MS = 520
-const CLOSE_MS = 200
+/** The FLIP runs the same length in both directions — close is its reverse. */
+const FLIP_MS = 520
+const EASE_OPEN = 'cubic-bezier(0.22,1,0.36,1)'
+/** The exact mirror of EASE_OPEN: (1−x2, 1−y2, 1−x1, 1−y1). */
+const EASE_CLOSE = 'cubic-bezier(0.64,0,0.78,0)'
 
 function panelOf(id: string): HTMLElement | null {
   return host.value?.querySelector<HTMLElement>(`#pilp-${id}`) ?? null
 }
 function tileOf(id: string): HTMLElement | null {
   return host.value?.querySelector<HTMLElement>(`.pil__tile[data-p="${id}"]`) ?? null
+}
+
+/**
+ * The transform that maps the full-stage panel onto its plate — the FLIP's far
+ * end. Shared by the open and its exact reverse, so the two can never describe
+ * different geometry.
+ */
+function plateTransform(id: string): string | null {
+  const tile = tileOf(id)
+  const st = stage.value
+  if (!tile || !st) return null
+  const t = tile.getBoundingClientRect()
+  const s = st.getBoundingClientRect()
+  if (!s.width || !s.height) return null
+  return (
+    `translate(${(t.left - s.left).toFixed(1)}px, ${(t.top - s.top).toFixed(1)}px)` +
+    ` scale(${(t.width / s.width).toFixed(4)}, ${(t.height / s.height).toFixed(4)})`
+  )
 }
 
 /**
@@ -85,25 +106,18 @@ function show(id: string, from: HTMLElement) {
   if (prefersReducedMotion()) return
 
   // FLIP: the panel grows out of the plate the visitor clicked.
-  const tile = tileOf(id)
-  if (!tile) return
-  const t = tile.getBoundingClientRect()
-  const s = st.getBoundingClientRect()
+  const plate = plateTransform(id)
+  if (!plate) return
   panel.style.transformOrigin = '0 0'
-  fx.anim(
-    panel,
-    [
-      {
-        transform: `translate(${(t.left - s.left).toFixed(1)}px, ${(t.top - s.top).toFixed(1)}px) scale(${(t.width / s.width).toFixed(4)}, ${(t.height / s.height).toFixed(4)})`,
-      },
-      { transform: 'none' },
-    ],
-    { duration: OPEN_MS, easing: 'cubic-bezier(0.22,1,0.36,1)', fill: 'none' },
-  )
+  fx.anim(panel, [{ transform: plate }, { transform: 'none' }], {
+    duration: FLIP_MS,
+    easing: EASE_OPEN,
+    fill: 'none',
+  })
   const body = panel.querySelector<HTMLElement>('.pil__scroll')
   if (body) {
     fx.anim(body, [{ opacity: 0 }, { opacity: 0, offset: 0.45 }, { opacity: 1 }], {
-      duration: OPEN_MS + 240,
+      duration: FLIP_MS,
       easing: 'ease-out',
       fill: 'none',
     })
@@ -112,7 +126,8 @@ function show(id: string, from: HTMLElement) {
 
 function close(returnFocus = true) {
   if (open.value === null) return
-  const panel = panelOf(open.value)
+  const id = open.value
+  const panel = panelOf(id)
   const done = () => {
     if (open.value === null) return
     open.value = null
@@ -120,19 +135,32 @@ function close(returnFocus = true) {
     if (returnFocus) invoker?.focus({ preventScroll: true })
     invoker = null
   }
-  if (!panel || prefersReducedMotion()) {
+  const to = panel ? plateTransform(id) : null
+  if (!panel || !to || prefersReducedMotion()) {
     done()
     return
   }
-  // The one close direction CSS can't run: fade, then drop from the tree.
-  fx.anim(panel, [{ opacity: 1 }, { opacity: 0 }], {
-    duration: CLOSE_MS,
-    easing: 'ease-out',
+  // The close is the open played backwards: the same geometry, the same
+  // duration, the mirrored easing — the panel shrinks back into its plate
+  // (which is directly beneath it, so it is revealed exactly where it belongs).
+  // An opacity-only fade read as a glitch because it did not undo the FLIP.
+  panel.style.transformOrigin = '0 0'
+  fx.anim(panel, [{ transform: 'none' }, { transform: to }], {
+    duration: FLIP_MS,
+    easing: EASE_CLOSE,
     fill: 'none',
   })
-  // Paired with CLOSE_MS above; lands the state even if the animation never
+  const body = panel.querySelector<HTMLElement>('.pil__scroll')
+  if (body) {
+    fx.anim(body, [{ opacity: 1 }, { opacity: 0, offset: 0.55 }, { opacity: 0 }], {
+      duration: FLIP_MS,
+      easing: 'ease-in',
+      fill: 'none',
+    })
+  }
+  // Paired with FLIP_MS above; lands the state even if the animation never
   // advances (throttled tab).
-  fx.setTimeout(done, CLOSE_MS + 40)
+  fx.setTimeout(done, FLIP_MS + 40)
 }
 
 function toggle(id: string, ev: Event) {
@@ -380,7 +408,10 @@ function srcset(id: string, ext: string) {
 /* Corner titles. */
 .pil__label {
   position: absolute;
-  z-index: 2;
+  /* Above the plates — including a hovered one, which lifts to 3. The layout
+     below keeps them from overlapping at all; this is the belt, so an
+     unforeseen viewport can never hide a title behind a picture. */
+  z-index: 4;
   background: none;
   border: 0;
   padding: 0.25rem 0;
@@ -393,33 +424,27 @@ function srcset(id: string, ext: string) {
   letter-spacing: -0.015em;
   color: var(--grafit);
   text-align: left;
-  max-width: min(60vw, 34ch);
+  /* Single value on purpose — see the tile's note: a mixed-unit min() does not
+     survive minification here. */
+  max-width: 60vw;
   transition: color var(--t-lift) var(--ease-out);
 }
 
+/* PHONES: all three titles on one left rail, each beside its own plate — the
+   middle one sits to the LEFT of the middle plate rather than sharing the top
+   edge with the first, which crowded them into each other (owner's call). */
 .pil__label--design {
   top: 0;
   left: var(--gutter);
 }
 .pil__label--security {
-  top: 0;
-  right: var(--gutter);
-  text-align: right;
+  top: 40%;
+  left: var(--gutter);
+  max-width: 34%;
 }
 .pil__label--seo {
   bottom: 0;
   left: var(--gutter);
-}
-
-/* On narrow screens the right label's BOX reaches left of its right-aligned
-   ink (shrink-to-fit caps at max-width when the text wraps), and that empty
-   box would sit over the left label's letters and steal their clicks
-   (measured: a 50px shared strip at 375px). The left-anchored labels stack
-   above, so every ink pixel belongs to its own button; the right label's ink
-   is never under a left box. */
-.pil__label--design,
-.pil__label--seo {
-  z-index: 3;
 }
 
 .pil__label:hover {
@@ -428,11 +453,22 @@ function srcset(id: string, ext: string) {
 
 /* The cluster: absolute within the stage, staggered off each other's rhythm
    like plates on a wall. Portrait positions first; desktop repositions below. */
+/* The size is bounded on BOTH axes. A plate's height comes from its width
+   (4:3) while its position is a percentage of the stage's HEIGHT, so a
+   width-only size lets the cluster outgrow a short stage and spill into the
+   title bands — which is exactly how the bottom title got covered on a
+   wide-but-short screen.
+   Expressed as width + max-width, NOT `min(48%, 30svh)`: the minifier folds a
+   mixed-unit min() down to one term (measured — the built CSS shipped a bare
+   `width:26%`, so the cap silently did not exist). The used width of a
+   width/max-width pair IS the minimum of the two, and both are single values
+   no build transform can drop. */
 .pil--live .pil__tile {
   position: absolute;
   z-index: 1;
   display: block;
   width: 48%;
+  max-width: 30svh;
   padding: 0;
   border: 0;
   background: var(--grafit);
@@ -603,8 +639,10 @@ function srcset(id: string, ext: string) {
     height: min(86vh, 54rem);
   }
 
+  /* Same both-axis bound as the phone rule, at desktop proportions. */
   .pil--live .pil__tile {
     width: 26%;
+    max-width: 31svh;
   }
 
   .pil--live .pil__tile[data-p='design'] {
@@ -617,7 +655,24 @@ function srcset(id: string, ext: string) {
   }
   .pil--live .pil__tile[data-p='seo'] {
     left: 30%;
-    top: 58%;
+    top: 56%;
+  }
+
+  /* The middle title returns to the opposite corner here, where the row is
+     wide enough for two. */
+  .pil__label--security {
+    top: 0;
+    left: auto;
+    right: var(--gutter);
+    text-align: right;
+    max-width: 46%;
+  }
+
+  /* The left-rail titles stop short of the cluster's left edge (33%/30%), so
+     no title box ever reaches under a plate. */
+  .pil__label--design,
+  .pil__label--seo {
+    max-width: 29%;
   }
 }
 </style>
