@@ -4,23 +4,14 @@
     {
       "name": "preview",
       "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "run",
-        "preview",
-        "--",
-        "--port",
-        "4272",
-        "--strictPort"
-      ],
+      "runtimeArgs": ["run", "preview"],
+      "autoPort": true,
       "port": 4272
     },
     {
       "name": "dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "run",
-        "dev"
-      ],
+      "runtimeArgs": ["run", "dev"],
       "port": 5173
     }
   ]

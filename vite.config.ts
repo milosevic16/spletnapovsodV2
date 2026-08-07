@@ -10,6 +10,12 @@ import 'vite-ssg' // type augmentation for ssgOptions
 // the build if any token remains.
 
 export default defineConfig({
+  // The preview port comes from the harness's PORT env when assigned (parallel
+  // sessions each get their own), falling back to the historical fixed port.
+  preview: {
+    port: Number(process.env.PORT) || 4272,
+    strictPort: true,
+  },
   plugins: [
     vue(),
     // Metric-matched fallback faces (size-adjust/ascent/descent) generated from

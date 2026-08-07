@@ -109,6 +109,8 @@ export const invisible = {
    */
   feedback: {
     scanLabel: 'Povlecite za primerjavo kode in izrisane strani',
+    /** Names the layer selector, which exists only once the section hydrates. */
+    layersLabel: 'Sloji pod površino',
   },
   outro:
     'Vse to je vključeno že v osnovnem paketu. S tem se vam ni treba ukvarjati — naj to za vas uredijo profesionalci z izkušnjami.',
@@ -192,6 +194,10 @@ export const pillars = {
   title: 'Kaj vsebujejo vsi paketi?',
   intro:
     'Trije stebri, na katerih stoji vsaka stran, ki jo izdelamo — od najmanjše do največje.',
+  /** Interaction-only (the expanded panel's close control) — guard-skipped. */
+  feedback: {
+    closeLabel: 'Zapri',
+  },
   items: [
     {
       id: 'design',
