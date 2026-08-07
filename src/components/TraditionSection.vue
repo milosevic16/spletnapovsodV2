@@ -5,10 +5,10 @@
  * A red cut line divides the VIEWPORT. Everything above it is the rendered
  * page; everything below it is the markup a crawler receives.
  *
- * THREE ACTS. First the visitor simply READS: they arrive on raw markup with
- * no line in sight and scroll through a big chunk of it undisturbed. Then,
- * once they have pushed TRIGGER_VH past the section's start — a commitment,
- * not a graze — the scan fires ONCE: a single decisive sweep down the screen,
+ * THREE ACTS. First the visitor simply READS: the section arrives as raw
+ * markup with no line in sight, scrolling up into view. Then, the moment its
+ * top edge meets the top of the screen — the markup now owning the whole
+ * viewport — the scan fires ONCE: a single decisive sweep down the screen,
  * eased by an asymmetric S-curve (slow press, fast rip, soft landing), that
  * converts everything it passes. Then the line RESTS low on the viewport and
  * becomes an instrument: content entering from below crosses it and converts
@@ -50,12 +50,12 @@ const grip = ref<HTMLInputElement | null>(null)
 const live = ref(false)
 
 /**
- * The scan fires once the reader has scrolled this far PAST the section's
- * start, in viewport heights. By then they have traversed ~1.25 screens of
- * raw markup — a big chunk read on its own terms, and a scroll depth that
- * says "carry on", not a graze.
+ * The scan fires when the section's top edge meets the top of the screen —
+ * the moment the raw markup owns the whole viewport and nothing else is
+ * competing for the eye. Expressed in viewport heights past that edge, so the
+ * moment stays tunable; 0 IS the edge.
  */
-const TRIGGER_VH = 0.25
+const TRIGGER_VH = 0
 /** Where the line rests after the scan: low, with a strip of code still
     arriving beneath it, so the instrument stays visible and invites the drag. */
 const PARK = 90
