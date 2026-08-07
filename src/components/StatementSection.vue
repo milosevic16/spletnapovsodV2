@@ -30,15 +30,25 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
            appears exactly when this element leaves the screen, so the brand is
            never absent from the page. -->
       <p class="stmt__brand" data-brand-sentinel>
-        <!-- Brand mark: the sheet cut by the plane, the site's own motif.
-             Sized in em, so it scales with the wordmark by construction. Its
-             red rule spans the full viewBox, so the SVG's own left edge IS the
-             composition's leftmost ink — no optical correction needed. -->
-        <svg class="stmt__mark" viewBox="0 0 24 24" aria-hidden="true" fill="none">
-          <rect x="2.5" y="2.5" width="19" height="19" fill="none" stroke="currentColor"
-            stroke-width="1.5" />
-          <rect x="2.5" y="13" width="19" height="8.5" fill="currentColor" />
-          <rect x="0" y="11.25" width="24" height="1.9" fill="var(--rez)" />
+        <!-- The pd mark: two overlapping discs carrying Povsod's first and
+             last letters; the d is the p rotated 180° (the mark's point
+             symmetry). Sized in em, so it scales with the wordmark by
+             construction; the left disc's edge is the viewBox edge, so the
+             SVG's own left edge IS the composition's leftmost ink. Geometry
+             pairs with the intro veil in index.html, whose flying mark lands
+             exactly on this one — change either, change both. -->
+        <svg class="stmt__mark" viewBox="0 0 244 144" aria-hidden="true">
+          <circle cx="72" cy="72" r="72" fill="var(--rez)" />
+          <circle cx="172" cy="72" r="72" fill="var(--rez)" />
+          <g fill="none" stroke="#fff" stroke-width="18" stroke-linecap="round">
+            <circle cx="79" cy="79" r="33" />
+            <line x1="46" y1="55" x2="46" y2="118" />
+          </g>
+          <g fill="none" stroke="#fff" stroke-width="18" stroke-linecap="round"
+            transform="rotate(180 122 72)">
+            <circle cx="79" cy="79" r="33" />
+            <line x1="46" y1="55" x2="46" y2="118" />
+          </g>
         </svg>
         <span class="stmt__wordmark">SpletnaPovsod</span>
       </p>
@@ -93,9 +103,10 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
   padding-block: calc((var(--hero-wordmark-scaley) - 1) * 0.5em);
 }
 
+/* Height carries the scale; the width follows the mark's own 244:144 ratio. */
 .stmt__mark {
-  width: 0.78em;
   height: 0.78em;
+  width: auto;
   flex: 0 0 auto;
 }
 

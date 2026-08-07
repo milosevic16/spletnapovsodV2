@@ -206,35 +206,43 @@ textarea {
    never on SPA navigation back to home. With JS off the flag never appears and
    the page is simply, fully there: the h1 never waits on JavaScript.
 
-   DELAYS ARE KEYED TO THE VEIL TIMELINE in index.html (cut draws 0.40–1.02s,
-   halves part 1.02–1.64s, veil hidden 1.80s, node removed 2.60s). Change one,
-   change the other — each side names the other in a comment.
+   DELAYS ARE KEYED TO THE VEIL TIMELINE in index.html (word typed by ~0.9s,
+   contracts into the mark 1.45–1.95s, mark flies 2.35–2.95s, ground fades
+   2.4–2.85s, veil hidden 3.2s, node removed 3.8s). The page settles WHILE the
+   mark is flying home. Change one, change the other — each side names the
+   other in a comment.
+
+   THE BRAND ROW DOES NOT SETTLE: the flying mark lands on it and crossfades,
+   so the mark must already be at rest when the ground lifts — animating it
+   would pull the landing target out from under the veil. Only the wordmark
+   TEXT beside it arrives with the page.
 
    Under reduced motion the block does not exist at all (per-effect early
    return); the global kill-switch below is the floor under it. */
 @media (prefers-reduced-motion: no-preference) {
   html[data-intro] .masthead__row {
-    animation: settle-down 0.5s var(--ease-out) 0.98s both;
+    animation: settle-down 0.5s var(--ease-out) 2.38s both;
   }
 
-  /* The CTA settles with the masthead row it now lives in. */
-  html[data-intro] .stmt__brand,
   html[data-intro] .stmt__title,
   html[data-intro] .stmt__lead,
   html[data-intro] .work__plates {
     animation: settle-up 0.55s var(--ease-out) both;
   }
-  html[data-intro] .stmt__brand {
-    animation-delay: 1.06s;
+  /* Own keyframes: the wordmark RESTS at scaleY(--hero-wordmark-scaley), and a
+     transform keyframe replaces the transform wholesale — settle-up would
+     strip the stretch for the length of the animation and snap it back. */
+  html[data-intro] .stmt__wordmark {
+    animation: settle-word 0.55s var(--ease-out) 2.45s both;
   }
   html[data-intro] .stmt__title {
-    animation-delay: 1.18s;
+    animation-delay: 2.55s;
   }
   html[data-intro] .stmt__lead {
-    animation-delay: 1.28s;
+    animation-delay: 2.65s;
   }
   html[data-intro] .work__plates {
-    animation-delay: 1.42s;
+    animation-delay: 2.8s;
   }
 }
 
@@ -259,6 +267,17 @@ textarea {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes settle-word {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scaleY(var(--hero-wordmark-scaley, 1));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scaleY(var(--hero-wordmark-scaley, 1));
   }
 }
 

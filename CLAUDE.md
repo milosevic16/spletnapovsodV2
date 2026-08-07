@@ -106,14 +106,19 @@ time, visibility-gated). One finite grip pulse (2 sinusoidal swells, killed on f
 interaction). Reduced motion: global kill-switch + per-effect early
 returns; the static page is a finished section drawing.
 
-**The veil** (`index.html`, inline): pure-CSS timed sequence ≤1.8s — the framed sheet
-holds 0.5s, the red line draws 0.6s, the halves (each carrying its part of the sheet
-frame) part 0.6s revealing the hero; CANNOT hang by construction (no JS dependency; the
-app only removes the spent node at 2.6s). `<noscript>` and reduced-motion drop it
-entirely. The IZRIS token is stamped with the real build date **in
-`scripts/postbuild.mjs`** (a vite `transformIndexHtml` hook does NOT survive vite-ssg's
-render — verified the hard way) and a guard blocks the build if the token remains.
+**The veil** (`index.html`, inline): the logo's origin story, pure CSS ~3.2s — on black,
+»spletnapovsod« types out; the p of Povsod and the final d are the pd mark's own halves
+(red disc, white letter, exaggerated tails); the plain letters vanish, the word contracts
+into the mark, and the mark flies to the hero brand position while the page settles
+beneath (base.css delays and App.vue's 3.8s cleanup are keyed to the timeline — each side
+names the other). The landing is a COPIED FORMULA (–-hero-inset, --hero-wordmark, the
+45px desktop strip) — change those tokens, change the veil's literals. CANNOT hang by
+construction (no JS dependency). `<noscript>` and reduced-motion drop it entirely.
 System fonts only, no images, literal hex colors (the bundled CSS hasn't loaded yet).
+The pd mark itself renders in three places — veil, StatementSection, SiteMasthead —
+same geometry, paired by comment. (The old IZRIS stamp left with the sheet veil;
+postbuild's stamping/guard are conditional and now no-op. favicon/og still carry the
+old sheet-cut mark — regenerate with the owner.)
 
 **Buried-plate focus**: sticky plates get `inert` while fully covered (rAF-throttled
 scroll check, desktop only); the plate INDEX above the stack is the keyboard/SR-canonical
