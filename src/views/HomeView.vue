@@ -73,11 +73,14 @@ useHead({
   <SiteMasthead />
   <main id="main">
     <StatementSection />
-    <!-- The work carousel before the invisible-work band (owner's call): the
-         proof lands before the argument. -->
+    <!-- Owner's order: the proof (work), then what a package contains, then
+         the invisible-work band that argues for it. Each section keeps its OWN
+         ground through the Paketi/Kaj-dobite swap — Paketi stays paper-2, Kaj
+         dobite stays graphite — so the bands read
+         pigment → paper-2 → graphite → paper → earth. -->
     <WorkCarousel />
-    <TraditionSection />
     <PillarsSection />
+    <TraditionSection />
     <DifferentiatorsSection />
     <ContactSection />
   </main>
