@@ -114,7 +114,11 @@ beneath (base.css delays and App.vue's 3.8s cleanup are keyed to the timeline �
 names the other). The landing is a COPIED FORMULA (–-hero-inset, --hero-wordmark, the
 45px desktop strip) — change those tokens, change the veil's literals. CANNOT hang by
 construction (no JS dependency). `<noscript>` and reduced-motion drop it entirely.
-System fonts only, no images, literal hex colors (the bundled CSS hasn't loaded yet).
+No images, literal hex colors. Type: Archivo Variable at 500 (the studio voice, per the
+owner's Claude Design prototype) — safe in the veil because the bundled CSS is
+render-blocking (family + fontaine metric fallback exist before first paint) and the
+woff2 is preloaded, so a late swap changes glyphs, not geometry; the old system-fonts
+rule is retired on that reasoning.
 The pd mark itself renders in three places — veil, StatementSection, SiteMasthead —
 same geometry, paired by comment. (The old IZRIS stamp left with the sheet veil;
 postbuild's stamping/guard are conditional and now no-op. favicon/og still carry the
