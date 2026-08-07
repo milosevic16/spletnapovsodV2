@@ -8,13 +8,14 @@
  * ports of the sites' shipped code). Nothing animates our chrome.
  *
  * The band is the selected project's STAGE colour — not the site's own
- * background but a colour drawn from its accent family, deep or bright enough
- * to make the screenshot pop, entered and left on a clean cutoff against the
- * paper above and below. Only the ground interpolates on a swap: the corner
- * labels live per plate with per-plate ink and crossfade WITH their plate,
- * and the controls sit on a constant graphite chip — measured, an ink
- * interpolating paper↔graphite dips to 1.1:1 mid-fade, so no text is ever
- * asked to ride the transition.
+ * background but a PIGMENT from its accent family, entered and left on a clean
+ * cutoff against the paper above and below. The three sit at nearly the same
+ * weight and differ in hue (see GROUNDS), so the band reads as three inks from
+ * one set rather than three brightnesses.
+ *
+ * That weight match is what lets ONE ink serve all three: paper on every
+ * ground and on every frame of every transition (measured, worst 5.31:1). So
+ * nothing here changes colour with the selection except the ground itself.
  *
  * SSG contract: all three plates — screenshots, names, sector lines, live
  * links — are in the prerendered HTML. JS adds the carousel on top; with JS
@@ -42,20 +43,29 @@ const progressEl = ref<HTMLElement | null>(null)
 const AUTOPLAY_MS = 7000
 
 /**
- * Each project's stage: a colour from ITS OWN accent family (never its page
- * background), plus the one ink that passes on it. Ratios measured 2026-08-07:
- *   lemur     #6242DC (deepened from their #7F59F5) — paper ink 5.64:1
- *   mercpeter #BA3730 (deepened from their #D2453E) — paper ink 5.11:1
- *   bloctopus #1FC49A (their green, verbatim)       — graphite ink 7.67:1
+ * Each project's ground: a pigment from ITS OWN accent family, never its page
+ * background. Measured 2026-08-07 against paper ink #F5F2EB, and against each
+ * screenshot's mean colour:
+ *
+ *   lemur     #7A3184 plum      paper 7.22:1  chroma  83   (from their #7F59F5)
+ *   mercpeter #BA3730 brick     paper 5.11:1  chroma 138   (from their #D2453E)
+ *   bloctopus #0B7A5F viridian  paper 4.74:1  chroma 111   (from their #1FC49A)
+ *
+ * Chroma, not brightness, is what makes a screenshot pop here: all three shots
+ * are near-neutral (means #9aa6a3, #737372, #203740), so a saturated ground
+ * separates by hue. The brick carries only 1.2:1 of VALUE against its shot and
+ * reads strongly — which is why the replacements were chosen for pigment depth
+ * rather than for luminance, and why the earlier screen-bright violet and mint
+ * (low chroma for their brightness) read as generic.
  */
-const STAGES: Record<string, { ground: string; ink: string }> = {
-  lemur: { ground: '#6242DC', ink: '#F5F2EB' },
-  mercpeter: { ground: '#BA3730', ink: '#F5F2EB' },
-  bloctopus: { ground: '#1FC49A', ink: '#1A1C1E' },
+const GROUNDS: Record<string, string> = {
+  lemur: '#7A3184',
+  mercpeter: '#BA3730',
+  bloctopus: '#0B7A5F',
 }
 
 /** Bound on the section, so prerender and hydration agree and nothing jumps. */
-const stageGround = computed(() => STAGES[items[active.value]!.id]?.ground ?? '#1A1C1E')
+const stageGround = computed(() => GROUNDS[items[active.value]!.id] ?? '#1A1C1E')
 
 const effects: (SlideEffect | null)[] = []
 let autoplayTimer = 0
@@ -243,7 +253,6 @@ onUnmounted(() => {
         :key="r.id"
         class="plate"
         :class="[`plate--${r.id}`, live ? 'plate--stacked' : '']"
-        :style="{ '--plate-ink': STAGES[r.id]?.ink ?? '#F5F2EB' }"
         :inert="live && i !== active ? true : undefined"
         :aria-hidden="live && i !== active ? 'true' : undefined"
       >
@@ -289,8 +298,8 @@ onUnmounted(() => {
         </div>
 
         <!-- The band's only text: a short line bottom-left, the site's name
-             bottom-right. Ink is per-plate and constant — labels crossfade
-             with their plate rather than riding the ground transition. -->
+             bottom-right. One paper ink, which passes on all three grounds and
+             on every frame between them. -->
         <div class="plate__corners">
           <p class="annot plate__sector">{{ r.sector }}</p>
           <a :href="r.url" target="_blank" rel="noopener" class="plate__name">
@@ -304,8 +313,9 @@ onUnmounted(() => {
     </ul>
 
     <!-- Controls appear only once live: with JS off the plates are all in
-         flow and there is nothing to control. The chip's graphite never
-         changes, so control ink and borders never cross a moving ground. -->
+         flow and there is nothing to control. They sit straight on the ground
+         in the same paper ink as the corners — no backing chip, because no
+         ink here changes with the selection. -->
     <div v-if="live" class="work__controls">
       <button
         type="button"
@@ -413,13 +423,13 @@ onUnmounted(() => {
   align-items: baseline;
   justify-content: space-between;
   gap: 1.5rem;
-  color: var(--plate-ink);
+  color: var(--list);
   width: 100%;
   margin-inline: auto;
 }
 
 .plate__sector {
-  color: var(--plate-ink);
+  color: var(--list);
   max-width: 34ch;
 }
 
@@ -440,25 +450,27 @@ onUnmounted(() => {
 }
 
 .work :focus-visible {
-  outline-color: var(--plate-ink);
+  outline-color: var(--list);
 }
 
-/* --- controls: a constant graphite chip -------------------------------------
-   Control ink and hairlines never sit on the interpolating ground. */
+/* --- controls ---------------------------------------------------------------
+   Straight on the ground. Every hairline is paper at alpha, so one measured
+   ink covers all three pigments and every frame between them; the red accent
+   would have vanished on the brick.
+
+   Hairlines are paper @0.75 — solved for the 3:1 UI floor on the WORST of the
+   three grounds (viridian 3.37:1, brick 3.52, plum 4.80). The obvious 0.45
+   measured 2.13 on viridian. The progress TRACK deliberately stays below that
+   floor: it is a 1px rail whose meaning is carried entirely by the fill
+   running over it at 4.74–7.22:1. */
 .work__controls {
   width: fit-content;
   margin: 1.1rem auto 0;
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.5rem 0.85rem;
-  background: var(--grafit);
   flex-wrap: wrap;
   justify-content: center;
-}
-
-.work__controls :focus-visible {
-  outline-color: var(--rez-na-temnem);
 }
 
 .work__thumbs {
@@ -470,7 +482,7 @@ onUnmounted(() => {
 .work__thumb {
   display: block;
   padding: 0;
-  border: 1px solid var(--crta-na-temnem);
+  border: 1px solid rgb(245 242 235 / 0.75);
   background: none;
   cursor: pointer;
   line-height: 0;
@@ -489,9 +501,10 @@ onUnmounted(() => {
   opacity: 0.75;
 }
 
+/* Selected state is opacity AND border weight — never colour alone. */
 .work__thumb--on {
   opacity: 1;
-  border-color: var(--rez-na-temnem);
+  border-color: var(--list);
 }
 
 .work__step {
@@ -501,7 +514,7 @@ onUnmounted(() => {
   width: 44px;
   height: 44px;
   background: none;
-  border: 1px solid var(--crta-na-temnem);
+  border: 1px solid rgb(245 242 235 / 0.75);
   color: var(--list);
   cursor: pointer;
   transition: border-color var(--t-lift) var(--ease-out);
@@ -515,7 +528,7 @@ onUnmounted(() => {
   display: block;
   width: 5rem;
   height: 1px;
-  background: var(--crta-na-temnem);
+  background: rgb(245 242 235 / 0.3);
   overflow: hidden;
 }
 
@@ -523,7 +536,7 @@ onUnmounted(() => {
   display: block;
   width: 100%;
   height: 100%;
-  background: var(--rez-na-temnem);
+  background: var(--list);
   transform: scaleX(0);
   transform-origin: left center;
 }
