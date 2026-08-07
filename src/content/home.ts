@@ -19,8 +19,8 @@ export interface Hero {
   /** Accented prefix of `title` (must match exactly — the component falls back to the plain title if not). */
   titleAccent: string
   lead: string
+  /** Rendered in the masthead strip — the page's single call to action. */
   ctaPrimary: { label: string; target: string }
-  ctaSecondary: { label: string; target: string }
 }
 
 export interface InvisibleItem {
@@ -100,7 +100,6 @@ export const hero: Hero = {
   titleAccent: 'Hitre',
   lead: 'Izdelujemo vse od osnovnih predstavitvenih strani do naprednih spletnih sistemov z rezervacijami in plačili Stripe. Poskrbimo za oblikovanje, razvoj, tehnično osnovo in objavo na vaši domeni.',
   ctaPrimary: { label: 'Naročite izdelek', target: 'kontakt' },
-  ctaSecondary: { label: 'Oglejte si reference', target: 'reference' },
 }
 
 export const invisible = {

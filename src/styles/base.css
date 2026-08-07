@@ -216,24 +216,21 @@ textarea {
     animation: settle-down 0.5s var(--ease-out) 0.98s both;
   }
 
+  /* The CTA settles with the masthead row it now lives in. */
   html[data-intro] .stmt__brand,
-  html[data-intro] .stmt__lead,
   html[data-intro] .stmt__title,
-  html[data-intro] .stmt__cta,
+  html[data-intro] .stmt__lead,
   html[data-intro] .work__plates {
     animation: settle-up 0.55s var(--ease-out) both;
   }
   html[data-intro] .stmt__brand {
     animation-delay: 1.06s;
   }
-  html[data-intro] .stmt__lead {
-    animation-delay: 1.14s;
-  }
   html[data-intro] .stmt__title {
-    animation-delay: 1.24s;
+    animation-delay: 1.18s;
   }
-  html[data-intro] .stmt__cta {
-    animation-delay: 1.32s;
+  html[data-intro] .stmt__lead {
+    animation-delay: 1.28s;
   }
   html[data-intro] .work__plates {
     animation-delay: 1.42s;

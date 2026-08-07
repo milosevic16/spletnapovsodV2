@@ -1,11 +1,11 @@
 <script setup lang="ts">
 /**
- * The opening band, carrying the brand: the SpletnaPovsod mark sits above the
- * h1 on the left; the lead and the calls to action stack on the right.
+ * The opening band. The wordmark is the page's anchor: enlarged, hard into the
+ * top-left corner, on its own row so it has the container's full width to be
+ * big in. The claim and its qualifier sit right, below and across from it.
  *
- * Two alignment locks, both the owner's spec:
- *   — the wordmark's TOP is the lead's top (row 1, both align-start);
- *   — the CTA row's BOTTOM is the h1's bottom (row 2, both align-end).
+ * The call to action is NOT here — it lives in the masthead strip, so the
+ * band is purely the brand and the claim.
  *
  * No JS: the only motion here is the arrival settle in base.css, once per
  * hard load.
@@ -23,13 +23,9 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
   <section class="stmt">
     <div class="container stmt__grid">
       <p class="stmt__brand">
-        <!-- Brand mark: the sheet cut by the plane, the site's own motif -->
-        <svg
-          class="stmt__mark"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-          fill="none"
-        >
+        <!-- Brand mark: the sheet cut by the plane, the site's own motif.
+             Sized in em, so it scales with the wordmark by construction. -->
+        <svg class="stmt__mark" viewBox="0 0 24 24" aria-hidden="true" fill="none">
           <rect x="2.5" y="2.5" width="19" height="19" fill="none" stroke="currentColor"
             stroke-width="1.5" />
           <rect x="2.5" y="13" width="19" height="8.5" fill="currentColor" />
@@ -43,20 +39,14 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
       </h1>
 
       <p class="stmt__lead">{{ hero.lead }}</p>
-
-      <div class="stmt__cta">
-        <a :href="`#${hero.ctaPrimary.target}`" class="stmt__btn">{{ hero.ctaPrimary.label }}</a>
-        <a :href="`#${hero.ctaSecondary.target}`" class="stmt__more">{{
-          hero.ctaSecondary.label
-        }}</a>
-      </div>
     </div>
   </section>
 </template>
 
 <style scoped>
+/* Tight to the corner: just enough air under the strip for the caps to breathe. */
 .stmt {
-  padding-top: 1.75rem;
+  padding-top: 0.85rem;
   padding-bottom: clamp(2rem, 1.5rem + 2vw, 3.25rem);
 }
 
@@ -65,31 +55,33 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
   gap: 1.35rem;
 }
 
+/* The font-size lives on the row, so the mark's em width tracks the wordmark. */
 .stmt__brand {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
+  gap: 0.5em;
+  font-family: var(--font-display);
+  font-stretch: var(--wdth-monument);
+  font-weight: 300;
+  /* Sized to fill ~70% of the container's width at desktop — the wordmark is
+     the corner anchor, so it is the largest thing on the page. The curve is
+     fitted through two measured points (320px -> 27px, 1265px -> 83px) rather
+     than guessed: the mark and wordmark never wrap, so a 320px screen must
+     have real margin, and the obvious curve left only 7px — inside the range a
+     font swap can move. */
+  font-size: clamp(1.6rem, 0.52rem + 5.9vw, 6rem);
   line-height: 1;
+  letter-spacing: -0.025em;
 }
 
 .stmt__mark {
-  width: 1.7rem;
-  height: 1.7rem;
+  width: 0.78em;
+  height: 0.78em;
   flex: 0 0 auto;
 }
 
 .stmt__wordmark {
-  font-family: var(--font-display);
-  font-stretch: var(--wdth-monument);
-  font-weight: 300;
-  font-size: clamp(1.6rem, 1.1rem + 2.4vw, 2.9rem);
-  line-height: 1;
-  letter-spacing: -0.02em;
   white-space: nowrap;
-}
-
-.stmt__title {
-  max-width: 18ch;
 }
 
 .stmt__hl {
@@ -104,101 +96,38 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
   color: var(--grafit-2);
 }
 
-.stmt__cta {
-  margin-top: 0.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.stmt__btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 3.25rem;
-  padding: 0.75rem 1.75rem;
-  background: var(--rez);
-  color: #fff; /* 6.01:1 on --rez — measured */
-  font-family: var(--font-display);
-  font-stretch: var(--wdth-datum);
-  font-weight: 600;
-  font-size: 0.9rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  text-decoration: none;
-  transition: background var(--t-lift) var(--ease-out);
-}
-
-.stmt__btn:hover {
-  background: var(--rez-deep);
-}
-
-.stmt__more {
-  align-self: flex-start;
-  padding: 0.65rem 0; /* 44px+ tap target with the 1rem line box */
-  font-weight: 600;
-  color: var(--rez); /* 5.37:1 on --list — measured */
-  text-decoration: underline;
-  text-underline-offset: 0.3em;
-}
-
-@media (min-width: 640px) {
-  .stmt__cta {
-    flex-direction: row;
-    align-items: center;
-    gap: 1.75rem;
-  }
-  .stmt__more {
-    align-self: center;
-  }
-}
-
-/* Desktop: two columns, two rows. Row 1 aligns START (wordmark top == lead
-   top); row 2 aligns END (h1 bottom == CTA bottom) — the two locks. */
+/* Desktop: the wordmark takes row 1 across the full width — that width is what
+   lets it be this large — and the claim block sits right, in the rows under it. */
 @media (min-width: 900px) {
   .stmt {
-    padding-top: 2.5rem;
+    padding-top: 0.5rem;
     padding-bottom: clamp(2.5rem, 2rem + 2vw, 4rem);
   }
 
   .stmt__grid {
-    grid-template-columns: minmax(0, 12fr) minmax(0, 11fr);
-    column-gap: clamp(2rem, 5vw, 5rem);
-    row-gap: 2rem;
+    grid-template-columns: repeat(24, minmax(0, 1fr));
+    column-gap: 1rem;
+    row-gap: 0;
   }
 
   .stmt__brand {
-    grid-column: 1;
+    grid-column: 1 / -1;
     grid-row: 1;
-    align-self: start;
-  }
-
-  .stmt__lead {
-    grid-column: 2;
-    grid-row: 1;
-    align-self: start;
-    font-size: 1rem;
-    line-height: 1.65;
   }
 
   .stmt__title {
-    grid-column: 1;
+    grid-column: 13 / -1;
     grid-row: 2;
-    align-self: end;
-    max-width: none;
+    margin-top: clamp(1.75rem, 1rem + 3vw, 3.5rem);
     font-size: clamp(2.2rem, 0.9rem + 2.8vw, 3.2rem);
   }
 
-  .stmt__cta {
-    grid-column: 2;
-    grid-row: 2;
-    align-self: end;
-    margin-top: 0;
-  }
-
-  .stmt__mark {
-    width: 2.1rem;
-    height: 2.1rem;
+  .stmt__lead {
+    grid-column: 13 / -1;
+    grid-row: 3;
+    margin-top: 1.15rem;
+    font-size: 1rem;
+    line-height: 1.65;
   }
 }
 </style>
