@@ -33,10 +33,29 @@ const open = ref(false)
 const phone = ref(false)
 /** Phones only: the bar has gathered itself out of the hero and taken the top. */
 const pinned = ref(false)
+/** Phones only: pulled off the top while the reader is travelling down. */
+const stowed = ref(false)
 const toggleEl = ref<HTMLButtonElement | null>(null)
 
 function close() {
   open.value = false
+}
+
+/**
+ * The bar yields to a reader travelling down and returns the moment they turn
+ * back. The threshold is what keeps it from flickering on the small
+ * corrections a finger makes; an open menu never stows, because pulling the
+ * panel's own header out from over it would be absurd.
+ */
+const STOW_THRESHOLD = 8
+let lastY = 0
+
+function onDirection() {
+  const y = window.scrollY
+  const dy = y - lastY
+  if (Math.abs(dy) < STOW_THRESHOLD) return
+  lastY = y
+  stowed.value = open.value ? false : dy > 0
 }
 
 function toggle() {
@@ -84,6 +103,9 @@ onMounted(() => {
     onScroll()
     fx.on(window, 'scroll', onScroll, { passive: true })
   }
+
+  lastY = window.scrollY
+  fx.on(window, 'scroll', onDirection, { passive: true })
 })
 
 onUnmounted(() => {
@@ -94,7 +116,12 @@ onUnmounted(() => {
 <template>
   <header
     class="masthead"
-    :class="{ 'masthead--live': live, 'masthead--open': open, 'masthead--pinned': pinned }"
+    :class="{
+      'masthead--live': live,
+      'masthead--open': open,
+      'masthead--pinned': pinned,
+      'masthead--stowed': stowed,
+    }"
   >
     <div class="container masthead__row">
       <!-- The bar's own small wordmark, phones only, revealed once pinned.
@@ -108,7 +135,7 @@ onUnmounted(() => {
           <rect x="2.5" y="13" width="19" height="8.5" fill="currentColor" />
           <rect x="0" y="11.25" width="24" height="1.9" fill="var(--rez)" />
         </svg>
-        <span>SpletnaPovsod</span>
+        <span class="masthead__brandtext">SpletnaPovsod</span>
       </p>
 
       <button
@@ -246,6 +273,11 @@ onUnmounted(() => {
    paper ground, hairline, the small wordmark arriving from the left, the
    button drawing up into the row with it. */
 @media (max-width: 899.98px) {
+  /* Three states, not two: HERO (transparent, brand blank, bare glyph),
+     PINNED (thin bar, small brand) and OPEN (either of the above turned into a
+     header carrying the brand at HERO size). Open is deliberately its own
+     face rather than a modifier of pinned — the brand must never disappear
+     behind the menu it opened. */
   .masthead--live {
     position: fixed;
     top: 0;
@@ -254,66 +286,126 @@ onUnmounted(() => {
     z-index: 50;
     background: transparent;
     border-bottom-color: transparent;
+    /* The hero face's box is as tall as the (invisible) brand inside it, so it
+       must not sit over the page swallowing taps. Only its controls take any. */
+    pointer-events: none;
+    transition:
+      background-color 260ms var(--ease-out),
+      border-bottom-color 260ms var(--ease-out),
+      transform 320ms var(--ease-out);
   }
 
+  .masthead--live .masthead__toggle,
+  .masthead--live .masthead__panel {
+    pointer-events: auto;
+  }
+
+  /* Stowed: yields to a reader travelling down, returns when they turn back.
+     Never while open, and never in the hero face, where it holds the only
+     control the visitor has. */
+  .masthead--live.masthead--pinned.masthead--stowed:not(.masthead--open) {
+    transform: translateY(-100%);
+  }
+
+  /* The button is taken OUT of the row's flow. In flow it competes with a
+     brand that is now hero-sized, and at 320px the two plus their gap exceed
+     the line — measured, the button wrapped to a second row and the bar grew
+     to 92px. Out of flow it can never wrap, and the brand gets the same
+     reserved right-hand strip the hero's own wordmark has. */
   .masthead--live .masthead__row {
-    justify-content: space-between;
+    position: relative;
+    min-height: 44px;
+    /* The desktop row centres its items; with the button out of flow the brand
+       became the only one and centred with it, landing 5px off the hero's own
+       wordmark. Phones start from the left edge. */
+    justify-content: flex-start;
+    /* The brand TOP-aligns, so the bar's copy lands exactly where the hero's
+       own wordmark already is (centring it put the two 3px apart, which shows
+       as a jump the moment the menu opens over it). */
     align-items: flex-start;
     /* The hero face: the button sits on the wordmark's own inset — which is
        NOT the container's gutter (they diverge above ~408px, where the gutter
        is 4vw and the inset 4.9vw). */
     padding-inline: var(--hero-inset);
-    padding-top: var(--hero-inset);
-    padding-bottom: 0;
-    transition: padding 300ms var(--ease-out);
+    padding-block: var(--hero-inset) 0;
+    transition: padding 320ms var(--ease-out);
   }
 
-  /* Pinned — or opened, which also makes it a header — the row draws in. */
-  .masthead--live.masthead--pinned .masthead__row,
-  .masthead--live.masthead--open .masthead__row {
+  /* Only a SHUT pinned bar draws in; open restores the hero's own padding.
+     There the brand is a small mark, so the row centres as a bar should. */
+  .masthead--live.masthead--pinned:not(.masthead--open) .masthead__row {
     align-items: center;
     padding-block: 0.25rem;
   }
 
-  .masthead--live.masthead--pinned {
+  .masthead--live.masthead--pinned:not(.masthead--open) {
     background: var(--list);
     border-bottom-color: var(--mreza);
   }
 
-  /* The bar's wordmark: present but blank until pinned, so the button keeps
-     the right edge in both faces and only the brand animates in. */
+  /* The bar's wordmark is the hero's, re-rendered: same tokens, same optical
+     pull, same vertical stretch. Blank in the hero face — the real hero
+     wordmark is showing through — and full size again the moment the menu
+     opens over it, so the brand is never absent from the screen. */
   .masthead--live .masthead__brand {
     display: flex;
     align-items: center;
-    gap: 0.45em;
+    gap: 0.5em;
     font-family: var(--font-display);
-    font-stretch: var(--wdth-monument);
+    font-stretch: var(--hero-wordmark-wdth);
     font-weight: 300;
-    font-size: 1.05rem;
+    font-size: var(--hero-wordmark);
     line-height: 1;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.025em;
+    margin-top: -0.11em;
+    padding-block: calc((var(--hero-wordmark-scaley) - 1) * 0.5em);
+    /* The same strip the hero's own brand reserves for the button. */
+    padding-right: 3rem;
     color: var(--grafit);
     opacity: 0;
-    transform: translateX(-8px);
     transition:
       opacity 300ms var(--ease-out),
-      transform 300ms var(--ease-out);
+      font-size 380ms var(--ease-out),
+      font-stretch 380ms var(--ease-out);
   }
 
-  .masthead--live.masthead--pinned .masthead__brand {
+  .masthead__brandtext {
+    white-space: nowrap;
+    transform: scaleY(var(--hero-wordmark-scaley));
+    transform-origin: left center;
+  }
+
+  /* Shut and pinned, it is the small bar mark. */
+  .masthead--live.masthead--pinned:not(.masthead--open) .masthead__brand {
+    --hero-wordmark-scaley: 1;
+    font-size: 1.05rem;
+    font-stretch: var(--wdth-monument);
+    letter-spacing: -0.02em;
     opacity: 1;
-    transform: none;
+  }
+
+  /* Open, from either face, it stands at hero size. */
+  .masthead--live.masthead--open .masthead__brand {
+    opacity: 1;
   }
 
   .masthead__brandmark {
-    width: 0.95em;
-    height: 0.95em;
+    width: 0.78em;
+    height: 0.78em;
     flex: 0 0 auto;
   }
 
   .masthead--live .masthead__toggle {
     display: inline-flex;
     align-items: center;
+    /* Out of flow, pinned to the corner. The vertical anchor is the WORDMARK's
+       own centre — inset, less the brand's 0.11em optical pull, plus half its
+       stretched line — so the glyph lines up with the lettering rather than
+       with whatever box happens to be tallest. */
+    position: absolute;
+    top: calc(var(--hero-inset) + 0.45 * var(--hero-wordmark));
+    right: calc(var(--hero-inset) - 1.5px);
+    transform: translateY(-50%);
     /* Ink, not box: the glyph is flush right and pulled out by the 1.5px its
        own viewBox holds inside, so its rule ends on exactly the inset the
        wordmark starts on. */
@@ -345,15 +437,14 @@ onUnmounted(() => {
   /* Pinned, it becomes the labelled chip: one step darker than the page, with
      a real line — at 1.09:1 against the paper the fill alone would not read
      as a control. */
-  /* Pinned, the chip is a bordered box, so its BORDER takes the inset. */
-  .masthead--live.masthead--pinned .masthead__toggle {
-    padding-inline: 0.85rem;
-    margin-right: 0;
-    background: var(--list-2);
-    border-color: var(--mreza-strong);
+  /* Pinned it gains its label and nothing else: no fill, no border — by the
+     owner's call it is just a button in the header, not a chip on it. The row
+     centres there, so the optical pull above is not wanted. */
+  .masthead--live.masthead--pinned:not(.masthead--open) .masthead__toggle {
+    top: 50%;
   }
 
-  /* The label rides with the chip; in the hero face only the glyph shows. */
+  /* The label rides with the bar; in the hero and open faces only the glyph. */
   .masthead__toggle-label {
     display: inline-block;
     max-width: 0;
@@ -365,15 +456,9 @@ onUnmounted(() => {
       opacity 220ms var(--ease-out);
   }
 
-  .masthead--live.masthead--pinned .masthead__toggle-label {
+  .masthead--live.masthead--pinned:not(.masthead--open) .masthead__toggle-label {
     max-width: 5rem;
     opacity: 1;
-  }
-
-  /* Open, the chip's fill dissolves into the strip it just became. */
-  .masthead--live.masthead--open .masthead__toggle {
-    background: transparent;
-    border-color: transparent;
   }
 
   .masthead__glyph {

@@ -96,8 +96,29 @@
      wordmark it stands beside. */
   --hero-inset: clamp(1.25rem, 4.9vw, 4.5rem);
 
+  /* The hero wordmark's cut, shared so the masthead can render the SAME
+     lettering: when the menu opens it shows the brand at hero size, and any
+     divergence would read as two different wordmarks swapping places.
+     PHONES take a narrower width axis and a slight vertical stretch — the
+     string never wraps, so width is the only budget there is, and buying it
+     back on the wdth axis is what lets the size grow at all (92% frees ~17%
+     of the width; the stretch spends it on height). */
+  --hero-wordmark: clamp(1.7rem, -0.6rem + 12.7vw, 5rem);
+  --hero-wordmark-wdth: 92%;
+  --hero-wordmark-scaley: 1.12;
+
   /* Motion — UNCHANGED from the approved layout */
   --t-draw: 800ms; /* Prerez line draw */
   --t-lift: 200ms; /* card hover lift */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Desktop has no button sharing the wordmark's row, so it keeps the brand's
+   own monumental cut at full width and no stretch. */
+@media (min-width: 900px) {
+  :root {
+    --hero-wordmark: clamp(1.6rem, 0.52rem + 5.9vw, 6rem);
+    --hero-wordmark-wdth: var(--wdth-monument);
+    --hero-wordmark-scaley: 1;
+  }
 }

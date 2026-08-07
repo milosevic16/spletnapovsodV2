@@ -80,15 +80,17 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
   font-family: var(--font-display);
   font-stretch: var(--wdth-monument);
   font-weight: 300;
-  /* Phones: fitted to the width left once the menu button has taken the
-     corner (viewport − 2 insets − 3rem), with margin at every step — the mark
-     and wordmark never wrap, so an overflow here is permanent. Desktop
-     overrides this below, where there is no button in the row. */
-  font-size: clamp(1.5rem, -0.49rem + 10.6vw, 5rem);
+  /* Cut and size come from tokens.css, because the masthead renders the same
+     lettering when the menu is open and the two must be indistinguishable. */
+  font-stretch: var(--hero-wordmark-wdth);
+  font-size: var(--hero-wordmark);
   line-height: 1;
   letter-spacing: -0.025em;
   /* Keep the wordmark clear of the fixed menu button in the hero's corner. */
   padding-right: 3rem;
+  /* The vertical stretch is a transform, so it adds no layout height of its
+     own — this gives the extra half-em back at each end. */
+  padding-block: calc((var(--hero-wordmark-scaley) - 1) * 0.5em);
 }
 
 .stmt__mark {
@@ -99,6 +101,10 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
 
 .stmt__wordmark {
   white-space: nowrap;
+  /* Stretched about the centre, so the row's optical middle does not move and
+     the square mark stays centred on it. */
+  transform: scaleY(var(--hero-wordmark-scaley));
+  transform-origin: left center;
 }
 
 .stmt__hl {
@@ -138,7 +144,6 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
     align-self: start;
     /* No button in the row here — the wordmark takes the full measure. */
     padding-right: 0;
-    font-size: clamp(1.6rem, 0.52rem + 5.9vw, 6rem);
   }
 
   .stmt__lead {
