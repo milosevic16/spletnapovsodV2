@@ -2,10 +2,20 @@
 /**
  * Tradicija in izkušnje — the section that shows its own source.
  *
- * A red cut line sits across the VIEWPORT. Everything above it is the rendered
- * page; everything below it is the markup a crawler receives. Scrolling pushes
- * the section up through the line, so the page converts itself as it passes.
- * The line is draggable, so the two states can be compared at will.
+ * A red cut line divides the VIEWPORT. Everything above it is the rendered
+ * page; everything below it is the markup a crawler receives.
+ *
+ * THE SCROLL IS THE KNIFE. The visitor arrives on raw markup and reads it with
+ * no line in sight; once the section holds ~65% of the screen, further
+ * scrolling drives the cut down the viewport through an asymmetric S-curve —
+ * a slow press while the eye settles, a fast rip through the middle, a long
+ * deceleration over the last fifth so the transformation stays legible. The
+ * state is a pure function of scroll: scrubbing back re-opens the markup near
+ * the section's start (and only there — the window sits at the top of the
+ * section, so re-reading the layers below never un-renders them), there are
+ * no timers and nothing to strand, and the line itself exists exactly while a
+ * split exists on screen. The grip overrides the mapping; scrolling more than
+ * a hand's width takes the knife back.
  *
  * Three rules hold it together:
  *
@@ -40,13 +50,43 @@ const grip = ref<HTMLInputElement | null>(null)
 const live = ref(false)
 
 /**
- * Where the cut rides, as a percentage of the VIEWPORT height: 0 = screen top
- * (everything on screen is markup), 100 = screen bottom (everything rendered).
- * This is exactly what the grip sets, which is what makes the control legible.
+ * The scrub window. START_VH: conversion begins when the stage's top reaches
+ * this fraction of the viewport — i.e. once the section holds ~65% of the
+ * screen; above that the visitor simply reads raw markup, and the line does
+ * not exist yet. TRAVEL_VH: how much scrolling the full conversion takes, in
+ * viewport heights — ~600px on a desktop screen, long enough to feel like a
+ * scrub, short enough to finish while the section still fills the screen.
  */
-const PARK = 78
-/** The arrival sweep: the cut travels from the top of the screen down to PARK. */
-const SWEEP_MS = 950
+const START_VH = 0.35
+const TRAVEL_VH = 0.75
+
+/**
+ * The wipe's response to scroll: p^A / (p^A + (1−p)^B), an asymmetric S-curve.
+ * Measured points at A=1.8, B=1.4 — the first tenth of the travel yields 2%
+ * of the wipe (the line lands on the section's edge and presses), 30–70% of
+ * the travel rips through 16%→74%, and the last fifth decelerates through the
+ * final 14% so the eye keeps hold of what just happened.
+ */
+const CURVE_A = 1.8
+const CURVE_B = 1.4
+
+function wipe(p: number): number {
+  if (p <= 0) return 0
+  if (p >= 1) return 1
+  const rise = Math.pow(p, CURVE_A)
+  return rise / (rise + Math.pow(1 - p, CURVE_B))
+}
+
+/**
+ * A hand on the grip beats the scroll mapping — until the reader scrolls
+ * further than this, which hands the knife back. The tolerance (the original
+ * REZ grip's own constant) keeps a trackpad's incidental jitter from
+ * snatching the line out from under a drag.
+ */
+const MANUAL_SCROLL_TOLERANCE = 24
+let manual = false
+let manualAnchorY = 0
+let reduced = false
 
 /**
  * Per-block parallax, as a multiplier in [-1, 1] of AMPLITUDE. The detail
@@ -57,8 +97,10 @@ const SWEEP_MS = 950
 const AMPLITUDE = 18
 const RATES = [0, 0.7, 0]
 
-/** The cut's viewport position. Written by the sweep and by the grip. */
+/** The cut's viewport position — written by the scroll mapping and the grip. */
 const scanPct = ref(100)
+/** Whether a split exists on screen. The line exists exactly then. */
+const cutting = ref(false)
 
 /**
  * Which material layer the detail drawing is probing. Drives the leader line's
@@ -148,7 +190,6 @@ const blocks = computed(() => [
  */
 let measureRaf = 0
 let syncRaf = 0
-let sweeping = false
 
 /**
  * Pin each markup block onto the box of the block it describes.
@@ -231,13 +272,23 @@ function measure() {
   if (!el || !layer || !st) return
 
   const vh = window.innerHeight
-  const layerRect = layer.getBoundingClientRect()
+  const rect = st.getBoundingClientRect()
+
+  // The scroll is the knife — unless a hand is on the grip, or reduced motion
+  // keeps the page finished. Progress runs 0→1 across TRAVEL_VH of scrolling
+  // starting at START_VH, shaped by wipe().
+  if (!manual && !reduced) {
+    const p = (START_VH * vh - rect.top) / (TRAVEL_VH * vh)
+    scanPct.value = wipe(Math.min(1, Math.max(0, p))) * 100
+  }
+  cutting.value = scanPct.value > 0.5 && scanPct.value < 99.5
+
   // The cut's screen position, expressed as a distance into the markup layer.
+  const layerRect = layer.getBoundingClientRect()
   const cut = Math.min(Math.max((scanPct.value / 100) * vh - layerRect.top, 0), layerRect.height)
   el.style.setProperty('--cut', `${cut.toFixed(1)}px`)
 
   // Progress of the stage across the screen, centred: -1 entering, +1 leaving.
-  const rect = st.getBoundingClientRect()
   const raw = (vh - rect.top) / (vh + rect.height)
   const c = Math.min(1, Math.max(-1, raw * 2 - 1))
   for (const [i, rate] of RATES.entries()) {
@@ -249,6 +300,10 @@ function onScroll() {
   if (measureRaf) cancelAnimationFrame(measureRaf)
   measureRaf = fx.raf(() => {
     measureRaf = 0
+    // Scrolling past the tolerance takes the knife back from the grip.
+    if (manual && Math.abs(window.scrollY - manualAnchorY) > MANUAL_SCROLL_TOLERANCE) {
+      manual = false
+    }
     measure()
   })
 }
@@ -267,27 +322,11 @@ function scheduleSync() {
 function onGrip() {
   const g = grip.value
   if (!g) return
-  sweeping = false // a hand on the control always wins
+  // A hand on the control always wins; the anchor marks where it took hold.
+  manual = true
+  manualAnchorY = window.scrollY
   scanPct.value = Number(g.value)
   measure()
-}
-
-/** The arrival sweep: the cut enters at the top of the screen and settles at
-    PARK, converting everything it passes. Self-driven, because the visitor may
-    not be scrolling while it runs. */
-function sweep() {
-  sweeping = true
-  const t0 = performance.now()
-  const step = (now: number) => {
-    if (!sweeping) return
-    const t = Math.min(1, (now - t0) / SWEEP_MS)
-    const eased = 1 - Math.pow(1 - t, 3)
-    scanPct.value = eased * PARK
-    measure()
-    if (t < 1) fx.raf(step)
-    else sweeping = false
-  }
-  fx.raf(step)
 }
 
 onMounted(() => {
@@ -296,10 +335,10 @@ onMounted(() => {
   const st = stage.value
   if (!el || !st) return
 
-  const reduced = prefersReducedMotion()
-  // Reduced motion gets the finished page and a live control — nothing moves
-  // on its own. Everyone else arrives on the markup and watches it convert.
-  scanPct.value = reduced ? 100 : 0
+  // Reduced motion keeps the finished page and a live control — the scroll
+  // mapping never runs, so only the grip writes the cut. Everyone else gets
+  // the state their scroll position implies, computed by the first measure().
+  reduced = prefersReducedMotion()
 
   // The first pin waits for the hydrated DOM. Hydration REPLACES this
   // section's layout — the four callouts collapse to one, the bands become
@@ -342,40 +381,22 @@ onMounted(() => {
     }),
   )
 
-  if (reduced || !('IntersectionObserver' in window)) return
-
-  let swept = false
-  const io = fx.io(
-    (entries) => {
-      for (const e of entries) {
-        // rootMargin pins the trigger to the moment the top edge lands.
-        if (!e.isIntersecting || swept) continue
-        swept = true
-        io.disconnect()
-        sweep()
-      }
-    },
-    { rootMargin: '0px 0px -100% 0px', threshold: 0 },
-  )
-  io.observe(st)
-
-  // Safety net: never strand the visitor on markup.
-  fx.setTimeout(() => {
-    if (swept) return
-    swept = true
-    io.disconnect()
-    sweep()
-  }, 9000)
+  // No trigger, no timer, no safety net: the cut is a pure function of the
+  // scroll position, so there is no state to strand and nothing to arm.
 })
 
 onUnmounted(() => {
-  sweeping = false
   fx.dispose()
 })
 </script>
 
 <template>
-  <section id="nevidno" ref="root" class="trad" :class="{ 'trad--live': live }">
+  <section
+    id="nevidno"
+    ref="root"
+    class="trad"
+    :class="{ 'trad--live': live, 'trad--cutting': cutting }"
+  >
     <div ref="stage" class="trad__stage">
       <!-- RENDERED: the real page. In normal flow, so it defines the height
            and a crawler reads it as ordinary HTML. -->
@@ -601,9 +622,12 @@ onUnmounted(() => {
   background: var(--rez-na-temnem);
   box-shadow: 0 0 18px 1px var(--rez-na-temnem);
   opacity: 0;
+  /* A one-shot fade on a boolean class — never fighting the per-frame --cut
+     writes, which stay raw. */
+  transition: opacity 240ms var(--ease-out);
 }
 
-.trad--live .trad__scan-line {
+.trad--cutting .trad__scan-line {
   opacity: 1;
 }
 
