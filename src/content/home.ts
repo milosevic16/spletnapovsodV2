@@ -420,6 +420,15 @@ export const footer = {
 
 export const ui = {
   skipToContent: 'Preskoči na vsebino',
+  /**
+   * Interaction-only: the phone menu control exists ONLY once the masthead
+   * hydrates — with JS off the whole nav is simply visible in flow, so there is
+   * no button and nothing to label. Lives under the `feedback` key the content
+   * guard skips by contract.
+   */
+  feedback: {
+    menuLabel: 'Meni',
+  },
 }
 
 /** 404 copy — asserted against dist/404.html by the content guard. */

@@ -26,6 +26,17 @@
   initial-value: #1a1c1e;
 }
 
+/* The phone menu's unfold, 0 (shut) → 1 (open). Registered for the same reason
+   --stage is: an unregistered custom property is substituted at computed-value
+   time and cannot be transitioned, and this ONE number drives both the panel's
+   clip and the red plane riding its leading edge — so the two can never fall
+   out of step. */
+@property --reveal {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
 :root {
   /* The sheet (the human layer) */
   --list: #f5f2eb; /* drafting-paper page ground; grafit on it 15.29:1 */
