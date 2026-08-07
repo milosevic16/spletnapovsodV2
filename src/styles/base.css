@@ -109,10 +109,11 @@ textarea {
   outline-color: var(--rez-na-temnem);
 }
 
-/* Anchor targets: clear of the sticky masthead — which is sticky only ≥900px,
-   so phones get just a breath of air, not an 80px hole. */
+/* Anchor targets clear the masthead. On phones it is FIXED and appears once
+   the hero's wordmark has left, so by the time any in-page link is followed
+   the bar is showing and the target must clear its ~52px. */
 [id] {
-  scroll-margin-top: 1rem;
+  scroll-margin-top: 4.5rem;
 }
 @media (min-width: 900px) {
   [id] {

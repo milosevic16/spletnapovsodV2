@@ -31,6 +31,8 @@ const live = ref(false)
 const open = ref(false)
 /** Whether the chip is the nav's only face — drives `inert`, so it must be real. */
 const phone = ref(false)
+/** Phones only: the bar has gathered itself out of the hero and taken the top. */
+const pinned = ref(false)
 const toggleEl = ref<HTMLButtonElement | null>(null)
 
 function close() {
@@ -61,6 +63,27 @@ onMounted(() => {
   }
   sync()
   fx.on(desktop, 'change', sync as EventListener)
+
+  // The bar appears exactly when the hero's own wordmark leaves the screen, so
+  // the brand is never absent from the page. The sentinel is a named contract
+  // with StatementSection rather than a class-name guess.
+  const sentinel = document.querySelector('[data-brand-sentinel]')
+  if (sentinel && 'IntersectionObserver' in window) {
+    fx.io(
+      (entries) => {
+        for (const e of entries) pinned.value = !e.isIntersecting
+      },
+      { threshold: 0 },
+    ).observe(sentinel)
+  } else {
+    // No sentinel (or no observer): fall back to a plain threshold rather than
+    // leaving the bar stuck in its hero face forever.
+    const onScroll = () => {
+      pinned.value = window.scrollY > 120
+    }
+    onScroll()
+    fx.on(window, 'scroll', onScroll, { passive: true })
+  }
 })
 
 onUnmounted(() => {
@@ -69,18 +92,36 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <header class="masthead" :class="{ 'masthead--live': live, 'masthead--open': open }">
+  <header
+    class="masthead"
+    :class="{ 'masthead--live': live, 'masthead--open': open, 'masthead--pinned': pinned }"
+  >
     <div class="container masthead__row">
+      <!-- The bar's own small wordmark, phones only, revealed once pinned.
+           aria-hidden and hydration-gated: the hero already carries the brand
+           for crawlers and assistive tech, and this is its second face, not a
+           second announcement. -->
+      <p v-if="live" class="masthead__brand" aria-hidden="true">
+        <svg class="masthead__brandmark" viewBox="0 0 24 24" fill="none">
+          <rect x="2.5" y="2.5" width="19" height="19" fill="none" stroke="currentColor"
+            stroke-width="1.5" />
+          <rect x="2.5" y="13" width="19" height="8.5" fill="currentColor" />
+          <rect x="0" y="11.25" width="24" height="1.9" fill="var(--rez)" />
+        </svg>
+        <span>SpletnaPovsod</span>
+      </p>
+
       <button
         v-if="live"
         ref="toggleEl"
         type="button"
         class="masthead__toggle"
         :aria-expanded="open ? 'true' : 'false'"
+        :aria-label="ui.feedback.menuLabel"
         aria-controls="glavni-meni"
         @click="toggle"
       >
-        {{ ui.feedback.menuLabel }}
+        <span class="masthead__toggle-label">{{ ui.feedback.menuLabel }}</span>
         <!-- Bracketed rules, the drawing's own vocabulary. Open, the outer two
              collapse into the middle: the plane closing, not a rotated X. -->
         <svg
@@ -165,8 +206,9 @@ onUnmounted(() => {
   column-gap: clamp(1rem, 4vw, 3rem);
 }
 
-/* The chip exists only once hydrated, and only on a phone. */
-.masthead__toggle {
+/* Both exist only once hydrated, and only on a phone. */
+.masthead__toggle,
+.masthead__brand {
   display: none;
 }
 
@@ -196,19 +238,97 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
-/* --- phone: the strip becomes the menu ------------------------------------- */
+/* --- phone: two faces ------------------------------------------------------
+   AT THE TOP the masthead is not a header at all: it is fixed, transparent,
+   and contributes nothing but the menu button standing in the hero's own
+   top-right corner, on the same --hero-inset as the wordmark opposite it.
+   PINNED (the hero wordmark has scrolled away) it gathers into a thin bar —
+   paper ground, hairline, the small wordmark arriving from the left, the
+   button drawing up into the row with it. */
 @media (max-width: 899.98px) {
+  .masthead--live {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: transparent;
+    border-bottom-color: transparent;
+  }
+
+  .masthead--live .masthead__row {
+    justify-content: space-between;
+    align-items: flex-start;
+    /* The hero face: the button sits on the wordmark's own inset — which is
+       NOT the container's gutter (they diverge above ~408px, where the gutter
+       is 4vw and the inset 4.9vw). */
+    padding-inline: var(--hero-inset);
+    padding-top: var(--hero-inset);
+    padding-bottom: 0;
+    transition: padding 300ms var(--ease-out);
+  }
+
+  /* Pinned — or opened, which also makes it a header — the row draws in. */
+  .masthead--live.masthead--pinned .masthead__row,
+  .masthead--live.masthead--open .masthead__row {
+    align-items: center;
+    padding-block: 0.25rem;
+  }
+
+  .masthead--live.masthead--pinned {
+    background: var(--list);
+    border-bottom-color: var(--mreza);
+  }
+
+  /* The bar's wordmark: present but blank until pinned, so the button keeps
+     the right edge in both faces and only the brand animates in. */
+  .masthead--live .masthead__brand {
+    display: flex;
+    align-items: center;
+    gap: 0.45em;
+    font-family: var(--font-display);
+    font-stretch: var(--wdth-monument);
+    font-weight: 300;
+    font-size: 1.05rem;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--grafit);
+    opacity: 0;
+    transform: translateX(-8px);
+    transition:
+      opacity 300ms var(--ease-out),
+      transform 300ms var(--ease-out);
+  }
+
+  .masthead--live.masthead--pinned .masthead__brand {
+    opacity: 1;
+    transform: none;
+  }
+
+  .masthead__brandmark {
+    width: 0.95em;
+    height: 0.95em;
+    flex: 0 0 auto;
+  }
+
   .masthead--live .masthead__toggle {
     display: inline-flex;
     align-items: center;
+    /* Ink, not box: the glyph is flush right and pulled out by the 1.5px its
+       own viewBox holds inside, so its rule ends on exactly the inset the
+       wordmark starts on. */
+    justify-content: flex-end;
+    margin-right: -1.5px;
     gap: 0.55rem;
     min-height: 44px;
-    padding-inline: 1rem;
-    /* One step darker than the page, with a real line: at 1.09:1 against the
-       paper the fill alone would not read as a control. */
-    background: var(--list-2);
-    border: 1px solid var(--mreza-strong);
-    color: var(--grafit); /* 13.97:1 on --list-2 — measured */
+    /* The hero face is the bare glyph — a standalone control, not a bar. The
+       44px box stays for the tap floor; it is simply transparent, so the
+       wordmark may come as close as its own padding-right allows. */
+    min-width: 44px;
+    padding-inline: 0;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--grafit);
     font-family: var(--font-display);
     font-stretch: var(--wdth-datum);
     font-weight: 500;
@@ -216,12 +336,44 @@ onUnmounted(() => {
     text-transform: uppercase;
     letter-spacing: 0.14em;
     cursor: pointer;
-    transition: background-color 220ms var(--ease-out);
+    transition:
+      background-color 260ms var(--ease-out),
+      border-color 260ms var(--ease-out),
+      padding 300ms var(--ease-out);
+  }
+
+  /* Pinned, it becomes the labelled chip: one step darker than the page, with
+     a real line — at 1.09:1 against the paper the fill alone would not read
+     as a control. */
+  /* Pinned, the chip is a bordered box, so its BORDER takes the inset. */
+  .masthead--live.masthead--pinned .masthead__toggle {
+    padding-inline: 0.85rem;
+    margin-right: 0;
+    background: var(--list-2);
+    border-color: var(--mreza-strong);
+  }
+
+  /* The label rides with the chip; in the hero face only the glyph shows. */
+  .masthead__toggle-label {
+    display: inline-block;
+    max-width: 0;
+    overflow: hidden;
+    opacity: 0;
+    white-space: nowrap;
+    transition:
+      max-width 300ms var(--ease-out),
+      opacity 220ms var(--ease-out);
+  }
+
+  .masthead--live.masthead--pinned .masthead__toggle-label {
+    max-width: 5rem;
+    opacity: 1;
   }
 
   /* Open, the chip's fill dissolves into the strip it just became. */
   .masthead--live.masthead--open .masthead__toggle {
     background: transparent;
+    border-color: transparent;
   }
 
   .masthead__glyph {

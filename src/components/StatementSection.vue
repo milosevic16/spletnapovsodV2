@@ -26,7 +26,10 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
 <template>
   <section class="stmt">
     <div class="stmt__grid">
-      <p class="stmt__brand">
+      <!-- data-brand-sentinel is a contract with SiteMasthead: the phone bar
+           appears exactly when this element leaves the screen, so the brand is
+           never absent from the page. -->
+      <p class="stmt__brand" data-brand-sentinel>
         <!-- Brand mark: the sheet cut by the plane, the site's own motif.
              Sized in em, so it scales with the wordmark by construction. Its
              red rule spans the full viewBox, so the SVG's own left edge IS the
@@ -53,9 +56,9 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
 </template>
 
 <style scoped>
+/* The one margin — left, top, right and bottom — defined in tokens.css so the
+   phone menu button can sit on the same inset as the wordmark beside it. */
 .stmt {
-  /* The one margin: left, top, right and bottom all read this. */
-  --hero-inset: clamp(1.25rem, 4.9vw, 4.5rem);
   padding: var(--hero-inset);
 }
 
@@ -77,11 +80,15 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
   font-family: var(--font-display);
   font-stretch: var(--wdth-monument);
   font-weight: 300;
-  /* Fitted through two measured points (320px -> 27px, 1265px -> 83px): the
-     mark and wordmark never wrap, so a 320px screen must keep real margin. */
-  font-size: clamp(1.6rem, 0.52rem + 5.9vw, 6rem);
+  /* Phones: fitted to the width left once the menu button has taken the
+     corner (viewport − 2 insets − 3rem), with margin at every step — the mark
+     and wordmark never wrap, so an overflow here is permanent. Desktop
+     overrides this below, where there is no button in the row. */
+  font-size: clamp(1.5rem, -0.49rem + 10.6vw, 5rem);
   line-height: 1;
   letter-spacing: -0.025em;
+  /* Keep the wordmark clear of the fixed menu button in the hero's corner. */
+  padding-right: 3rem;
 }
 
 .stmt__mark {
@@ -99,9 +106,16 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
   color: var(--rez);
 }
 
+/* Phones: the claim and its qualifier step DOWN so the wordmark is
+   unambiguously the largest thing on the screen — before this the h1 rendered
+   34.3px against a 30.4px wordmark and the brand lost its own hero. */
+.stmt__title {
+  font-size: clamp(1.35rem, 0.95rem + 2.6vw, 2.4rem);
+}
+
 .stmt__lead {
-  font-size: var(--fs-lead);
-  line-height: 1.55;
+  font-size: 0.95rem;
+  line-height: 1.6;
   max-width: 46ch;
   color: var(--grafit-2);
 }
@@ -122,13 +136,19 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
     grid-column: 1 / -1;
     grid-row: 1;
     align-self: start;
+    /* No button in the row here — the wordmark takes the full measure. */
+    padding-right: 0;
+    font-size: clamp(1.6rem, 0.52rem + 5.9vw, 6rem);
+  }
+
+  .stmt__lead {
+    font-size: 1rem;
+    line-height: 1.65;
   }
 
   .stmt__lead {
     grid-column: 1 / span 10;
     grid-row: 2;
-    font-size: 1rem;
-    line-height: 1.65;
   }
 
   .stmt__title {

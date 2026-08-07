@@ -90,6 +90,12 @@
   --gutter: clamp(1.25rem, 4vw, 4rem);
   --measure: 66ch;
 
+  /* The opening band's one margin, on all four sides. Lives here rather than
+     on .stmt because the masthead reads it too: on a phone the menu button is
+     part of the hero, so it must sit on exactly the same inset as the
+     wordmark it stands beside. */
+  --hero-inset: clamp(1.25rem, 4.9vw, 4.5rem);
+
   /* Motion — UNCHANGED from the approved layout */
   --t-draw: 800ms; /* Prerez line draw */
   --t-lift: 200ms; /* card hover lift */
