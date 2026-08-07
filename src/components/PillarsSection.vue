@@ -2,19 +2,19 @@
 /**
  * »Kaj vsebujejo vsi paketi?« — three pillars as a work-wall.
  *
- * Desktop, hydrated: the pillar titles stand at the stage's corners in display
- * size and the three plates sit as a staggered cluster in the middle. Hovering
- * a plate enlarges it while the others step back (and its corner title inks
- * red); clicking a plate — or its title — expands that plate across the whole
- * stage and the pillar's full text appears over it. One open at a time,
- * Escape closes, focus moves to the panel's close control and returns to the
- * invoker on close.
+ * ONE layout on every screen (owner's call): the pillar titles stand at the
+ * stage's corners in display size and the three plates sit as a staggered
+ * cluster in the middle — phones get the same wall, just recomposed for a
+ * portrait stage. Hovering a plate (pointer devices) enlarges it while the
+ * others step back and its corner title inks red; clicking or tapping a plate
+ * — or its title — expands that plate across the whole stage and the pillar's
+ * full text appears over it. One open at a time, Escape closes, focus moves
+ * to the panel's close control and returns to the invoker on close.
  *
  * The prerendered page and JS-off readers get all three articles IN FULL, in
  * flow, each with its plate as an ordinary figure — the collapse is applied by
  * JS after hydration (inline styles from paint(), never CSS), so nothing is
- * ever hidden without a way back. Phones keep the flow layout: plates become
- * tappable ledger bands and the tapped article expands in place.
+ * ever hidden without a way back.
  */
 import { onMounted, onUnmounted, ref } from 'vue'
 import { pillars } from '@/content/home'
@@ -34,8 +34,6 @@ const items = pillars.items
 const OPEN_MS = 520
 const CLOSE_MS = 200
 
-const isDesktop = () => window.matchMedia('(min-width: 900px)').matches
-
 function panelOf(id: string): HTMLElement | null {
   return host.value?.querySelector<HTMLElement>(`#pilp-${id}`) ?? null
 }
@@ -48,17 +46,17 @@ function tileOf(id: string): HTMLElement | null {
  * declarations in this project before, and a hidden state must never depend
  * on the stylesheet anyway (JS applied it, JS can always undo it). The same
  * pass keeps the wall's controls out of the way while a panel covers them:
- * on desktop they get `inert`, so Tab can never land on a button that is
- * visually underneath the open panel.
+ * they get `inert`, so Tab and a screen reader can never land on a control
+ * that is visually underneath the open panel.
  */
 function paint() {
-  const desktopOverlay = live.value && open.value !== null && isDesktop()
+  const overlay = live.value && open.value !== null
   for (const it of items) {
     const panel = panelOf(it.id)
     if (panel) panel.style.display = !live.value || open.value === it.id ? '' : 'none'
   }
   for (const b of host.value?.querySelectorAll<HTMLElement>('.pil__label, .pil__tile') ?? []) {
-    if (desktopOverlay) b.setAttribute('inert', '')
+    if (overlay) b.setAttribute('inert', '')
     else b.removeAttribute('inert')
   }
 }
@@ -66,23 +64,21 @@ function paint() {
 function show(id: string, from: HTMLElement) {
   if (open.value === id) return
   invoker = from
-  const wasOpen = open.value
   open.value = id
-
-  // Phones: closing the other article above the tapped band moves the page —
-  // measure the band's drift across the repaint and take it back out.
-  const before = from.getBoundingClientRect().top
   paint()
-  if (!isDesktop()) {
-    if (wasOpen) {
-      const drift = from.getBoundingClientRect().top - before
-      if (drift !== 0) window.scrollBy({ top: drift, behavior: 'instant' as ScrollBehavior })
-    }
-    return
-  }
 
   const panel = panelOf(id)
-  if (!panel) return
+  const st = stage.value
+  if (!panel || !st) return
+
+  // If the stage's top has scrolled past (a bottom tile on a portrait stage),
+  // snap it back so the opened panel is read from its beginning. Instant —
+  // never a glide (house rule) — and BEFORE the FLIP measures anything.
+  const stTop = st.getBoundingClientRect().top
+  if (stTop < -8) {
+    window.scrollTo({ top: stTop + window.scrollY, behavior: 'instant' as ScrollBehavior })
+  }
+
   // Focus follows the expansion; Escape and the close control lead back out.
   panel.querySelector<HTMLElement>('.pil__close')?.focus({ preventScroll: true })
 
@@ -90,8 +86,7 @@ function show(id: string, from: HTMLElement) {
 
   // FLIP: the panel grows out of the plate the visitor clicked.
   const tile = tileOf(id)
-  const st = stage.value
-  if (!tile || !st) return
+  if (!tile) return
   const t = tile.getBoundingClientRect()
   const s = st.getBoundingClientRect()
   panel.style.transformOrigin = '0 0'
@@ -125,7 +120,7 @@ function close(returnFocus = true) {
     if (returnFocus) invoker?.focus({ preventScroll: true })
     invoker = null
   }
-  if (!panel || prefersReducedMotion() || !isDesktop()) {
+  if (!panel || prefersReducedMotion()) {
     done()
     return
   }
@@ -155,7 +150,7 @@ onMounted(() => {
 
 onUnmounted(() => fx.dispose())
 
-const sizesTile = '(min-width: 900px) 27vw, 6rem'
+const sizesTile = '(min-width: 900px) 27vw, 48vw'
 const sizesCover = '100vw'
 
 function srcset(id: string, ext: string) {
@@ -193,7 +188,7 @@ function srcset(id: string, ext: string) {
       </template>
 
       <div v-for="p in items" :key="p.id" class="pil__group">
-        <!-- The plate: a cluster tile on desktop, a ledger band on phones. -->
+        <!-- The plate. -->
         <button
           v-if="live"
           type="button"
@@ -219,8 +214,7 @@ function srcset(id: string, ext: string) {
               />
             </picture>
           </span>
-          <span class="pil__tile-name">{{ p.title }}</span>
-          <span class="pil__tile-ind" aria-hidden="true"></span>
+          <span class="visually-hidden">{{ p.title }}</span>
         </button>
 
         <article :id="`pilp-${p.id}`" class="pil__panel" :aria-label="p.title">
@@ -308,6 +302,9 @@ function srcset(id: string, ext: string) {
 
 .pil__panel {
   border-top: 1px solid var(--mreza-strong);
+  max-width: 72rem;
+  margin-inline: auto;
+  padding-inline: var(--gutter);
 }
 
 .pil__cover {
@@ -344,6 +341,13 @@ function srcset(id: string, ext: string) {
   gap: 1.1rem;
 }
 
+@media (min-width: 640px) {
+  .pil__points {
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: 1.25rem 2.5rem;
+  }
+}
+
 .pil__point-label {
   font-weight: 600;
 }
@@ -362,11 +366,204 @@ function srcset(id: string, ext: string) {
   padding: 1rem 1.25rem;
 }
 
-/* Static articles keep their measure even though the stage is full-bleed live. */
-.pil__panel {
-  max-width: 72rem;
+/* --- hydrated: the wall, every screen -------------------------------------- */
+/* Portrait phones get a taller-than-wide stage and the same three corners. */
+.pil--live .pil__stage {
+  position: relative;
+  height: min(78svh, 44rem);
+}
+
+.pil--live .pil__group {
+  display: contents;
+}
+
+/* Corner titles. */
+.pil__label {
+  position: absolute;
+  z-index: 2;
+  background: none;
+  border: 0;
+  padding: 0.25rem 0;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-stretch: var(--wdth-monument);
+  font-weight: 300;
+  font-size: clamp(1.3rem, 0.55rem + 3.4vw, 3.1rem);
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  color: var(--grafit);
+  text-align: left;
+  max-width: min(60vw, 34ch);
+  transition: color var(--t-lift) var(--ease-out);
+}
+
+.pil__label--design {
+  top: 0;
+  left: var(--gutter);
+}
+.pil__label--security {
+  top: 0;
+  right: var(--gutter);
+  text-align: right;
+}
+.pil__label--seo {
+  bottom: 0;
+  left: var(--gutter);
+}
+
+/* On narrow screens the right label's BOX reaches left of its right-aligned
+   ink (shrink-to-fit caps at max-width when the text wraps), and that empty
+   box would sit over the left label's letters and steal their clicks
+   (measured: a 50px shared strip at 375px). The left-anchored labels stack
+   above, so every ink pixel belongs to its own button; the right label's ink
+   is never under a left box. */
+.pil__label--design,
+.pil__label--seo {
+  z-index: 3;
+}
+
+.pil__label:hover {
+  color: var(--rez);
+}
+
+/* The cluster: absolute within the stage, staggered off each other's rhythm
+   like plates on a wall. Portrait positions first; desktop repositions below. */
+.pil--live .pil__tile {
+  position: absolute;
+  z-index: 1;
+  display: block;
+  width: 48%;
+  padding: 0;
+  border: 0;
+  background: var(--grafit);
+  line-height: 0;
+  cursor: pointer;
+  transition: transform 340ms var(--ease-out);
+}
+
+.pil--live .pil__tile[data-p='design'] {
+  left: 10%;
+  top: 13%;
+}
+.pil--live .pil__tile[data-p='security'] {
+  left: 44%;
+  top: 38%;
+}
+.pil--live .pil__tile[data-p='seo'] {
+  left: 14%;
+  top: 63%;
+}
+
+.pil--live .pil__tile-pic {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--mreza-strong);
+}
+
+.pil--live .pil__tile-pic img {
+  width: 100%;
+  /* height:auto is load-bearing: the img carries height="1200" as its CLS
+     hint, and a presentational height BEATS aspect-ratio (which only resolves
+     an AUTO dimension). Without this line every tile is 1200px tall
+     (measured). */
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+/* Hover: pointer devices only, so touch never wires a state that cannot
+   leave. The hovered plate steps forward, the others step back, and the
+   plate's own corner title inks red — in both directions, so the title is a
+   remote hand for its plate. Transform-only; :has misses simply cost the
+   cross-highlight, never the function. */
+@media (hover: hover) {
+  .pil--live .pil__tile:hover {
+    transform: scale(1.07);
+    z-index: 3;
+  }
+  .pil--live .pil__stage:has(.pil__tile:hover) .pil__tile:not(:hover) {
+    transform: scale(0.93);
+  }
+  .pil--live .pil__stage:has(.pil__label--design:hover) .pil__tile[data-p='design'],
+  .pil--live .pil__stage:has(.pil__label--security:hover) .pil__tile[data-p='security'],
+  .pil--live .pil__stage:has(.pil__label--seo:hover) .pil__tile[data-p='seo'] {
+    transform: scale(1.07);
+    z-index: 3;
+  }
+  .pil--live .pil__stage:has(.pil__tile[data-p='design']:hover) .pil__label--design,
+  .pil--live .pil__stage:has(.pil__tile[data-p='security']:hover) .pil__label--security,
+  .pil--live .pil__stage:has(.pil__tile[data-p='seo']:hover) .pil__label--seo {
+    color: var(--rez);
+  }
+}
+
+/* The open panel: the plate across the whole stage, the article over it.
+   Text sits on a graphite veil at 0.86 — measured over pure white that
+   composites to #434547: paper 9.94:1, papir-dim 6.64:1. */
+.pil--live .pil__panel {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: var(--grafit);
+}
+
+.pil--live .pil__cover {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+}
+
+.pil--live .pil__cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pil--live .pil__cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgb(26 28 30 / 0.86);
+}
+
+.pil--live .pil__scroll {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+}
+
+.pil--live .pil__body {
+  max-width: 62rem;
   margin-inline: auto;
-  padding-inline: var(--gutter);
+  /* The close control owns the top-right corner; the first row of text
+     starts below its 44px + breathing room, on every screen. */
+  padding: clamp(4.25rem, 3.5rem + 2vw, 5.5rem) var(--gutter) 3rem;
+}
+
+.pil--live .pil__artifact {
+  color: var(--papir-dim);
+}
+
+.pil--live .pil__name {
+  color: var(--list);
+  font-size: clamp(1.45rem, 1.2rem + 1.2vw, 2.4rem);
+}
+
+.pil--live .pil__summary {
+  color: var(--list);
+}
+
+.pil--live .pil__point-label {
+  color: var(--list);
+}
+
+.pil--live .pil__point-detail {
+  color: var(--papir-dim);
 }
 
 .pil__close {
@@ -375,9 +572,6 @@ function srcset(id: string, ext: string) {
   gap: 0.5rem;
   min-height: 44px;
   padding-inline: 1rem;
-  background: none;
-  border: 1px solid var(--mreza-strong);
-  color: var(--grafit);
   cursor: pointer;
   font-family: var(--font-display);
   font-stretch: var(--wdth-datum);
@@ -385,169 +579,32 @@ function srcset(id: string, ext: string) {
   font-size: var(--fs-kicker);
   text-transform: uppercase;
   letter-spacing: 0.11em;
-  margin-block: 1rem 1.5rem;
-}
-
-/* --- phones, hydrated: ledger bands + in-flow expansion -------------------- */
-.pil__tile {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  width: 100%;
-  min-height: 44px;
-  padding: 0.6rem var(--gutter);
-  background: none;
-  border: 0;
-  border-top: 1px solid var(--mreza-strong);
-  cursor: pointer;
-  text-align: left;
-}
-
-.pil__group:last-child .pil__tile {
-  border-bottom: 1px solid var(--mreza-strong);
-}
-
-.pil__tile-pic {
-  flex: 0 0 auto;
-  width: 6rem;
-  line-height: 0;
-  border: 1px solid var(--mreza);
-}
-
-.pil__tile-pic img {
-  width: 100%;
-  height: auto;
-}
-
-.pil__tile-name {
-  flex: 1;
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: clamp(1.1rem, 1rem + 0.6vw, 1.4rem);
-  color: var(--grafit);
-}
-
-/* +/− indicator drawn as two strokes — no dingbat glyph. */
-.pil__tile-ind {
-  position: relative;
-  flex: 0 0 auto;
-  width: 14px;
-  height: 14px;
-}
-.pil__tile-ind::before,
-.pil__tile-ind::after {
-  content: '';
   position: absolute;
-  background: var(--rez);
-}
-.pil__tile-ind::before {
-  left: 0;
-  right: 0;
-  top: 6px;
-  height: 2px;
-}
-.pil__tile-ind::after {
-  top: 0;
-  bottom: 0;
-  left: 6px;
-  width: 2px;
-  transition: transform 200ms var(--ease-out);
-}
-.pil__tile[aria-expanded='true'] .pil__tile-ind::after {
-  transform: scaleY(0);
+  top: 0.9rem;
+  right: var(--gutter);
+  z-index: 7;
+  margin: 0;
+  color: var(--list);
+  border: 1px solid rgb(245 242 235 / 0.6);
+  background: rgb(26 28 30 / 0.5);
 }
 
-/* Hydrated phones: the band shows the plate, so the article drops its figure
-   and top rule (the band above is the divider). JS-off never has bands, so
-   this must stay behind the live flag. */
-@media (max-width: 899.98px) {
-  /* The corner titles are the desktop wall's typography; on phones the bands
-     already carry the names, so the label buttons would be duplicate text. */
-  .pil__label {
-    display: none;
-  }
-  .pil--live .pil__cover {
-    display: none;
-  }
-  .pil--live .pil__panel {
-    border-top: 0;
-  }
-  .pil--live .pil__group + .pil__group {
-    margin-top: 0;
-  }
-  .pil--live .pil__body {
-    border-left: 3px solid var(--rez);
-    background: var(--rez-vodni);
-    padding: 1.25rem;
-    margin-block: 0.75rem 1.25rem;
-  }
-  .pil--live .pil__close {
-    display: none;
-  }
+.pil__close:hover {
+  border-color: var(--list);
 }
 
-/* --- desktop, hydrated: the wall ------------------------------------------- */
+.pil--live .pil__panel :focus-visible {
+  outline-color: var(--rez-na-temnem);
+}
+
+/* --- desktop recomposition of the same wall -------------------------------- */
 @media (min-width: 900px) {
   .pil--live .pil__stage {
-    position: relative;
     height: min(86vh, 54rem);
   }
 
-  .pil--live .pil__group {
-    display: contents;
-  }
-
-  /* Corner titles. */
-  .pil__label {
-    position: absolute;
-    z-index: 2;
-    background: none;
-    border: 0;
-    padding: 0.25rem 0;
-    cursor: pointer;
-    font-family: var(--font-display);
-    font-stretch: var(--wdth-monument);
-    font-weight: 300;
-    font-size: clamp(1.8rem, 1.2rem + 1.9vw, 3.1rem);
-    line-height: 1.05;
-    letter-spacing: -0.015em;
-    color: var(--grafit);
-    text-align: left;
-    max-width: 34ch;
-    transition: color var(--t-lift) var(--ease-out);
-  }
-
-  .pil__label--design {
-    top: 0;
-    left: var(--gutter);
-  }
-  .pil__label--security {
-    top: 0;
-    right: var(--gutter);
-    text-align: right;
-  }
-  .pil__label--seo {
-    bottom: 0;
-    left: var(--gutter);
-  }
-
-  .pil__label:hover {
-    color: var(--rez);
-  }
-
-  /* The cluster. Tiles are absolute within the stage, staggered off each
-     other's rhythm like plates on a wall. */
   .pil--live .pil__tile {
-    position: absolute;
-    z-index: 1;
-    display: block;
     width: 26%;
-    min-height: 0;
-    padding: 0;
-    border: 0;
-    background: var(--grafit);
-    line-height: 0;
-    transition: transform 340ms var(--ease-out);
   }
 
   .pil--live .pil__tile[data-p='design'] {
@@ -561,144 +618,6 @@ function srcset(id: string, ext: string) {
   .pil--live .pil__tile[data-p='seo'] {
     left: 30%;
     top: 58%;
-  }
-
-  .pil--live .pil__tile-pic {
-    display: block;
-    width: 100%;
-    border: 1px solid var(--mreza-strong);
-  }
-
-  .pil--live .pil__tile-pic img {
-    aspect-ratio: 4 / 3;
-    object-fit: cover;
-  }
-
-  .pil--live .pil__tile-name,
-  .pil--live .pil__tile-ind {
-    display: none;
-  }
-
-  /* Hover: the hovered plate steps forward, the others step back, and the
-     plate's own corner title inks red — in both directions, so the title is
-     a remote hand for its plate. Transform-only; :has misses simply cost the
-     cross-highlight, never the function. */
-  @media (hover: hover) {
-    .pil--live .pil__tile:hover {
-      transform: scale(1.07);
-      z-index: 3;
-    }
-    .pil--live .pil__stage:has(.pil__tile:hover) .pil__tile:not(:hover) {
-      transform: scale(0.93);
-    }
-    .pil--live .pil__stage:has(.pil__label--design:hover) .pil__tile[data-p='design'],
-    .pil--live .pil__stage:has(.pil__label--security:hover) .pil__tile[data-p='security'],
-    .pil--live .pil__stage:has(.pil__label--seo:hover) .pil__tile[data-p='seo'] {
-      transform: scale(1.07);
-      z-index: 3;
-    }
-    .pil--live .pil__stage:has(.pil__tile[data-p='design']:hover) .pil__label--design,
-    .pil--live .pil__stage:has(.pil__tile[data-p='security']:hover) .pil__label--security,
-    .pil--live .pil__stage:has(.pil__tile[data-p='seo']:hover) .pil__label--seo {
-      color: var(--rez);
-    }
-  }
-
-  /* The open panel: the plate across the whole stage, the article over it.
-     Text sits on a graphite veil at 0.86 — measured over pure white that
-     composites to #434547: paper 9.94:1, papir-dim 6.64:1, and the red
-     indicator strokes 3.40:1 against the 3:1 UI floor. */
-  .pil--live .pil__panel {
-    position: absolute;
-    inset: 0;
-    z-index: 6;
-    max-width: none;
-    margin: 0;
-    padding: 0;
-    border: 0;
-    overflow: hidden;
-    background: var(--grafit);
-  }
-
-  .pil--live .pil__cover {
-    position: absolute;
-    inset: 0;
-    margin: 0;
-  }
-
-  .pil--live .pil__cover img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .pil--live .pil__cover::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: rgb(26 28 30 / 0.86);
-  }
-
-  .pil--live .pil__scroll {
-    position: absolute;
-    inset: 0;
-    overflow-y: auto;
-  }
-
-  .pil--live .pil__body {
-    max-width: 62rem;
-    margin-inline: auto;
-    padding: clamp(2.5rem, 2rem + 2vw, 4rem) var(--gutter) 3rem;
-  }
-
-  .pil--live .pil__artifact {
-    color: var(--papir-dim);
-  }
-
-  .pil--live .pil__name {
-    color: var(--list);
-    font-size: clamp(1.6rem, 1.3rem + 1.2vw, 2.4rem);
-  }
-
-  .pil--live .pil__summary {
-    color: var(--list);
-  }
-
-  .pil--live .pil__points {
-    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-    gap: 1.25rem 2.5rem;
-  }
-
-  .pil--live .pil__point-label {
-    color: var(--list);
-  }
-
-  .pil--live .pil__point-detail {
-    color: var(--papir-dim);
-  }
-
-  .pil--live .pil__close {
-    position: absolute;
-    top: 1.25rem;
-    right: var(--gutter);
-    z-index: 7;
-    margin: 0;
-    color: var(--list);
-    border-color: rgb(245 242 235 / 0.6);
-    background: rgb(26 28 30 / 0.5);
-  }
-
-  .pil--live .pil__close:hover {
-    border-color: var(--list);
-  }
-
-  .pil--live .pil__panel :focus-visible {
-    outline-color: var(--rez-na-temnem);
-  }
-
-  /* Non-live desktop (JS off): points still spread into columns. */
-  .pil__points {
-    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
   }
 }
 </style>
