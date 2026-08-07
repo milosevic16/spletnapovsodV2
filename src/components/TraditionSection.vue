@@ -27,7 +27,7 @@
  * `--cut` is unset, which falls back to 100% and clips the markup away
  * entirely. A crawler reads the rendered layer as ordinary HTML.
  */
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { invisible } from '@/content/home'
 import { factLines } from '@/lib/machine-facts'
 import { createFx, prefersReducedMotion } from '@/lib/fx'
@@ -49,18 +49,45 @@ const PARK = 78
 const SWEEP_MS = 950
 
 /**
- * Per-block parallax, as a multiplier in [-1, 1] of AMPLITUDE. The four strata
- * carry ONE shared rate — they are flush, so any relative movement between
- * them would open seams; moving together they read as one buried slab
- * drifting against the surface text. Header and outro sit still. Worst-case
- * relative movement is therefore 0.7 × 18 ≈ 13px, against ≥40px of margin
- * between the slab and its neighbours.
+ * Per-block parallax, as a multiplier in [-1, 1] of AMPLITUDE. The detail
+ * drawing is one block, so it drifts as a single buried mass against the
+ * still header and outro — no relative movement inside it, which is what
+ * would open seams between the flush material layers.
  */
 const AMPLITUDE = 18
-const RATES = [0, 0.7, 0.7, 0.7, 0.7, 0]
+const RATES = [0, 0.7, 0]
 
 /** The cut's viewport position. Written by the sweep and by the grip. */
 const scanPct = ref(100)
+
+/**
+ * Which material layer the detail drawing is probing. Drives the leader line's
+ * position through a single integer custom property, so the swing is one CSS
+ * transition rather than per-frame work.
+ */
+const layer = ref(0)
+
+/** Read the tabs from the DOM: a v-for ref array goes stale on every update. */
+function bandAt(i: number): HTMLElement | undefined {
+  return root.value?.querySelectorAll<HTMLElement>('.asm__band')[i]
+}
+
+/** Vertical tablist: arrows move and select, Home/End jump to the ends. */
+function onLayerKeys(e: KeyboardEvent) {
+  const n = invisible.items.length
+  let next = -1
+  if (e.key === 'ArrowDown' || e.key === 'ArrowRight') next = (layer.value + 1) % n
+  else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') next = (layer.value - 1 + n) % n
+  else if (e.key === 'Home') next = 0
+  else if (e.key === 'End') next = n - 1
+  if (next < 0) return
+  e.preventDefault()
+  layer.value = next
+  // The focus follows the selection, which is the tablist contract. nextTick,
+  // not rAF: this waits on Vue's DOM update, and rAF is throttled to a stop in
+  // a background tab — the focus must land regardless.
+  nextTick(() => bandAt(next)?.focus())
+}
 
 /** The markup each block emits — derived, so it cannot depict tags we do not ship. */
 const blocks = computed(() => [
@@ -77,17 +104,18 @@ const blocks = computed(() => [
       { id: '', text: `<p>${invisible.machineGloss}</p>` },
     ],
   },
-  ...invisible.items.map((item) => ({
-    id: item.id,
-    kind: 'item' as const,
-    item,
-    code: [
+  {
+    // The detail drawing is ONE block, so its markup — every layer's article,
+    // in order — sits over the drawing that depicts them.
+    id: 'assembly',
+    kind: 'assembly' as const,
+    code: invisible.items.flatMap((item) => [
       { id: '', text: `<article id="${item.id}">` },
       { id: '', text: `  <h3>${item.label}</h3>` },
       { id: '', text: `  <p>${item.detail}</p>` },
       { id: '', text: `</article>` },
-    ],
-  })),
+    ]),
+  },
   {
     id: 'outro',
     kind: 'outro' as const,
@@ -146,10 +174,23 @@ function syncCode() {
     if (needs[i]! > own[i]!) src.style.minHeight = `${needs[i]}px`
   }
 
-  // Rows are final — pin each markup block onto the block it describes.
-  layerRect = layer.getBoundingClientRect()
-  const tops = rendered.map((src) => src.getBoundingClientRect().top - layerRect.top)
-  for (const [i, dst] of coded.entries()) dst.style.top = `${tops[i]!.toFixed(1)}px`
+  // Rows are final — pin each markup block onto the block it describes, then
+  // confirm. Reserving heights above CHANGES the very rows being pinned, so a
+  // single pass can settle on stale numbers and the markup then sits wrong
+  // forever with nothing to correct it. The check is one extra reflow and it
+  // converges: re-pinning moves only absolutely-positioned boxes, which cannot
+  // feed back into the rendered layer's geometry.
+  for (let pass = 0; pass < 2; pass++) {
+    layerRect = layer.getBoundingClientRect()
+    const tops = rendered.map((src) => src.getBoundingClientRect().top - layerRect.top)
+    let worst = 0
+    for (const [i, dst] of coded.entries()) {
+      const want = tops[i]!
+      worst = Math.max(worst, Math.abs(want - parseFloat(dst.style.top || '0')))
+      dst.style.top = `${want.toFixed(1)}px`
+    }
+    if (worst < 0.5) break
+  }
 
   measure()
 }
@@ -235,7 +276,13 @@ onMounted(() => {
   // on its own. Everyone else arrives on the markup and watches it convert.
   scanPct.value = reduced ? 100 : 0
 
-  syncCode()
+  // The first pin waits for the hydrated DOM. Hydration REPLACES this
+  // section's layout — the four callouts collapse to one, the bands become
+  // tabs — and measuring before that re-render pins the markup to a layout
+  // that is about to vanish (measured: 136.8px of permanent drift).
+  measure()
+  nextTick(syncCode)
+
   fx.on(window, 'scroll', onScroll, { passive: true })
   fx.on(
     window,
@@ -255,6 +302,12 @@ onMounted(() => {
   }
   // Text metrics change on font swap — re-pin once they have landed.
   document.fonts?.ready.then(() => scheduleSync())
+
+  // Probing a layer swaps the callout, which changes the block's height.
+  // Re-pin explicitly rather than leaning on the ResizeObserver: this one is
+  // a state change we own, so it should not depend on observing its own
+  // side effect.
+  watch(layer, () => nextTick(scheduleSync))
 
   if (reduced || !('IntersectionObserver' in window)) return
 
@@ -306,15 +359,69 @@ onUnmounted(() => {
             <p class="trad__gloss">{{ invisible.machineGloss }}</p>
           </template>
 
-          <!-- The strata drawing: each guarantee is a layer below the surface,
-               darker and more densely hatched with depth. The id is real, so
-               the markup layer's <article id="…"> depicts a tag we ship. -->
-          <template v-else-if="b.kind === 'item'">
-            <article class="stratum" :id="b.item.id">
-              <span class="stratum__hatch" aria-hidden="true"></span>
-              <h3 class="stratum__label">{{ b.item.label }}</h3>
-              <p class="stratum__detail">{{ b.item.detail }}</p>
-            </article>
+          <!-- THE DETAIL: a section through the site's own build-up. Four
+               material layers, each drawn in its own drafting hatch; probing
+               one swings the leader across to its callout.
+
+               The bands become tabs ONLY once hydrated — with JS off they are
+               an inert drawing and all four callouts stand open in flow, so
+               nobody meets a control that does nothing. The article ids are
+               real, so the markup layer's <article id="…"> depicts a tag we
+               actually ship. -->
+          <template v-else-if="b.kind === 'assembly'">
+            <div class="asm" :style="{ '--sel': layer }">
+              <div
+                class="asm__stack"
+                :role="live ? 'tablist' : undefined"
+                :aria-label="live ? invisible.feedback.layersLabel : undefined"
+                aria-orientation="vertical"
+                @keydown="live && onLayerKeys($event)"
+              >
+                <!-- Dimension rule down the left edge: extension ticks only,
+                     never a figure — this drawing measures nothing we could
+                     honestly put a number on. -->
+                <span class="asm__dim" aria-hidden="true"></span>
+
+                <component
+                  :is="live ? 'button' : 'div'"
+                  v-for="(item, n) in invisible.items"
+                  :key="item.id"
+                  class="asm__band"
+                  :class="[`asm__band--${n}`, { 'asm__band--on': live && n === layer }]"
+                  :type="live ? 'button' : undefined"
+                  :role="live ? 'tab' : undefined"
+                  :aria-selected="live ? String(n === layer) : undefined"
+                  :aria-controls="live ? `layer-${item.id}` : undefined"
+                  :tabindex="live ? (n === layer ? 0 : -1) : undefined"
+                  @click="live && (layer = n)"
+                >
+                  <span class="asm__fill" aria-hidden="true"></span>
+                  <!-- The cut plane marking the probed layer: the site's own
+                       motif, red rule with square end ticks. -->
+                  <span class="asm__plane" aria-hidden="true"></span>
+                  <span v-if="live" class="visually-hidden">{{ item.label }}</span>
+                </component>
+
+                <!-- Swings to the probed layer; positioned from --sel alone. -->
+                <span v-if="live" class="asm__leader" aria-hidden="true"></span>
+              </div>
+
+              <div class="asm__callouts">
+                <article
+                  v-for="(item, n) in invisible.items"
+                  :id="item.id"
+                  :key="item.id"
+                  class="asm__callout"
+                  :class="{ 'asm__callout--on': !live || n === layer }"
+                  :role="live ? 'tabpanel' : undefined"
+                  :aria-labelledby="undefined"
+                  :hidden="live && n !== layer"
+                >
+                  <h3 class="asm__label" :id="`layer-${item.id}`">{{ item.label }}</h3>
+                  <p class="asm__detail">{{ item.detail }}</p>
+                </article>
+              </div>
+            </div>
           </template>
 
           <template v-else>
@@ -504,63 +611,209 @@ onUnmounted(() => {
   margin-inline: auto;
 }
 
-/* --- the strata drawing -----------------------------------------------------
-   The four guarantees as four layers below the surface: flush bands, ground
-   stepping darker and hatch packing denser with depth — depth is DRAWN (fill
-   and line), never shadowed. The hatch column is the drawing's core sample.
+/* --- the detail drawing -----------------------------------------------------
+   A section through the site's build-up: four material layers, each in its own
+   drafting hatch, probed one at a time. Depth is DRAWN — fill, line and hatch,
+   never a shadow. Nothing here carries a figure: the honesty contract reserves
+   mono for real machine emissions, and a drawing's numbers would be invented,
+   so the technical register is carried by CONVENTION (hatch, dimension ticks,
+   leader, cut plane) instead. */
+.asm {
+  --asm-gap: clamp(2rem, 6vw, 6rem);
+  display: grid;
+  gap: 2rem;
+}
 
-   Grounds are the dark family's own steps: --grafit-inset down to --zemlja,
-   the two literals between them interpolated. papir-dim measures 8.87:1 on
-   the LIGHTEST band (the family's documented floor) and only climbs as the
-   bands darken, so the deepest text is the most legible. */
-.stratum {
-  --hatch-w: clamp(2.5rem, 8vw, 6.5rem);
+.asm__stack {
   position: relative;
+  display: grid;
+  grid-auto-rows: 1fr; /* equal bands — the leader's 25% steps depend on it */
+  min-height: clamp(17rem, 46vw, 26rem);
   border: 1px solid var(--crta-na-temnem);
-  border-bottom: none;
-  padding: clamp(1.5rem, 1.1rem + 1.6vw, 2.25rem) clamp(1.1rem, 3vw, 2rem);
-  padding-left: calc(var(--hatch-w) + clamp(1.1rem, 3vw, 2rem));
+  /* The leader reaches out of this box. */
+  overflow: visible;
+  margin-left: 1.25rem;
 }
 
-/* The deepest band closes the drawing. */
-.trad__b--hosting .stratum {
-  border-bottom: 1px solid var(--crta-na-temnem);
-}
-
-.trad__b--seo-foundation .stratum {
-  background: var(--grafit-inset);
-  --pitch: 13px;
-}
-.trad__b--forms .stratum {
-  background: #1f2327;
-  --pitch: 9px;
-}
-.trad__b--compliance .stratum {
-  background: #191d21;
-  --pitch: 6px;
-}
-.trad__b--hosting .stratum {
-  background: var(--zemlja);
-  --pitch: 4px;
-}
-
-/* The core-sample column: 45° section hatch, denser per band. Decoration in
-   line duty only — no text ever sits on it. */
-.stratum__hatch {
+/* Dimension rule: extension ticks top and bottom, no figure. */
+.asm__dim {
   position: absolute;
-  inset-block: 0;
-  left: 0;
-  width: var(--hatch-w);
-  border-right: 1px solid var(--crta-na-temnem);
-  background: repeating-linear-gradient(
-    45deg,
-    transparent 0 calc(var(--pitch, 10px) - 1px),
-    rgb(245 242 235 / 0.3) calc(var(--pitch, 10px) - 1px) var(--pitch, 10px)
-  );
+  top: 0;
+  bottom: 0;
+  left: -1.25rem;
+  width: 1px;
+  background: var(--crta-na-temnem);
   pointer-events: none;
 }
+.asm__dim::before,
+.asm__dim::after {
+  content: '';
+  position: absolute;
+  left: -3px;
+  width: 7px;
+  height: 1px;
+  background: var(--crta-na-temnem);
+}
+.asm__dim::before {
+  top: 0;
+}
+.asm__dim::after {
+  bottom: 0;
+}
 
-.stratum__label {
+.asm__band {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid var(--crta-na-temnem);
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  overflow: hidden;
+}
+
+.asm__band:last-of-type {
+  border-bottom: 0;
+}
+
+button.asm__band {
+  cursor: pointer;
+}
+
+/* The four materials. Grounds step darker with depth (the dark family's own
+   steps), hatches change CHARACTER rather than only pitch, the way a section
+   distinguishes materials. papir-dim measures 8.87:1 on the lightest of these
+   and only climbs as they darken. */
+.asm__fill {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: opacity var(--t-lift) var(--ease-out);
+  opacity: 0.5;
+}
+
+.asm__band--0 {
+  background: var(--grafit-inset);
+}
+.asm__band--0 .asm__fill {
+  background: repeating-linear-gradient(
+    45deg,
+    transparent 0 9px,
+    rgb(245 242 235 / 0.34) 9px 10px
+  );
+}
+
+.asm__band--1 {
+  background: #1f2327;
+}
+.asm__band--1 .asm__fill {
+  background:
+    repeating-linear-gradient(45deg, transparent 0 9px, rgb(245 242 235 / 0.3) 9px 10px),
+    repeating-linear-gradient(-45deg, transparent 0 9px, rgb(245 242 235 / 0.3) 9px 10px);
+}
+
+.asm__band--2 {
+  background: #191d21;
+}
+.asm__band--2 .asm__fill {
+  background-image: radial-gradient(rgb(245 242 235 / 0.5) 1px, transparent 1.2px);
+  background-size: 9px 9px;
+}
+
+.asm__band--3 {
+  background: var(--zemlja);
+}
+.asm__band--3 .asm__fill {
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0 5px,
+    rgb(245 242 235 / 0.24) 5px 6px
+  );
+}
+
+button.asm__band:hover .asm__fill,
+.asm__band--on .asm__fill {
+  opacity: 1;
+}
+
+/* The cut plane through the probed layer: red rule, square end ticks. */
+.asm__plane {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  background: var(--rez-na-temnem);
+  opacity: 0;
+  transform: scaleX(0.82);
+  transition:
+    opacity var(--t-lift) var(--ease-out),
+    transform 320ms var(--ease-out);
+  pointer-events: none;
+}
+.asm__plane::before,
+.asm__plane::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  width: 8px;
+  height: 8px;
+  background: var(--rez-na-temnem);
+}
+.asm__plane::before {
+  left: 0;
+}
+.asm__plane::after {
+  right: 0;
+}
+
+.asm__band--on .asm__plane {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+/* Swings between layers on --sel alone: bands are equal, so each centre is
+   (n + 0.5) × 25%. One transition, no per-frame work. */
+.asm__leader {
+  position: absolute;
+  left: 100%;
+  width: var(--asm-gap);
+  height: 1px;
+  top: calc((var(--sel, 0) + 0.5) * 25%);
+  background: var(--rez-na-temnem);
+  transition: top 380ms var(--ease-out);
+  pointer-events: none;
+  display: none;
+}
+.asm__leader::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: -3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--rez-na-temnem);
+}
+
+/* --- the callout ----------------------------------------------------------- */
+.asm__callout[hidden] {
+  display: none;
+}
+
+/* Only genuinely adjacent VISIBLE callouts are spaced — the JS-off case where
+   all four stand open. `+` still matches across `display:none` siblings, so
+   the plain selector gave the one visible panel a phantom top margin whose
+   presence depended on which band was probed (measured). */
+.asm__callout:not([hidden]) + .asm__callout:not([hidden]) {
+  margin-top: 1.75rem;
+}
+
+.asm__label {
   font-family: var(--font-display);
   font-stretch: var(--wdth-datum);
   font-weight: 500;
@@ -569,13 +822,15 @@ onUnmounted(() => {
   text-transform: uppercase;
   letter-spacing: 0.09em;
   color: var(--list);
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid var(--crta-na-temnem);
 }
 
-.stratum__detail {
-  margin-top: 0.6rem;
-  font-size: 0.98rem;
+.asm__detail {
+  margin-top: 0.9rem;
+  font-size: 1rem;
   color: var(--papir-dim);
-  max-width: 44ch;
+  max-width: 46ch;
 }
 
 /* --- the outro -------------------------------------------------------------- */
@@ -649,18 +904,21 @@ onUnmounted(() => {
     padding-right: calc(var(--gutter) + 0.5rem);
   }
 
-  /* Each stratum opens into a two-column row: the label reads as the layer's
-     name, the detail as its annotation, both vertically centred in the band. */
-  .stratum {
-    display: grid;
+  /* Drawing left, callout right, the leader crossing the gap between them. */
+  .asm {
     grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-    column-gap: 3rem;
+    column-gap: var(--asm-gap);
     align-items: center;
-    min-height: 7.5rem;
   }
 
-  .stratum__detail {
-    margin-top: 0;
+  .asm__leader {
+    display: block;
+  }
+
+  /* The panel swaps content on selection; reserving the tallest keeps the
+     drawing from jumping as the leader swings. */
+  .asm__callouts {
+    min-height: 11rem;
   }
 }
 </style>
