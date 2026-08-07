@@ -20,10 +20,17 @@ export default defineConfig({
     vue(),
     // Metric-matched fallback faces (size-adjust/ascent/descent) generated from
     // the real font files — the swap changes glyphs, not geometry (CLS ~0).
-    // Order pairs with tokens.css stacks: Archivo↔Arial, Source Serif↔Georgia,
-    // Chivo Mono↔Courier New.
+    // PER-FAMILY, not a shared array. fontaine emits one fallback face per
+    // (source face × fallback) under ONE family name with no unicode-range, so
+    // the LAST entry wins for every family alike — an array can only ever pair
+    // correctly with one of them. Measured on the array form: Chivo Mono won
+    // Arial at size-adjust 134.6%, i.e. the mono register would have rendered
+    // Arial glyphs during the swap. The object form pairs them honestly.
     FontaineTransform.vite({
-      fallbacks: ['Arial', 'Georgia', 'Courier New'],
+      fallbacks: {
+        'Instrument Sans Variable': ['Arial'],
+        'Chivo Mono': ['Courier New'],
+      },
       resolvePath: (id) => new URL(`./public${id}`, import.meta.url),
     }),
   ],

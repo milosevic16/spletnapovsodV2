@@ -18,7 +18,6 @@ export interface Hero {
   title: string
   /** Accented prefix of `title` (must match exactly — the component falls back to the plain title if not). */
   titleAccent: string
-  lead: string
   /** Rendered in the masthead strip — the page's single call to action. */
   ctaPrimary: { label: string; target: string }
 }
@@ -89,7 +88,6 @@ export const nav: NavItem[] = [
 export const hero: Hero = {
   title: 'Hitre, dostopne in profesionalne spletne strani.',
   titleAccent: 'Hitre',
-  lead: 'Izdelujemo vse od osnovnih predstavitvenih strani do naprednih spletnih sistemov z rezervacijami in plačili Stripe. Poskrbimo za oblikovanje, razvoj, tehnično osnovo in objavo na vaši domeni.',
   ctaPrimary: { label: 'Naročite izdelek', target: 'kontakt' },
 }
 

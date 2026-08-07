@@ -134,11 +134,11 @@ onUnmounted(() => {
         <svg class="masthead__brandmark" viewBox="0 0 244 144">
           <circle cx="72" cy="72" r="72" fill="var(--rez)" />
           <circle cx="172" cy="72" r="72" fill="var(--rez)" />
-          <g fill="none" stroke="#fff" stroke-width="18" stroke-linecap="round">
+          <g fill="none" stroke="var(--list)" stroke-width="18" stroke-linecap="round">
             <circle cx="79" cy="79" r="33" />
             <line x1="46" y1="55" x2="46" y2="118" />
           </g>
-          <g fill="none" stroke="#fff" stroke-width="18" stroke-linecap="round"
+          <g fill="none" stroke="var(--list)" stroke-width="18" stroke-linecap="round"
             transform="rotate(180 122 72)">
             <circle cx="79" cy="79" r="33" />
             <line x1="46" y1="55" x2="46" y2="118" />

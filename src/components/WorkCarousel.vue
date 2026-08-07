@@ -301,11 +301,13 @@ onUnmounted(() => {
           ></a>
         </div>
 
-        <!-- The band's only text: a short line bottom-left, the site's name
-             bottom-right. One paper ink, which passes on all three grounds and
-             on every frame between them. -->
+        <!-- The band's only text: the sector line and the site's name, driven
+             into opposite corners of the plate — BELOW the frame on desktop,
+             ABOVE it on phones. Both set in the machine register: uppercase,
+             wide-tracked, technical. One paper ink, which passes on all three
+             grounds and on every frame between them. -->
         <div class="plate__corners">
-          <p class="annot plate__sector">{{ r.sector }}</p>
+          <p class="plate__sector">{{ r.sector }}</p>
           <a :href="r.url" target="_blank" rel="noopener" class="plate__name">
             {{ r.name }}
             <span class="visually-hidden">
@@ -430,31 +432,44 @@ onUnmounted(() => {
   height: auto;
 }
 
-/* --- the corners ------------------------------------------------------------ */
+/* --- the corners ------------------------------------------------------------
+   PHONES put the pair ABOVE the frame (owner's call): the plate is a column,
+   and `order: -1` lifts the corners over the window without touching DOM
+   order, so the reading order stays sector → name → link. */
 .plate__corners {
+  order: -1;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 1.5rem;
+  gap: 1rem;
   color: var(--list);
   width: 100%;
   margin-inline: auto;
 }
 
-.plate__sector {
+/* Both corners share ONE register — the machine voice, uppercase and
+   wide-tracked. Deliberately mono here and nowhere else in this band: these
+   are a real URL's owner and its sector, the closest thing the carousel has to
+   a checkable emission, and the honesty contract's own examples name URLs. */
+.plate__sector,
+.plate__name {
+  font-family: var(--font-mono);
+  font-size: clamp(0.75rem, 0.62rem + 0.55vw, 0.9rem);
+  font-weight: 400;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
   color: var(--list);
+}
+
+.plate__sector {
   max-width: 34ch;
 }
 
 .plate__name {
-  font-family: var(--font-display);
-  font-stretch: var(--wdth-datum);
-  font-weight: 600;
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.11em;
   text-decoration: none;
   white-space: nowrap;
+  text-align: right;
 }
 
 .plate__name:hover {
@@ -587,8 +602,23 @@ onUnmounted(() => {
     object-position: top center;
   }
 
+  /* Desktop returns them BELOW the frame and drives them to ITS corners, not
+     the band's: the frame is height-driven at 2:1, so its rendered width is
+     2 × min(62vh, 34rem) = min(124vh, 68rem), capped by the plate. Repeating
+     that expression — rather than the band's measure — is what makes the two
+     lines land on the frame's own edges. Paired with .plate--stacked
+     .plate__frame above; change one, change the other. */
   .plate--stacked .plate__corners {
-    max-width: min(94vw, 78rem);
+    order: 0;
+    width: min(124vh, 68rem, 100%);
+    margin-top: 0.15rem;
+  }
+
+  /* A step larger here — the frame gives them the room the phone cannot. */
+  .plate--stacked .plate__sector,
+  .plate--stacked .plate__name {
+    font-size: 0.98rem;
+    letter-spacing: 0.1em;
   }
 }
 </style>

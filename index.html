@@ -11,8 +11,7 @@
     <!-- Above-the-fold font subsets. Latin only: the kicker, h1 and the lead's
          opening words carry no č/š/ž; the ext subsets swap in behind fontaine's
          metric-matched fallbacks, so the swap changes glyphs, not geometry. -->
-    <link rel="preload" href="/fonts/archivo-latin-standard-normal.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="/fonts/source-serif-4-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/instrument-sans-latin-standard-normal.woff2" as="font" type="font/woff2" crossorigin />
     <title>SpletnaPovsod</title>
     <!-- The opening veil: the logo's origin story. Static HTML + CSS only,
          system fonts only, no images, no JS dependency: a pure-CSS timed
@@ -46,7 +45,7 @@
         inset: 0;
         z-index: 9999;
         pointer-events: none;
-        background: #0f0e0e;
+        background: #f5f2eb;
         /* The ground lifts while the mark is still flying, then the whole
            veil retires. */
         animation:
@@ -72,7 +71,7 @@
       }
       /* The word: one flex row, everything in em so the fly can scale the
          whole assembly by animating font-size alone. Slightly above centre —
-         the optical middle of a dark field. */
+         the optical middle of the field. */
       #veil .v-word {
         position: absolute;
         left: 50%;
@@ -89,11 +88,11 @@
            geometry, and the old system-font rule would now be leaving the
            studio voice on the table. Weight and tracking follow the owner's
            Claude Design prototype (Switzer-class, 500, tight). */
-        font-family: 'Archivo Variable', 'Archivo Variable fallback', Arial, sans-serif;
+        font-family: 'Instrument Sans Variable', 'Instrument Sans Variable fallback', Arial, sans-serif;
         font-weight: 500;
         letter-spacing: -0.02em;
         line-height: 1;
-        color: #f5f2eb;
+        color: #1a1c1e;
         white-space: nowrap;
         /* fly to the brand corner (translate stays; left/top/font-size land
            it): +1.2708em / +0.75em are half the logo's width and height, so
@@ -203,8 +202,8 @@
         <span class="v-ch" style="--i:6">a</span>
         <svg class="v-pd v-p" style="--i:7" viewBox="0 0 144 144">
           <circle cx="72" cy="72" r="72" fill="#b03b22" />
-          <circle cx="79" cy="79" r="33" fill="none" stroke="#fff" stroke-width="18" />
-          <rect class="v-stem" x="37" y="46" width="18" height="115" rx="9" fill="#fff" />
+          <circle cx="79" cy="79" r="33" fill="none" stroke="#f5f2eb" stroke-width="18" />
+          <rect class="v-stem" x="37" y="46" width="18" height="115" rx="9" fill="#f5f2eb" />
         </svg>
         <span class="v-ch" style="--i:8">o</span>
         <span class="v-ch" style="--i:9">v</span>
@@ -213,8 +212,8 @@
         <svg class="v-pd v-d" style="--i:12" viewBox="0 0 144 144">
           <g transform="rotate(180 72 72)">
             <circle cx="72" cy="72" r="72" fill="#b03b22" />
-            <circle cx="79" cy="79" r="33" fill="none" stroke="#fff" stroke-width="18" />
-            <rect class="v-stem" x="37" y="46" width="18" height="115" rx="9" fill="#fff" />
+            <circle cx="79" cy="79" r="33" fill="none" stroke="#f5f2eb" stroke-width="18" />
+            <rect class="v-stem" x="37" y="46" width="18" height="115" rx="9" fill="#f5f2eb" />
           </g>
         </svg>
       </p>

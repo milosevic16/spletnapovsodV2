@@ -65,17 +65,20 @@
   --ok-na-temnem: #8fc7a6; /* form success on zemlja-2: 8.10:1 */
   --err-na-temnem: #f0a48a; /* form error on zemlja-2: 7.72:1 — rust, deliberately NOT --rez */
 
-  /* Type — one lettering hand (Archivo width axis), one human voice, one
-     machine voice. The "<family> fallback" entries are fontaine's generated
+  /* Type — ONE grotesque for display, body and labels alike, plus the machine
+     voice. The "<family> fallback" entries are fontaine's generated
      metric-matched faces (size-adjust/ascent/descent over the local base) —
      they MUST be named in the stack or the swap reflows the page. */
-  --font-display: 'Archivo Variable', 'Archivo Variable fallback', Arial, sans-serif;
-  --font-text: 'Source Serif 4 Variable', 'Source Serif 4 Variable fallback', Georgia, serif;
+  --font-display: 'Instrument Sans Variable', 'Instrument Sans Variable fallback', Arial, sans-serif;
+  --font-text: 'Instrument Sans Variable', 'Instrument Sans Variable fallback', Arial, sans-serif;
   --font-mono: 'Chivo Mono', 'Chivo Mono fallback', 'Courier New', monospace;
 
-  /* Width-axis stops (font-stretch %) — the drawing hand's two registers */
-  --wdth-monument: 115%; /* display: light-monumental, wide */
-  --wdth-datum: 74%; /* instrument labels: narrow caps */
+  /* Width-axis stops (font-stretch %). Display sits at the family's NATURAL
+     width: its monumentality is scale and tight tracking, never a stretched
+     face — a wide light display face was what read as childish. Only the
+     instrument register narrows, and only to 82 (the axis floors at 75). */
+  --wdth-monument: 100%;
+  --wdth-datum: 82%; /* instrument labels: narrow caps */
 
   /* Fluid scale by role — UNCHANGED from the approved layout */
   --fs-h1: clamp(2.1rem, 1.3rem + 3.6vw, 3.6rem);
@@ -104,8 +107,8 @@
      back on the wdth axis is what lets the size grow at all (92% frees ~17%
      of the width; the stretch spends it on height). */
   --hero-wordmark: clamp(1.7rem, -0.6rem + 12.7vw, 5rem);
-  --hero-wordmark-wdth: 92%;
-  --hero-wordmark-scaley: 1.12;
+  --hero-wordmark-wdth: 88%;
+  --hero-wordmark-scaley: 1;
 
   /* Motion — UNCHANGED from the approved layout */
   --t-draw: 800ms; /* Prerez line draw */

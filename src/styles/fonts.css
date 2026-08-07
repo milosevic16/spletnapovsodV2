@@ -2,16 +2,16 @@
    metric-matched fallbacks (see vite.config.ts) so the swap changes glyphs, not
    geometry. Files live in public/fonts/ under an immutable cache header.
 
-   REZ 1:1 type system — one lettering hand, two voices, one machine register:
-   - Archivo Variable (wght 100-900 + wdth 62-125): Expanded ~115 at light weights
-     for monumental display, Narrow ~70 caps for datum/instrument labels. The
-     width axis does honestly what two families usually fake.
-   - Source Serif 4 Variable (wght only — body never renders at display sizes,
-     the 2.4× larger opsz cut buys nothing here): the human voice.
+   Type system — ONE grotesque plus the machine register:
+   - Instrument Sans Variable (wght 400-700 + wdth 75-100): display, body and
+     instrument labels alike. Its registers come from size, weight, width and
+     tracking, not from three different typefaces — the studio discipline.
+     Display is tight and normal-width (the monumentality is scale, never a
+     stretched face); datum labels narrow to ~82% caps.
    - Chivo Mono 400: the machine voice. HONESTY CONTRACT: mono appears ONLY on
      genuine machine emissions (head lines, robots lines, header names, URLs,
      file names) — never on claims, labels, or paragraphs. If it is mono, it is
-     checkable. Human-side instrument labels use Archivo Narrow caps instead. */
+     checkable. Human-side instrument labels use the narrow caps instead. */
 
 /* Per family: latin-ext declared FIRST, latin LAST — fontaine appends one
    generated "<family> fallback" @font-face per source face under the SAME
@@ -19,48 +19,28 @@
    metrics win the cascade. The ext-derived set over-adjusts (~130% vs ~102%
    size-adjust — measured in dist) and must lose. */
 
-/* Archivo — display + structural (variable: wght 100-900, wdth 62-125). */
+/* Instrument Sans — the whole page: display, body and instrument labels. One
+   family, three registers, differentiated by SIZE, WEIGHT, WIDTH and TRACKING
+   rather than by three typefaces. Variable: wght 400-700, wdth 75-100. */
 @font-face {
-  font-family: 'Archivo Variable';
+  font-family: 'Instrument Sans Variable';
   font-style: normal;
   font-display: swap;
-  font-weight: 100 900;
-  font-stretch: 62% 125%;
-  src: url(/fonts/archivo-latin-ext-standard-normal.woff2) format('woff2-variations');
+  font-weight: 400 700;
+  font-stretch: 75% 100%;
+  src: url(/fonts/instrument-sans-latin-ext-standard-normal.woff2) format('woff2-variations');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
     U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
     U+2C60-2C7F, U+A720-A7FF;
 }
 
 @font-face {
-  font-family: 'Archivo Variable';
+  font-family: 'Instrument Sans Variable';
   font-style: normal;
   font-display: swap;
-  font-weight: 100 900;
-  font-stretch: 62% 125%;
-  src: url(/fonts/archivo-latin-standard-normal.woff2) format('woff2-variations');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
-    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-
-/* Source Serif 4 — text serif (variable: wght 200-900). */
-@font-face {
-  font-family: 'Source Serif 4 Variable';
-  font-style: normal;
-  font-display: swap;
-  font-weight: 200 900;
-  src: url(/fonts/source-serif-4-latin-ext-wght-normal.woff2) format('woff2-variations');
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
-    U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
-    U+2C60-2C7F, U+A720-A7FF;
-}
-
-@font-face {
-  font-family: 'Source Serif 4 Variable';
-  font-style: normal;
-  font-display: swap;
-  font-weight: 200 900;
-  src: url(/fonts/source-serif-4-latin-wght-normal.woff2) format('woff2-variations');
+  font-weight: 400 700;
+  font-stretch: 75% 100%;
+  src: url(/fonts/instrument-sans-latin-standard-normal.woff2) format('woff2-variations');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
     U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }

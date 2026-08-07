@@ -30,7 +30,7 @@ body {
   min-height: 100vh;
   font-family: var(--font-text);
   font-size: 1rem;
-  line-height: 1.65;
+  line-height: 1.6;
   color: var(--grafit);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -40,15 +40,16 @@ body {
   background: var(--list);
 }
 
-/* Display: Archivo Expanded at light weight — monumentality through size and
-   width, never boldness. h3 steps down to normal width at text weight. */
+/* Display: the grotesque at its natural width, medium weight, TIGHT tracking —
+   monumentality is scale, never a stretched or hairline face. (Instrument Sans
+   floors at 400, so the old 300 would silently clamp anyway.) */
 h1,
 h2 {
   font-family: var(--font-display);
-  font-weight: 300;
+  font-weight: 500;
   font-stretch: var(--wdth-monument);
-  line-height: 1.15;
-  letter-spacing: -0.015em;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
 }
 
 h1 {
@@ -62,8 +63,8 @@ h3 {
   font-weight: 500;
   font-stretch: 100%;
   font-size: var(--fs-h3);
-  line-height: 1.25;
-  letter-spacing: -0.005em;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 
 p {
@@ -129,7 +130,7 @@ textarea {
   padding-inline: var(--gutter);
 }
 
-/* Instrument labels — the drawing hand's narrow register. Archivo Narrow caps,
+/* Instrument labels — the narrow register: the same grotesque at wdth 82 caps,
    NEVER mono: mono is reserved for machine emissions (see .emisija). */
 .kicker {
   font-family: var(--font-display);
@@ -225,7 +226,6 @@ textarea {
   }
 
   html[data-intro] .stmt__title,
-  html[data-intro] .stmt__lead,
   html[data-intro] .work__plates {
     animation: settle-up 0.55s var(--ease-out) both;
   }
@@ -237,9 +237,6 @@ textarea {
   }
   html[data-intro] .stmt__title {
     animation-delay: 2.55s;
-  }
-  html[data-intro] .stmt__lead {
-    animation-delay: 2.65s;
   }
   html[data-intro] .work__plates {
     animation-delay: 2.8s;

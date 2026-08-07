@@ -1,9 +1,10 @@
 <script setup lang="ts">
 /**
  * The opening band, composed to its own corners: the wordmark hard into the
- * top-left, the claim hard into the bottom-right, the qualifier to the claim's
- * left. One inset — `--hero-inset` — is the margin on all four sides, so the
- * two anchors sit diagonally opposite at the same distance from the page edge.
+ * top-left across TWO lines ([mark] Spletna / Povsod), the claim hard into the
+ * bottom-right. One inset — `--hero-inset` — is the margin on all four sides,
+ * so the two anchors sit diagonally opposite at the same distance from the
+ * page edge.
  *
  * The band deliberately does NOT use `.container`: a centred 72rem measure
  * makes the left margin the page gutter PLUS half the leftover viewport (107px
@@ -40,27 +41,23 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
         <svg class="stmt__mark" viewBox="0 0 244 144" aria-hidden="true">
           <circle cx="72" cy="72" r="72" fill="var(--rez)" />
           <circle cx="172" cy="72" r="72" fill="var(--rez)" />
-          <g fill="none" stroke="#fff" stroke-width="18" stroke-linecap="round">
+          <g fill="none" stroke="var(--list)" stroke-width="18" stroke-linecap="round">
             <circle cx="79" cy="79" r="33" />
             <line x1="46" y1="55" x2="46" y2="118" />
           </g>
-          <g fill="none" stroke="#fff" stroke-width="18" stroke-linecap="round"
+          <g fill="none" stroke="var(--list)" stroke-width="18" stroke-linecap="round"
             transform="rotate(180 122 72)">
             <circle cx="79" cy="79" r="33" />
             <line x1="46" y1="55" x2="46" y2="118" />
           </g>
         </svg>
-        <span class="stmt__wordmark">SpletnaPovsod</span>
+        <span class="stmt__wordmark">Spletna</span>
+        <span class="stmt__wordmark stmt__wordmark--2">Povsod</span>
       </p>
 
-      <!-- DOM order is the logical one — claim, then qualifier — while the
-           grid seats the qualifier to its left. Assistive tech reads the h1
-           first; the eye meets the lead first. -->
       <h1 class="stmt__title">
         <span v-if="titleAccent" class="stmt__hl">{{ titleAccent }}</span>{{ titleRest }}
       </h1>
-
-      <p class="stmt__lead">{{ hero.lead }}</p>
     </div>
   </section>
 </template>
@@ -77,11 +74,17 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
   gap: 1.35rem;
 }
 
-/* The font-size lives on the row, so the mark's em width tracks the wordmark. */
+/* Two lines: [mark] Spletna / Povsod. A wrapping flex row breaks on each
+   item's flex BASIS, so the break is forced rather than left to spare pixels
+   (house rule) — the mark and »Spletna« share row one, »Povsod« takes row two
+   at 100% basis. The font-size lives on the row, so the mark's em width tracks
+   the wordmark. */
 .stmt__brand {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5em;
+  row-gap: 0;
   /* Optical correction, not a nudge: the mark is 0.78em inside a 1em line box
      and centred, so its ink starts 0.11em below the padding edge — measured
      9.2px against a 62.7px left inset. Pulling the row up by exactly that puts
@@ -89,7 +92,7 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
   margin-top: -0.11em;
   font-family: var(--font-display);
   font-stretch: var(--wdth-monument);
-  font-weight: 300;
+  font-weight: 500;
   /* Cut and size come from tokens.css, because the masthead renders the same
      lettering when the menu is open and the two must be indistinguishable. */
   font-stretch: var(--hero-wordmark-wdth);
@@ -113,9 +116,16 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
 .stmt__wordmark {
   white-space: nowrap;
   /* Stretched about the centre, so the row's optical middle does not move and
-     the square mark stays centred on it. */
+     the mark stays centred on it. */
   transform: scaleY(var(--hero-wordmark-scaley));
   transform-origin: left center;
+}
+
+/* »Povsod« takes the whole second line — a deterministic basis, never a
+   dependence on spare pixels. Its left edge lines up with the MARK's, so the
+   two lines and the mark share one leading edge. */
+.stmt__wordmark--2 {
+  flex: 0 0 100%;
 }
 
 .stmt__hl {
@@ -130,17 +140,9 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
   font-size: clamp(1.35rem, 0.95rem + 2.6vw, 2.4rem);
 }
 
-.stmt__lead {
-  font-size: 0.95rem;
-  line-height: 1.6;
-  max-width: 46ch;
-  color: var(--grafit-2);
-}
-
-/* Desktop: the two anchors take opposite corners. Row 2 bottom-aligns, so the
-   claim's last line and the lead's last line share a baseline band, and the
-   claim is right-aligned so its edge actually reaches the inset — left-aligned
-   it rags ~80px short and stops reading as a corner. */
+/* Desktop: the two anchors take opposite corners. The claim is right-aligned
+   so its edge actually reaches the inset — left-aligned it rags ~80px short
+   and stops reading as a corner. */
 @media (min-width: 900px) {
   .stmt__grid {
     grid-template-columns: repeat(24, minmax(0, 1fr));
@@ -155,16 +157,6 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
     align-self: start;
     /* No button in the row here — the wordmark takes the full measure. */
     padding-right: 0;
-  }
-
-  .stmt__lead {
-    font-size: 1rem;
-    line-height: 1.65;
-  }
-
-  .stmt__lead {
-    grid-column: 1 / span 10;
-    grid-row: 2;
   }
 
   .stmt__title {
