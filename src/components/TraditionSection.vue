@@ -49,14 +49,15 @@ const PARK = 78
 const SWEEP_MS = 950
 
 /**
- * Per-block parallax, as a multiplier in [-1, 1] of AMPLITUDE. Bounded on
- * purpose: the offsets are what separate the strata, but two vertical
- * neighbours moving oppositely close the gap between them by 2×AMPLITUDE, and
- * the row gap is 40px. At 18px the worst case leaves 4px (the previous
- * unbounded rates reached 205px and blocks simply overlapped).
+ * Per-block parallax, as a multiplier in [-1, 1] of AMPLITUDE. The four strata
+ * carry ONE shared rate — they are flush, so any relative movement between
+ * them would open seams; moving together they read as one buried slab
+ * drifting against the surface text. Header and outro sit still. Worst-case
+ * relative movement is therefore 0.7 × 18 ≈ 13px, against ≥40px of margin
+ * between the slab and its neighbours.
  */
 const AMPLITUDE = 18
-const RATES = [0, -0.5, 1, -0.35, 0.8, -0.9, 0.4]
+const RATES = [0, 0.7, 0.7, 0.7, 0.7, 0]
 
 /** The cut's viewport position. Written by the sweep and by the grip. */
 const scanPct = ref(100)
@@ -64,17 +65,16 @@ const scanPct = ref(100)
 /** The markup each block emits — derived, so it cannot depict tags we do not ship. */
 const blocks = computed(() => [
   {
-    id: 'head',
-    kind: 'head' as const,
-    code: factLines.map((f) => ({ id: f.id, text: f.text })),
-  },
-  {
-    id: 'intro',
-    kind: 'intro' as const,
+    // One centred header block: the guard-checked head emissions open its
+    // markup, exactly as they open the real page's.
+    id: 'header',
+    kind: 'header' as const,
     code: [
+      ...factLines.map((f) => ({ id: f.id, text: f.text })),
       { id: '', text: `<h2>${invisible.title}</h2>` },
       { id: '', text: `<blockquote>${invisible.quote}</blockquote>` },
       { id: '', text: `<p>${invisible.intro}</p>` },
+      { id: '', text: `<p>${invisible.machineGloss}</p>` },
     ],
   },
   ...invisible.items.map((item) => ({
@@ -296,11 +296,8 @@ onUnmounted(() => {
       <div class="trad__render">
         <div v-for="(b, i) in blocks" :key="b.id" class="trad__b" :class="`trad__b--${b.id}`"
           :style="{ '--p': `var(--p${i}, 0px)` }">
-          <template v-if="b.kind === 'head'">
+          <template v-if="b.kind === 'header'">
             <p class="kicker kicker--on-dark">{{ invisible.kicker }}</p>
-          </template>
-
-          <template v-else-if="b.kind === 'intro'">
             <h2 class="trad__title">{{ invisible.title }}</h2>
             <blockquote class="trad__quote">
               <p>{{ invisible.quote }}</p>
@@ -309,10 +306,14 @@ onUnmounted(() => {
             <p class="trad__gloss">{{ invisible.machineGloss }}</p>
           </template>
 
+          <!-- The strata drawing: each guarantee is a layer below the surface,
+               darker and more densely hatched with depth. The id is real, so
+               the markup layer's <article id="…"> depicts a tag we ship. -->
           <template v-else-if="b.kind === 'item'">
-            <article class="card">
-              <h3 class="card__label">{{ b.item.label }}</h3>
-              <p class="card__detail">{{ b.item.detail }}</p>
+            <article class="stratum" :id="b.item.id">
+              <span class="stratum__hatch" aria-hidden="true"></span>
+              <h3 class="stratum__label">{{ b.item.label }}</h3>
+              <p class="stratum__detail">{{ b.item.detail }}</p>
             </article>
           </template>
 
@@ -371,7 +372,13 @@ onUnmounted(() => {
   position: relative;
   background: var(--grafit);
   color: var(--list);
-  padding-block: var(--section-y);
+  /* Asymmetric on purpose: the owner wants the header tight under the top of
+     the band, so the entry padding is roughly half the section rhythm. The
+     markup layer reads BOTH values to cover the padding, so they live as
+     variables rather than in the shorthand alone. */
+  --pad-t: clamp(2.25rem, 1.75rem + 2vw, 3.5rem);
+  --pad-b: var(--section-y);
+  padding-block: var(--pad-t) var(--pad-b);
 }
 
 /* Full-bleed, so the markup layer's ground can reach the screen edges. The
@@ -380,12 +387,14 @@ onUnmounted(() => {
   position: relative;
 }
 
-/* The geometry authority; the only child in flow. */
+/* The geometry authority; the only child in flow. One column — the header,
+   the four strata flush against each other, the outro. Spacing is per-block
+   margin, so the strata can sit at 0 while the text blocks breathe. */
 .trad__render {
   position: relative;
   z-index: 0;
   display: grid;
-  gap: 2rem;
+  gap: 0;
   max-width: 76rem;
   margin-inline: auto;
   padding-inline: var(--gutter);
@@ -403,16 +412,23 @@ onUnmounted(() => {
   position: absolute;
   left: 0;
   right: 0;
-  top: calc(var(--section-y) * -1);
-  bottom: calc(var(--section-y) * -1);
+  top: calc(var(--pad-t) * -1);
+  bottom: calc(var(--pad-b) * -1);
   z-index: 1;
   background: var(--grafit-inset);
   clip-path: inset(var(--cut, 100%) 0 0 0);
 }
 
-/* Pinned onto their counterparts by syncCode(), never laid out by a grid. */
+/* Pinned onto their counterparts by syncCode(), never laid out by a grid.
+   margin: 0 is load-bearing: the block-modifier classes below set layout
+   margins, a margin offsets an absolute box from its `top`, and these blocks
+   share those classes — the outro's margin-top walked its markup 56px off the
+   block it describes (measured). Text stays left-aligned raw code even where
+   the rendered twin centres. */
 .trad__code .trad__b {
   position: absolute;
+  margin: 0;
+  text-align: left;
 }
 
 /* Every block carries its own parallax offset, and BOTH layers read the same
@@ -445,64 +461,134 @@ onUnmounted(() => {
   opacity: 1;
 }
 
-/* --- the rendered page ----------------------------------------------------- */
+/* --- the centred header ----------------------------------------------------
+   One stack, centred, tight under the band's top edge — every element caps
+   its own measure and centres itself, so the column reads as one plumb line. */
+.trad__render .trad__b--header {
+  text-align: center;
+  margin-bottom: clamp(2.5rem, 2rem + 2.5vw, 4rem);
+}
+
 .trad__title {
-  margin-top: 0.75rem;
+  margin-top: 0.6rem;
   color: var(--list);
 }
 
 .trad__quote {
-  margin-top: 1.5rem;
-  border-left: 3px solid var(--rez-na-temnem);
-  padding-left: 1.25rem;
+  margin-top: 1.1rem;
 }
 
 .trad__quote p {
-  font-family: var(--font-display);
-  font-size: clamp(1.2rem, 1.05rem + 0.9vw, 1.6rem);
+  font-family: var(--font-text);
+  font-size: clamp(1.25rem, 1.05rem + 1.1vw, 1.75rem);
   font-weight: 500;
-  line-height: 1.35;
-  max-width: 30ch;
-}
-
-.trad__intro {
-  margin-top: 1.25rem;
-  color: var(--papir-dim);
-  max-width: 54ch;
-}
-
-.trad__gloss {
-  margin-top: 1rem;
-  font-style: italic;
-  font-size: 0.92rem;
-  color: var(--papir-dim);
-  max-width: 48ch;
-}
-
-.card {
-  border: 1px solid var(--crta-na-temnem);
-  border-top: 3px solid var(--rez-na-temnem);
-  background: var(--grafit-inset);
-  padding: 1.25rem;
-}
-
-.card__label {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1.05rem;
+  line-height: 1.4;
+  max-width: 36ch;
+  margin-inline: auto;
   color: var(--list);
 }
 
-.card__detail {
-  margin-top: 0.5rem;
+.trad__intro {
+  margin-top: 1.1rem;
+  color: var(--papir-dim);
+  max-width: 58ch;
+  margin-inline: auto;
+}
+
+.trad__gloss {
+  margin-top: 0.9rem;
+  font-style: italic;
   font-size: 0.95rem;
   color: var(--papir-dim);
+  max-width: 48ch;
+  margin-inline: auto;
+}
+
+/* --- the strata drawing -----------------------------------------------------
+   The four guarantees as four layers below the surface: flush bands, ground
+   stepping darker and hatch packing denser with depth — depth is DRAWN (fill
+   and line), never shadowed. The hatch column is the drawing's core sample.
+
+   Grounds are the dark family's own steps: --grafit-inset down to --zemlja,
+   the two literals between them interpolated. papir-dim measures 8.87:1 on
+   the LIGHTEST band (the family's documented floor) and only climbs as the
+   bands darken, so the deepest text is the most legible. */
+.stratum {
+  --hatch-w: clamp(2.5rem, 8vw, 6.5rem);
+  position: relative;
+  border: 1px solid var(--crta-na-temnem);
+  border-bottom: none;
+  padding: clamp(1.5rem, 1.1rem + 1.6vw, 2.25rem) clamp(1.1rem, 3vw, 2rem);
+  padding-left: calc(var(--hatch-w) + clamp(1.1rem, 3vw, 2rem));
+}
+
+/* The deepest band closes the drawing. */
+.trad__b--hosting .stratum {
+  border-bottom: 1px solid var(--crta-na-temnem);
+}
+
+.trad__b--seo-foundation .stratum {
+  background: var(--grafit-inset);
+  --pitch: 13px;
+}
+.trad__b--forms .stratum {
+  background: #1f2327;
+  --pitch: 9px;
+}
+.trad__b--compliance .stratum {
+  background: #191d21;
+  --pitch: 6px;
+}
+.trad__b--hosting .stratum {
+  background: var(--zemlja);
+  --pitch: 4px;
+}
+
+/* The core-sample column: 45° section hatch, denser per band. Decoration in
+   line duty only — no text ever sits on it. */
+.stratum__hatch {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: var(--hatch-w);
+  border-right: 1px solid var(--crta-na-temnem);
+  background: repeating-linear-gradient(
+    45deg,
+    transparent 0 calc(var(--pitch, 10px) - 1px),
+    rgb(245 242 235 / 0.3) calc(var(--pitch, 10px) - 1px) var(--pitch, 10px)
+  );
+  pointer-events: none;
+}
+
+.stratum__label {
+  font-family: var(--font-display);
+  font-stretch: var(--wdth-datum);
+  font-weight: 500;
+  font-size: clamp(1.35rem, 1rem + 1.8vw, 2.15rem);
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--list);
+}
+
+.stratum__detail {
+  margin-top: 0.6rem;
+  font-size: 0.98rem;
+  color: var(--papir-dim);
+  max-width: 44ch;
+}
+
+/* --- the outro -------------------------------------------------------------- */
+.trad__render .trad__b--outro {
+  margin-top: clamp(2.25rem, 1.75rem + 2vw, 3.5rem);
+  text-align: center;
 }
 
 .trad__outro {
   font-size: var(--fs-lead);
   color: var(--list);
-  max-width: 46ch;
+  max-width: 50ch;
+  margin-inline: auto;
 }
 
 /* --- the control ------------------------------------------------------------
@@ -560,45 +646,21 @@ onUnmounted(() => {
 
 @media (min-width: 900px) {
   .trad__render {
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    align-items: start;
-    gap: 2.5rem 1.5rem;
     padding-right: calc(var(--gutter) + 0.5rem);
   }
 
-  /* Scattered, not stacked. Placement lives on the rendered layer alone — the
-     markup layer inherits the result through syncCode(), so there is only ever
-     one description of the layout. */
-  .trad__render .trad__b--head {
-    grid-column: 1 / span 5;
-    grid-row: 1;
+  /* Each stratum opens into a two-column row: the label reads as the layer's
+     name, the detail as its annotation, both vertically centred in the band. */
+  .stratum {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    column-gap: 3rem;
+    align-items: center;
+    min-height: 7.5rem;
   }
-  .trad__render .trad__b--intro {
-    grid-column: 1 / span 6;
-    grid-row: 2;
-  }
-  .trad__render .trad__b--seo-foundation {
-    grid-column: 8 / span 5;
-    grid-row: 1 / span 2;
-    margin-top: 3.5rem;
-  }
-  .trad__render .trad__b--forms {
-    grid-column: 2 / span 4;
-    grid-row: 3;
-  }
-  .trad__render .trad__b--compliance {
-    grid-column: 7 / span 4;
-    grid-row: 3;
-    margin-top: 4rem;
-  }
-  .trad__render .trad__b--hosting {
-    grid-column: 4 / span 5;
-    grid-row: 4;
-  }
-  .trad__render .trad__b--outro {
-    grid-column: 1 / span 6;
-    grid-row: 5;
-    margin-top: 2rem;
+
+  .stratum__detail {
+    margin-top: 0;
   }
 }
 </style>
