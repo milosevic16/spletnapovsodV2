@@ -1,11 +1,15 @@
 <script setup lang="ts">
 /**
- * The opening band. The wordmark is the page's anchor: enlarged, hard into the
- * top-left corner, on its own row so it has the container's full width to be
- * big in. The claim and its qualifier sit right, below and across from it.
+ * The opening band, composed to its own corners: the wordmark hard into the
+ * top-left, the claim hard into the bottom-right, the qualifier to the claim's
+ * left. One inset — `--hero-inset` — is the margin on all four sides, so the
+ * two anchors sit diagonally opposite at the same distance from the page edge.
  *
- * The call to action is NOT here — it lives in the masthead strip, so the
- * band is purely the brand and the claim.
+ * The band deliberately does NOT use `.container`: a centred 72rem measure
+ * makes the left margin the page gutter PLUS half the leftover viewport (107px
+ * at a 1265px screen, against ~17px above the wordmark), which is exactly the
+ * mismatch this composition is meant to remove. The inset is measured from the
+ * viewport instead, so left and top are the same number by construction.
  *
  * No JS: the only motion here is the arrival settle in base.css, once per
  * hard load.
@@ -21,10 +25,12 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
 
 <template>
   <section class="stmt">
-    <div class="container stmt__grid">
+    <div class="stmt__grid">
       <p class="stmt__brand">
         <!-- Brand mark: the sheet cut by the plane, the site's own motif.
-             Sized in em, so it scales with the wordmark by construction. -->
+             Sized in em, so it scales with the wordmark by construction. Its
+             red rule spans the full viewBox, so the SVG's own left edge IS the
+             composition's leftmost ink — no optical correction needed. -->
         <svg class="stmt__mark" viewBox="0 0 24 24" aria-hidden="true" fill="none">
           <rect x="2.5" y="2.5" width="19" height="19" fill="none" stroke="currentColor"
             stroke-width="1.5" />
@@ -34,6 +40,9 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
         <span class="stmt__wordmark">SpletnaPovsod</span>
       </p>
 
+      <!-- DOM order is the logical one — claim, then qualifier — while the
+           grid seats the qualifier to its left. Assistive tech reads the h1
+           first; the eye meets the lead first. -->
       <h1 class="stmt__title">
         <span v-if="titleAccent" class="stmt__hl">{{ titleAccent }}</span>{{ titleRest }}
       </h1>
@@ -44,10 +53,10 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
 </template>
 
 <style scoped>
-/* Tight to the corner: just enough air under the strip for the caps to breathe. */
 .stmt {
-  padding-top: 0.85rem;
-  padding-bottom: clamp(2rem, 1.5rem + 2vw, 3.25rem);
+  /* The one margin: left, top, right and bottom all read this. */
+  --hero-inset: clamp(1.25rem, 4.9vw, 4.5rem);
+  padding: var(--hero-inset);
 }
 
 .stmt__grid {
@@ -60,15 +69,16 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
   display: flex;
   align-items: center;
   gap: 0.5em;
+  /* Optical correction, not a nudge: the mark is 0.78em inside a 1em line box
+     and centred, so its ink starts 0.11em below the padding edge — measured
+     9.2px against a 62.7px left inset. Pulling the row up by exactly that puts
+     the topmost ink on the same number as the leftmost ink, at every size. */
+  margin-top: -0.11em;
   font-family: var(--font-display);
   font-stretch: var(--wdth-monument);
   font-weight: 300;
-  /* Sized to fill ~70% of the container's width at desktop — the wordmark is
-     the corner anchor, so it is the largest thing on the page. The curve is
-     fitted through two measured points (320px -> 27px, 1265px -> 83px) rather
-     than guessed: the mark and wordmark never wrap, so a 320px screen must
-     have real margin, and the obvious curve left only 7px — inside the range a
-     font swap can move. */
+  /* Fitted through two measured points (320px -> 27px, 1265px -> 83px): the
+     mark and wordmark never wrap, so a 320px screen must keep real margin. */
   font-size: clamp(1.6rem, 0.52rem + 5.9vw, 6rem);
   line-height: 1;
   letter-spacing: -0.025em;
@@ -96,38 +106,41 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
   color: var(--grafit-2);
 }
 
-/* Desktop: the wordmark takes row 1 across the full width — that width is what
-   lets it be this large — and the claim block sits right, in the rows under it. */
+/* Desktop: the two anchors take opposite corners. Row 2 bottom-aligns, so the
+   claim's last line and the lead's last line share a baseline band, and the
+   claim is right-aligned so its edge actually reaches the inset — left-aligned
+   it rags ~80px short and stops reading as a corner. */
 @media (min-width: 900px) {
-  .stmt {
-    padding-top: 0.5rem;
-    padding-bottom: clamp(2.5rem, 2rem + 2vw, 4rem);
-  }
-
   .stmt__grid {
     grid-template-columns: repeat(24, minmax(0, 1fr));
     column-gap: 1rem;
-    row-gap: 0;
+    row-gap: clamp(3rem, 9vw, 8rem);
+    align-items: end;
   }
 
   .stmt__brand {
     grid-column: 1 / -1;
     grid-row: 1;
+    align-self: start;
+  }
+
+  .stmt__lead {
+    grid-column: 1 / span 10;
+    grid-row: 2;
+    font-size: 1rem;
+    line-height: 1.65;
   }
 
   .stmt__title {
     grid-column: 13 / -1;
     grid-row: 2;
-    margin-top: clamp(1.75rem, 1rem + 3vw, 3.5rem);
+    text-align: right;
     font-size: clamp(2.2rem, 0.9rem + 2.8vw, 3.2rem);
-  }
-
-  .stmt__lead {
-    grid-column: 13 / -1;
-    grid-row: 3;
-    margin-top: 1.15rem;
-    font-size: 1rem;
-    line-height: 1.65;
+    /* The mirror of the brand's correction: the last line's half-leading plus
+       the font's descent leave the type sitting 5.6px inside a 62.7px inset.
+       Keyed to the FONT's descent, not to this copy's glyphs — a last line
+       with no descender must not shift the whole block. */
+    margin-bottom: -0.11em;
   }
 }
 </style>

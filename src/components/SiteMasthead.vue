@@ -1,12 +1,16 @@
 <script setup lang="ts">
 /**
- * The masthead is the four section buttons plus the page's single call to
- * action, on a really narrow strip — no logo, no domain readout. The brand
- * lives in the opening band below (StatementSection), REF-style. Transparent,
- * so the paper runs unbroken from the very top of the page down to the stage.
+ * The masthead is the four section buttons plus the call to action, centred on
+ * a really narrow strip — no logo, no domain readout. The brand lives in the
+ * opening band below (StatementSection), REF-style. Transparent, so the paper
+ * runs unbroken from the very top of the page down to the stage.
  *
- * The strip's height is the 44px tap floor and nothing more: the CTA is a
- * 44px-tall button, so carrying it costs no height.
+ * The CTA is a sibling of the nav, not a member of it: it points at the same
+ * anchor as the »Kontakt« link, so it would be a duplicate stop inside a
+ * navigation landmark. It carries the LINKS' styling, by the owner's call —
+ * the page therefore has no filled-button emphasis anywhere above the fold.
+ *
+ * The strip's height is the 44px tap floor and nothing more.
  */
 import { nav, hero } from '@/content/home'
 </script>
@@ -20,7 +24,9 @@ import { nav, hero } from '@/content/home'
         </a>
       </nav>
 
-      <a :href="`#${hero.ctaPrimary.target}`" class="masthead__cta">{{ hero.ctaPrimary.label }}</a>
+      <a :href="`#${hero.ctaPrimary.target}`" class="masthead__link masthead__cta">{{
+        hero.ctaPrimary.label
+      }}</a>
     </div>
   </header>
 </template>
@@ -32,15 +38,17 @@ import { nav, hero } from '@/content/home'
   border-bottom: 1px solid var(--mreza);
 }
 
-/* Phones cannot fit four links and the CTA on one 44px row without breaking
-   the tap floor, so they get two centred rows — composed, not a stray wrap.
-   The row gap stays 0, which keeps the strip at exactly two tap targets. */
+/* Centred at every width. Phones cannot fit four links and the CTA on one
+   44px row without breaking the tap floor, so they wrap to two centred rows —
+   composed, not a stray wrap. The row gap stays 0, which keeps the strip at
+   exactly two tap targets there and one here. */
 .masthead__row {
   display: flex;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 0 1.5rem;
+  /* Same as the nav's internal gap, so all five items are evenly spaced. */
+  gap: 0 clamp(1rem, 4vw, 3rem);
 }
 
 .masthead__nav {
@@ -48,13 +56,6 @@ import { nav, hero } from '@/content/home'
   flex-wrap: wrap;
   justify-content: center;
   column-gap: clamp(1rem, 4vw, 3rem);
-}
-
-/* One row from here up: nav to the left edge, CTA to the right. */
-@media (min-width: 900px) {
-  .masthead__row {
-    justify-content: space-between;
-  }
 }
 
 /* The strip is visually narrow; the 44px tap floor lives on the links. */
@@ -69,7 +70,7 @@ import { nav, hero } from '@/content/home'
   font-size: var(--fs-kicker);
   text-transform: uppercase;
   letter-spacing: 0.11em;
-  color: var(--grafit-2);
+  color: var(--grafit-2); /* 6.74:1 on --list — measured */
   text-decoration: none;
 }
 
@@ -77,27 +78,8 @@ import { nav, hero } from '@/content/home'
   color: var(--rez);
 }
 
-/* The one conversion element on the page. 44px tall, so it sets the strip's
-   height rather than adding to it. */
+/* The CTA differs from the nav links in one respect only: it never breaks. */
 .masthead__cta {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  padding-inline: 1.1rem;
-  background: var(--rez);
-  color: #fff; /* 6.01:1 on --rez — measured */
-  font-family: var(--font-display);
-  font-stretch: var(--wdth-datum);
-  font-weight: 600;
-  font-size: var(--fs-kicker);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  text-decoration: none;
   white-space: nowrap;
-  transition: background var(--t-lift) var(--ease-out);
-}
-
-.masthead__cta:hover {
-  background: var(--rez-deep);
 }
 </style>
