@@ -67,12 +67,14 @@ corners absolute (not even pills).
    labels, red current tick via scroll-spy), phone top strip + native `<dialog>` menu.
 
 **Experience spine** (order in `HomeView.vue`; anchors `reference/paketi/razlike/kontakt`
-are machine identifiers, unchanged): veil (»Zarez«) → hero (»Fasada«, watermark = real
-`<title>` at 5% opacity) → plates (»Plošče«: index + 3 sticky-stacked full-viewport
-sheets, client-ink edge bands from sampled `inks`) → **the cut scene** (»Prerezna
-ravnina«) → ledger (»Zapisnik«, all machine bytes) → drawn WordPress comparison → three
-pillar chapters (increasing machine density: 0 → 2 → 3 emission lines) → spec panel
-(unequal rows) → ground line → below-grade contact + footer.
+are machine identifiers, unchanged): veil (»Zarez«) → masthead strip (four nav buttons +
+the page's single CTA) → statement band (brand wordmark tight top-left, claim + lead
+right) → work carousel (full-bleed pigment stage, in-frame previews porting each client
+site's own landing animation) → Tradicija in izkušnje (the viewport cut line — see
+`TraditionSection.vue` header) → pillar chapters → differentiators → below-grade contact
++ footer. (The plates theatre, the cut scene, the ledger and the WordPress comparison
+from the original REZ build were removed in the avgust 2026 REF-layout pivots; their
+subsections below are historical until this doc gets its post-pivot refresh.)
 
 **The cut scene** (`CutSection.vue`) — the defining interaction:
 - One unitless var `--cut-n` (the section layer's share, 12–88; **stylesheet rest = 55**,
@@ -101,8 +103,7 @@ Components render them in `data-fact="<id>"` nodes (scene emblems, ledger, pilla
 Draws 600–1200ms `cubic-bezier(0.22,1,0.36,1)`, IO-armed; WAAPI `fill:'none'`, last
 keyframe = stylesheet rest. The ONE loop: the contact title block's minute clock (real
 time, visibility-gated). One finite grip pulse (2 sinusoidal swells, killed on first
-interaction). Compare-section SVGs stroke-draw once; rest state in stylesheet is DRAWN,
-JS hides via inline style only. Reduced motion: global kill-switch + per-effect early
+interaction). Reduced motion: global kill-switch + per-effect early
 returns; the static page is a finished section drawing.
 
 **The veil** (`index.html`, inline): pure-CSS timed sequence ≤1.8s — the framed sheet
@@ -127,9 +128,10 @@ strip/grip/menu; footer nav is the complete in-flow nav.
 
 Unchanged from the first build and now structurally enforced: every mono line must be a
 real emitted byte (guard-checked), every measurement a checkable fact. Never a
-performance number we have not measured in the field — the WordPress comparison is fought
-on STRUCTURE (see `comparison` house note in the content module). Once real CWV field
-data exists (Search Console, ~28-day lag), numbers may enter — sourced and dated.
+performance number we have not measured in the field. (The WordPress comparison section,
+which this rule once shaped, was removed avgust 2026 on the owner's call — the rule
+outlives it.) Once real CWV field data exists (Search Console, ~28-day lag), numbers may
+enter — sourced and dated.
 
 ## Content
 
