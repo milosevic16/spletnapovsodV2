@@ -115,6 +115,43 @@ const CLIPS = {
 const VP9_CRF = 42
 const H264_CRF = 30
 
+/**
+ * BANDS — clips that are not plates. The hero's »POVSOD« is a row of letters
+ * about 5.16 times wider than it is tall (950 × 184 at 1440, and the ratio is a
+ * property of the string, so it holds at every size), and a video shown through
+ * it can only ever be a horizontal STRIP of its frame. So the strip is chosen
+ * here, at encode time, instead of being left to `cover` to pick at display
+ * time: the file ends up the shape of the word, every pixel in it is seen, and
+ * it weighs almost nothing. 720 / 5.16 = 139.5, hence h 140.
+ *
+ * `crop` is in SOURCE pixels, measured off a still — y=600 is the band where
+ * all three of the clip's scenes carry something (the slat stack, the drawn A's
+ * legs, the graphite block against the red bar); measured YAVG per band, 600
+ * was the densest of five candidates.
+ *
+ * `grade` IS NOT TASTE, IT IS LEGIBILITY, and it is also the concept. The clip
+ * is paper-on-paper studio footage: its own paper measures Y≈214, the sheet it
+ * would be seen through is #ece8de (Y≈232). Ungraded, the letters showing that
+ * paper vanish into the ground — measured, and visible in the first render.
+ * The factor is MEASURED, not derived. Method: decode the graded band, take
+ * each frame’s 95th-percentile luminance (what a letter-sized area can land
+ * on) and compute its contrast against the sheet. The clip’s worst beat is the
+ * flat pencil-drawing one; it lands at 3.7 : 1 with a 0.55 multiplier and
+ * 4.8 : 1 with 0.47. Both clear the 3 : 1 floor for display type — 0.47 is the
+ * one taken, because below the cut the word is POCHÉ and poché is dark, and
+ * because it keeps the darks proportional rather than crushing them. The
+ * saturation lift keeps the red bar reading as the site's own red through it.
+ * Conceptually the darkening is the same move as the concept: the window looks
+ * into a dimmer interior, which is what a window in a section drawing does.
+ */
+const BANDS = {
+  'hero-povsod': {
+    source: 'hero-povsod.mp4',
+    crop: { w: 720, h: 140, x: 0, y: 600 },
+    grade: "lutyuv='y=val*0.47',eq=saturation=1.15",
+  },
+}
+
 function ff(args) {
   return execFileSync('ffmpeg', args, { stdio: ['ignore', 'pipe', 'pipe'] })
 }
@@ -156,7 +193,9 @@ if (!existsSync(SRC_DIR)) {
 }
 mkdirSync(OUT_DIR, { recursive: true })
 
-const sources = readdirSync(SRC_DIR).filter((f) => f.endsWith('.mp4'))
+// Band sources are handled separately below, so they are not plates.
+const bandSources = new Set(Object.values(BANDS).map((b) => b.source))
+const sources = readdirSync(SRC_DIR).filter((f) => f.endsWith('.mp4') && !bandSources.has(f))
 if (!sources.length) {
   console.error(`MISS: ${SRC_DIR} holds no .mp4`)
   process.exit(1)
@@ -233,8 +272,50 @@ for (const file of sources) {
   ])
 
   console.log(
-    `${id}: ${width}×${height} → ${cropW}×${cropH} (${(cropW / cropH).toFixed(2)}:1) ${duration.toFixed(2)}s · ` +
+    `${id}: ${width}×${height} → ${cropW}×${cropH} at +${cropX}+${cropY} ` +
+      `(${(cropW / cropH).toFixed(2)}:1) ${duration.toFixed(2)}s · ` +
       `mp4 ${kb(mp4)}kB · webm ${kb(webm)}kB · poster ${kb(poster)}kB`,
+  )
+}
+
+for (const [name, cfg] of Object.entries(BANDS)) {
+  const src = join(SRC_DIR, cfg.source)
+  if (!existsSync(src)) {
+    console.log(`skip band "${name}": no ${cfg.source} in video-src/`)
+    continue
+  }
+  const { width, height, duration } = probe(src)
+  const c = cfg.crop
+  if (c.x + c.w > width || c.y + c.h > height) {
+    console.error(`MISS: band "${name}" crop ${c.w}×${c.h}+${c.x}+${c.y} falls outside ${width}×${height}`)
+    process.exit(1)
+  }
+  const vf = `crop=${even(c.w)}:${even(c.h)}:${even(c.x)}:${even(c.y)}` + (cfg.grade ? `,${cfg.grade}` : '')
+  const mp4 = join(OUT_DIR, `${name}-${BAND_VERSION}.mp4`)
+  const webm = join(OUT_DIR, `${name}-${BAND_VERSION}.webm`)
+  const poster = join(OUT_DIR, `${name}-${BAND_VERSION}.jpg`)
+
+  ff([
+    '-v', 'error', '-y', '-i', src, '-vf', vf, '-an',
+    '-c:v', 'libx264', '-preset', 'veryslow', '-crf', String(H264_CRF),
+    '-pix_fmt', 'yuv420p', '-profile:v', 'high', '-movflags', '+faststart',
+    mp4,
+  ])
+  ff([
+    '-v', 'error', '-y', '-i', src, '-vf', vf, '-an',
+    '-c:v', 'libvpx-vp9', '-crf', String(VP9_CRF), '-b:v', '0', '-row-mt', '1',
+    '-deadline', 'good', '-cpu-used', '1', '-pix_fmt', 'yuv420p',
+    webm,
+  ])
+  ff([
+    '-v', 'error', '-y', '-ss', String(Math.max(0, duration - 0.15)), '-i', src,
+    '-vf', vf, '-frames:v', '1', '-q:v', '6',
+    poster,
+  ])
+
+  console.log(
+    `${name}: band ${c.w}×${c.h} at +${c.x}+${c.y} of ${width}×${height} ` +
+      `(${(c.w / c.h).toFixed(2)}:1) · mp4 ${kb(mp4)}kB · webm ${kb(webm)}kB · poster ${kb(poster)}kB`,
   )
 }
 

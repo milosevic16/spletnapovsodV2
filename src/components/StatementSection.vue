@@ -33,7 +33,9 @@
  * sheet deliberately stops short of the fold so the work below shows through —
  * a hero that ends where the next thing begins.
  */
+import { nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { hero } from '@/content/home'
+import { createFx, prefersReducedMotion } from '@/lib/fx'
 
 // The accent span is derived from the title, so a copy edit can never make the
 // highlight diverge from the real h1 text.
@@ -43,10 +45,50 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
 
 const WORD_1 = 'Spletna'
 const WORD_2 = 'Povsod'
+/** The clip path holds its own copy of the word. Uppercased here rather than
+ *  by `text-transform`, which is not dependable on SVG text — and a clip that
+ *  renders lowercase would cut the wrong shapes out of the video. */
+const WORD_2_CLIP = WORD_2.toUpperCase()
+
+/** PAIRED with BANDS['hero-povsod'] in scripts/build-pillar-videos.mjs.
+ *  /video/* is immutable-cached, so a re-encode must bump both. */
+const CLIP_VERSION = 'v1'
+const clip = (ext: string) => `/video/hero-povsod-${CLIP_VERSION}.${ext}`
+
+const fx = createFx()
+const rootEl = ref<HTMLElement | null>(null)
+/** Gates the window: with JS off »POVSOD« is simply the screened ink word, and
+ *  a clip that never resolved could not leave a video rectangle on the page. */
+const live = ref(false)
+
+onMounted(() => {
+  live.value = true
+  // Reduced motion keeps the window — a still frame seen through the letters
+  // is not movement — but it is never played.
+  if (prefersReducedMotion() || !('IntersectionObserver' in window)) return
+  nextTick(() => {
+    const v = rootEl.value?.querySelector<HTMLVideoElement>('.stmt__window-vid')
+    if (!v) return
+    const io = fx.io(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) void v.play().catch(() => {})
+          else v.pause()
+        }
+      },
+      { threshold: 0 },
+    )
+    io.observe(v)
+  })
+})
+
+onUnmounted(() => {
+  fx.dispose()
+})
 </script>
 
 <template>
-  <section class="stmt">
+  <section ref="rootEl" class="stmt">
     <!-- The sheet. data-brand-sentinel is a contract with SiteMasthead: the
          phone bar appears exactly when this element leaves the screen, so the
          brand is never absent from the page. -->
@@ -95,7 +137,57 @@ const WORD_2 = 'Povsod'
         <span class="stmt__cut" aria-hidden="true"></span>
 
         <p class="stmt__course stmt__course--solid">
-          <span class="stmt__wordmark press">{{ WORD_2 }}</span>
+          <span class="stmt__wordmark press">
+            {{ WORD_2 }}
+            <!-- THE WINDOW: the same word cut out of a moving image. The box is
+                 the wordmark's own, so the clip path's user space and the
+                 glyphs share one origin; the letters are the only place the
+                 video is allowed to show. -->
+            <span v-if="live" class="stmt__window" aria-hidden="true">
+              <video
+                class="stmt__window-vid"
+                :poster="clip('jpg')"
+                muted
+                loop
+                playsinline
+                preload="none"
+                disablepictureinpicture
+                tabindex="-1"
+              >
+                <source :src="clip('webm')" type="video/webm" />
+                <source :src="clip('mp4')" type="video/mp4" />
+              </video>
+
+              <!-- THE KNOCKOUT. A plate of the sheet's own ground laid over the
+                   video with the word masked OUT of it, so the video survives
+                   only inside the letters. The mask is applied to an SVG shape,
+                   not to the HTML box — see the note on .stmt__knock. -->
+              <svg class="stmt__knock" aria-hidden="true" focusable="false">
+                <defs>
+                  <mask id="stmt-povsod-mask" maskUnits="userSpaceOnUse">
+                    <rect x="0" y="0" width="100%" height="100%" fill="#fff" />
+                    <text class="stmt__masktext" x="0" y="0">{{ WORD_2_CLIP }}</text>
+                  </mask>
+                </defs>
+                <rect
+                  x="0"
+                  y="0"
+                  width="100%"
+                  height="100%"
+                  fill="var(--list-2)"
+                  mask="url(#stmt-povsod-mask)"
+                />
+                <!-- THE CONTOUR, and it is structural rather than decorative:
+                     the window's content is a moving image, so the fill inside
+                     a letter is whatever the clip happens to be showing. The
+                     hairline is what guarantees the word is always READ as the
+                     word — the same outline »SPLETNA« carries above the cut,
+                     the same hand. Drawn last so it sits over both the plate
+                     and the video. -->
+                <text class="stmt__masktext stmt__contour" x="0" y="0">{{ WORD_2_CLIP }}</text>
+              </svg>
+            </span>
+          </span>
         </p>
       </div>
 
@@ -221,7 +313,7 @@ const WORD_2 = 'Povsod'
   /* The courses' shared width, for anything that must align to where the type
      ends. Declared here but RESOLVED in the children that use it, which is the
      only context where cqw can see this container. */
-  --mon-w: calc(min(calc(var(--mon-span) / 4.218), var(--mon-cap)) * 4.218);
+  --mon-w: calc(min(calc(var(--mon-span) / 4.4502), var(--mon-cap)) * 4.4502);
   /* auto ABOVE and auto on the title block below: the free space divides
      equally, so the drawing floats centred on the sheet instead of the void
      pooling in one place. */
@@ -238,7 +330,11 @@ const WORD_2 = 'Povsod'
 .stmt__course {
   margin: 0;
   font-family: var(--font-sans);
-  font-weight: 400;
+  /* 700, not 400: both courses are now FILLED — one with a drafting hatch, the
+     other with a moving image — and a 400 letterform is too thin a window for
+     either to read inside it. The weight is what makes the fills legible, so
+     it is not a style preference but a requirement of the treatment. */
+  font-weight: 700;
   line-height: 0.8;
   letter-spacing: -0.02em;
   text-transform: uppercase;
@@ -249,15 +345,18 @@ const WORD_2 = 'Povsod'
   padding-block: 0.04em;
 }
 
-/* »SPLETNA« — 4.218em wide in the real face (measured). */
+/* »SPLETNA« — 4.4502em wide in the real face (measured at weight 700; it was
+   4.218 at 400, and the constants MUST be re-measured whenever the weight or
+   the tracking moves, or the two courses stop being flush). */
 .stmt__course--drawn {
-  font-size: min(calc(var(--mon-span) / 4.218), var(--mon-cap));
+  font-size: min(calc(var(--mon-span) / 4.4502), var(--mon-cap));
 }
 
-/* »POVSOD« — 3.951em (measured). The cap carries the same ratio
-   (16rem × 4.218 / 3.951 = 17.08rem) so the two stay flush. */
+/* »POVSOD« — 4.13em at the same weight. The cap carries the same ratio
+   (16rem × 4.4502 / 4.13 = 17.24rem) so capping never breaks the flush. */
 .stmt__course--solid {
-  font-size: min(calc(var(--mon-span) / 3.951), calc(var(--mon-cap) * 1.0676));
+  position: relative;
+  font-size: min(calc(var(--mon-span) / 4.125), calc(var(--mon-cap) * 1.0788));
   color: var(--grafit);
 }
 
@@ -266,9 +365,36 @@ const WORD_2 = 'Povsod'
    @supports because the fill only goes transparent where a stroke will
    actually be painted — without the guard an unsupporting engine would render
    the brand name invisible. */
+/* ABOVE THE CUT the word is DRAWN, and it is drawn the way this site draws cut
+   matter everywhere else: »SPLETNA« is filled with the 45° SECTION HATCH that
+   the »Kaj dobite« strata are hatched with, held inside a hairline outline.
+   Same convention, same angle, same hand — the hero now states in its own name
+   the drawing language the page uses further down.
+
+   Both devices at once, and they need each other: the outline gives the
+   letterform its edge, the hatch gives it its material. The hatch pitch is in
+   em so it scales with the type instead of getting denser as the word grows.
+
+   Gated, and the gate is load-bearing on both counts: text-stroke and
+   background-clip:text each need `color: transparent` to show anything, so an
+   engine with neither would render the brand name invisible. Outside the
+   guards the word stays solid ink. */
 @supports (-webkit-text-stroke: 1px currentColor) {
   .stmt__course--drawn .stmt__wordmark {
-    -webkit-text-stroke: 0.013em var(--grafit);
+    -webkit-text-stroke: 0.012em var(--grafit);
+    color: transparent;
+  }
+}
+
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .stmt__course--drawn .stmt__wordmark {
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent 0 0.042em,
+      var(--grafit) 0.042em 0.054em
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
     color: transparent;
   }
 }
@@ -326,6 +452,81 @@ const WORD_2 = 'Povsod'
 
 .stmt__wordmark {
   display: inline-block;
+  /* The window is positioned against this box, so the clip path's user space
+     and the glyphs it cuts share one origin. */
+  position: relative;
+}
+
+/* --- the window -------------------------------------------------------------
+   »POVSOD« is cut out of a moving image: the video fills the wordmark's box and
+   `clip-path` lets it through the letterforms only. The screened ink word sits
+   underneath it, which is what shows with JS off and what the video is laid
+   over when it plays.
+
+   THE BAND IS CHOSEN AT ENCODE TIME, not here. The word is ~4.7 times wider
+   than it is tall, so only a horizontal strip of any frame could ever appear
+   in it; scripts/build-pillar-videos.mjs cuts that strip out of the source and
+   the file arrives already the shape of the word. */
+.stmt__window {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.stmt__window-vid {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* A KNOCKOUT, NOT A CLIP, and that is a measured decision. The obvious build
+   is `clip-path: url(#…)` on the video's box with a <clipPath> holding the
+   word — and it does not work: tested here with hit-testing, a clipPath whose
+   child is a <rect> clips an HTML element correctly, while the identical
+   clipPath holding <text> is IGNORED ENTIRELY, leaving the video as a full
+   rectangle over the wordmark. Both with and without a transform on the text.
+   So the cut-out is done where masking is dependable — INSIDE the SVG: a plate
+   of the sheet's own ground is painted over the video with the word masked out
+   of it, and the video survives only in the letters.
+   The plate's fill has to stay the hero's ground (--list-2) or it will read as
+   a rectangle sitting on the sheet. */
+.stmt__knock {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* The mask's own copy of the word. Every property that decides a glyph's shape
+   or its position must match the visible wordmark exactly — face, weight,
+   size, tracking — or the knockout lands off the letters. Black in a mask
+   means "hide", so the letters are what the plate does not cover.
+
+   THE BASELINE IS THE ONE DERIVED NUMBER. SVG text is positioned from its
+   baseline, and the HTML wordmark's baseline sits at
+   (lineHeight − (ascent + descent)) / 2 + ascent from the top of its box —
+   for Geist's metrics at line-height 0.8 that is 0.7389em, and the mask text's
+   own bbox confirms its baseline is at y = 0 before the translate.
+   Re-derive if the face, the weight or the line-height changes. */
+.stmt__masktext {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: min(calc(var(--mon-span) / 4.125), calc(var(--mon-cap) * 1.0788));
+  letter-spacing: -0.02em;
+  fill: #000;
+  transform: translateY(0.7389em);
+}
+
+/* The contour reuses the mask text's geometry wholesale — same class, so the
+   two can never disagree about where a letter is — and only swaps the paint.
+   0.012em matches »SPLETNA«'s stroke above the cut; text-stroke centres its
+   width on the outline while SVG's stroke does too, so the two read as the
+   same hairline at the same size. */
+.stmt__contour {
+  fill: none;
+  stroke: var(--grafit);
+  stroke-width: 0.012em;
 }
 
 /* --- the title block --------------------------------------------------------
