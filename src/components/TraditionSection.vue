@@ -1,44 +1,45 @@
 <script setup lang="ts">
 /**
- * Tradicija in izkušnje — the section that shows its own source, staged on the
- * design system's broadcast metaphor: a screen that RENDERS THE SITE as a
- * scanline passes across it.
+ * Tradicija in izkušnje — the section that shows its own source. THE WHOLE
+ * SECTION is the screen: no frame, no inset panel, one dark field running the
+ * full bleed, split by a vertical red beam. LEFT of the beam the rendered
+ * page, RIGHT of it the source a crawler receives (mono). One number drives
+ * both clips, the beam and the dial: --scan (0 = all source, 100 = rendered).
  *
- * This section also carries the page's light→dark ground change: its top
- * crossing mid-viewport flips [data-ground] (src/lib/ground.ts), and the whole
- * page tweens around the instrument while the instrument itself stays put —
- * both of its surfaces are CONSTANT (paper screen, black bezel), so the body
- * copy inside never rides the flip and never dips below AA. The only text that
- * rides it is the display title, which snaps between its two inks mid-tween
- * (see --trad-snap below).
+ * THIS SECTION IS WHERE THE PAGE TURNS DARK, and it turns dark by FADING: the
+ * section's own ground tweens transparent → black over --dur-ground with the
+ * measured ease, and its content fades in behind that (the reference's own
+ * mechanism — the ground interpolates, the text arrives on an opacity ramp).
+ * The page canvas darkens with it (src/lib/ground.ts flips [data-ground] at the
+ * same moment), so there is never a paper seam around or under the band.
  *
- * THE INSTRUMENT. A framed set: a screen split by a vertical red beam — LEFT
- * of the beam the rendered page (paper world), RIGHT of it the source the
- * crawler receives (mono on black) — over a black bezel carrying the legend
- * and the dial (the two state labels and a real <input type="range">). One
- * number drives everything: --scan (0 = all source, 100 = fully rendered).
+ * The earlier version framed a white panel inside the section, so the flip
+ * darkened only the margins AROUND a box that stayed paper — and its inks
+ * rode the page tween, which crosses mid-grey and needed a colour snap to stay
+ * legible. Both are gone: the section carries dark-world inks throughout, the
+ * ground fade is one-shot (it never reverses under settled dark-on-dark type),
+ * and the content is simply absent until the ground is dark.
  *
- * THE SWEEP. On arrival the screen holds at 0 (raw source) and STAYS there
- * while the visitor reads: the pass only fires after the screen has been
- * continuously visible for SWEEP_HOLD_MS, and leaving the viewport disarms it
- * again. Then the beam makes ONE left→right pass (SWEEP_MS), rendering the
- * page and carrying the dial's handle to the right end. At any moment — during
- * the hold or the pass — the hand owns the control: dragging is direct,
+ * THE SWEEP. The section arrives as raw source and stays there for
+ * SWEEP_HOLD_MS of continuous visibility — leaving disarms it — then ONE
+ * left→right pass (SWEEP_MS) renders the page and carries the dial's handle to
+ * the right end. At any moment the hand owns the control: dragging is direct,
  * nothing else is coupled to it, scroll never moves it.
  *
- * THE LAYERS (the interactive layer). Inside the rendered half, the four
- * things that live under the surface are drawn as a SECTION THROUGH THE SITE:
- * strata of unequal thickness, stepping darker with depth, probed one at a
- * time. Probing fills a stratum with ink and swings a leader across to its
- * callout. Real tablist semantics; with JS off the strata are an inert drawing
- * and all four callouts stand open in flow, so nobody meets a dead control.
+ * THE STRATA (the interactive layer). The four things under the surface are a
+ * SECTION THROUGH THE SITE: strata of unequal thickness in dark materials,
+ * each with its own drafting hatch, probed one at a time. Probing brings its
+ * hatch to full, draws the CUT PLANES at its two interfaces, fills its
+ * terminal and lights the leader across to the callout. Real tablist
+ * semantics; with JS off the strata are an inert drawing and all four callouts
+ * stand open in flow, so nobody meets a dead control.
  *
- * REST STATE (stylesheet, no JS): --scan falls back to 55 — the composed split
- * where BOTH worlds are legible, which is also what reduced-motion visitors
- * get (no sweep, dial fully operable). A crawler reads the rendered layer as
- * ordinary HTML; the source layer is its aria-hidden mono twin, derived from
- * the same content module so it cannot depict tags we do not ship, and it
- * opens with the guard-checked head emissions (data-fact).
+ * REST STATE (stylesheet, no JS, reduced motion): the ground is dark, the
+ * content is present, --scan falls back to 55 — the composed split where both
+ * worlds are legible and the dial is fully operable. A crawler reads the
+ * rendered layer as ordinary HTML; the source layer is its aria-hidden mono
+ * twin, derived from the same content module so it cannot depict tags we do
+ * not ship, and it opens with the guard-checked head emissions (data-fact).
  */
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { invisible } from '@/content/home'
@@ -72,6 +73,10 @@ const SWEEP_HOLD_MS = 1100
 /** Fires when this share of the screen is visible. Deliberately modest: a tall
  *  screen on a short phone viewport can never reach a high threshold. */
 const SWEEP_VISIBLE = 0.35
+
+/** Safety net for the ground fade: if the observer never delivers a callback,
+ *  the section must not sit at its pre-entrance state forever. */
+const GROUND_NET_MS = 2500
 
 /** 0 = all source, 100 = fully rendered. */
 const scan = ref(REST)
@@ -191,17 +196,52 @@ const sourceLines = computed(() => [
   { id: '', text: `<p>${invisible.machineGloss}</p>` },
 ])
 
+/**
+ * The arrival: `pre` holds the section at its pre-entrance state — ground
+ * transparent, content absent — and dropping it runs the fade. Applied from JS
+ * and never from CSS alone, so with JS off (and under reduced motion, which
+ * returns before this is ever set) the dark band and all of its content are
+ * simply, fully there: the house rule is that a hidden state must always have
+ * a reveal path.
+ */
+const pre = ref(false)
+
 onMounted(() => {
   live.value = true
 
-  // Reduced motion: the composed rest IS the finished state — no sweep, the
-  // dial and the strata fully operable, the ground flip lands instantly
-  // (base.css kill-switch).
+  // Reduced motion: the settled dark band IS the finished state — no ground
+  // fade, no entrance, no sweep; the dial and the strata stay fully operable.
   if (prefersReducedMotion()) return
-  // No IntersectionObserver → no sweep. Never park on 0 without a way to
-  // render: the composed rest stays.
-  if (!('IntersectionObserver' in window) || !screen.value) return
-  scan.value = 0 // arrive as raw source; the pass renders it after the beat
+  // No IntersectionObserver → nothing to arm: never hold the section at a
+  // pre-entrance state we cannot leave, and never park --scan on 0 with no way
+  // to render. The composed rest stays.
+  if (!('IntersectionObserver' in window) || !root.value || !screen.value) return
+
+  pre.value = true // ground transparent, content absent — until it arrives
+  scan.value = 0 // and it arrives as raw source; the pass renders it
+
+  // The ground fade fires the moment the section appears from below, so it is
+  // settled before any of the content is in the reading zone. Own observer,
+  // own threshold (0): the sweep's beat is a different question with a
+  // different threshold, and one shared observer would couple them.
+  const groundIo = fx.io(
+    (entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue
+        groundIo.disconnect()
+        pre.value = false
+      }
+    },
+    { threshold: 0 },
+  )
+  groundIo.observe(root.value)
+  // Safety net: if the observer never delivers, drop the pre-state anyway —
+  // disconnect FIRST so a later scroll cannot re-fire it onto visible content.
+  fx.setTimeout(() => {
+    groundIo.disconnect()
+    pre.value = false
+  }, GROUND_NET_MS)
+
   const io = fx.io(
     (entries) => {
       for (const e of entries) {
@@ -237,14 +277,34 @@ onUnmounted(() => {
     id="nevidno"
     ref="root"
     class="trad"
-    :class="{ 'trad--live': live, 'trad--edge': edge }"
+    :class="{ 'trad--live': live, 'trad--edge': edge, 'trad--pre': pre }"
+    :style="live ? { '--scan': String(scan) } : undefined"
   >
-    <div class="container">
+    <!-- THE SOURCE — the whole section as a crawler receives it. Absolute over
+         the entire band (padding included), clipped to the RIGHT of the beam,
+         complementary to the rendered layer by construction: the two read the
+         same --scan, so the seam cannot disagree with itself. Decorative for
+         assistive tech; the rendered layer carries every string. -->
+    <div ref="screen" class="trad__source" aria-hidden="true">
+      <div class="container trad__source-in">
+        <code
+          v-for="(line, n) in sourceLines"
+          :key="n"
+          class="emisija trad__line"
+          :data-fact="line.id || undefined"
+          >{{ line.text }}</code
+        >
+      </div>
+    </div>
+
+    <!-- THE BEAM — the seam itself, spanning the section's full height. -->
+    <span class="trad__beam" aria-hidden="true"></span>
+
+    <!-- THE RENDERED PAGE — in flow, so it defines the section's height and is
+         the complete, real content for crawlers and JS-off readers. -->
+    <div class="container trad__world">
       <header class="trad__head">
-        <!-- The kicker rides the flipping page ground, so it lives on its own
-             constant plate (the system's mono chip): AA on both grounds at
-             every instant of the tween. -->
-        <p class="trad__kicker">{{ invisible.kicker }}</p>
+        <p class="kicker kicker--on-dark">{{ invisible.kicker }}</p>
         <h2 class="trad__title">
           {{ title.before
           }}<span v-if="title.run" class="trad__script">{{ title.run }}</span
@@ -252,20 +312,15 @@ onUnmounted(() => {
         </h2>
       </header>
 
-      <div class="trad__set">
-        <!-- The screen. The rendered page is the geometry authority (in flow,
-             real content); the source layer is absolute behind it, opaque
-             black, clipped complementarily by the same --scan. -->
-        <div ref="screen" class="trad__screen" :style="live ? { '--scan': String(scan) } : undefined">
-          <div class="trad__made">
-            <!-- The statement band: the argument, then a rule. Grouped so the
-                 rule belongs to the band rather than to a paragraph. -->
-            <div class="trad__argument">
-              <blockquote class="trad__quote">
-                <p>{{ invisible.quote }}</p>
-              </blockquote>
-              <p class="trad__intro">{{ invisible.intro }}</p>
-            </div>
+      <div class="trad__made">
+        <!-- The statement band: the argument, then a rule. Grouped so the
+             rule belongs to the band rather than to a paragraph. -->
+        <div class="trad__argument">
+          <blockquote class="trad__quote">
+            <p>{{ invisible.quote }}</p>
+          </blockquote>
+          <p class="trad__intro">{{ invisible.intro }}</p>
+        </div>
 
             <!-- THE INTERACTIVE LAYER: a section through the site's own
                  build-up. Four strata of unequal thickness, each in its own
@@ -334,68 +389,92 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <p class="trad__outro">{{ invisible.outro }}</p>
-          </div>
+        <p class="trad__outro">{{ invisible.outro }}</p>
+      </div>
+    </div>
 
-          <div class="trad__source" aria-hidden="true">
-            <code
-              v-for="(line, n) in sourceLines"
-              :key="n"
-              class="emisija trad__line"
-              :data-fact="line.id || undefined"
-              >{{ line.text }}</code
-            >
-          </div>
-
-          <span class="trad__beam" aria-hidden="true"></span>
-        </div>
-
-        <!-- The bezel, under the screen: why the source half matters, then the
-             dial. A constant black strip, so nothing in it rides the flip. -->
-        <div class="trad__bezel">
-          <p class="trad__legend">{{ invisible.machineGloss }}</p>
-          <div class="trad__dial">
-            <span class="trad__end">{{ invisible.machineLabel }}</span>
-            <input
-              v-if="live"
-              ref="gripEl"
-              class="trad__grip"
-              type="range"
-              min="0"
-              max="100"
-              step="1"
-              :value="Math.round(scan)"
-              :aria-label="invisible.feedback.scanLabel"
-              @input="onGrip"
-              @pointerdown="takeOver"
-              @keydown="takeOver"
-            />
-            <span v-else class="trad__grip-ghost" aria-hidden="true"></span>
-            <span class="trad__end">{{ invisible.humanLabel }}</span>
-          </div>
-        </div>
+    <!-- THE CHROME — the legend and the dial. Above BOTH layers and never
+         clipped, so the control is operable whichever side of the beam it
+         happens to sit over. It is the instrument's own furniture, not part of
+         the page being rendered. -->
+    <div class="container trad__chrome">
+      <p class="trad__legend">{{ invisible.machineGloss }}</p>
+      <div class="trad__dial">
+        <span class="trad__end">{{ invisible.machineLabel }}</span>
+        <input
+          v-if="live"
+          ref="gripEl"
+          class="trad__grip"
+          type="range"
+          min="0"
+          max="100"
+          step="1"
+          :value="Math.round(scan)"
+          :aria-label="invisible.feedback.scanLabel"
+          @input="onGrip"
+          @pointerdown="takeOver"
+          @keydown="takeOver"
+        />
+        <span v-else class="trad__grip-ghost" aria-hidden="true"></span>
+        <span class="trad__end">{{ invisible.humanLabel }}</span>
       </div>
     </div>
   </section>
 </template>
 
 <style scoped>
-/* Transparent root: the section sits ON the flipping page ground — arriving
-   here is what turns the page dark (ground.ts), and the tween is visible
-   exactly where the visitor is looking. Both instrument surfaces are constant,
-   so no body copy rides the flip. */
+/* THE SECTION IS THE SCREEN — full bleed, no frame, no inset panel. Its own
+   ground is the dark world, and it ARRIVES BY FADING: transparent → black over
+   the measured ground tween. `.trad--pre` is applied from JS on mount and
+   dropped when the section appears, so with JS off (and under reduced motion,
+   which never sets it) the band is simply, fully dark.
+
+   The pre-state kills its own transitions, so ENTERING it snaps (no visible
+   reverse fade on mount) while LEAVING it tweens — the whole arrival is two
+   classes and two plain transitions, nothing per-frame. */
 .trad {
-  /* Tighter than the standard section frame: the settle wants the whole
-     instrument inside one viewport (measured: 887px at 1440×900, so it fits
-     with the head and both bezel strips), and the centre-snap crops padding
-     first — so the padding is the sacrificial zone. */
-  padding-block: var(--space-12);
+  position: relative;
+  isolation: isolate;
+  /* Nothing may escape the band: the source layer covers the full bleed and
+     the beam runs the full height. */
+  overflow: hidden;
+  padding-block: var(--space-16);
+  background: var(--color-black);
+  transition: background-color var(--dur-ground) var(--ease-ground);
+  color: var(--color-paper); /* 18.8:1 on the settled ground */
 }
 
-/* The settle: a native proximity snap centres the instrument when the scroll
-   comes to rest nearby — never a trap, scrolling straight through is free
+.trad--pre {
+  background: transparent;
+  transition: none;
+}
+
+/* The content arrives BEHIND the ground, on an opacity ramp — the reference's
+   own mechanism (its text crossfades by alpha while the ground interpolates).
+   The delay is what keeps it honest: by the time any of this is visible the
+   ground is already most of the way to black, so paper-coloured type is never
+   shown on a paper-coloured ground. */
+.trad__world,
+.trad__source,
+.trad__beam,
+.trad__chrome {
+  opacity: 1;
+  transition: opacity 520ms var(--ease-spring) 380ms;
+}
+
+.trad--pre .trad__world,
+.trad--pre .trad__source,
+.trad--pre .trad__beam,
+.trad--pre .trad__chrome {
+  opacity: 0;
+  transition: none;
+}
+
+/* The settle: a native proximity snap centres the band when the scroll comes
+   to rest nearby — never a trap, scrolling straight through is free
    (scroll-snap-type on html lives in base.css, gated to wide viewports and
-   no-preference; this is the only snap-align on the page). */
+   no-preference; this is the only snap-align on the page). Where the band is
+   taller than the viewport the spec relaxes the snap by itself. */
 @media (min-width: 1200px) and (prefers-reduced-motion: no-preference) {
   .trad {
     scroll-snap-align: center;
@@ -403,61 +482,20 @@ onUnmounted(() => {
 }
 
 .trad__head {
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--space-10);
 }
 
-/* The kicker chip: constant plate (ink fill, paper text 13.9:1) with the
-   constant divider as its edge, so it reads on both page grounds at every
-   instant of the tween. */
-.trad__kicker {
-  display: inline-block;
-  font-family: var(--font-mono);
-  font-size: var(--type-label-size);
-  font-weight: 500;
-  line-height: var(--type-label-lh);
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  color: var(--color-paper);
-  background: var(--color-ink);
-  border: 1px solid var(--divider);
-  padding: var(--space-1) var(--space-2);
-}
-
-/* The one piece of text that rides the flip. Large display type (3:1 floor):
-   its ink SNAPS between the two states mid-tween rather than tweening through
-   the ground's own greys — any continuous ink path crosses the ground and
-   dips below AA; a snap inside the window where BOTH inks clear 3:1 never
-   does. The light ink is pure black (not the brand's #242424) because that
-   DOUBLES the window: measured on the real tween by seeking the --surface
-   transition, black holds ≥3:1 until ~400ms and paper from ~340ms
-   (worst boundary 3.09), so the snap sits at the centre. #242424's window is
-   only [340,360]. Re-measure if --dur-ground / --ease-ground change. */
+/* No colour snap, no flip: the section carries its own dark world, so the
+   title is paper throughout and simply is not there until the ground is. */
 .trad__title {
-  /* Centre of the measured both-pass window on the 1000ms ground tween.
-     PAIRED with tokens.css — change the tween, re-measure the window. */
-  --trad-snap: 370ms;
   margin-top: var(--space-4);
   font-size: var(--type-display-l-size);
   font-weight: var(--type-display-l-weight);
   line-height: var(--type-display-l-lh);
   letter-spacing: var(--type-display-l-ls);
   text-transform: uppercase;
-  color: var(--color-black);
-  overflow-wrap: anywhere;
-}
-
-:root[data-ground='dark'] .trad__title {
   color: var(--color-paper);
-}
-
-/* The snap is a zero-duration transition with a delay. Gated: under reduced
-   motion the ground flip itself is instant (kill-switch), so the title must
-   flip WITH the attribute — a leftover delay would strand dark-on-dark text
-   for half a second. */
-@media (prefers-reduced-motion: no-preference) {
-  .trad__title {
-    transition: color 0ms linear var(--trad-snap);
-  }
+  overflow-wrap: anywhere;
 }
 
 /* The script splice: same size, its own face, lowercase against the machined
@@ -470,72 +508,61 @@ onUnmounted(() => {
   font-weight: 400;
 }
 
-/* --- the instrument --------------------------------------------------------
-   One framed object on the changing page: the frame is the constant divider
-   grey, legible on both grounds, exactly like the reference's unmoving
-   hairlines. */
-.trad__set {
-  border: var(--divider-width) solid var(--divider);
-}
-
-/* --- the screen ------------------------------------------------------------ */
-.trad__screen {
+/* --- the two layers --------------------------------------------------------
+   The rendered page is in flow (it defines the height and is the real content);
+   the source is absolute over the WHOLE band, padding included. Their clips are
+   complementary reads of one --scan, so the seam can never disagree with
+   itself. `var(--scan, 55)` PAIRS with REST in the script block. */
+.trad__world {
   position: relative;
-  /* The source layer must never bleed past the frame. */
-  overflow: hidden;
-  background: var(--color-black);
-}
-
-/* The rendered page: real content, in flow — it defines the screen's height.
-   Clipped from the RIGHT by the scan (0 = all source, 100 = all page).
-   `var(--scan, 55)` PAIRS with REST in the script block. */
-.trad__made {
-  position: relative;
-  z-index: 1;
-  background: var(--color-paper);
-  padding: clamp(1.25rem, 1rem + 2vw, 2.5rem);
+  z-index: 2;
   clip-path: inset(0 calc((100 - var(--scan, 55)) * 1%) 0 0);
 }
 
-/* The source: the mono twin, opaque black, behind the page — visible exactly
-   where the page is clipped away. Its own padding, its own flow; if the
-   document runs longer than the screen the tail clips, which is why the
-   guard-checked facts stand FIRST. */
 .trad__source {
   position: absolute;
   inset: 0;
-  z-index: 0;
-  background: var(--color-black);
-  padding: clamp(1.25rem, 1rem + 2vw, 2.5rem);
+  z-index: 1;
+  /* One step off the section's own ground: the two halves read as different
+     material even where the beam has passed off-screen. Paper-dim mono on it
+     measures 11.9:1. */
+  background: #14171a;
+  clip-path: inset(0 0 0 calc(var(--scan, 55) * 1%));
   overflow: hidden;
+}
+
+/* Its own vertical frame, matching the band's, so the first source line sits
+   on the same baseline as the rendered kicker. */
+.trad__source-in {
+  padding-block: var(--space-16);
 }
 
 .trad__line {
   display: block;
-  color: var(--papir-dim); /* 12.5:1 on black */
+  color: var(--papir-dim); /* 11.9:1 on the source ground */
   font-size: 0.8125rem;
   line-height: 1.75;
   overflow-wrap: anywhere;
 }
 
-/* The beam: the cut red, 2px, standing on the seam — legible on BOTH panels
-   (5.37:1 on paper, 3.49:1 on black). No glow: depth is drawn, never cast. */
+/* The beam: the cut's on-dark voice, 2px, standing on the seam and running the
+   band's full height — 6.4:1 on both grounds. No glow: depth is drawn. */
 .trad__beam {
   position: absolute;
-  z-index: 2;
+  z-index: 3;
   top: 0;
   bottom: 0;
   left: calc(var(--scan, 55) * 1%);
   width: 2px;
   margin-left: -1px;
-  background: var(--color-cut);
-  opacity: 1;
-  transition: opacity 240ms var(--ease-spring);
+  background: var(--color-cut-dark);
 }
 
-/* No split, no beam (fully source / fully rendered). */
+/* No split, no beam (fully source / fully rendered). Its own transition, so
+   the edge fade never fights the arrival ramp above. */
 .trad--edge .trad__beam {
   opacity: 0;
+  transition: opacity 240ms var(--ease-spring);
 }
 
 /* --- the rendered page's own composition ------------------------------------
@@ -549,8 +576,8 @@ onUnmounted(() => {
   margin: 0;
 }
 .trad__quote p {
-  /* A miniature of the statement role — the full-size statement (3rem) makes
-     the screen taller than any viewport the settle could hold. */
+  /* A miniature of the statement role — the full-size statement (3rem) would
+     make the band taller than any viewport. */
   font-size: clamp(1.375rem, 1.05rem + 1.3vw, 2.25rem);
   font-weight: var(--type-statement-weight);
   letter-spacing: var(--type-statement-ls);
@@ -558,39 +585,39 @@ onUnmounted(() => {
   /* The system's statement runs lh 0.9; caps with carons need a shade more
      air to keep ascenders clear of the line above. */
   line-height: 1.02;
-  color: var(--color-ink);
+  color: var(--color-paper); /* 18.8:1 */
   max-width: 26ch;
 }
 
 .trad__intro {
   margin-top: var(--space-6);
-  color: var(--color-ink-2); /* 8.99:1 on paper */
+  color: var(--papir-dim); /* 12.5:1 on the band's ground */
   max-width: 54ch;
 }
 
 .trad__outro {
   margin-top: var(--space-6);
   padding-top: var(--space-6);
-  border-top: var(--divider-width) solid var(--mreza-strong);
-  color: var(--color-ink);
+  border-top: var(--divider-width) solid var(--crta-na-temnem);
+  color: var(--color-paper);
   font-weight: 500;
   max-width: 54ch;
 }
 
 /* --- the strata (the interactive layer) -------------------------------------
-   A section through the build-up. Unequal thicknesses are the point: a
-   membrane is thin, a substrate is thick — equal slabs would read as a bar
-   chart. Grounds step darker with depth through the paper family; each
-   material carries its OWN drafting hatch, at half strength until probed.
+   A section through the build-up, drawn in the DARK world now that the band
+   is dark throughout: grounds step darker with depth, hatches are drawn in
+   paper, the cut is the accent's on-dark voice. Unequal thicknesses are the
+   point — a membrane is thin, a substrate is thick; equal slabs would read as
+   a bar chart.
 
    Probing is signalled the way a section drawing signals it — and never by
    tone alone: the CUT PLANES appear at the layer's two interfaces with square
    end ticks, the terminal fills, the hatch comes up to full, the label
-   brightens, and the leader swings across to the callout. The band's own
+   brightens, and the leader lights across to the callout. The band's own
    GROUND never changes, which is what keeps the label's contrast constant
-   through every state (a ground tween under 14px type crosses mid-grey and
-   drops both possible inks under 4.5:1 — measured; that is why the earlier
-   ink-fill version was replaced by this one). */
+   through every state (a ground tween under 14px type crosses mid-tone and
+   drops every possible ink under 4.5:1 — measured). */
 .asm {
   --asm-gap: clamp(1.5rem, 4vw, 3rem);
   display: grid;
@@ -602,7 +629,7 @@ onUnmounted(() => {
   display: grid;
   grid-template-rows: 1.4fr 0.72fr 0.95fr 1.95fr;
   min-height: clamp(19rem, 34vw, 26rem);
-  border: var(--divider-width) solid var(--mreza-strong);
+  border: var(--divider-width) solid var(--crta-na-temnem);
   /* The leader and the dimension rule reach out of this box. */
   overflow: visible;
   margin-left: 1.25rem;
@@ -615,7 +642,7 @@ onUnmounted(() => {
   bottom: 0;
   left: -1.25rem;
   width: 1px;
-  background: var(--mreza-strong);
+  background: var(--crta-na-temnem);
   pointer-events: none;
 }
 .asm__dim::before,
@@ -625,7 +652,7 @@ onUnmounted(() => {
   left: -3px;
   width: 7px;
   height: 1px;
-  background: var(--mreza-strong);
+  background: var(--crta-na-temnem);
 }
 .asm__dim::before {
   top: 0;
@@ -643,7 +670,7 @@ onUnmounted(() => {
   padding: 0;
   margin: 0;
   border: 0;
-  border-bottom: var(--divider-width) solid var(--mreza-strong);
+  border-bottom: var(--divider-width) solid var(--crta-na-temnem);
   background: none;
   font: inherit;
   color: inherit;
@@ -663,17 +690,18 @@ button.asm__band {
 }
 
 .asm__band:focus-visible {
-  outline: 2px solid var(--color-cut);
+  outline: 2px solid var(--color-cut-dark);
   outline-offset: -4px;
 }
 
 /* The hatch: half strength at rest, full when probed. Opacity only — the
    band's ground is constant, so the label's worst-case composite is the
    hatch LINE over that ground, and every alpha below is chosen against the
-   4.5:1 floor for the 14px label (computed per band; the deepest ground takes
-   the lightest hatch). SCALE contrast, not just pitch: a 3px lamination
-   against a 22px poché is what makes two fills read as different MATERIALS
-   rather than the same material drawn twice. */
+   4.5:1 floor for the 14px label (computed per band; on dark the hatch
+   LIGHTENS the ground, so the brightest hatches take the lowest alphas).
+   SCALE contrast, not just pitch: a 3px lamination against a 22px poché is
+   what makes two fills read as different MATERIALS rather than the same
+   material drawn twice. */
 .asm__fill {
   position: absolute;
   inset: 0;
@@ -684,59 +712,53 @@ button.asm__band {
 
 /* Structure — 45° section hatch. */
 .asm__band--0 {
-  background: var(--color-paper);
+  background: var(--grafit-inset); /* #24282c */
 }
 .asm__band--0 .asm__fill {
   background: repeating-linear-gradient(
     45deg,
     transparent 0 10px,
-    rgb(36 36 36 / 0.28) 10px 11px
+    rgb(245 242 235 / 0.3) 10px 11px
   );
 }
 
 /* Membrane — a thin laminated sheet, ruled very fine. */
 .asm__band--1 {
-  background: var(--color-paper-2);
+  background: #1e2226;
 }
 .asm__band--1 .asm__fill {
-  background: repeating-linear-gradient(0deg, transparent 0 2px, rgb(36 36 36 / 0.26) 2px 3px);
+  background: repeating-linear-gradient(0deg, transparent 0 2px, rgb(245 242 235 / 0.26) 2px 3px);
 }
 
 /* Granular fill — stipple, the drafting convention for loose material. */
 .asm__band--2 {
-  background: var(--mreza);
+  background: #191d21;
 }
 .asm__band--2 .asm__fill {
-  background-image: radial-gradient(rgb(36 36 36 / 0.4) 1px, transparent 1.3px);
+  background-image: radial-gradient(rgb(245 242 235 / 0.42) 1px, transparent 1.3px);
   background-size: 8px 8px;
 }
 
-/* Substrate — coarse cross-hatched poché, the mass everything sits on. Its
-   ground is already the darkest, so the hatch is the lightest of the four.
+/* Substrate — coarse cross-hatched poché, the mass everything sits on: the
+   deepest ground of the four.
 
-   The tone is a component-local material step, NOT --mreza-strong (#b3ac9c):
-   the cut red measures 2.79:1 on that, so the cut planes — a state indicator —
-   would have missed the 3:1 floor on this one stratum. Solved numerically
-   against the HATCH-COMPOSITED ground (the hatch darkens it further, which a
-   flat-ground calculation misses: #bdb6a6 reads 3.07 flat but 2.85 composited).
-   #c5bfb0 is the first step that clears it composited (3.14:1) while keeping a
-   real depth gradient (245 → 236 → 217 → 197) and ink at 8.11:1.
-
-   ONE rule block for this selector, deliberately: the ground line below used to
-   live in its own `.asm__band--3 { border-top }` block, and the CSS minifier
-   merges duplicate selectors and can drop declarations while doing it (both
-   blocks did survive this build — checked in dist — but the house rule is one
-   block per selector for anything load-bearing). */
+   ONE rule block for this selector, deliberately: the ground line used to live
+   in its own `.asm__band--3 { border-top }` block, and the CSS minifier merges
+   duplicate selectors and can drop declarations while doing it. */
 .asm__band--3 {
-  background: #c5bfb0;
+  /* A literal, not --zemlja: the adapter maps that to pure black, which is the
+     SECTION's own ground — the deepest stratum would have dissolved into the
+     band around it. This keeps the four materials an even ramp that stays
+     above the section ground: 36,40,44 → 30,34,38 → 25,29,33 → 20,23,26. */
+  background: #14171a;
   /* The interface onto the substrate is the drawing's ground line — heavier,
      the way a section marks the boundary you build on. */
-  border-top: 2px solid var(--color-ink);
+  border-top: 2px solid var(--papir-dim);
 }
 .asm__band--3 .asm__fill {
   background:
-    repeating-linear-gradient(45deg, transparent 0 21px, rgb(36 36 36 / 0.16) 21px 23px),
-    repeating-linear-gradient(-45deg, transparent 0 21px, rgb(36 36 36 / 0.16) 21px 23px);
+    repeating-linear-gradient(45deg, transparent 0 21px, rgb(245 242 235 / 0.22) 21px 23px),
+    repeating-linear-gradient(-45deg, transparent 0 21px, rgb(245 242 235 / 0.22) 21px 23px);
 }
 
 .asm__band--on .asm__fill {
@@ -764,27 +786,16 @@ button.asm__band {
   font-weight: 500;
   letter-spacing: var(--type-label-ls);
   text-transform: uppercase;
-  color: var(--color-ink-2);
+  color: var(--papir-dim); /* ≥9.3:1 on every stratum's hatch composite */
   transition: color var(--dur-tween) var(--ease-hover);
 }
 
-/* The two DEEPEST strata take full ink even at rest. Computed against the
-   hatch composite rather than the flat ground: on band 3 the secondary ink
-   over the coverage-weighted average (≈rgb(175)) measures 4.6:1 — inside the
-   floor but with no margin, and 3.6:1 where a glyph crosses a hatch line. Full
-   ink puts them at 7.1:1 and 5.6:1. Their selection is still unmistakable: the
-   cut planes, the filled terminal, the leader and the hatch all change. */
-.asm__band--2 .asm__band-label,
-.asm__band--3 .asm__band-label {
-  color: var(--color-ink);
-}
-
 .asm__band--on .asm__band-label {
-  color: var(--color-ink);
+  color: var(--color-paper);
 }
 @media (hover: hover) {
   button.asm__band:hover .asm__band-label {
-    color: var(--color-ink);
+    color: var(--color-paper);
   }
 }
 
@@ -796,7 +807,7 @@ button.asm__band {
   width: 9px;
   height: 9px;
   margin-top: -4.5px;
-  border: 1px solid var(--color-ink-2);
+  border: 1px solid var(--papir-dim);
   transition:
     background-color var(--dur-tween) var(--ease-hover),
     border-color var(--dur-tween) var(--ease-hover);
@@ -804,18 +815,16 @@ button.asm__band {
 
 @media (hover: hover) {
   button.asm__band:hover .asm__node {
-    border-color: var(--color-ink);
+    border-color: var(--color-paper);
   }
 }
 
-/* Filled, but the INK border stays: the ink delineates the terminal against
-   every stratum ground (≥6.6:1) while the red says "taken". A red border on a
-   red fill would leave the deepest stratum's terminal at 3.07:1 — passing, but
-   with the outline doing no work; this way the shape never depends on the
-   accent's own contrast. */
+/* Filled: on dark the accent's own voice clears the 3:1 UI floor on every
+   stratum ground (≥4.3:1 measured), so the terminal needs no borrowed
+   outline — border and fill are both the cut. */
 .asm__band--on .asm__node {
-  background: var(--color-cut);
-  border-color: var(--color-ink);
+  background: var(--color-cut-dark);
+  border-color: var(--color-cut-dark);
 }
 
 /* The cut planes BOUNDING the probed layer — drawn at its two interfaces, so
@@ -825,8 +834,8 @@ button.asm__band {
   position: absolute;
   inset: 0;
   z-index: 2;
-  border-top: 2px solid var(--color-cut);
-  border-bottom: 2px solid var(--color-cut);
+  border-top: 2px solid var(--color-cut-dark);
+  border-bottom: 2px solid var(--color-cut-dark);
   opacity: 0;
   transition: opacity var(--dur-tween) var(--ease-hover);
   pointer-events: none;
@@ -838,7 +847,7 @@ button.asm__band {
   left: 0;
   width: 8px;
   height: 8px;
-  background: var(--color-cut);
+  background: var(--color-cut-dark);
 }
 .asm__plane::before {
   top: 0;
@@ -864,7 +873,7 @@ button.asm__band {
   margin-top: -0.5px;
   width: var(--asm-gap);
   height: 1px;
-  background: var(--color-cut);
+  background: var(--color-cut-dark);
   opacity: 0;
   transition: opacity var(--dur-fast) var(--ease-hover);
   pointer-events: none;
@@ -876,7 +885,7 @@ button.asm__band {
   top: -2.5px;
   width: 6px;
   height: 6px;
-  background: var(--color-cut);
+  background: var(--color-cut-dark);
 }
 
 .asm__band--on .asm__leader {
@@ -924,42 +933,46 @@ button.asm__band {
   line-height: var(--type-display-l-lh);
   letter-spacing: var(--type-display-l-ls);
   text-transform: uppercase;
-  color: var(--color-ink);
+  color: var(--color-paper);
   padding-bottom: var(--space-3);
-  border-bottom: var(--divider-width) solid var(--mreza-strong);
+  border-bottom: var(--divider-width) solid var(--crta-na-temnem);
 }
 
 .asm__detail {
   margin-top: var(--space-4);
-  color: var(--color-ink-2);
+  color: var(--papir-dim);
   font-size: 1.0625rem;
   line-height: 1.5;
   max-width: 38ch;
 }
 
-/* --- the bezel: legend, then the dial --------------------------------------- */
-.trad__bezel {
-  background: var(--color-black);
-  border-top: var(--divider-width) solid var(--divider);
+/* --- the chrome: legend, then the dial ---------------------------------------
+   Above BOTH layers and never clipped — the control has to work whichever side
+   of the beam it is standing over, so it reads on the section's own ground
+   rather than on a plate of its own. */
+.trad__chrome {
+  position: relative;
+  z-index: 4;
+  margin-top: var(--space-10);
 }
 
 .trad__legend {
   margin: 0;
-  padding: var(--space-3) var(--space-4);
-  color: var(--papir-dim); /* 12.5:1 on black */
+  padding-bottom: var(--space-3);
+  border-bottom: var(--divider-width) solid var(--crta-na-temnem);
+  color: var(--papir-dim); /* 12.5:1 */
   font-size: 0.875rem;
-  max-width: none;
+  max-width: 62ch;
 }
 
-/* The dial strip, at the bottom of the instrument. */
+/* The dial, at the bottom of the section. */
 .trad__dial {
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
   column-gap: var(--space-4);
   row-gap: var(--space-2);
-  padding: var(--space-2) var(--space-4) var(--space-3);
-  border-top: var(--divider-width) solid var(--crta-na-temnem);
+  padding-top: var(--space-2);
 }
 
 .trad__end {
@@ -985,7 +998,9 @@ button.asm__band {
 }
 .trad__grip::-webkit-slider-runnable-track {
   height: 2px;
-  background: var(--crta-na-temnem);
+  /* The constant divider grey: 7.8:1 on the band's ground, so the track itself
+     clears the 3:1 UI floor rather than leaning on the thumb to be findable. */
+  background: var(--divider);
 }
 .trad__grip::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -994,11 +1009,13 @@ button.asm__band {
   margin-top: -9px;
   border: 0;
   border-radius: 0;
-  background: var(--color-cut-dark); /* 6.42:1 on the black bezel */
+  background: var(--color-cut-dark); /* 6.42:1 on the band's ground */
 }
 .trad__grip::-moz-range-track {
   height: 2px;
-  background: var(--crta-na-temnem);
+  /* The constant divider grey: 7.8:1 on the band's ground, so the track itself
+     clears the 3:1 UI floor rather than leaning on the thumb to be findable. */
+  background: var(--divider);
 }
 .trad__grip::-moz-range-thumb {
   width: 20px;
@@ -1025,7 +1042,7 @@ button.asm__band {
   .trad__argument {
     max-width: var(--measure-statement);
     padding-bottom: var(--space-8);
-    border-bottom: var(--divider-width) solid var(--mreza-strong);
+    border-bottom: var(--divider-width) solid var(--crta-na-temnem);
     margin-bottom: var(--space-8);
   }
 
@@ -1055,7 +1072,7 @@ button.asm__band {
 @media (max-width: 809px) {
   .trad__argument {
     padding-bottom: var(--space-6);
-    border-bottom: var(--divider-width) solid var(--mreza-strong);
+    border-bottom: var(--divider-width) solid var(--crta-na-temnem);
     margin-bottom: var(--space-6);
   }
   .trad__dial {
@@ -1072,7 +1089,7 @@ button.asm__band {
   /* Phones lose the leader, so the link between a stratum and its callout is
      proximity plus this rule, in the same red. */
   .asm__panels {
-    border-top: 2px solid var(--color-cut);
+    border-top: 2px solid var(--color-cut-dark);
     padding-top: var(--space-4);
   }
 }

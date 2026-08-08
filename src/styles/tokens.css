@@ -278,23 +278,22 @@
 :root {
   transition:
     --surface var(--dur-ground) var(--ease-ground),
-    --surface-soft var(--dur-ground) var(--ease-ground),
-    --ink var(--dur-ground) var(--ease-ground),
-    --ink-2 var(--dur-ground) var(--ease-ground),
-    --ghost var(--dur-ground) var(--ease-ground),
-    --accent var(--dur-ground) var(--ease-ground);
+    --surface-soft var(--dur-ground) var(--ease-ground);
 }
 
+/* THE FLIP MOVES THE PAGE CANVAS ONLY — html/body/#app paint, which is what
+   iOS samples for the status-bar strip and the overscroll, plus whatever
+   shows between sections. It deliberately does NOT touch the ink tokens any
+   more: a section that goes dark now fades its OWN ground in and carries its
+   own dark-world inks (TraditionSection), so no text ever rides the page
+   tween. That is what removed a real defect — interpolating --ink against an
+   interpolating --surface crosses mid-grey, where every possible ink sits
+   under 4.5:1, and it had to be papered over with a mid-tween colour snap.
+   --muted and --divider were always constant here (#9e9e9e reads on both
+   grounds, 7.84:1 on #000) — the reference leaves them still too. */
 :root[data-ground='dark'] {
   --surface: var(--color-black);
   --surface-soft: var(--color-black);
-  --ink: var(--color-paper); /* text on dark is the paper — the warm world inverts whole */
-  --ink-2: #c6c9c3; /* secondary on dark (papir-dim); 12.5:1 on #000 */
-  --ghost: var(--color-ink-2);
-  --accent: var(--color-cut-dark);
-  /* --muted and --divider deliberately unchanged: #9e9e9e reads on both
-     grounds (7.84:1 on #000) — the reference leaves them still, which is part
-     of why the flip costs nothing. */
 }
 
 /* Reference breakpoints as measured in the served CSS: base ≥1200,

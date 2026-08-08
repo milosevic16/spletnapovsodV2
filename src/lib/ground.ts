@@ -26,8 +26,12 @@
 export const GROUND_TRIGGER_ID = 'nevidno'
 
 /** Viewport fraction the trigger's top must cross (0 = top, 1 = bottom).
- *  0.5 = the reference's measured mid-viewport trigger line. */
-export const GROUND_TRIGGER_FRACTION = 0.5
+ *  1.0 = the moment the section first appears from below, which is when the
+ *  section itself begins fading its own dark ground in — the canvas and the
+ *  section must darken together or a paper seam shows under/around it. (The
+ *  reference's own trigger is mid-viewport, but its dark sections do not fade
+ *  themselves in; ours does, and the two have to agree.) */
+export const GROUND_TRIGGER_FRACTION = 1
 
 export interface GroundHandle {
   /** Re-measure now (route changes don't always scroll). */
