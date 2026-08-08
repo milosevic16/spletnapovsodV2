@@ -41,20 +41,23 @@
          TIMELINE (base.css settle delays and App.vue's cleanup are keyed to
          it — change one, change all): type 0.12+i*0.065s (done ~0.9s), hold,
          vanish 1.35s, contract+retract 1.45-1.95s, fly 2.35-2.95s, ground
-         fades 2.4-2.85s, mark crossfades out 2.95-3.2s, veil hidden 3.2s,
-         node removed 3.8s. -->
+         ROLLS UP 2.4-2.95s, mark crossfades out 2.95-3.2s, veil hidden 3.2s,
+         node removed 3.8s.
+
+         The roll and the flight are deliberately concurrent: the mark travels
+         to the header's corner while the ground it was printed on climbs to
+         become that same header. The ground wears the HEADER's surface (paper
+         + press screen), never the hero's — the hero is what gets revealed
+         underneath, so the two must differ. -->
     <style>
       #veil {
         position: fixed;
         inset: 0;
         z-index: 9999;
         pointer-events: none;
-        background: #ece8de;
-        /* The ground lifts while the mark is still flying, then the whole
-           veil retires. */
-        animation:
-          v-bg 0.45s ease-out 2.4s forwards,
-          veil-done 0.01s linear 3.2s forwards;
+        /* No ground of its own any more — the ground is its own layer below,
+           so rolling it up cannot clip the mark that is still flying over it. */
+        animation: veil-done 0.01s linear 3.2s forwards;
         /* Where the mark lands = the hero brand mark, by shared formula:
            left/top: --hero-inset (+ the desktop masthead's 45px in-flow
            strip); height: 0.55em of --hero-display — the mark stands alone
@@ -65,7 +68,37 @@
         --land-top: clamp(1.25rem, 4.9vw, 4.5rem);
         --land-h: calc(0.55 * clamp(3rem, 0.25rem + 16vw, 8.25rem));
       }
+      /* THE GROUND. It wears the HEADER's surface, not the hero's: paper plus
+         the same press screen (.press .press--light, from the bundled CSS,
+         which is render-blocking — the same reasoning that lets the veil use
+         the real webfont). That is what makes the ending work: the ground does
+         not fade away, it ROLLS UP, and on desktop it stops exactly on the
+         header's own 45px strip — same colour, same screen, same lattice
+         origin (both boxes start at viewport 0,0) — so the thing that was
+         covering the page simply becomes the header, and the hero is revealed
+         beneath it. On a phone there is no bar at the top, so it rolls all the
+         way: a window shade.
+
+         HEIGHT, not transform: a shade's visible part must stay still while
+         its bottom edge travels. scaleY would squash the dots and the colour
+         band with it. The element is fixed with no children, so the cost is a
+         paint on one layer, not a page reflow. */
+      #veil .v-ground {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 100%;
+        background-color: #f5f2eb;
+        animation: v-roll 0.55s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+      }
       @media (min-width: 900px) {
+        /* 45px = the masthead's in-flow strip, measured. Paired with the
+           landing formula below, which carries the same literal. */
+        #veil .v-ground {
+          animation-name: v-roll-to-header;
+        }
+
         #veil {
           --land-top: calc(45px + clamp(1.25rem, 4.9vw, 4.5rem));
           --land-h: calc(0.55 * clamp(8.25rem, 4.9rem + 5.93vw, 10.25rem));
@@ -163,8 +196,12 @@
       @keyframes v-word-out {
         to { opacity: 0; }
       }
-      @keyframes v-bg {
-        to { background: transparent; }
+      /* The roll. Phones take it to nothing; desktop stops on the header. */
+      @keyframes v-roll {
+        to { height: 0; }
+      }
+      @keyframes v-roll-to-header {
+        to { height: 45px; }
       }
       @keyframes veil-done {
         to { visibility: hidden; }
@@ -188,6 +225,12 @@
   </head>
   <body>
     <div id="veil" aria-hidden="true">
+      <!-- The ground: the HEADER's surface, and a layer of its own so rolling
+           it up never clips the mark flying above it. The press classes come
+           from the bundled stylesheet, which is render-blocking — if it ever
+           failed to arrive the ground would simply be flat paper, which is a
+           fine fallback rather than a broken intro. -->
+      <span class="v-ground press press--light"></span>
       <!-- »spletnapovsod«, typed. The p of Povsod and the final d are the
            logo's own halves; the d is the p rotated 180° (the mark's point
            symmetry). Geometry pairs with the BrandMark SVG in
