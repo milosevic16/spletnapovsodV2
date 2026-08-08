@@ -1,399 +1,150 @@
 <script setup lang="ts">
 /**
- * Tradicija in izkušnje — the section that shows its own source.
+ * Tradicija in izkušnje — the section that shows its own source, restaged on
+ * the design system's broadcast metaphor: a screen that RENDERS THE SITE as a
+ * scanline passes across it.
  *
- * A red cut line divides the VIEWPORT. Everything above it is the rendered
- * page; everything below it is the markup a crawler receives.
+ * This section also carries the page's light→dark ground change: its top
+ * crossing mid-viewport flips [data-ground] (src/lib/ground.ts), and the
+ * whole page tweens around the instrument while the instrument itself stays
+ * put — both of its panels are CONSTANT surfaces (paper and black), so the
+ * body copy inside never rides the flip and never dips below AA. The only
+ * text that rides the flip is the display title, which snaps between its two
+ * inks mid-tween (see --trad-snap below).
  *
- * THREE ACTS. First the visitor simply READS: the section arrives as raw
- * markup with no line in sight, scrolling up into view. Then, the moment its
- * top edge meets the top of the screen — the markup now owning the whole
- * viewport — the scan fires ONCE: a single decisive sweep down the screen,
- * eased by an asymmetric S-curve (slow press, fast rip, soft landing), that
- * converts everything it passes. Then the line RESTS low on the viewport and
- * becomes an instrument: content entering from below crosses it and converts
- * as the visitor scrolls on, and the grip drags it anywhere — the dragged
- * position simply stays, because after the one sweep there is no mapping to
- * fight the reader's hand. Scrolling back up never un-renders what the scan
- * already converted.
+ * THE INSTRUMENT. A framed set: a black dial strip (the two state labels and
+ * a real <input type="range">), a screen split by a vertical red beam —
+ * LEFT of the beam the rendered page (paper world), RIGHT of it the source
+ * the crawler receives (mono on black) — and a black legend strip. One
+ * number drives everything: --scan (0 = all source, 100 = fully rendered).
  *
- * Three rules hold it together:
+ * THE SWEEP. On arrival the screen holds at 0 (raw source); when it is ~30%
+ * visible the beam makes ONE left→right pass (SWEEP_MS), rendering the page
+ * and carrying the slider's handle to the right end. After that — and at any
+ * moment during it — the hand owns the control: dragging is direct, nothing
+ * else is coupled to it, scroll never moves it.
  *
- *  1. THE CUT IS VIEWPORT-RELATIVE. It is a position on the SCREEN, recomputed
- *     into the layer's own coordinates every frame — never a percentage of the
- *     section. A section-relative cut parks the line wherever that percentage
- *     lands, which on a section taller than the screen is off-screen entirely:
- *     the visitor never sees the line and the grip drags something invisible
- *     (measured — the line sat 909px down a 1109px section, past the fold).
- *  2. THE MARKUP LAYER IS OPAQUE. It REPLACES the rendered page below the cut.
- *     Transparent, the two layers simply both paint and the section reads as
- *     garbage — two texts in the same pixels (measured).
- *  3. SPATIAL BINDING. Every block exists in both layers at the same place, so
- *     a block's markup sits exactly where the block sits. The parallax offsets
- *     are custom properties both layers read, so a card and its markup travel
- *     together and can never drift apart.
- *
- * Rest state (stylesheet, no-JS, reduced motion) is the FULLY RENDERED page:
- * `--cut` is unset, which falls back to 100% and clips the markup away
- * entirely. A crawler reads the rendered layer as ordinary HTML.
+ * REST STATE (stylesheet, no JS): --scan falls back to 55 — the composed
+ * split where BOTH worlds are legible, which is also what reduced-motion
+ * visitors get (no sweep, dial fully operable). A crawler reads the rendered
+ * layer as ordinary HTML; the source layer is its aria-hidden mono twin,
+ * derived from the same content module so it cannot depict tags we do not
+ * ship, and it opens with the guard-checked head emissions (data-fact).
  */
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { invisible } from '@/content/home'
 import { factLines } from '@/lib/machine-facts'
 import { createFx, prefersReducedMotion } from '@/lib/fx'
 
 const fx = createFx()
-const root = ref<HTMLElement | null>(null)
-const stage = ref<HTMLElement | null>(null)
-const codeLayer = ref<HTMLElement | null>(null)
-const grip = ref<HTMLInputElement | null>(null)
+const screen = ref<HTMLElement | null>(null)
+const gripEl = ref<HTMLInputElement | null>(null)
 const live = ref(false)
 
-/**
- * The scan fires when the section's top edge meets the top of the screen —
- * the moment the raw markup owns the whole viewport and nothing else is
- * competing for the eye. Expressed in viewport heights past that edge, so the
- * moment stays tunable; 0 IS the edge.
- */
-const TRIGGER_VH = 0
-/** Where the line rests after the scan: low, with a strip of code still
-    arriving beneath it, so the instrument stays visible and invites the drag. */
-const PARK = 90
-/** One decisive pass down the screen. */
-const SWEEP_MS = 1250
+/** The composed rest: both worlds in view. PAIRS with every `var(--scan, 55)`
+ *  fallback in the style block — change one, change all. */
+const REST = 55
+/** One pass of the beam across the screen. */
+const SWEEP_MS = 1600
+/** A beat after the screen lands before the pass starts. */
+const SWEEP_DELAY_MS = 180
+/** Fires when this share of the screen is visible — 0.5 can be unreachable
+ *  for a tall screen on a short phone viewport, so it sits lower. */
+const SWEEP_VISIBLE = 0.3
 
-/**
- * The sweep's TIME easing: t^A / (t^A + (1−t)^B), an asymmetric S-curve.
- * Measured points at A=1.8, B=1.4 — the first tenth of the time yields 2% of
- * the travel (the line appears and presses), the middle rips (30–70% of the
- * time covers 16%→74%), and the last fifth decelerates through the final 14%
- * so the eye keeps hold of what just happened.
- */
-const CURVE_A = 1.8
-const CURVE_B = 1.4
+/** 0 = all source, 100 = fully rendered. */
+const scan = ref(REST)
+/** The beam only exists while a split exists. */
+const edge = computed(() => scan.value <= 0.5 || scan.value >= 99.5)
 
-function wipe(t: number): number {
-  if (t <= 0) return 0
-  if (t >= 1) return 1
-  const rise = Math.pow(t, CURVE_A)
-  return rise / (rise + Math.pow(1 - t, CURVE_B))
-}
-
-let reduced = false
-let swept = false
 let sweeping = false
+/** Sweep spent, or the hand took over — either way the pass never (re)fires. */
+let done = false
 
-/**
- * Per-block parallax, as a multiplier in [-1, 1] of AMPLITUDE. The detail
- * drawing is one block, so it drifts as a single buried mass against the
- * still header and outro — no relative movement inside it, which is what
- * would open seams between the flush material layers.
- */
-const AMPLITUDE = 18
-const RATES = [0, 0.7, 0]
-
-/** The cut's viewport position — written by the scroll mapping and the grip. */
-const scanPct = ref(100)
-/** Whether a split exists on screen. The line exists exactly then. */
-const cutting = ref(false)
-
-/**
- * Which material layer the detail drawing is probing. Drives the leader line's
- * position through a single integer custom property, so the swing is one CSS
- * transition rather than per-frame work.
- */
-const layer = ref(0)
-
-/** Read the tabs from the DOM: a v-for ref array goes stale on every update. */
-function bandAt(i: number): HTMLElement | undefined {
-  return root.value?.querySelectorAll<HTMLElement>('.asm__band')[i]
+/** Decisive and damped, zero overshoot — the system's temperament. */
+function easeOutCubic(t: number): number {
+  return 1 - Math.pow(1 - t, 3)
 }
 
-/**
- * Point the leader at the probed layer's centre.
- *
- * Measured, not computed from the index: the layers have DIFFERENT thicknesses
- * now, so the old (n + 0.5) × 25% arithmetic — which assumed four equal bands —
- * would aim at the wrong place on three of the four.
- */
-function placeLeader() {
-  const asm = root.value?.querySelector<HTMLElement>('.asm')
-  const band = bandAt(layer.value)
-  if (!asm || !band) return
-  asm.style.setProperty('--lead-y', `${band.offsetTop + band.offsetHeight / 2}px`)
-}
-
-/** Vertical tablist: arrows move and select, Home/End jump to the ends. */
-function onLayerKeys(e: KeyboardEvent) {
-  const n = invisible.items.length
-  let next = -1
-  if (e.key === 'ArrowDown' || e.key === 'ArrowRight') next = (layer.value + 1) % n
-  else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') next = (layer.value - 1 + n) % n
-  else if (e.key === 'Home') next = 0
-  else if (e.key === 'End') next = n - 1
-  if (next < 0) return
-  e.preventDefault()
-  layer.value = next
-  // The focus follows the selection, which is the tablist contract. nextTick,
-  // not rAF: this waits on Vue's DOM update, and rAF is throttled to a stop in
-  // a background tab — the focus must land regardless.
-  nextTick(() => bandAt(next)?.focus())
-}
-
-/** The markup each block emits — derived, so it cannot depict tags we do not ship. */
-const blocks = computed(() => [
-  {
-    // One centred header block: the guard-checked head emissions open its
-    // markup, exactly as they open the real page's.
-    id: 'header',
-    kind: 'header' as const,
-    code: [
-      ...factLines.map((f) => ({ id: f.id, text: f.text })),
-      { id: '', text: `<h2>${invisible.title}</h2>` },
-      { id: '', text: `<blockquote>${invisible.quote}</blockquote>` },
-      { id: '', text: `<p>${invisible.intro}</p>` },
-      { id: '', text: `<p>${invisible.machineGloss}</p>` },
-    ],
-  },
-  {
-    // The detail drawing is ONE block, so its markup — every layer's article,
-    // in order — sits over the drawing that depicts them.
-    id: 'assembly',
-    kind: 'assembly' as const,
-    code: invisible.items.flatMap((item) => [
-      { id: '', text: `<article id="${item.id}">` },
-      { id: '', text: `  <h3>${item.label}</h3>` },
-      { id: '', text: `  <p>${item.detail}</p>` },
-      { id: '', text: `</article>` },
-    ]),
-  },
-  {
-    id: 'outro',
-    kind: 'outro' as const,
-    code: [{ id: '', text: `<p>${invisible.outro}</p>` }],
-  },
-])
-
-/**
- * Pending frame ids, NOT "is one pending" booleans.
- *
- * A boolean set here and cleared inside the callback latches permanently if
- * that frame is never delivered — a throttled or hidden tab is enough — and
- * every later request is then dropped, so the section stops re-pinning for
- * good with nothing to signal it (measured: a stale pin survived a forced
- * resize because the flag was stuck). Cancel-and-reschedule has no such state.
- */
-let measureRaf = 0
-let syncRaf = 0
-
-/**
- * Pin each markup block onto the box of the block it describes.
- *
- * The two layers cannot share a grid: their rows size to their own content,
- * and mono lines are not the height of a rendered card, so the markup drifts
- * off the block it describes. The rendered layer is the single geometry
- * authority; every markup block is placed onto its counterpart's box.
- *
- * Parallax is zeroed for the whole measurement, so the rects read are LAYOUT
- * positions — getBoundingClientRect includes transforms, and pinning to a
- * transformed box would bake one frame's parallax in permanently.
- *
- * Driven by a ResizeObserver, never a one-shot on mount: the pane this renders
- * in can still be settling its width when mount fires, and coordinates
- * measured at a transient width are wrong forever afterwards.
- */
-function syncCode() {
-  const el = root.value
-  const layer = codeLayer.value
-  if (!el || !layer) return
-  const rendered = Array.from(el.querySelectorAll<HTMLElement>('.trad__render .trad__b'))
-  const coded = Array.from(el.querySelectorAll<HTMLElement>('.trad__code .trad__b'))
-  if (rendered.length !== coded.length || !rendered.length) return
-
-  for (const [i] of RATES.entries()) el.style.setProperty(`--p${i}`, '0px')
-  for (const src of rendered) src.style.minHeight = ''
-
-  // Horizontal first: columns are grid-driven and final, and a markup block's
-  // height only settles once it knows its width.
-  let layerRect = layer.getBoundingClientRect()
-  const boxes = rendered.map((src) => {
-    const r = src.getBoundingClientRect()
-    return { left: r.left - layerRect.left, width: r.width }
-  })
-  for (const [i, dst] of coded.entries()) {
-    dst.style.left = `${boxes[i]!.left.toFixed(1)}px`
-    dst.style.width = `${boxes[i]!.width.toFixed(1)}px`
-  }
-
-  // Reserve the taller of the two states per block, so markup can never spill
-  // onto a neighbour and the rendered block never leaves a hole.
-  const needs = coded.map((dst) => dst.offsetHeight)
-  const own = rendered.map((src) => src.offsetHeight)
-  for (const [i, src] of rendered.entries()) {
-    if (needs[i]! > own[i]!) src.style.minHeight = `${needs[i]}px`
-  }
-
-  // Rows are final — pin each markup block onto the block it describes, then
-  // confirm. Reserving heights above CHANGES the very rows being pinned, so a
-  // single pass can settle on stale numbers and the markup then sits wrong
-  // forever with nothing to correct it. The check is one extra reflow and it
-  // converges: re-pinning moves only absolutely-positioned boxes, which cannot
-  // feed back into the rendered layer's geometry.
-  for (let pass = 0; pass < 2; pass++) {
-    layerRect = layer.getBoundingClientRect()
-    const tops = rendered.map((src) => src.getBoundingClientRect().top - layerRect.top)
-    let worst = 0
-    for (const [i, dst] of coded.entries()) {
-      const want = tops[i]!
-      worst = Math.max(worst, Math.abs(want - parseFloat(dst.style.top || '0')))
-      dst.style.top = `${want.toFixed(1)}px`
-    }
-    if (worst < 0.5) break
-  }
-
-  // The bands are sized in fr, so any relayout moves the leader's target.
-  placeLeader()
-  measure()
-}
-
-/**
- * One read, one write per frame: the cut in the markup layer's own
- * coordinates, and the parallax both layers share.
- */
-function measure() {
-  const el = root.value
-  const layer = codeLayer.value
-  const st = stage.value
-  if (!el || !layer || !st) return
-
-  const vh = window.innerHeight
-  const rect = st.getBoundingClientRect()
-
-  // The one-shot trigger is a scroll-depth condition checked wherever measure
-  // runs — no observer to arm, nothing to strand: a reader who reaches the
-  // depth gets the scan, however they got there.
-  if (!swept && !reduced && rect.top <= -TRIGGER_VH * vh) {
-    swept = true
-    sweep()
-  }
-  cutting.value = scanPct.value > 0.5 && scanPct.value < 99.5
-
-  // The cut's screen position, expressed as a distance into the markup layer.
-  const layerRect = layer.getBoundingClientRect()
-  const cut = Math.min(Math.max((scanPct.value / 100) * vh - layerRect.top, 0), layerRect.height)
-  el.style.setProperty('--cut', `${cut.toFixed(1)}px`)
-
-  // Progress of the stage across the screen, centred: -1 entering, +1 leaving.
-  const raw = (vh - rect.top) / (vh + rect.height)
-  const c = Math.min(1, Math.max(-1, raw * 2 - 1))
-  for (const [i, rate] of RATES.entries()) {
-    el.style.setProperty(`--p${i}`, `${(c * rate * AMPLITUDE).toFixed(1)}px`)
-  }
-}
-
-function onScroll() {
-  if (measureRaf) cancelAnimationFrame(measureRaf)
-  measureRaf = fx.raf(() => {
-    measureRaf = 0
-    measure()
-  })
-}
-
-/** Coalesce the observer's bursts into one sync per frame. The sync is
-    idempotent, so no "we are writing" guard is needed — and such a guard would
-    drop the genuine resize that lands in the same window. */
-function scheduleSync() {
-  if (syncRaf) cancelAnimationFrame(syncRaf)
-  syncRaf = fx.raf(() => {
-    syncRaf = 0
-    syncCode()
-  })
-}
-
-function onGrip() {
-  const g = grip.value
-  if (!g) return
-  // A hand on the control always wins — it cancels a running sweep, and the
-  // dragged position simply STAYS: after the one scan there is no mapping
-  // waiting to snatch the line back.
-  sweeping = false
-  scanPct.value = Number(g.value)
-  measure()
-}
-
-/**
- * The scan: one decisive pass from the top of the screen down to PARK,
- * converting everything it crosses, eased by wipe() over SWEEP_MS.
- * Self-driven, because the reader may have stopped scrolling by the time the
- * trigger depth is reached.
- */
 function sweep() {
+  if (done) return
   sweeping = true
   const t0 = performance.now()
   const step = (now: number) => {
     if (!sweeping) return
     const t = Math.min(1, (now - t0) / SWEEP_MS)
-    scanPct.value = wipe(t) * PARK
-    measure()
+    scan.value = easeOutCubic(t) * 100
     if (t < 1) fx.raf(step)
-    else sweeping = false
+    else {
+      sweeping = false
+      done = true
+    }
   }
   fx.raf(step)
 }
 
+/** A hand on the control always wins — cancels a running sweep and simply
+ *  keeps the dragged position; there is no mapping waiting to snatch it. */
+function takeOver() {
+  sweeping = false
+  done = true
+}
+
+function onGrip() {
+  takeOver()
+  if (gripEl.value) scan.value = Number(gripEl.value.value)
+}
+
+/** The title splice: ONE script run inside the display word, set by eye
+ *  (art direction: never the first glyph, one run per word, tail runs read
+ *  best). Derived from the real title so a copy edit degrades to the plain
+ *  word rather than mis-slicing it. */
+const SPLICE_RUN = 'nje'
+const title = computed(() => {
+  const t = invisible.title
+  const at = t.lastIndexOf(SPLICE_RUN)
+  if (at <= 0) return { before: t, run: '', after: '' }
+  return { before: t.slice(0, at), run: SPLICE_RUN, after: t.slice(at + SPLICE_RUN.length) }
+})
+
+/** The source the crawler receives — derived from the content module and the
+ *  guard-checked fact lines, so the depiction cannot drift from the shipped
+ *  bytes. Facts first: they are what a crawler reads before anything else. */
+const sourceLines = computed(() => [
+  ...factLines.map((f) => ({ id: f.id, text: f.text })),
+  { id: '', text: `<h2>${invisible.title}</h2>` },
+  { id: '', text: `<blockquote>${invisible.quote}</blockquote>` },
+  { id: '', text: `<p>${invisible.intro}</p>` },
+  ...invisible.items.flatMap((item) => [
+    { id: '', text: `<article id="${item.id}">` },
+    { id: '', text: `  <h3>${item.label}</h3>` },
+    { id: '', text: `  <p>${item.detail}</p>` },
+    { id: '', text: `</article>` },
+  ]),
+  { id: '', text: `<p>${invisible.outro}</p>` },
+  { id: '', text: `<p>${invisible.machineGloss}</p>` },
+])
+
 onMounted(() => {
   live.value = true
-  const el = root.value
-  const st = stage.value
-  if (!el || !st) return
-
-  // Reduced motion keeps the finished page and a live control — the scan
-  // never fires, so only the grip writes the cut. Everyone else arrives on
-  // the raw markup and reads it until the trigger depth.
-  reduced = prefersReducedMotion()
-  if (!reduced) scanPct.value = 0
-
-  // The first pin waits for the hydrated DOM. Hydration REPLACES this
-  // section's layout — the four callouts collapse to one, the bands become
-  // tabs — and measuring before that re-render pins the markup to a layout
-  // that is about to vanish (measured: 136.8px of permanent drift).
-  measure()
-  nextTick(() => {
-    placeLeader()
-    syncCode()
-  })
-
-  fx.on(window, 'scroll', onScroll, { passive: true })
-  fx.on(
-    window,
-    'resize',
-    () => {
-      // Two independent paths to a re-pin: the failure is silent and permanent.
-      scheduleSync()
-      onScroll()
+  // Reduced motion: the composed rest IS the finished state — no sweep, the
+  // dial fully operable, the ground flip lands instantly (base.css kill-switch).
+  if (prefersReducedMotion()) return
+  // No IntersectionObserver → no sweep. Never park on 0 without a way to
+  // render: the composed rest stays.
+  if (!('IntersectionObserver' in window) || !screen.value) return
+  scan.value = 0 // arrive as raw source; the pass renders it
+  const io = fx.io(
+    (entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue
+        io.disconnect()
+        fx.setTimeout(sweep, SWEEP_DELAY_MS)
+      }
     },
-    { passive: true },
+    { threshold: SWEEP_VISIBLE },
   )
-
-  if ('ResizeObserver' in window) {
-    const ro = fx.ro(scheduleSync)
-    ro.observe(el.querySelector('.trad__render')!)
-    for (const b of el.querySelectorAll('.trad__render .trad__b')) ro.observe(b)
-  }
-  // Text metrics change on font swap — re-pin once they have landed.
-  document.fonts?.ready.then(() => scheduleSync())
-
-  // Probing a layer swaps the callout, which changes the block's height.
-  // Re-pin explicitly rather than leaning on the ResizeObserver: this one is
-  // a state change we own, so it should not depend on observing its own
-  // side effect.
-  watch(layer, () =>
-    nextTick(() => {
-      placeLeader()
-      scheduleSync()
-    }),
-  )
-
+  io.observe(screen.value)
 })
 
 onUnmounted(() => {
@@ -405,672 +156,454 @@ onUnmounted(() => {
 <template>
   <section
     id="nevidno"
-    ref="root"
     class="trad"
-    :class="{ 'trad--live': live, 'trad--cutting': cutting }"
+    :class="{ 'trad--live': live, 'trad--edge': edge }"
   >
-    <div ref="stage" class="trad__stage">
-      <!-- RENDERED: the real page. In normal flow, so it defines the height
-           and a crawler reads it as ordinary HTML. -->
-      <div class="trad__render">
-        <div v-for="(b, i) in blocks" :key="b.id" class="trad__b" :class="`trad__b--${b.id}`"
-          :style="{ '--p': `var(--p${i}, 0px)` }">
-          <template v-if="b.kind === 'header'">
-            <p class="kicker kicker--on-dark">{{ invisible.kicker }}</p>
-            <h2 class="trad__title">{{ invisible.title }}</h2>
-            <blockquote class="trad__quote">
-              <p>{{ invisible.quote }}</p>
-            </blockquote>
-            <p class="trad__intro">{{ invisible.intro }}</p>
-            <p class="trad__gloss">{{ invisible.machineGloss }}</p>
-          </template>
+    <div class="container">
+      <header class="trad__head">
+        <!-- The kicker rides the flipping page ground, so it lives on its own
+             constant plate (the system's mono chip): AA on both grounds at
+             every instant of the tween. -->
+        <p class="trad__kicker">{{ invisible.kicker }}</p>
+        <h2 class="trad__title">
+          {{ title.before
+          }}<span v-if="title.run" class="trad__script">{{ title.run }}</span
+          >{{ title.after }}
+        </h2>
+      </header>
 
-          <!-- THE DETAIL: a section through the site's own build-up. Four
-               material layers, each drawn in its own drafting hatch; probing
-               one swings the leader across to its callout.
-
-               The bands become tabs ONLY once hydrated — with JS off they are
-               an inert drawing and all four callouts stand open in flow, so
-               nobody meets a control that does nothing. The article ids are
-               real, so the markup layer's <article id="…"> depicts a tag we
-               actually ship. -->
-          <template v-else-if="b.kind === 'assembly'">
-            <div class="asm">
-              <div
-                class="asm__stack"
-                :role="live ? 'tablist' : undefined"
-                :aria-label="live ? invisible.feedback.layersLabel : undefined"
-                aria-orientation="vertical"
-                @keydown="live && onLayerKeys($event)"
-              >
-                <!-- Dimension rule down the left edge: extension ticks only,
-                     never a figure — this drawing measures nothing we could
-                     honestly put a number on. -->
-                <span class="asm__dim" aria-hidden="true"></span>
-
-                <component
-                  :is="live ? 'button' : 'div'"
-                  v-for="(item, n) in invisible.items"
-                  :key="item.id"
-                  class="asm__band"
-                  :class="[`asm__band--${n}`, { 'asm__band--on': live && n === layer }]"
-                  :type="live ? 'button' : undefined"
-                  :role="live ? 'tab' : undefined"
-                  :aria-selected="live ? String(n === layer) : undefined"
-                  :aria-controls="live ? `layer-${item.id}` : undefined"
-                  :tabindex="live ? (n === layer ? 0 : -1) : undefined"
-                  @click="live && (layer = n)"
-                >
-                  <span class="asm__fill" aria-hidden="true"></span>
-                  <!-- The cut planes bounding the probed layer: the site's own
-                       motif, red rules with square end ticks, drawn at the
-                       layer's interfaces so they never cross its name. -->
-                  <span class="asm__plane" aria-hidden="true"></span>
-                  <!-- Named in the drawing, expanded in the callout: the shared
-                       word is what ties a layer to the text it opens. -->
-                  <span class="asm__band-label">{{ item.label }}</span>
-                  <!-- Leader terminal. Hollow reads as available, filled as
-                       taken — the drawing's own way of saying "press me". -->
-                  <span class="asm__node" aria-hidden="true"></span>
-                </component>
-
-                <!-- Swings to the probed layer; positioned from --sel alone. -->
-                <span v-if="live" class="asm__leader" aria-hidden="true"></span>
-              </div>
-
-              <div class="asm__callouts">
-                <article
-                  v-for="(item, n) in invisible.items"
-                  :id="item.id"
-                  :key="item.id"
-                  class="asm__callout"
-                  :class="{ 'asm__callout--on': !live || n === layer }"
-                  :role="live ? 'tabpanel' : undefined"
-                  :aria-labelledby="undefined"
-                  :hidden="live && n !== layer"
-                >
-                  <h3 class="asm__label" :id="`layer-${item.id}`">{{ item.label }}</h3>
-                  <p class="asm__detail">{{ item.detail }}</p>
-                </article>
-              </div>
-            </div>
-          </template>
-
-          <template v-else>
-            <p class="trad__outro">{{ invisible.outro }}</p>
-          </template>
-        </div>
-      </div>
-
-      <!-- MARKUP: the same blocks, in the same places, as the tags we emit.
-           Opaque, so below the cut it REPLACES the page rather than joining
-           it. Decorative for assistive tech — the rendered layer already
-           carries every string. The cut line lives in here so it and the clip
-           share one variable AND one coordinate system. -->
-      <div ref="codeLayer" class="trad__code" aria-hidden="true">
-        <div v-for="(b, i) in blocks" :key="b.id" class="trad__b" :class="`trad__b--${b.id}`"
-          :style="{ '--p': `var(--p${i}, 0px)` }">
-          <code
-            v-for="(line, n) in b.code"
-            :key="n"
-            class="emisija trad__line"
-            :data-fact="line.id || undefined"
-            >{{ line.text }}</code
-          >
-        </div>
-        <span class="trad__scan-line"></span>
-      </div>
-
-      <!-- The labels name the section's two states and stay in the static
-           HTML; only the control itself waits for hydration, so JS-off never
-           sees a dead affordance. -->
-      <div class="trad__grip-wrap">
-        <div class="trad__grip-rail">
-          <span class="datum trad__grip-label">{{ invisible.humanLabel }}</span>
+      <div class="trad__set">
+        <!-- The dial: the two states name the slider's ends — machine left
+             (0, all source), human right (100, rendered). -->
+        <div class="trad__dial">
+          <span class="trad__end">{{ invisible.machineLabel }}</span>
           <input
             v-if="live"
-            ref="grip"
+            ref="gripEl"
             class="trad__grip"
             type="range"
             min="0"
             max="100"
             step="1"
-            :value="scanPct"
+            :value="Math.round(scan)"
             :aria-label="invisible.feedback.scanLabel"
             @input="onGrip"
+            @pointerdown="takeOver"
+            @keydown="takeOver"
           />
-          <span class="datum trad__grip-label">{{ invisible.machineLabel }}</span>
+          <span v-else class="trad__grip-ghost" aria-hidden="true"></span>
+          <span class="trad__end">{{ invisible.humanLabel }}</span>
         </div>
+
+        <!-- The screen. The rendered page is the geometry authority (in flow,
+             real content); the source layer is absolute behind it, opaque
+             black, clipped complementarily by the same --scan. -->
+        <div ref="screen" class="trad__screen" :style="live ? { '--scan': String(scan) } : undefined">
+          <div class="trad__made">
+            <blockquote class="trad__quote">
+              <p>{{ invisible.quote }}</p>
+            </blockquote>
+            <p class="trad__intro">{{ invisible.intro }}</p>
+            <div class="trad__rows">
+              <article
+                v-for="(item, n) in invisible.items"
+                :id="item.id"
+                :key="item.id"
+                class="trad__row"
+              >
+                <span class="trad__index" aria-hidden="true">00{{ n + 1 }}</span>
+                <h3 class="trad__row-label">{{ item.label }}</h3>
+                <p class="trad__row-detail">{{ item.detail }}</p>
+              </article>
+            </div>
+            <p class="trad__outro">{{ invisible.outro }}</p>
+          </div>
+
+          <div class="trad__source" aria-hidden="true">
+            <code
+              v-for="(line, n) in sourceLines"
+              :key="n"
+              class="emisija trad__line"
+              :data-fact="line.id || undefined"
+              >{{ line.text }}</code
+            >
+          </div>
+
+          <span class="trad__beam" aria-hidden="true"></span>
+        </div>
+
+        <!-- The legend: why the source half matters. Constant dark strip. -->
+        <p class="trad__legend">{{ invisible.machineGloss }}</p>
       </div>
     </div>
   </section>
 </template>
 
 <style scoped>
+/* Transparent root: the section sits ON the flipping page ground — arriving
+   here is what turns the page dark (ground.ts), and the tween is visible
+   exactly where the visitor is looking. Both instrument panels are constant,
+   so no body copy rides the flip. */
 .trad {
-  position: relative;
-  background: var(--grafit);
-  color: var(--list);
-  /* Asymmetric on purpose: the owner wants the header tight under the top of
-     the band, so the entry padding is roughly half the section rhythm. The
-     markup layer reads BOTH values to cover the padding, so they live as
-     variables rather than in the shorthand alone. */
-  --pad-t: clamp(2.25rem, 1.75rem + 2vw, 3.5rem);
-  --pad-b: var(--section-y);
-  padding-block: var(--pad-t) var(--pad-b);
+  /* Tighter than the standard section frame: the settle wants the whole
+     instrument inside one viewport, and the centre-snap crops padding first —
+     so the padding is the sacrificial zone. */
+  padding-block: var(--space-16);
 }
 
-/* Full-bleed, so the markup layer's ground can reach the screen edges. The
-   rendered layer inside carries the measure. */
-.trad__stage {
-  position: relative;
+/* The settle: a native proximity snap centres the instrument when the scroll
+   comes to rest nearby — never a trap, scrolling straight through is free
+   (scroll-snap-type on html lives in base.css, gated to wide viewports and
+   no-preference; this is the only snap-align on the page). */
+@media (min-width: 1200px) and (prefers-reduced-motion: no-preference) {
+  .trad {
+    scroll-snap-align: center;
+  }
 }
 
-/* The geometry authority; the only child in flow. One column — the header,
-   the four strata flush against each other, the outro. Spacing is per-block
-   margin, so the strata can sit at 0 while the text blocks breathe. */
-.trad__render {
-  position: relative;
-  z-index: 0;
+.trad__head {
+  margin-bottom: var(--space-8);
+}
+
+/* The kicker chip: constant plate (ink fill, paper text 13.9:1) with the
+   constant divider as its edge, so it reads on both page grounds at every
+   instant of the tween. */
+.trad__kicker {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  font-weight: 500;
+  line-height: var(--type-label-lh);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--color-paper);
+  background: var(--color-ink);
+  border: 1px solid var(--divider);
+  padding: var(--space-1) var(--space-2);
+}
+
+/* The one piece of text that rides the flip. Large display type (3:1 floor):
+   its ink SNAPS between the two states mid-tween rather than tweening through
+   the ground's own greys — any continuous ink path crosses the ground and
+   dips below AA; a snap inside the window where BOTH inks clear 3:1 never
+   does. The light ink is pure black (not the brand's #242424) because that
+   DOUBLES the window: measured on the real tween by seeking the --surface
+   transition, black holds ≥3:1 until ~400ms and paper from ~340ms
+   (worst boundary 3.09), so the snap sits at the centre. #242424's window is
+   only [340,360]. Re-measure if --dur-ground / --ease-ground change. */
+.trad__title {
+  /* Centre of the measured both-pass window on the 1000ms ground tween.
+     PAIRED with tokens.css — change the tween, re-measure the window. */
+  --trad-snap: 370ms;
+  margin-top: var(--space-4);
+  font-size: var(--type-display-l-size);
+  font-weight: var(--type-display-l-weight);
+  line-height: var(--type-display-l-lh);
+  letter-spacing: var(--type-display-l-ls);
+  text-transform: uppercase;
+  color: var(--color-black);
+  overflow-wrap: anywhere;
+}
+
+:root[data-ground='dark'] .trad__title {
+  color: var(--color-paper);
+}
+
+/* The snap is a zero-duration transition with a delay. Gated: under reduced
+   motion the ground flip itself is instant (kill-switch), so the title must
+   flip WITH the attribute — a leftover delay would strand dark-on-dark text
+   for half a second. */
+@media (prefers-reduced-motion: no-preference) {
+  .trad__title {
+    transition: color 0ms linear var(--trad-snap);
+  }
+}
+
+/* The script splice: same size, its own face, lowercase against the machined
+   caps, lh 1 / ls 0 (measured convention from the reference). */
+.trad__script {
+  font-family: var(--font-script);
+  text-transform: none;
+  line-height: 1;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+/* --- the instrument --------------------------------------------------------
+   One framed object on the changing page: the frame is the constant divider
+   grey, legible on both grounds, exactly like the reference's unmoving
+   hairlines. */
+.trad__set {
+  border: var(--divider-width) solid var(--divider);
+}
+
+/* The dial strip: constant black bezel. */
+.trad__dial {
   display: grid;
-  gap: 0;
-  max-width: 76rem;
-  margin-inline: auto;
-  padding-inline: var(--gutter);
-  /* Clear the grip rail. Additive to the gutter, not a replacement for it:
-     the rail is measured from the same 76rem box, so the clearance is
-     (gutter + this) - 44px. */
-  padding-right: calc(var(--gutter) + 3rem);
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  column-gap: var(--space-4);
+  row-gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-black);
+  border-bottom: var(--divider-width) solid var(--crta-na-temnem);
 }
 
-/* The markup layer covers the section's own block padding too, so the cut
-   never leaves a seam between the two grounds. `--cut` is a LENGTH into this
-   box, computed per frame; unset (no JS) it falls back to 100% and the whole
-   layer is clipped away, leaving the finished page. */
-.trad__code {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: calc(var(--pad-t) * -1);
-  bottom: calc(var(--pad-b) * -1);
-  z-index: 1;
-  background: var(--grafit-inset);
-  clip-path: inset(var(--cut, 100%) 0 0 0);
+.trad__end {
+  font-family: var(--font-mono);
+  font-size: var(--type-data-size);
+  letter-spacing: var(--type-data-ls);
+  text-transform: uppercase;
+  color: var(--papir-dim); /* 12.5:1 on black */
+  white-space: nowrap;
 }
 
-/* Pinned onto their counterparts by syncCode(), never laid out by a grid.
-   margin: 0 is load-bearing: the block-modifier classes below set layout
-   margins, a margin offsets an absolute box from its `top`, and these blocks
-   share those classes — the outro's margin-top walked its markup 56px off the
-   block it describes (measured). Text stays left-aligned raw code even where
-   the rendered twin centres. */
-.trad__code .trad__b {
-  position: absolute;
+/* A real range input: drag, keyboard (arrows / PgUp / Home / End) and touch
+   all work with ZERO custom touch listeners. 44px hit target; the visible
+   thumb is a 20px square riding a 2px track. */
+.trad__grip {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 44px;
+  min-width: 8rem;
   margin: 0;
-  text-align: left;
+  background: transparent;
+  cursor: ew-resize;
+}
+.trad__grip::-webkit-slider-runnable-track {
+  height: 2px;
+  background: var(--crta-na-temnem);
+}
+.trad__grip::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: -9px;
+  border: 0;
+  border-radius: 0;
+  background: var(--color-cut-dark); /* 6.42:1 on the black bezel */
+}
+.trad__grip::-moz-range-track {
+  height: 2px;
+  background: var(--crta-na-temnem);
+}
+.trad__grip::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 0;
+  background: var(--color-cut-dark);
+}
+.trad__grip:focus-visible {
+  outline: 2px solid var(--color-cut-dark);
+  outline-offset: 4px;
 }
 
-/* Every block carries its own parallax offset, and BOTH layers read the same
-   custom property — a card and its markup can never separate. */
-.trad__b {
-  transform: translateY(var(--p, 0px));
+/* JS-off: the dial keeps its geometry, no dead control appears. */
+.trad__grip-ghost {
+  height: 44px;
+}
+
+/* --- the screen ------------------------------------------------------------ */
+.trad__screen {
+  position: relative;
+  /* The source layer must never bleed past the frame. */
+  overflow: hidden;
+  background: var(--color-black);
+}
+
+/* The rendered page: real content, in flow — it defines the screen's height.
+   Clipped from the RIGHT by the scan (0 = all source, 100 = all page).
+   `var(--scan, 55)` PAIRS with REST in the script block. */
+.trad__made {
+  position: relative;
+  z-index: 1;
+  background: var(--color-paper);
+  padding: clamp(1.25rem, 1rem + 2vw, 2.5rem);
+  clip-path: inset(0 calc((100 - var(--scan, 55)) * 1%) 0 0);
+}
+
+/* The source: the mono twin, opaque black, behind the page — visible exactly
+   where the page is clipped away. Its own padding, its own flow; if the
+   document runs longer than the screen the tail clips, which is why the
+   guard-checked facts stand FIRST. */
+.trad__source {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--color-black);
+  padding: clamp(1.25rem, 1rem + 2vw, 2.5rem);
+  overflow: hidden;
 }
 
 .trad__line {
   display: block;
-  color: var(--papir-dim); /* 8.87:1 on --grafit-inset */
+  color: var(--papir-dim); /* 12.5:1 on black */
+  font-size: 0.8125rem;
   line-height: 1.75;
   overflow-wrap: anywhere;
 }
 
-/* The cut itself: the first visible row of the unclipped region, so it and the
-   clip can never disagree. */
-.trad__scan-line {
+/* The beam: the cut red, 2px, standing on the seam — legible on BOTH panels
+   (5.37:1 on paper, 3.49:1 on black). No glow: depth is drawn, never cast. */
+.trad__beam {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: var(--cut, 100%);
-  height: 2px;
-  background: var(--rez-na-temnem);
-  box-shadow: 0 0 18px 1px var(--rez-na-temnem);
-  opacity: 0;
-  /* A one-shot fade on a boolean class — never fighting the per-frame --cut
-     writes, which stay raw. */
-  transition: opacity 240ms var(--ease-out);
-}
-
-.trad--cutting .trad__scan-line {
+  z-index: 2;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--scan, 55) * 1%);
+  width: 2px;
+  margin-left: -1px;
+  background: var(--color-cut);
   opacity: 1;
+  transition: opacity 240ms var(--ease-spring);
 }
 
-/* --- the centred header ----------------------------------------------------
-   One stack, centred, tight under the band's top edge — every element caps
-   its own measure and centres itself, so the column reads as one plumb line. */
-.trad__render .trad__b--header {
-  text-align: center;
-  margin-bottom: clamp(2.5rem, 2rem + 2.5vw, 4rem);
+/* No split, no beam (fully source / fully rendered). */
+.trad--edge .trad__beam {
+  opacity: 0;
 }
 
-.trad__title {
-  margin-top: 0.6rem;
-  color: var(--list);
-}
-
+/* --- the rendered page's own composition ------------------------------------ */
 .trad__quote {
-  margin-top: 1.1rem;
+  margin: 0;
 }
-
 .trad__quote p {
-  font-family: var(--font-text);
-  font-size: clamp(1.25rem, 1.05rem + 1.1vw, 1.75rem);
-  font-weight: 500;
-  line-height: 1.4;
-  max-width: 36ch;
-  margin-inline: auto;
-  color: var(--list);
+  /* A miniature of the statement role — the full-size statement (3rem) makes
+     the screen taller than any viewport the settle could hold. */
+  font-size: clamp(1.375rem, 1.05rem + 1.3vw, 2.25rem);
+  font-weight: var(--type-statement-weight);
+  letter-spacing: var(--type-statement-ls);
+  text-transform: uppercase;
+  /* The system's statement runs lh 0.9; caps with carons need a shade more
+     air to keep ascenders clear of the line above. */
+  line-height: 1.02;
+  color: var(--color-ink);
+  max-width: 24ch;
 }
 
 .trad__intro {
-  margin-top: 1.1rem;
-  color: var(--papir-dim);
+  margin-top: var(--space-6);
+  color: var(--color-ink-2); /* 8.99:1 on paper */
   max-width: 58ch;
-  margin-inline: auto;
 }
 
-.trad__gloss {
-  margin-top: 0.9rem;
-  font-style: italic;
-  font-size: 0.95rem;
-  color: var(--papir-dim);
-  max-width: 48ch;
-  margin-inline: auto;
+.trad__rows {
+  margin-top: var(--space-8);
+  border-top: var(--divider-width) solid var(--mreza-strong);
 }
 
-/* --- the detail drawing -----------------------------------------------------
-   A section through the site's build-up: four material layers, each in its own
-   drafting hatch, probed one at a time. Depth is DRAWN — fill, line and hatch,
-   never a shadow. Nothing here carries a figure: the honesty contract reserves
-   mono for real machine emissions, and a drawing's numbers would be invented,
-   so the technical register is carried by CONVENTION (hatch, dimension ticks,
-   leader, cut plane) instead. */
-.asm {
-  --asm-gap: clamp(2rem, 6vw, 6rem);
+.trad__row {
   display: grid;
-  gap: 2rem;
+  grid-template-columns: 2rem minmax(0, 14rem) minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: var(--space-4);
+  padding-block: var(--space-3);
+  border-bottom: var(--divider-width) solid var(--mreza-strong);
 }
 
-/* Layers of a real build-up are not equal slabs: a membrane is thin, a
-   substrate is thick. These fractions are what stop the drawing reading as a
-   bar chart — and they are why the leader is MEASURED rather than stepped in
-   quarters. The floor on each band keeps the thinnest above the 44px tap
-   target once the fractions are applied. */
-.asm__stack {
-  position: relative;
-  display: grid;
-  grid-template-rows: 1.4fr 0.72fr 0.95fr 1.95fr;
-  min-height: clamp(20rem, 54vw, 28rem);
-  border: 1px solid var(--crta-na-temnem);
-  /* The leader reaches out of this box. */
-  overflow: visible;
-  margin-left: 1.25rem;
+.trad__index {
+  font-family: var(--font-mono);
+  font-size: var(--type-data-size);
+  letter-spacing: var(--type-data-ls);
+  color: var(--color-ink-2);
 }
 
-/* Dimension rule: extension ticks top and bottom, no figure. */
-.asm__dim {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: -1.25rem;
-  width: 1px;
-  background: var(--crta-na-temnem);
-  pointer-events: none;
-}
-.asm__dim::before,
-.asm__dim::after {
-  content: '';
-  position: absolute;
-  left: -3px;
-  width: 7px;
-  height: 1px;
-  background: var(--crta-na-temnem);
-}
-.asm__dim::before {
-  top: 0;
-}
-.asm__dim::after {
-  bottom: 0;
-}
-
-.asm__band {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 100%;
-  min-height: 44px;
-  padding: 0;
-  margin: 0;
-  border: 0;
-  border-bottom: 1px solid var(--crta-na-temnem);
-  background: none;
-  font: inherit;
-  color: inherit;
-  text-align: left;
-  overflow: hidden;
-}
-
-.asm__band:last-of-type {
-  border-bottom: 0;
-}
-
-/* The interface onto the substrate is the drawing's ground line — heavier, the
-   way a section marks the boundary you build on. */
-.asm__band--3 {
-  border-top: 2px solid var(--crta-na-temnem);
-}
-
-button.asm__band {
-  cursor: pointer;
-}
-
-/* The four materials. Grounds step darker with depth (the dark family's own
-   steps), hatches change CHARACTER rather than only pitch, the way a section
-   distinguishes materials. papir-dim measures 8.87:1 on the lightest of these
-   and only climbs as they darken. */
-.asm__fill {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  transition: opacity var(--t-lift) var(--ease-out);
-  opacity: 0.5;
-}
-
-/* SCALE contrast, not just pitch: a 3px lamination against a 22px poché is
-   what makes two fills read as different MATERIALS rather than the same
-   material drawn twice. */
-
-/* Structure — 45° section hatch. */
-.asm__band--0 {
-  background: var(--grafit-inset);
-}
-.asm__band--0 .asm__fill {
-  background: repeating-linear-gradient(
-    45deg,
-    transparent 0 10px,
-    rgb(245 242 235 / 0.34) 10px 11px
-  );
-}
-
-/* Membrane — a thin laminated sheet, ruled very fine. */
-.asm__band--1 {
-  background: #1e2226;
-}
-.asm__band--1 .asm__fill {
-  background: repeating-linear-gradient(
-    0deg,
-    transparent 0 2px,
-    rgb(245 242 235 / 0.3) 2px 3px
-  );
-}
-
-/* Granular fill — stipple, the drafting convention for loose material. */
-.asm__band--2 {
-  background: #191d21;
-}
-.asm__band--2 .asm__fill {
-  background-image: radial-gradient(rgb(245 242 235 / 0.55) 1px, transparent 1.3px);
-  background-size: 8px 8px;
-}
-
-/* Substrate — coarse cross-hatched poché, the mass everything sits on. */
-.asm__band--3 {
-  background: var(--zemlja);
-}
-.asm__band--3 .asm__fill {
-  background:
-    repeating-linear-gradient(45deg, transparent 0 21px, rgb(245 242 235 / 0.26) 21px 23px),
-    repeating-linear-gradient(-45deg, transparent 0 21px, rgb(245 242 235 / 0.26) 21px 23px);
-}
-
-button.asm__band:hover .asm__fill,
-.asm__band--on .asm__fill {
-  opacity: 1;
-}
-
-/* --- naming and the terminal ------------------------------------------------
-   The band names its layer and the callout expands it; that shared word is the
-   link between the drawing and the text. The terminal is the affordance —
-   hollow means available, filled means probed. */
-.asm__band-label {
-  position: relative;
-  z-index: 1;
-  padding: 0.5rem 2.9rem 0.5rem clamp(0.9rem, 3vw, 1.4rem);
-  font-family: var(--font-display);
-  font-stretch: var(--wdth-datum);
+.trad__row-label {
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
   font-weight: 500;
-  font-size: var(--fs-kicker);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--papir-dim); /* >= 8.87:1 on every band ground */
-  transition: color var(--t-lift) var(--ease-out);
+  line-height: 1.25;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--color-ink);
 }
 
-.asm__band--on .asm__band-label,
-button.asm__band:hover .asm__band-label {
-  color: var(--list);
-}
-
-.asm__node {
-  position: absolute;
-  z-index: 1;
-  right: clamp(0.9rem, 3vw, 1.4rem);
-  top: 50%;
-  width: 9px;
-  height: 9px;
-  margin-top: -4.5px;
-  border: 1px solid var(--papir-dim);
-  transition:
-    background var(--t-lift) var(--ease-out),
-    border-color var(--t-lift) var(--ease-out);
-}
-
-button.asm__band:hover .asm__node {
-  border-color: var(--list);
-}
-
-.asm__band--on .asm__node {
-  background: var(--rez-na-temnem);
-  border-color: var(--rez-na-temnem);
-}
-
-/* The cut planes BOUNDING the probed layer — drawn at its two interfaces, so
-   they mark the layer without crossing its name. Square end ticks at the left,
-   the site's own cut motif. */
-.asm__plane {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  border-top: 2px solid var(--rez-na-temnem);
-  border-bottom: 2px solid var(--rez-na-temnem);
-  opacity: 0;
-  transition: opacity var(--t-lift) var(--ease-out);
-  pointer-events: none;
-}
-.asm__plane::before,
-.asm__plane::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  width: 8px;
-  height: 8px;
-  background: var(--rez-na-temnem);
-}
-.asm__plane::before {
-  top: 0;
-}
-.asm__plane::after {
-  bottom: 0;
-}
-
-.asm__band--on .asm__plane {
-  opacity: 1;
-}
-
-/* Aimed by placeLeader() at the probed band's measured centre — the layers
-   have different thicknesses, so there is no index arithmetic that would do. */
-.asm__leader {
-  position: absolute;
-  left: 100%;
-  width: var(--asm-gap);
-  height: 1px;
-  top: var(--lead-y, 50%);
-  background: var(--rez-na-temnem);
-  transition: top 380ms var(--ease-out);
-  pointer-events: none;
-  display: none;
-}
-.asm__leader::before {
-  content: '';
-  position: absolute;
-  left: -4px;
-  top: -3px;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--rez-na-temnem);
-}
-
-/* --- the callout ----------------------------------------------------------- */
-.asm__callout[hidden] {
-  display: none;
-}
-
-/* Only genuinely adjacent VISIBLE callouts are spaced — the JS-off case where
-   all four stand open. `+` still matches across `display:none` siblings, so
-   the plain selector gave the one visible panel a phantom top margin whose
-   presence depended on which band was probed (measured). */
-.asm__callout:not([hidden]) + .asm__callout:not([hidden]) {
-  margin-top: 1.75rem;
-}
-
-/* Phones lose the leader, so the link becomes proximity plus this rule in the
-   same red as the probed layer's cut planes directly above it. */
-@media (max-width: 899.98px) {
-  .asm__callouts {
-    border-top: 2px solid var(--rez-na-temnem);
-    padding-top: 1.35rem;
-  }
-}
-
-.asm__label {
-  font-family: var(--font-display);
-  font-stretch: var(--wdth-datum);
-  font-weight: 500;
-  font-size: clamp(1.35rem, 1rem + 1.8vw, 2.15rem);
-  line-height: 1.1;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: var(--list);
-  padding-bottom: 0.7rem;
-  border-bottom: 1px solid var(--crta-na-temnem);
-}
-
-.asm__detail {
-  margin-top: 0.9rem;
-  font-size: 1rem;
-  color: var(--papir-dim);
-  max-width: 46ch;
-}
-
-/* --- the outro -------------------------------------------------------------- */
-.trad__render .trad__b--outro {
-  margin-top: clamp(2.25rem, 1.75rem + 2vw, 3.5rem);
-  text-align: center;
+.trad__row-detail {
+  color: var(--color-ink-2);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  max-width: 44ch;
 }
 
 .trad__outro {
-  font-size: var(--fs-lead);
-  color: var(--list);
+  margin-top: var(--space-8);
+  color: var(--color-ink);
+  font-weight: 500;
   max-width: 50ch;
-  margin-inline: auto;
 }
 
-/* --- the control ------------------------------------------------------------
-   A real range input, so dragging, the keyboard and touch all work without a
-   single touch listener — and none of the iOS non-passive-touchmove traps
-   apply. The rail runs the section's height but the control STICKS to the
-   viewport inside it: a full-height vertical range would own its gesture down
-   the entire right edge, which on a phone is hundreds of pixels where a swipe
-   moves the cut instead of scrolling. */
-/* Constrained to the SAME measure as the rendered layer. The stage is
-   full-bleed now, so anchoring the rail to the stage's own right edge would
-   strand it at the viewport edge on any screen wider than the measure. */
-.trad__grip-wrap {
-  position: absolute;
-  inset: 0;
-  max-width: 76rem;
-  margin-inline: auto;
-  z-index: 5;
-  pointer-events: none;
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-end;
-}
-
-.trad__grip-rail {
-  position: sticky;
-  top: 22vh;
-  height: 56vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  pointer-events: auto;
-}
-
-/* The thumb rides WITH the line: min (0, line at the screen top) at the
-   rail's top, max (100, line at the bottom) at its bottom — so dragging down
-   moves the cut down, one vector, no translation in the reader's head. The
-   previous `direction: rtl` reversed exactly this and made the control read
-   backwards (the owner caught it). */
-.trad__grip {
-  flex: 1;
-  writing-mode: vertical-lr;
-  width: 44px;
-  background: transparent;
-  cursor: ns-resize;
-  accent-color: var(--rez-na-temnem);
-}
-
-.trad__grip:focus-visible {
-  outline: 2px solid var(--rez-na-temnem);
-  outline-offset: 2px;
-}
-
-.trad__grip-label {
+/* --- the legend -------------------------------------------------------------- */
+.trad__legend {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-black);
+  border-top: var(--divider-width) solid var(--crta-na-temnem);
   color: var(--papir-dim);
-  writing-mode: vertical-rl;
+  font-size: 0.875rem;
+  max-width: none;
 }
 
-@media (min-width: 900px) {
-  .trad__render {
-    padding-right: calc(var(--gutter) + 0.5rem);
+/* --- desktop: the page under the beam is a real desktop composition ---------
+   The system's dominant split: statement + intro on the left, the ruled rows
+   on the right. This is also what lets the whole instrument fit a ~900px
+   viewport for the settle. */
+@media (min-width: 1200px) {
+  .trad__made {
+    display: grid;
+    grid-template-columns: minmax(0, 30fr) minmax(0, 68fr);
+    /* Explicit areas — auto-placement would stagger the two columns. */
+    grid-template-areas:
+      'quote rows'
+      'intro rows'
+      'intro outro';
+    column-gap: var(--space-8);
+    align-items: start;
+    align-content: start;
   }
-
-  /* Drawing left, callout right, the leader crossing the gap between them. */
-  .asm {
-    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-    column-gap: var(--asm-gap);
-    align-items: center;
+  .trad__made > .trad__quote {
+    grid-area: quote;
   }
-
-  .asm__leader {
-    display: block;
+  .trad__made > .trad__intro {
+    grid-area: intro;
+    align-self: start;
   }
+  .trad__made > .trad__rows {
+    grid-area: rows;
+  }
+  .trad__made > .trad__outro {
+    grid-area: outro;
+  }
+  .trad__rows {
+    margin-top: 0;
+  }
+  .trad__row {
+    grid-template-columns: 2rem minmax(0, 15rem) minmax(0, 1fr);
+  }
+}
 
-  /* The panel swaps content on selection; reserving the tallest keeps the
-     drawing from jumping as the leader swings. */
-  .asm__callouts {
-    min-height: 11rem;
+/* --- phone (system breakpoint) ----------------------------------------------
+   The section exceeds the viewport here by design: normal flow, no settle,
+   the sweep still fires on intersection. The dial re-stacks deterministically:
+   labels row, then the full-width control. */
+@media (max-width: 809px) {
+  .trad__dial {
+    grid-template-columns: 1fr auto;
+  }
+  .trad__grip {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    min-width: 0;
+  }
+  .trad__end:last-of-type {
+    justify-self: end;
+  }
+  .trad__row {
+    grid-template-columns: 2rem minmax(0, 1fr);
+    row-gap: var(--space-1);
+  }
+  .trad__row-detail {
+    grid-column: 2;
   }
 }
 </style>

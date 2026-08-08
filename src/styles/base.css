@@ -112,6 +112,17 @@ textarea {
   outline-color: var(--rez-na-temnem);
 }
 
+/* The settle for the Tradicija instrument (its snap-align lives in the
+   component): a PROXIMITY snap only — the scroll rests where the user leaves
+   it unless it stops near the one aligned section, and scrolling straight
+   through costs nothing. Gated off narrow viewports (the section exceeds
+   them by design) and off reduced motion (the brief: no settle there). */
+@media (min-width: 1200px) and (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-snap-type: y proximity;
+  }
+}
+
 /* Anchor targets clear the masthead. On phones it is FIXED and appears once
    the hero's wordmark has left, so by the time any in-page link is followed
    the bar is showing and the target must clear its ~52px. */

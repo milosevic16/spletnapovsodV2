@@ -50,12 +50,12 @@
 @property --surface {
   syntax: '<color>';
   inherits: true;
-  initial-value: #ffffff;
+  initial-value: #f5f2eb;
 }
 @property --surface-soft {
   syntax: '<color>';
   inherits: true;
-  initial-value: #fdfdfd;
+  initial-value: #ece8de;
 }
 @property --ink {
   syntax: '<color>';
@@ -70,38 +70,54 @@
 @property --ghost {
   syntax: '<color>';
   inherits: true;
-  initial-value: #e0e0e0;
+  initial-value: #d9d3c6;
+}
+@property --accent {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #b03b22;
 }
 
 :root {
   /* -------------------------------------------------------------------------
-     CORE PALETTE — eight greys, zero hue. Contrast (WCAG, measured in-page
-     from computed styles; the reference's composite-ground numbers — flat
-     colour × the 10% noise layer — are in background.md and sit slightly
-     lower, all still passing):
-       ink #242424 on #ffffff 15.52:1 · on #fdfdfd 15.2:1
-       ink-2 #424242 on #ffffff 10.05:1 · on #fdfdfd 9.88:1
-       white on #000000 21:1 · grey-light #e0e0e0 on #000 15.91:1
-       muted #9e9e9e on #000 7.84:1 · on #242424 5.79:1
-       white on ink #242424 15.52:1 (chip/CTA fills)
+     CORE PALETTE. The owner relaxed the reference's zero-hue rule (avgust
+     2026): the site keeps its own warm drafting paper as the light world and
+     ONE red as the accent — each with named jobs, never sprinkled. Everything
+     else is the reference's greys. Contrast (WCAG, measured in-page from
+     computed styles; ratios re-verified whenever these values move):
+       ink #242424 on paper #f5f2eb 13.9:1 · on paper-2 #ece8de 13.1:1
+       ink-2 #424242 on paper 8.99:1
+       paper on #000000 18.8:1 · on ink #242424 13.9:1
+       muted #9e9e9e on #000 7.84:1 · on #242424 5.79:1 — line duty on paper
+       cut #b03b22 text on paper 5.37:1 · white on cut 6.01:1
+       cut-dark #e4694a on #000 6.42:1 · on ink #242424 4.72:1
      ---------------------------------------------------------------------- */
-  --color-white: #ffffff; /* light surface; ink on dark */
-  --color-white-soft: #fdfdfd; /* second light surface */
+  --color-paper: #f5f2eb; /* the light surface — warm drafting paper */
+  --color-paper-2: #ece8de; /* second light surface, one step darker */
+  --color-white: #ffffff; /* pure white: text on cut/ink fills */
   --color-black: #000000; /* dark surface */
   --color-ink: #242424; /* primary ink on light; selected fills; chip/pill bg */
   --color-ink-2: #424242; /* secondary ink on light; statement ghost on dark */
-  --color-grey: #9e9e9e; /* muted text both themes; dividers — does NOT flip */
-  --color-grey-light: #e0e0e0; /* text on dark; statement ghost on light */
+  --color-grey: #9e9e9e; /* dividers both themes — does NOT flip; never text on paper */
+  --color-grey-light: #e0e0e0; /* neutral light grey (chips, on-dark text where warmth is wrong) */
   --color-chip-idle: #999999; /* budget chip idle text on dark form */
   --color-input-line: #767676; /* form input rule (2px) */
 
+  /* The accent — the cut red. JOBS: the scanline/beam, the slider thumb,
+     the pd mark, the primary CTA, focus rings. Never a status colour, never
+     sprinkled. */
+  --color-cut: #b03b22; /* on light grounds */
+  --color-cut-deep: #93301b; /* pressed/hover step; white on it 7.84:1 */
+  --color-cut-dark: #e4694a; /* the cut's voice on dark grounds */
+
   /* Role tokens — the LIGHT state; [data-ground='dark'] below swaps them.
      Registered above so the swap tweens. */
-  --surface: var(--color-white);
-  --surface-soft: var(--color-white-soft);
+  --surface: var(--color-paper);
+  --surface-soft: var(--color-paper-2);
   --ink: var(--color-ink);
   --ink-2: var(--color-ink-2);
-  --ghost: var(--color-grey-light); /* under-layer of scroll-filled statements */
+  --ghost: #d9d3c6; /* under-layer of scroll-filled statements (paper-dark step) */
+  --accent: var(--color-cut);
   --muted: var(--color-grey); /* constant through the flip */
   --divider: var(--color-grey); /* constant through the flip */
 
@@ -255,17 +271,19 @@
     --surface-soft var(--dur-ground) var(--ease-ground),
     --ink var(--dur-ground) var(--ease-ground),
     --ink-2 var(--dur-ground) var(--ease-ground),
-    --ghost var(--dur-ground) var(--ease-ground);
+    --ghost var(--dur-ground) var(--ease-ground),
+    --accent var(--dur-ground) var(--ease-ground);
 }
 
 :root[data-ground='dark'] {
   --surface: var(--color-black);
   --surface-soft: var(--color-black);
-  --ink: var(--color-white);
-  --ink-2: var(--color-grey-light);
+  --ink: var(--color-paper); /* text on dark is the paper — the warm world inverts whole */
+  --ink-2: #c6c9c3; /* secondary on dark (papir-dim); 12.5:1 on #000 */
   --ghost: var(--color-ink-2);
+  --accent: var(--color-cut-dark);
   /* --muted and --divider deliberately unchanged: #9e9e9e reads on both
-     grounds (7.35:1 on #000) — the reference leaves them still, which is part
+     grounds (7.84:1 on #000) — the reference leaves them still, which is part
      of why the flip costs nothing. */
 }
 
@@ -306,33 +324,35 @@
    their own redesigns. Every line here is scheduled for deletion with the
    section that consumes it; nothing new may consume these names.
 
-   Mapping intent: paper world → white surfaces; graphite ink → #242424;
-   the poché/earth dark bands → ink/black; THE RED IS PROVISIONALLY RETIRED
-   (--rez → ink): the system is zero-hue. The pd mark's discs go ink-filled —
-   the veil's literals (index.html) match. Owner call to bring one hue back:
-   change --rez here + the veil's two disc fills.
+   Mapping intent (owner call, avgust 2026 — colour rules relaxed): the warm
+   paper family and the red accent RETURN as the system's own light world and
+   cut; the dark bands sit on the new black-based world with the ink #242424
+   as the poché step. The pd mark's discs are red again — the veil's literals
+   (index.html) match.
 
    Interim contrast (measured in-page from computed styles):
-     text --grafit #242424 on --list #fff 15.52:1 · on --list-2 #fdfdfd 15.2:1
-     --grafit-2 #424242 on #fff 10.05:1 · on #fdfdfd 9.88:1
-     --list #fff on --grafit #242424 15.52:1 · on --zemlja #000 21:1
-     --papir-dim #e0e0e0 on #242424 11.76:1 · on #424242 7.61:1 · on #000 15.91:1
+     text --grafit #242424 on --list paper 13.9:1 · on --list-2 13.1:1
+     --grafit-2 #424242 on paper 8.99:1
+     --list paper on --grafit #242424 13.9:1 · on --zemlja #000 18.8:1
+     --papir-dim #c6c9c3 on #242424 10.4:1 · on #24282c 10.9:1 · on #000 12.5:1
+     --rez #b03b22 on paper 5.37:1 · white on it 6.01:1
+     --rez-na-temnem #e4694a on #000 6.42:1 · on #242424 4.72:1
      status: #8fc7a6 on #242424 8.05:1 · #f0a48a on #242424 7.67:1
 --------------------------------------------------------------------------- */
 :root {
-  --list: var(--color-white);
-  --list-2: var(--color-white-soft);
-  --mreza: var(--color-grey-light); /* hairlines on light — line duty */
-  --mreza-strong: var(--color-grey); /* emphasized rules — line duty */
+  --list: var(--color-paper);
+  --list-2: var(--color-paper-2);
+  --mreza: #d9d3c6; /* paper hairlines — line duty, never text */
+  --mreza-strong: #b3ac9c; /* emphasized rules — line duty */
   --grafit: var(--color-ink); /* ink; and the poché bands' ground */
   --grafit-2: var(--color-ink-2);
-  --grafit-inset: var(--color-ink-2); /* inset on the poché, one step lighter */
-  --crta-na-temnem: var(--color-ink-2); /* dark-world hairline — line duty */
-  --papir-dim: var(--color-grey-light); /* secondary text on dark */
-  --rez: var(--color-ink); /* the accent, retired to ink (see above) */
-  --rez-deep: var(--color-black); /* pressed/hover step */
-  --rez-na-temnem: var(--color-white); /* accent + focus voice on dark */
-  --rez-vodni: var(--color-white-soft); /* quiet wash ground */
+  --grafit-inset: #24282c; /* inset on the poché, one step lighter */
+  --crta-na-temnem: #414a50; /* dark-world hairline — line duty */
+  --papir-dim: #c6c9c3; /* secondary text on dark */
+  --rez: var(--color-cut); /* the accent is back — see the core palette */
+  --rez-deep: var(--color-cut-deep); /* pressed/hover step */
+  --rez-na-temnem: var(--color-cut-dark); /* accent + focus voice on dark */
+  --rez-vodni: #f4eae6; /* quiet wash ground; ink on it 13.5:1 */
   --zemlja: var(--color-black); /* contact + footer ground */
   --zemlja-2: var(--color-ink); /* insets on dark go lighter */
   --ok-na-temnem: #8fc7a6; /* form success on dark — functional, kept until the
