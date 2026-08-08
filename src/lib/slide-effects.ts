@@ -73,7 +73,7 @@ const rnd = (a: number, b: number) => a + Math.random() * (b - a)
    here as live elements in the blanked spots, so they exist exactly once.
    The intro line's text, size, color and tracking mirror the measured
    computed style (25px on the 1240px-wide crop, rgb(159,159,159), −0.0525em);
-   the site sets it in IBM Plex Mono — our Chivo Mono stands in, the closest
+   the site sets it in IBM Plex Mono — our mono face stands in, the closest
    face this project ships.
 --------------------------------------------------------------------------- */
 const LEMUR_TEXT = 'Your terminal to the legal world:'

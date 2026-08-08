@@ -23,13 +23,16 @@ export default defineConfig({
     // PER-FAMILY, not a shared array. fontaine emits one fallback face per
     // (source face × fallback) under ONE family name with no unicode-range, so
     // the LAST entry wins for every family alike — an array can only ever pair
-    // correctly with one of them. Measured on the array form: Chivo Mono won
-    // Arial at size-adjust 134.6%, i.e. the mono register would have rendered
-    // Arial glyphs during the swap. The object form pairs them honestly.
+    // correctly with one of them. Measured on the array form (previous font
+    // set): the mono won Arial at size-adjust 134.6%, i.e. the mono register
+    // would have rendered Arial glyphs during the swap. The object form pairs
+    // them honestly. Inspiration (the script splice) is deliberately absent:
+    // no local base can metric-match a script face — pages that splice glyphs
+    // preload its subset instead of pretending a fallback exists.
     FontaineTransform.vite({
       fallbacks: {
-        'Instrument Sans Variable': ['Arial'],
-        'Chivo Mono': ['Courier New'],
+        Geist: ['Arial'],
+        'Geist Mono': ['Courier New'],
       },
       resolvePath: (id) => new URL(`./public${id}`, import.meta.url),
     }),

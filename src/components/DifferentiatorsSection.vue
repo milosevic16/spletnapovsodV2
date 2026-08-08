@@ -33,8 +33,13 @@ import PrerezLine from './PrerezLine.vue'
 </template>
 
 <style scoped>
+/* PINNED light for now: this band sits directly below the Tradicija section,
+   so it is on screen while the page-wide ground switch (tokens.css) is dark —
+   without the pin its legacy ink text would land on the flipped dark root.
+   The pin comes off when the section joins the flip in its own redesign. */
 .diffs {
   padding-block: var(--section-y);
+  background: var(--list);
 }
 
 .diffs__title {

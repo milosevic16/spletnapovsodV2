@@ -23,7 +23,7 @@ const props = defineProps<{
   ticks?: string[]
   /**
    * The annotation is a literal machine emission (an emitted head line, a URL)
-   * rather than a claim. Honesty contract: emissions render in Chivo Mono and
+   * rather than a claim. Honesty contract: emissions render in the mono face and
    * VERBATIM — never case-transformed, because the bytes are the point.
    * Claims stay in the Archivo Narrow caps register.
    */

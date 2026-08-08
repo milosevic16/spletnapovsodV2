@@ -19,11 +19,13 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
-/* html AND body carry the SHEET colour: iOS Safari paints the status-bar strip
-   and overscroll by SAMPLING the page background, not the theme-color meta. */
+/* html AND body carry the GROUND: iOS Safari paints the status-bar strip
+   and overscroll by SAMPLING the page background, not the theme-color meta.
+   --surface is a registered <color> token transitioned on :root (tokens.css),
+   so the page-wide light→dark ground change tweens here too. */
 html,
 body {
-  background: var(--list);
+  background: var(--surface);
 }
 
 body {
@@ -37,7 +39,7 @@ body {
 }
 
 #app {
-  background: var(--list);
+  background: var(--surface);
 }
 
 /* Display: the grotesque at its natural width, medium weight, TIGHT tracking —
@@ -124,8 +126,12 @@ textarea {
 
 /* --- shared utilities ---------------------------------------------------- */
 
+/* The system container: full-bleed sections, content = viewport − 2 × gutter
+   (1312 at 1440 / 770 at 834 / 350 at 390 — exact at the reference's three
+   breakpoints), clamped at --container per the package demo so >1440 screens
+   don't run unbounded measures. */
 .container {
-  max-width: 72rem;
+  max-width: calc(var(--container) + 2 * var(--gutter));
   margin-inline: auto;
   padding-inline: var(--gutter);
 }
@@ -195,6 +201,72 @@ textarea {
 }
 .skip-link:focus-visible {
   transform: none;
+}
+
+/* --- the grain ------------------------------------------------------------ */
+/* One noise layer over EVERYTHING — the reference floats a fixed 400×225
+   video at opacity 0.1 ABOVE all content; that single fact (grain over the
+   photographs too, not behind them) is what welds imagery and surface into
+   one material. Stand-in: an feTurbulence tile (--noise-tile, tokens.css)
+   jittered by a discrete transform loop — compositor-only, ~3.6 jumps/s,
+   matching the measured temporal cadence (|Δ| ≈ 1.1 luma / 280ms).
+
+   The element is oversized ±320px so every jitter offset (all within ±320)
+   keeps full coverage. z-index sits above all page content and below the
+   intro veil (index.html, z 9999). NOTE: the native <dialog> phone menu
+   escapes to the top layer, above this — accepted until the masthead
+   redesign replaces it with the system's fixed z-10 panel.
+
+   The element lives in App.vue's template (static, aria-hidden) — no JS
+   creates it, so the ground reads the same with JS off. Under
+   prefers-reduced-motion the kill-switch below freezes the jitter: static
+   grain is the documented approximation (background.md). Contrast through
+   the layer is measured, not assumed: composite light ground vs ink
+   12.9:1, dark vs white 19.7:1 (background.md). */
+.grain {
+  position: fixed;
+  top: -320px;
+  left: -320px;
+  width: calc(100vw + 640px);
+  height: calc(100vh + 640px);
+  z-index: 9000;
+  pointer-events: none;
+  opacity: var(--noise-opacity);
+  background-image: var(--noise-tile);
+  background-size: 300px 300px;
+  animation: grain-jitter 2.2s steps(1, end) infinite;
+}
+
+/* Eight discrete positions — steps(1, end) holds each segment's start value,
+   so the texture JUMPS between frames (TV static), never slides. */
+@keyframes grain-jitter {
+  0% {
+    transform: translate(0, 0);
+  }
+  12.5% {
+    transform: translate(-140px, 60px);
+  }
+  25% {
+    transform: translate(80px, -190px);
+  }
+  37.5% {
+    transform: translate(-220px, -120px);
+  }
+  50% {
+    transform: translate(160px, 140px);
+  }
+  62.5% {
+    transform: translate(-60px, -260px);
+  }
+  75% {
+    transform: translate(240px, -40px);
+  }
+  87.5% {
+    transform: translate(-180px, 200px);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
 }
 
 /* --- the arrival settle -------------------------------------------------- */

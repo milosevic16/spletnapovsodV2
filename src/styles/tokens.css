@@ -1,16 +1,23 @@
 /* ---------------------------------------------------------------------------
-   REZ 1:1 — design tokens. Every color has a named job; every ratio below was
-   computed numerically (scripts kept in session scratchpad, re-runnable).
-   AA floors: 4.5:1 text, 3:1 large text/UI — measured against the DARKEST
-   surface each token can sit on.
+   DESIGN TOKENS — the extracted "designsystem1" system (docs + measured values
+   in the design package; provenance: computed-style dumps at 1440/834/390 +
+   bundle grep of the reference site). Adapted for this site:
 
-   The world: drafting paper, graphite line, solid poché, 45° section hatch,
-   red pencil. Depth is DRAWN (line weight, hatch, poché) — zero drop shadows
-   anywhere on the site.
+   - px sizes are expressed in rem (÷16) so user font-size prefs still scale
+     the page; the values are identical at default UA settings and each token
+     names its px source.
+   - The container follows the package's own demo: content clamps at
+     --container (1312) instead of growing unbounded on >1440 screens. The
+     strict extraction has no max-width — flip by removing the .container
+     max-width in base.css if the unbounded reading is wanted.
 
-   SCALE AND RHYTHM ARE THE APPROVED LAYOUT'S — sizes, spacing and timings
-   below are carried over unchanged so the REZ skin never moves the layout.
-   Only color, type family and line treatment are the redesign's.
+   THE TWO-STATE GROUND: the whole page is a Light/Dark system. Role tokens
+   (--surface/--ink/…) are REGISTERED <color> properties transitioned on :root,
+   so when [data-ground='dark'] lands on <html> every consumer tweens together
+   — one page-wide wallpaper change, per the reference (~1s critically damped
+   spring; CSS stand-in bezier below). What deliberately does NOT flip: --muted
+   and --divider (#9e9e9e reads on both grounds), the noise layer, body's
+   underlying paint. Trigger mechanism: src/lib/ground.ts.
 --------------------------------------------------------------------------- */
 
 /* The work stage's adaptive ground — each project's own darkest sampled ink.
@@ -37,87 +44,338 @@
   initial-value: 0;
 }
 
+/* The flip tokens. Registered <color> so the VALUE interpolates and every
+   consumer re-resolves per frame during the ground change (same mechanism as
+   --stage, proven there). initial-value = the light state. */
+@property --surface {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #ffffff;
+}
+@property --surface-soft {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #fdfdfd;
+}
+@property --ink {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #242424;
+}
+@property --ink-2 {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #424242;
+}
+@property --ghost {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #e0e0e0;
+}
+
 :root {
-  /* The sheet (the human layer) */
-  --list: #f5f2eb; /* drafting-paper page ground; grafit on it 15.29:1 */
-  --list-2: #ece8de; /* one step darker — alternating bands, card fills; grafit 13.97:1, grafit-2 6.16:1 */
-  --mreza: #d9d3c6; /* sheet frames, drawing hairlines (1.33:1 vs list — line duty, never text) */
-  --mreza-strong: #b3ac9c; /* emphasized rules (2.02:1 vs list — line duty, never text) */
-  --grafit: #1a1c1e; /* ink: all text; and poché — the solid fill of cut matter */
-  --grafit-2: #50555a; /* secondary text; 6.74:1 list, 6.16:1 list-2 */
+  /* -------------------------------------------------------------------------
+     CORE PALETTE — eight greys, zero hue. Contrast (WCAG, measured in-page
+     from computed styles; the reference's composite-ground numbers — flat
+     colour × the 10% noise layer — are in background.md and sit slightly
+     lower, all still passing):
+       ink #242424 on #ffffff 15.52:1 · on #fdfdfd 15.2:1
+       ink-2 #424242 on #ffffff 10.05:1 · on #fdfdfd 9.88:1
+       white on #000000 21:1 · grey-light #e0e0e0 on #000 15.91:1
+       muted #9e9e9e on #000 7.84:1 · on #242424 5.79:1
+       white on ink #242424 15.52:1 (chip/CTA fills)
+     ---------------------------------------------------------------------- */
+  --color-white: #ffffff; /* light surface; ink on dark */
+  --color-white-soft: #fdfdfd; /* second light surface */
+  --color-black: #000000; /* dark surface */
+  --color-ink: #242424; /* primary ink on light; selected fills; chip/pill bg */
+  --color-ink-2: #424242; /* secondary ink on light; statement ghost on dark */
+  --color-grey: #9e9e9e; /* muted text both themes; dividers — does NOT flip */
+  --color-grey-light: #e0e0e0; /* text on dark; statement ghost on light */
+  --color-chip-idle: #999999; /* budget chip idle text on dark form */
+  --color-input-line: #767676; /* form input rule (2px) */
 
-  /* The machine layer (poché bands: masthead, x-ray, card under-edges) */
-  --grafit-inset: #24282c; /* inset ON the poché, one step lighter (1.15:1 — border defines it); list 13.28:1, papir-dim 8.87:1 */
-  --crta-na-temnem: #414a50; /* the dark world's hairline (line duty only, never text) */
-  --papir-dim: #c6c9c3; /* secondary text on dark; 10.21:1 grafit, 10.75:1 zemlja, 9.33:1 zemlja-2 */
+  /* Role tokens — the LIGHT state; [data-ground='dark'] below swaps them.
+     Registered above so the swap tweens. */
+  --surface: var(--color-white);
+  --surface-soft: var(--color-white-soft);
+  --ink: var(--color-ink);
+  --ink-2: var(--color-ink-2);
+  --ghost: var(--color-grey-light); /* under-layer of scroll-filled statements */
+  --muted: var(--color-grey); /* constant through the flip */
+  --divider: var(--color-grey); /* constant through the flip */
 
-  /* The cut (one red, never sprinkled, never a status color) */
-  --rez: #b03b22; /* THE cut: cut lines, marks, focus, primary CTA; text 5.37:1 list / 4.91:1 list-2 / 5.08:1 vodni; white on it 6.01:1 */
-  --rez-deep: #93301b; /* pressed/hover step; white on it 7.84:1 */
-  --rez-na-temnem: #e4694a; /* the cut's voice on dark; 5.22:1 grafit, 5.50:1 zemlja, 4.78:1 zemlja-2 */
-  --rez-vodni: #f4eae6; /* quiet wash — open disclosure ground; grafit on it 14.45:1, grafit-2 6.37:1 */
+  /* The ground change: ~0.8s perceptual, rest ~1.0–1.1s, critically damped,
+     no overshoot (measured). CSS stand-in per background.md. */
+  --dur-ground: 1000ms;
+  --ease-ground: cubic-bezier(0.45, 0, 0.15, 1);
 
-  /* Below grade (the closing bands: contact + footer) */
-  --zemlja: #14171a; /* the earth; list on it 16.09:1 */
-  --zemlja-2: #1f242a; /* insets on dark go lighter; list 13.97:1, papir-dim 9.33:1 */
+  /* -------------------------------------------------------------------------
+     TYPE — Geist (display/UI/body), Geist Mono (labels/data), Inspiration
+     (script glyphs spliced INSIDE display words — editorial, once per heading,
+     never the first glyph, never in body/labels/mono). Weights in use: 400 &
+     500 only — hierarchy is scale, not boldness.
+     ---------------------------------------------------------------------- */
+  --font-sans: 'Geist', 'Geist fallback', Arial, sans-serif;
+  --font-mono: 'Geist Mono', 'Geist Mono fallback', 'Courier New', monospace;
+  --font-script: 'Inspiration', cursive;
 
-  /* Status (functional only — never brand accents; icon + text always) */
-  --ok-na-temnem: #8fc7a6; /* form success on zemlja-2: 8.10:1 */
-  --err-na-temnem: #f0a48a; /* form error on zemlja-2: 7.72:1 — rust, deliberately NOT --rez */
+  /* display XL — hero wordmark (h1). 164 / 132 / 80 px per breakpoint */
+  --type-display-xl-size: 10.25rem; /* 164px */
+  --type-display-xl-weight: 400;
+  --type-display-xl-lh: 0.8; /* spliced script glyphs sit at lh 1, ls 0 */
+  --type-display-xl-ls: -0.02em;
 
-  /* Type — ONE grotesque for display, body and labels alike, plus the machine
-     voice. The "<family> fallback" entries are fontaine's generated
-     metric-matched faces (size-adjust/ascent/descent over the local base) —
-     they MUST be named in the stack or the swap reflows the page. */
-  --font-display: 'Instrument Sans Variable', 'Instrument Sans Variable fallback', Arial, sans-serif;
-  --font-text: 'Instrument Sans Variable', 'Instrument Sans Variable fallback', Arial, sans-serif;
-  --font-mono: 'Chivo Mono', 'Chivo Mono fallback', 'Courier New', monospace;
+  /* display L — section titles. 96 / 80 / 48 px; ls −0.03em (−0.02 contact) */
+  --type-display-l-size: 6rem; /* 96px */
+  --type-display-l-weight: 400;
+  --type-display-l-lh: 0.8;
+  --type-display-l-ls: -0.03em;
 
-  /* Width-axis stops (font-stretch %). Display sits at the family's NATURAL
-     width: its monumentality is scale and tight tracking, never a stretched
-     face — a wide light display face was what read as childish. Only the
-     instrument register narrows, and only to 82 (the axis floors at 75). */
+  /* statement — the scroll-filled paragraphs. 48 / 32 / 24 px */
+  --type-statement-size: 3rem; /* 48px */
+  --type-statement-weight: 500;
+  --type-statement-lh: 0.9;
+  --type-statement-ls: -0.02em;
+
+  /* CTA link — 32px all breakpoints */
+  --type-cta-size: 2rem; /* 32px */
+  --type-cta-weight: 500;
+  --type-cta-lh: 1.3;
+  --type-cta-ls: -0.02em;
+
+  /* nav / wordmark small — 22 / 20 / 18 px */
+  --type-nav-size: 1.375rem; /* 22px */
+  --type-nav-weight: 400;
+  --type-nav-lh: 0.8;
+  --type-nav-ls: -0.02em;
+
+  /* mono label — [BRACKETED] kickers. 14 / 14 / 13 px, weight 500 */
+  --type-label-size: 0.875rem; /* 14px */
+  --type-label-weight: 500;
+  --type-label-lh: 1.3;
+  --type-label-ls: 0.03em;
+
+  /* mono data — index numbers, clock, rows, inputs. 14 / 14 / 13 px, 400 */
+  --type-data-size: 0.875rem; /* 14px */
+  --type-data-weight: 400;
+  --type-data-lh: 1;
+  --type-data-ls: 0.03em;
+
+  /* -------------------------------------------------------------------------
+     SPACING — strict 8px base with a 4px half-step (census in the package).
+     ---------------------------------------------------------------------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* vertical rhythm tiers (layout.md A4) */
+  --v-item: 8px;
+  --v-group: 16px;
+  --v-block: 48px;
+  --v-section: 96px; /* the container's own stack gap; 64 @phone */
+
+  /* -------------------------------------------------------------------------
+     LAYOUT — sections are full-bleed; the container is a padding result
+     (viewport − 2 × gutter), clamped at --container per the package demo.
+     ---------------------------------------------------------------------- */
+  --container: 1312px; /* 770 @tablet · 350 @phone */
+  --gutter: 64px; /* 32 @tablet · 20 @phone */
+  --section-block: 96px; /* block padding; 64 @phone. Sections abut margin-0 */
+  --nav-h: 59px; /* 55 @tablet · 51 @phone */
+
+  /* proportional splits — derived from measured widths (layout.md A2) */
+  --split-minor: 30%; /* work list / hero media */
+  --split-major: 68%; /* work preview (pairs with minor + 32px gap) */
+  --split-half: 37%; /* about content + its empty spacer */
+  --measure-statement: 65%; /* the 48px statement measure */
+  --split-decor: 23%; /* services circle */
+  --split-decor-body: 73%; /* services content */
+  --form-width: 600px; /* the ONLY centred block on the site */
+
+  /* -------------------------------------------------------------------------
+     SHAPE & LINES — square. radius 0 on everything that isn't a literal
+     circle; hairlines do the structure; zero shadows; gradients only as masks.
+     ---------------------------------------------------------------------- */
+  --radius: 0px;
+  --radius-dot: 80px; /* genuinely circular index dots */
+  --divider-width: 1px;
+  --input-line-width: 2px;
+  --card-width: 300px;
+
+  /* -------------------------------------------------------------------------
+     TEXTURE — one noise layer over EVERYTHING (grain above content, like the
+     reference's fixed 400×225 video at opacity 0.1). feTurbulence stand-in
+     tuned to the measured anisotropy (autocorr ~2px x / ~6px y →
+     baseFrequency 0.5 0.17); the shimmer comes from a discrete transform
+     jitter (~3.6 jumps/s ≈ measured |Δ| cadence). Layer: base.css .grain.
+     ---------------------------------------------------------------------- */
+  --noise-opacity: 0.1;
+  --noise-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.5 0.17' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+
+  /* -------------------------------------------------------------------------
+     MOTION — durations/eases the reference actually runs (motion.md).
+     Springs are `type: spring, bounce: 0` (critically damped, zero
+     overshoot); closest CSS feel for the spring family:
+     cubic-bezier(0.22, 1, 0.36, 1).
+     ---------------------------------------------------------------------- */
+  --dur-instant: 100ms; /* icon rotate; pill fade-in */
+  --dur-fast: 150ms; /* preview image crossfade */
+  --dur-tween: 200ms; /* hover-variant default tween */
+  --dur-veil: 300ms; /* blur veil */
+  --dur-spring: 800ms; /* workhorse: scroll-ins, theme flip */
+  --dur-char: 900ms; /* per-char display-word reveal (expo.out) */
+  --dur-spring-l: 1200ms; /* large layout springs */
+  --dur-spring-xl: 1600ms; /* hero entrance springs */
+  --dur-scramble: 800ms; /* text scramble full cycle */
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1); /* spring stand-in */
+  --ease-hover: cubic-bezier(0.27, 0, 0.51, 1); /* hover default (with 200ms) */
+  --ease-inout-sine: cubic-bezier(0.44, 0, 0.56, 1); /* blur veil tween */
+  --ease-expo-out: cubic-bezier(0.16, 1, 0.3, 1); /* char blinds reveal */
+  --stagger-step: 100ms; /* explicit sibling delay ladders: 0/.1/.2/.3s */
+}
+
+/* The page-wide ground change: transition the registered role tokens ON :root
+   so every consumer tweens in tandem. Reversible mid-flight (a transition
+   interrupted reverses from its current value — matches the reference's
+   hysteresis-free reversibility). Under prefers-reduced-motion base.css's
+   global kill-switch zeroes these durations → the flip is instant. */
+:root {
+  transition:
+    --surface var(--dur-ground) var(--ease-ground),
+    --surface-soft var(--dur-ground) var(--ease-ground),
+    --ink var(--dur-ground) var(--ease-ground),
+    --ink-2 var(--dur-ground) var(--ease-ground),
+    --ghost var(--dur-ground) var(--ease-ground);
+}
+
+:root[data-ground='dark'] {
+  --surface: var(--color-black);
+  --surface-soft: var(--color-black);
+  --ink: var(--color-white);
+  --ink-2: var(--color-grey-light);
+  --ghost: var(--color-ink-2);
+  /* --muted and --divider deliberately unchanged: #9e9e9e reads on both
+     grounds (7.35:1 on #000) — the reference leaves them still, which is part
+     of why the flip costs nothing. */
+}
+
+/* Reference breakpoints as measured in the served CSS: base ≥1200,
+   tablet 810–1199, phone ≤809. */
+@media (min-width: 810px) and (max-width: 1199px) {
+  :root {
+    --type-display-xl-size: 8.25rem; /* 132px */
+    --type-display-l-size: 5rem; /* 80px */
+    --type-statement-size: 2rem; /* 32px */
+    --type-nav-size: 1.25rem; /* 20px */
+    --container: 770px;
+    --gutter: 32px;
+    --nav-h: 55px;
+    --v-section: 80px;
+  }
+}
+
+@media (max-width: 809px) {
+  :root {
+    --type-display-xl-size: 5rem; /* 80px */
+    --type-display-l-size: 3rem; /* 48px */
+    --type-statement-size: 1.5rem; /* 24px */
+    --type-nav-size: 1.125rem; /* 18px */
+    --type-label-size: 0.8125rem; /* 13px */
+    --type-data-size: 0.8125rem; /* 13px */
+    --container: 350px;
+    --gutter: 20px;
+    --section-block: 64px;
+    --nav-h: 51px;
+    --v-section: 64px;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   TRANSITIONAL ADAPTER — the REZ-era token names, remapped onto the new
+   palette so the legacy sections render in the new register while they await
+   their own redesigns. Every line here is scheduled for deletion with the
+   section that consumes it; nothing new may consume these names.
+
+   Mapping intent: paper world → white surfaces; graphite ink → #242424;
+   the poché/earth dark bands → ink/black; THE RED IS PROVISIONALLY RETIRED
+   (--rez → ink): the system is zero-hue. The pd mark's discs go ink-filled —
+   the veil's literals (index.html) match. Owner call to bring one hue back:
+   change --rez here + the veil's two disc fills.
+
+   Interim contrast (measured in-page from computed styles):
+     text --grafit #242424 on --list #fff 15.52:1 · on --list-2 #fdfdfd 15.2:1
+     --grafit-2 #424242 on #fff 10.05:1 · on #fdfdfd 9.88:1
+     --list #fff on --grafit #242424 15.52:1 · on --zemlja #000 21:1
+     --papir-dim #e0e0e0 on #242424 11.76:1 · on #424242 7.61:1 · on #000 15.91:1
+     status: #8fc7a6 on #242424 8.05:1 · #f0a48a on #242424 7.67:1
+--------------------------------------------------------------------------- */
+:root {
+  --list: var(--color-white);
+  --list-2: var(--color-white-soft);
+  --mreza: var(--color-grey-light); /* hairlines on light — line duty */
+  --mreza-strong: var(--color-grey); /* emphasized rules — line duty */
+  --grafit: var(--color-ink); /* ink; and the poché bands' ground */
+  --grafit-2: var(--color-ink-2);
+  --grafit-inset: var(--color-ink-2); /* inset on the poché, one step lighter */
+  --crta-na-temnem: var(--color-ink-2); /* dark-world hairline — line duty */
+  --papir-dim: var(--color-grey-light); /* secondary text on dark */
+  --rez: var(--color-ink); /* the accent, retired to ink (see above) */
+  --rez-deep: var(--color-black); /* pressed/hover step */
+  --rez-na-temnem: var(--color-white); /* accent + focus voice on dark */
+  --rez-vodni: var(--color-white-soft); /* quiet wash ground */
+  --zemlja: var(--color-black); /* contact + footer ground */
+  --zemlja-2: var(--color-ink); /* insets on dark go lighter */
+  --ok-na-temnem: #8fc7a6; /* form success on dark — functional, kept until the
+     contact redesign authors the new form states (the reference has none) */
+  --err-na-temnem: #f0a48a; /* form error on dark — same */
+
+  /* Legacy type aliases. Geist has no width axis — font-stretch is inert; both
+     stops park at 100% so legacy rules parse until sections re-role onto the
+     --type-* tokens above. */
+  --font-display: var(--font-sans);
+  --font-text: var(--font-sans);
   --wdth-monument: 100%;
-  --wdth-datum: 82%; /* instrument labels: narrow caps */
+  --wdth-datum: 100%;
 
-  /* Fluid scale by role — UNCHANGED from the approved layout */
+  /* Legacy fluid scale — superseded per-section by the --type-* roles. */
   --fs-h1: clamp(2.1rem, 1.3rem + 3.6vw, 3.6rem);
   --fs-h2: clamp(1.5rem, 1.15rem + 1.6vw, 2.2rem);
   --fs-h3: clamp(1.125rem, 1.05rem + 0.4vw, 1.35rem);
   --fs-lead: clamp(1.05rem, 1rem + 0.35vw, 1.2rem);
-  --fs-kicker: 0.72rem; /* instrument labels — they do not scale */
-  --fs-annot: 0.75rem; /* annotations on Prerez lines and card seams */
+  --fs-kicker: 0.72rem;
+  --fs-annot: 0.75rem;
 
-  /* Rhythm — UNCHANGED from the approved layout */
-  --section-y: clamp(4rem, 3rem + 5vw, 7.5rem);
-  --gutter: clamp(1.25rem, 4vw, 4rem);
+  /* Legacy rhythm: --section-y now feeds from the system's section frame. */
+  --section-y: var(--section-block);
   --measure: 66ch;
 
-  /* The opening band's one margin, on all four sides. Lives here rather than
-     on .stmt because the masthead reads it too: on a phone the menu button is
-     part of the hero, so it must sit on exactly the same inset as the
-     wordmark it stands beside. */
+  /* The opening band's one margin, on all four sides. The masthead reads it
+     too; THE VEIL'S LANDING FORMULA (index.html) copies it as literals —
+     change either, change both. Unchanged until the hero redesign. */
   --hero-inset: clamp(1.25rem, 4.9vw, 4.5rem);
-
-  /* The hero wordmark's cut, shared so the masthead can render the SAME
-     lettering: when the menu opens it shows the brand at hero size, and any
-     divergence would read as two different wordmarks swapping places.
-     PHONES take a narrower width axis and a slight vertical stretch — the
-     string never wraps, so width is the only budget there is, and buying it
-     back on the wdth axis is what lets the size grow at all (92% frees ~17%
-     of the width; the stretch spends it on height). */
   --hero-wordmark: clamp(1.7rem, -0.6rem + 12.7vw, 5rem);
   --hero-wordmark-wdth: 88%;
   --hero-wordmark-scaley: 1;
 
-  /* Motion — UNCHANGED from the approved layout */
-  --t-draw: 800ms; /* Prerez line draw */
-  --t-lift: 200ms; /* card hover lift */
+  /* Legacy motion aliases. */
+  --t-draw: 800ms;
+  --t-lift: 200ms;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Desktop has no button sharing the wordmark's row, so it keeps the brand's
-   own monumental cut at full width and no stretch. */
+   own monumental cut at full width and no stretch. (Legacy — hero redesign
+   pending.) */
 @media (min-width: 900px) {
   :root {
     --hero-wordmark: clamp(1.6rem, 0.52rem + 5.9vw, 6rem);

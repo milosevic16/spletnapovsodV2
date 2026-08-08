@@ -1,7 +1,8 @@
 /**
  * Machine facts — the SINGLE SOURCE for every machine emission the page shows.
  *
- * The honesty contract (REZ 1:1 brand law): Chivo Mono carries ONLY genuine
+ * The honesty contract (brand law, register-independent): the mono face
+ * (currently Geist Mono) carries ONLY genuine
  * machine emissions, and every line here is a real, checkable byte of the
  * shipped artifact. The postbuild guard asserts this BIDIRECTIONALLY: every
  * fact below must appear in the emitted HTML as a `data-fact` node AND match

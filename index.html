@@ -3,24 +3,28 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <!-- The opening band is paper — the surface the status bar meets.
-         Mirrors --list; html/body carry it too (base.css). -->
-    <meta name="theme-color" content="#F5F2EB" />
+    <!-- The opening band is the light ground — the surface the status bar
+         meets. Mirrors --surface (light state); html/body carry it too
+         (base.css). -->
+    <meta name="theme-color" content="#ffffff" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <!-- Above-the-fold font subsets. Latin only: the kicker, h1 and the lead's
+    <!-- Above-the-fold font subsets. Latin only: the veil word, kicker and h1's
          opening words carry no č/š/ž; the ext subsets swap in behind fontaine's
          metric-matched fallbacks, so the swap changes glyphs, not geometry. -->
-    <link rel="preload" href="/fonts/instrument-sans-latin-standard-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
     <title>SpletnaPovsod</title>
     <!-- The opening veil: the logo's origin story. Static HTML + CSS only,
          system fonts only, no images, no JS dependency: a pure-CSS timed
          sequence that CANNOT hang (the timeline runs whether or not the app
          ever boots; the app only removes the spent node — App.vue).
 
-         On black, »spletnapovsod« types out letter by letter; the p of Povsod
-         and the final d are set as the LOGO's own halves (red disc, white
-         letter) with exaggerated tails. Then the plain letters vanish, the
+         On the light ground, »spletnapovsod« types out letter by letter; the
+         p of Povsod and the final d are set as the LOGO's own halves (ink
+         disc, white letter — the discs follow the adapter's --rez, which the
+         zero-hue system retires to ink; see tokens.css. Bring one hue back by
+         changing --rez there + the two disc fills below) with exaggerated
+         tails. Then the plain letters vanish, the
          word contracts until the two discs overlap into the pd mark, the
          tails retract to logo length, and the mark flies to the hero's own
          brand position while the page renders beneath it and the veil ground
@@ -45,7 +49,7 @@
         inset: 0;
         z-index: 9999;
         pointer-events: none;
-        background: #f5f2eb;
+        background: #ffffff;
         /* The ground lifts while the mark is still flying, then the whole
            veil retires. */
         animation:
@@ -85,14 +89,13 @@
         /* The brand's own grotesque, safely: the bundled CSS is render-blocking
            (family + fontaine metric fallback exist before ANY first paint) and
            the woff2 is preloaded above — so a late swap changes glyphs, not
-           geometry, and the old system-font rule would now be leaving the
-           studio voice on the table. Weight and tracking follow the owner's
-           Claude Design prototype (Switzer-class, 500, tight). */
-        font-family: 'Instrument Sans Variable', 'Instrument Sans Variable fallback', Arial, sans-serif;
+           geometry. Geist 500, tight tracking — the design system's sans at
+           its emphasis weight. */
+        font-family: 'Geist', 'Geist fallback', Arial, sans-serif;
         font-weight: 500;
         letter-spacing: -0.02em;
         line-height: 1;
-        color: #1a1c1e;
+        color: #242424;
         white-space: nowrap;
         /* fly to the brand corner (translate stays; left/top/font-size land
            it): +1.2708em / +0.75em are half the logo's width and height, so
@@ -201,9 +204,9 @@
         <span class="v-ch" style="--i:5">n</span>
         <span class="v-ch" style="--i:6">a</span>
         <svg class="v-pd v-p" style="--i:7" viewBox="0 0 144 144">
-          <circle cx="72" cy="72" r="72" fill="#b03b22" />
-          <circle cx="79" cy="79" r="33" fill="none" stroke="#f5f2eb" stroke-width="18" />
-          <rect class="v-stem" x="37" y="46" width="18" height="115" rx="9" fill="#f5f2eb" />
+          <circle cx="72" cy="72" r="72" fill="#242424" />
+          <circle cx="79" cy="79" r="33" fill="none" stroke="#ffffff" stroke-width="18" />
+          <rect class="v-stem" x="37" y="46" width="18" height="115" rx="9" fill="#ffffff" />
         </svg>
         <span class="v-ch" style="--i:8">o</span>
         <span class="v-ch" style="--i:9">v</span>
@@ -211,9 +214,9 @@
         <span class="v-ch" style="--i:11">o</span>
         <svg class="v-pd v-d" style="--i:12" viewBox="0 0 144 144">
           <g transform="rotate(180 72 72)">
-            <circle cx="72" cy="72" r="72" fill="#b03b22" />
-            <circle cx="79" cy="79" r="33" fill="none" stroke="#f5f2eb" stroke-width="18" />
-            <rect class="v-stem" x="37" y="46" width="18" height="115" rx="9" fill="#f5f2eb" />
+            <circle cx="72" cy="72" r="72" fill="#242424" />
+            <circle cx="79" cy="79" r="33" fill="none" stroke="#ffffff" stroke-width="18" />
+            <rect class="v-stem" x="37" y="46" width="18" height="115" rx="9" fill="#ffffff" />
           </g>
         </svg>
       </p>

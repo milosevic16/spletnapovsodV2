@@ -2,66 +2,85 @@
    metric-matched fallbacks (see vite.config.ts) so the swap changes glyphs, not
    geometry. Files live in public/fonts/ under an immutable cache header.
 
-   Type system — ONE grotesque plus the machine register:
-   - Instrument Sans Variable (wght 400-700 + wdth 75-100): display, body and
-     instrument labels alike. Its registers come from size, weight, width and
-     tracking, not from three different typefaces — the studio discipline.
-     Display is tight and normal-width (the monumentality is scale, never a
-     stretched face); datum labels narrow to ~82% caps.
-   - Chivo Mono 400: the machine voice. HONESTY CONTRACT: mono appears ONLY on
-     genuine machine emissions (head lines, robots lines, header names, URLs,
-     file names) — never on claims, labels, or paragraphs. If it is mono, it is
-     checkable. Human-side instrument labels use the narrow caps instead. */
+   Type system — the extracted "designsystem1" register (docs in the design
+   package; provenance: measured on the reference site):
+   - Geist (variable wght): display AND body AND UI. One sans; weights in use
+     are 400/500 only — hierarchy is scale (14 → 48 → 96 → 164), never boldness.
+   - Geist Mono (variable wght): every label, number, kicker, data row, input.
+     The old honesty contract survives the register swap: if it is mono, it is
+     checkable (data-fact nodes are guard-enforced in postbuild).
+   - Inspiration 400: the script accent — single glyph runs spliced INSIDE
+     display words at the same font-size, never a full word, never body copy.
+     Deliberately NO fontaine fallback: no local base can metric-match a
+     script face honestly. Pages that splice glyphs preload its subset instead
+     (art-direction.md: the splice is a per-word editorial judgment). */
 
 /* Per family: latin-ext declared FIRST, latin LAST — fontaine appends one
    generated "<family> fallback" @font-face per source face under the SAME
    fallback family name with no unicode-range, so the last-declared (latin)
-   metrics win the cascade. The ext-derived set over-adjusts (~130% vs ~102%
-   size-adjust — measured in dist) and must lose. */
+   metrics win the cascade. The ext-derived set over-adjusts and must lose. */
 
-/* Instrument Sans — the whole page: display, body and instrument labels. One
-   family, three registers, differentiated by SIZE, WEIGHT, WIDTH and TRACKING
-   rather than by three typefaces. Variable: wght 400-700, wdth 75-100. */
+/* Geist — the whole page: display, body, UI. Variable wght 100-900 (the
+   design uses 400/500; the variable file is the honest single source). */
 @font-face {
-  font-family: 'Instrument Sans Variable';
+  font-family: 'Geist';
   font-style: normal;
   font-display: swap;
-  font-weight: 400 700;
-  font-stretch: 75% 100%;
-  src: url(/fonts/instrument-sans-latin-ext-standard-normal.woff2) format('woff2-variations');
+  font-weight: 100 900;
+  src: url(/fonts/geist-latin-ext-wght-normal.woff2) format('woff2-variations');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
     U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
     U+2C60-2C7F, U+A720-A7FF;
 }
 
 @font-face {
-  font-family: 'Instrument Sans Variable';
+  font-family: 'Geist';
   font-style: normal;
   font-display: swap;
-  font-weight: 400 700;
-  font-stretch: 75% 100%;
-  src: url(/fonts/instrument-sans-latin-standard-normal.woff2) format('woff2-variations');
+  font-weight: 100 900;
+  src: url(/fonts/geist-latin-wght-normal.woff2) format('woff2-variations');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
     U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-/* Chivo Mono — the machine voice. One weight (400). Never a paragraph. */
+/* Geist Mono — labels, kickers, data, inputs, machine emissions. */
 @font-face {
-  font-family: 'Chivo Mono';
+  font-family: 'Geist Mono';
   font-style: normal;
   font-display: swap;
-  font-weight: 400;
-  src: url(/fonts/chivo-mono-latin-ext-400-normal.woff2) format('woff2');
+  font-weight: 100 900;
+  src: url(/fonts/geist-mono-latin-ext-wght-normal.woff2) format('woff2-variations');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
     U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
     U+2C60-2C7F, U+A720-A7FF;
 }
 @font-face {
-  font-family: 'Chivo Mono';
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url(/fonts/geist-mono-latin-wght-normal.woff2) format('woff2-variations');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Inspiration — the script splice. One weight, glyph-level use only. */
+@font-face {
+  font-family: 'Inspiration';
   font-style: normal;
   font-display: swap;
   font-weight: 400;
-  src: url(/fonts/chivo-mono-latin-400-normal.woff2) format('woff2');
+  src: url(/fonts/inspiration-latin-ext-400-normal.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
+    U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Inspiration';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(/fonts/inspiration-latin-400-normal.woff2) format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
     U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }

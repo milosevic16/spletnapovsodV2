@@ -64,9 +64,13 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
 
 <style scoped>
 /* The one margin — left, top, right and bottom — defined in tokens.css so the
-   phone menu button can sit on the same inset as the wordmark beside it. */
+   phone menu button can sit on the same inset as the wordmark beside it.
+   PINNED light for now: the page root flips with the ground switch
+   (tokens.css) and this section's inks are still the legacy constants — the
+   pin comes off when the section joins the flip in its own redesign. */
 .stmt {
   padding: var(--hero-inset);
+  background: var(--list);
 }
 
 .stmt__grid {

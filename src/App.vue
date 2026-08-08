@@ -3,6 +3,7 @@ import { onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useHead } from '@unhead/vue'
 import { ui } from '@/content/home'
+import { wireGround, type GroundHandle } from '@/lib/ground'
 
 // unhead owns htmlAttrs at prerender — declare the real lang or it emits "en".
 // It ALSO injects a default viewport meta that REPLACES the shell's authored
@@ -45,8 +46,16 @@ function onDocumentClick(e: MouseEvent) {
 const VEIL_CLEANUP_MS = 3800
 let veilTimer = 0
 
+/** The page-wide light→dark ground switch (src/lib/ground.ts). Lives here for
+ *  the app's lifetime; refreshed on route commit because a navigation does
+ *  not always produce the scroll event the listener keys on. */
+let ground: GroundHandle | null = null
+let removeGroundHook: (() => void) | null = null
+
 onMounted(() => {
   document.addEventListener('click', onDocumentClick)
+  ground = wireGround()
+  removeGroundHook = router.afterEach(() => ground?.refresh())
   veilTimer = window.setTimeout(() => {
     document.getElementById('veil')?.remove()
     delete document.documentElement.dataset.intro
@@ -54,6 +63,8 @@ onMounted(() => {
 })
 onUnmounted(() => {
   document.removeEventListener('click', onDocumentClick)
+  removeGroundHook?.()
+  ground?.dispose()
   clearTimeout(veilTimer)
 })
 </script>
@@ -61,4 +72,8 @@ onUnmounted(() => {
 <template>
   <a href="#main" class="skip-link">{{ ui.skipToContent }}</a>
   <RouterView />
+  <!-- The grain: one noise layer above ALL content, both grounds (base.css
+       .grain). Static template node — no JS creates it, so the surface reads
+       the same with JS off; pure-CSS jitter, frozen under reduced motion. -->
+  <div class="grain" aria-hidden="true"></div>
 </template>
