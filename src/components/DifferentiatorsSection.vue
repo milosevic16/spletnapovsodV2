@@ -106,7 +106,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section id="razlike" ref="root" class="dif" :class="{ 'dif--live': live }">
+  <section id="razlike" ref="root" class="dif press" :class="{ 'dif--live': live }">
     <div class="container dif__head">
       <p class="kicker kicker--on-dark">{{ differentiators.kicker }}</p>
       <h2 class="dif__title">{{ differentiators.title }}</h2>
@@ -166,7 +166,7 @@ onUnmounted(() => {
    (Kontakt), so the page's dark half reads as one world with this band
    lifted out of it. Paper on it 13.9:1, papir-dim 10.4:1. */
 .dif {
-  background: var(--grafit);
+  background-color: var(--grafit);
   color: var(--list);
   padding-block: var(--section-block);
 }

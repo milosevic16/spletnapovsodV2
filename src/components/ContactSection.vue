@@ -194,7 +194,7 @@ onUnmounted(() => fx.dispose())
 </script>
 
 <template>
-  <section id="kontakt" class="contact">
+  <section id="kontakt" class="contact press">
     <div class="container">
       <header class="contact__head">
         <p class="kicker kicker--on-dark">{{ contact.kicker }}</p>
@@ -383,7 +383,7 @@ onUnmounted(() => fx.dispose())
 
 <style scoped>
 .contact {
-  background: var(--zemlja);
+  background-color: var(--zemlja);
   color: var(--list);
   padding-block: var(--section-block) clamp(3rem, 2.5rem + 3vw, 5rem);
 }

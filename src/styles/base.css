@@ -214,6 +214,39 @@ textarea {
   transform: none;
 }
 
+/* --- the press screen ------------------------------------------------------
+   An editorial ground comes from the PROCESS, not from a substance. A
+   photograph of a material always describes somebody else's trade — timber
+   reads joinery, steel reads fabrication — and a studio that makes web pages
+   has no raw material at all. What it does have is printed matter, so the
+   dark bands carry the mark of printing: a halftone dot screen.
+
+   TWO STAGGERED GRIDS, NOT A ROTATION. Offsetting a second dot grid by half a
+   cell produces the lattice of a 45° screen — the angle black is actually
+   printed at — without a transform. That matters structurally: it rides as an
+   extra background LAYER on the section's own ground, so it needs no
+   pseudo-element, no extra DOM, no stacking context, and cannot disturb the
+   clipped and z-indexed layers these sections already run.
+
+   IT MUST STAY QUIET. At ~7% dot coverage and 5.5% ink the average lift is a
+   fraction of a percent — the screen is felt as texture and changes no
+   contrast pairing (measured after applying). It is a tint, not a pattern.
+
+   Sections opt in with the class AND must set `background-color`, never the
+   `background` shorthand: the shorthand resets background-image, and a scoped
+   component rule would silently win over this one. */
+.press {
+  --press-ink: rgb(245 242 235 / 0.055);
+  --press-cell: 7px;
+  background-image:
+    radial-gradient(circle, var(--press-ink) 0.75px, transparent 0.9px),
+    radial-gradient(circle, var(--press-ink) 0.75px, transparent 0.9px);
+  background-size: var(--press-cell) var(--press-cell);
+  background-position:
+    0 0,
+    calc(var(--press-cell) / 2) calc(var(--press-cell) / 2);
+}
+
 /* --- the grain ------------------------------------------------------------ */
 /* One noise layer over EVERYTHING — the reference floats a fixed 400×225
    video at opacity 0.1 ABOVE all content; that single fact (grain over the

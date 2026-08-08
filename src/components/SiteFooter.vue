@@ -8,7 +8,7 @@ const year = new Date().getFullYear()
 </script>
 
 <template>
-  <footer class="footer">
+  <footer class="footer press">
     <div class="container">
       <!-- Colophon contract: every annotation here must stay mechanically
            verifiable against the shipped artifact (SSG output, no analytics,
@@ -42,7 +42,7 @@ const year = new Date().getFullYear()
 
 <style scoped>
 .footer {
-  background: var(--zemlja);
+  background-color: var(--zemlja);
   color: var(--papir-dim);
   padding-block: 3rem 2.5rem;
   border-top: 1px solid var(--crta-na-temnem);

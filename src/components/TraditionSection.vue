@@ -269,7 +269,7 @@ onUnmounted(() => {
   <section
     id="nevidno"
     ref="root"
-    class="trad"
+    class="trad press"
     :class="{ 'trad--live': live, 'trad--edge': edge, 'trad--pre': pre }"
     :style="live ? { '--scan': String(scan) } : undefined"
   >
@@ -428,7 +428,7 @@ onUnmounted(() => {
      the beam runs the full height. */
   overflow: hidden;
   padding-block: var(--space-16);
-  background: var(--color-black);
+  background-color: var(--color-black);
   transition: background-color var(--dur-ground) var(--ease-ground);
   color: var(--color-paper); /* 18.8:1 on the settled ground */
 }
