@@ -245,183 +245,38 @@ textarea {
   opacity: var(--noise-opacity);
   background-image: var(--noise-tile);
   background-size: 300px 300px;
-  /* Two clocks on one element, co-prime durations so the composite never
-     visibly loops: the jitter re-randomizes the field on an UNEVEN pulse
-     (the recording's static runs near-still spells of ~0.8s broken by bursts
-     of quick kicks — measured |Δ| series: ~0.1 for stretches, then runs of
-     4–7), and the flicker breathes the whole field ±0.015 around 0.1
-     (measured frame means swing ±15% on the dark ground). Both end at their
-     rest values, so the reduced-motion kill-switch (below) lands on the
-     quiet state. */
-  animation:
-    grain-jitter 3.7s steps(1, end) infinite,
-    grain-flicker 2.7s steps(1, end) infinite;
+  animation: grain-jitter 2.2s steps(1, end) infinite;
 }
 
-/* Discrete positions on an uneven clock — steps(1, end) holds each segment's
-   start value, so the texture JUMPS between frames (TV static), never
-   slides: a burst of ~220ms kicks, a ~810ms still spell, two kicks, another
-   spell, three kicks home. Offsets are large relative to the ~6px stripe
-   pitch, so the striping re-randomizes rather than visibly marching. */
+/* Eight discrete positions — steps(1, end) holds each segment's start value,
+   so the texture JUMPS between frames (TV static), never slides. */
 @keyframes grain-jitter {
   0% {
     transform: translate(0, 0);
   }
-  6% {
+  12.5% {
     transform: translate(-140px, 60px);
   }
-  12% {
+  25% {
     transform: translate(80px, -190px);
   }
-  18% {
+  37.5% {
     transform: translate(-220px, -120px);
   }
-  24% {
+  50% {
     transform: translate(160px, 140px);
   }
-  /* still spell */
-  46% {
+  62.5% {
     transform: translate(-60px, -260px);
   }
-  52% {
+  75% {
     transform: translate(240px, -40px);
   }
-  /* still spell */
-  74% {
+  87.5% {
     transform: translate(-180px, 200px);
-  }
-  80% {
-    transform: translate(40px, 250px);
-  }
-  88% {
-    transform: translate(-260px, -30px);
   }
   100% {
     transform: translate(0, 0);
-  }
-}
-
-@keyframes grain-flicker {
-  0% {
-    opacity: 0.1;
-  }
-  13% {
-    opacity: 0.088;
-  }
-  29% {
-    opacity: 0.108;
-  }
-  41% {
-    opacity: 0.096;
-  }
-  57% {
-    opacity: 0.114;
-  }
-  71% {
-    opacity: 0.09;
-  }
-  86% {
-    opacity: 0.104;
-  }
-  100% {
-    opacity: 0.1;
-  }
-}
-
-/* THE OCCASIONAL GLITCHES — both rare, both brief, both ending hidden so a
-   frozen animation (reduced motion) shows clean static. They live INSIDE the
-   grain layer, so the layer's 0.1 opacity caps everything they can do: the
-   worst-case composite shift stays ~11% toward the tile's greys, which no
-   text pairing on either ground feels (re-checked numerically in-session).
-
-   Tear: a horizontal band of the same static at a foreign offset pops in for
-   ~2 video frames, twice per 13.7s cycle at different heights — the analog
-   band-displacement moment. (Honesty note: the recording's idle stretches
-   showed no isolated tear frames — the sampled agitation traced to page
-   scrolls — so this device is styled to the analog grammar at
-   near-threshold opacity rather than to a measured event.) */
-.grain::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 30%;
-  height: 64px;
-  background-image: var(--noise-tile);
-  background-size: 300px 300px;
-  background-position: 161px 37px;
-  opacity: 0;
-  animation: grain-tear 13.7s steps(1, end) infinite;
-}
-
-@keyframes grain-tear {
-  0% {
-    opacity: 0;
-    top: 30%;
-  }
-  31% {
-    opacity: 0.55;
-    top: 30%;
-  }
-  32% {
-    opacity: 0;
-    top: 30%;
-  }
-  73% {
-    opacity: 0.55;
-    top: 64%;
-  }
-  73.7% {
-    opacity: 0;
-    top: 64%;
-  }
-  100% {
-    opacity: 0;
-    top: 30%;
-  }
-}
-
-/* Roll: the vertical-hold band — a soft-edged stripe of brighter static
-   (the gradient is a MASK, per the system's gradient rule) that travels the
-   field once every ~17.3s and hides above it the rest of the cycle. */
-.grain::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: var(--noise-tile);
-  background-size: 300px 300px;
-  background-position: 71px 203px;
-  opacity: 0.35;
-  -webkit-mask-image: linear-gradient(
-    180deg,
-    transparent 0%,
-    #000 40%,
-    #000 60%,
-    transparent 100%
-  );
-  mask-image: linear-gradient(180deg, transparent 0%, #000 40%, #000 60%, transparent 100%);
-  -webkit-mask-size: 100% 140px;
-  mask-size: 100% 140px;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: 0 -140px;
-  mask-position: 0 -140px;
-  animation: grain-roll 17.3s linear infinite;
-}
-
-@keyframes grain-roll {
-  0% {
-    -webkit-mask-position: 0 -140px;
-    mask-position: 0 -140px;
-  }
-  88% {
-    -webkit-mask-position: 0 -140px;
-    mask-position: 0 -140px;
-  }
-  /* the roll itself: top to bottom in ~2.1s of the cycle */
-  100% {
-    -webkit-mask-position: 0 calc(100% + 140px);
-    mask-position: 0 calc(100% + 140px);
   }
 }
 
