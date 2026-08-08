@@ -107,6 +107,8 @@ export const invisible = {
    */
   feedback: {
     scanLabel: 'Povlecite za primerjavo kode in izrisane strani',
+    /** Names the layer selector, which exists only once the section hydrates. */
+    layersLabel: 'Sloji pod površino',
   },
   outro:
     'Vse to je vključeno že v osnovnem paketu. S tem se vam ni treba ukvarjati — naj to za vas uredijo profesionalci z izkušnjami.',

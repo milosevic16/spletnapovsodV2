@@ -1,42 +1,52 @@
 <script setup lang="ts">
 /**
- * Tradicija in izkušnje — the section that shows its own source, restaged on
- * the design system's broadcast metaphor: a screen that RENDERS THE SITE as a
+ * Tradicija in izkušnje — the section that shows its own source, staged on the
+ * design system's broadcast metaphor: a screen that RENDERS THE SITE as a
  * scanline passes across it.
  *
  * This section also carries the page's light→dark ground change: its top
- * crossing mid-viewport flips [data-ground] (src/lib/ground.ts), and the
- * whole page tweens around the instrument while the instrument itself stays
- * put — both of its panels are CONSTANT surfaces (paper and black), so the
- * body copy inside never rides the flip and never dips below AA. The only
- * text that rides the flip is the display title, which snaps between its two
- * inks mid-tween (see --trad-snap below).
+ * crossing mid-viewport flips [data-ground] (src/lib/ground.ts), and the whole
+ * page tweens around the instrument while the instrument itself stays put —
+ * both of its surfaces are CONSTANT (paper screen, black bezel), so the body
+ * copy inside never rides the flip and never dips below AA. The only text that
+ * rides it is the display title, which snaps between its two inks mid-tween
+ * (see --trad-snap below).
  *
- * THE INSTRUMENT. A framed set: a black dial strip (the two state labels and
- * a real <input type="range">), a screen split by a vertical red beam —
- * LEFT of the beam the rendered page (paper world), RIGHT of it the source
- * the crawler receives (mono on black) — and a black legend strip. One
+ * THE INSTRUMENT. A framed set: a screen split by a vertical red beam — LEFT
+ * of the beam the rendered page (paper world), RIGHT of it the source the
+ * crawler receives (mono on black) — over a black bezel carrying the legend
+ * and the dial (the two state labels and a real <input type="range">). One
  * number drives everything: --scan (0 = all source, 100 = fully rendered).
  *
- * THE SWEEP. On arrival the screen holds at 0 (raw source); when it is ~30%
- * visible the beam makes ONE left→right pass (SWEEP_MS), rendering the page
- * and carrying the slider's handle to the right end. After that — and at any
- * moment during it — the hand owns the control: dragging is direct, nothing
- * else is coupled to it, scroll never moves it.
+ * THE SWEEP. On arrival the screen holds at 0 (raw source) and STAYS there
+ * while the visitor reads: the pass only fires after the screen has been
+ * continuously visible for SWEEP_HOLD_MS, and leaving the viewport disarms it
+ * again. Then the beam makes ONE left→right pass (SWEEP_MS), rendering the
+ * page and carrying the dial's handle to the right end. At any moment — during
+ * the hold or the pass — the hand owns the control: dragging is direct,
+ * nothing else is coupled to it, scroll never moves it.
  *
- * REST STATE (stylesheet, no JS): --scan falls back to 55 — the composed
- * split where BOTH worlds are legible, which is also what reduced-motion
- * visitors get (no sweep, dial fully operable). A crawler reads the rendered
- * layer as ordinary HTML; the source layer is its aria-hidden mono twin,
- * derived from the same content module so it cannot depict tags we do not
- * ship, and it opens with the guard-checked head emissions (data-fact).
+ * THE LAYERS (the interactive layer). Inside the rendered half, the four
+ * things that live under the surface are drawn as a SECTION THROUGH THE SITE:
+ * strata of unequal thickness, stepping darker with depth, probed one at a
+ * time. Probing fills a stratum with ink and swings a leader across to its
+ * callout. Real tablist semantics; with JS off the strata are an inert drawing
+ * and all four callouts stand open in flow, so nobody meets a dead control.
+ *
+ * REST STATE (stylesheet, no JS): --scan falls back to 55 — the composed split
+ * where BOTH worlds are legible, which is also what reduced-motion visitors
+ * get (no sweep, dial fully operable). A crawler reads the rendered layer as
+ * ordinary HTML; the source layer is its aria-hidden mono twin, derived from
+ * the same content module so it cannot depict tags we do not ship, and it
+ * opens with the guard-checked head emissions (data-fact).
  */
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { invisible } from '@/content/home'
 import { factLines } from '@/lib/machine-facts'
 import { createFx, prefersReducedMotion } from '@/lib/fx'
 
 const fx = createFx()
+const root = ref<HTMLElement | null>(null)
 const screen = ref<HTMLElement | null>(null)
 const gripEl = ref<HTMLInputElement | null>(null)
 const live = ref(false)
@@ -46,11 +56,16 @@ const live = ref(false)
 const REST = 55
 /** One pass of the beam across the screen. */
 const SWEEP_MS = 1600
-/** A beat after the screen lands before the pass starts. */
-const SWEEP_DELAY_MS = 180
-/** Fires when this share of the screen is visible — 0.5 can be unreachable
- *  for a tall screen on a short phone viewport, so it sits lower. */
-const SWEEP_VISIBLE = 0.3
+/**
+ * How long the screen must stay continuously visible before the pass fires —
+ * the reading beat. Long on purpose: the raw source is the point of the first
+ * act, and rendering it early throws the argument away. Leaving the viewport
+ * disarms the timer, so the sweep can only happen to someone who lingered.
+ */
+const SWEEP_HOLD_MS = 2600
+/** Fires when this share of the screen is visible. Deliberately modest: a tall
+ *  screen on a short phone viewport can never reach a high threshold. */
+const SWEEP_VISIBLE = 0.35
 
 /** 0 = all source, 100 = fully rendered. */
 const scan = ref(REST)
@@ -60,6 +75,8 @@ const edge = computed(() => scan.value <= 0.5 || scan.value >= 99.5)
 let sweeping = false
 /** Sweep spent, or the hand took over — either way the pass never (re)fires. */
 let done = false
+/** The reading beat's pending timer, cleared when the screen leaves. */
+let holdTimer = 0
 
 /** Decisive and damped, zero overshoot — the system's temperament. */
 function easeOutCubic(t: number): number {
@@ -83,16 +100,61 @@ function sweep() {
   fx.raf(step)
 }
 
-/** A hand on the control always wins — cancels a running sweep and simply
- *  keeps the dragged position; there is no mapping waiting to snatch it. */
+/** A hand on the control always wins — cancels a pending hold or a running
+ *  sweep and simply keeps the dragged position; there is no mapping waiting to
+ *  snatch it back. */
 function takeOver() {
   sweeping = false
   done = true
+  if (holdTimer) {
+    clearTimeout(holdTimer)
+    holdTimer = 0
+  }
 }
 
 function onGrip() {
   takeOver()
   if (gripEl.value) scan.value = Number(gripEl.value.value)
+}
+
+/**
+ * The probed stratum. One integer drives the fill, the callout and the
+ * leader's position, so the three can never disagree.
+ */
+const probe = ref(0)
+
+/** Read the strata from the DOM: a v-for ref array goes stale on every update. */
+function bandAt(i: number): HTMLElement | undefined {
+  return root.value?.querySelectorAll<HTMLElement>('.asm__band')[i]
+}
+
+/**
+ * Aim the leader at the probed stratum's MEASURED centre. Measured, not
+ * derived from the index: the strata have different thicknesses, so any
+ * (n + 0.5) / count arithmetic points at the wrong place on most of them.
+ */
+function placeLeader() {
+  const stack = root.value?.querySelector<HTMLElement>('.asm__stack')
+  const band = bandAt(probe.value)
+  if (!stack || !band) return
+  stack.style.setProperty('--lead-y', `${band.offsetTop + band.offsetHeight / 2}px`)
+}
+
+/** Vertical tablist: arrows move and select, Home/End jump to the ends. */
+function onProbeKeys(e: KeyboardEvent) {
+  const n = invisible.items.length
+  let next = -1
+  if (e.key === 'ArrowDown' || e.key === 'ArrowRight') next = (probe.value + 1) % n
+  else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') next = (probe.value - 1 + n) % n
+  else if (e.key === 'Home') next = 0
+  else if (e.key === 'End') next = n - 1
+  if (next < 0) return
+  e.preventDefault()
+  probe.value = next
+  // Focus follows selection — the tablist contract. nextTick, not rAF: this
+  // waits on Vue's DOM update, and rAF is throttled to a stop in a background
+  // tab, where the focus must still land.
+  nextTick(() => bandAt(next)?.focus())
 }
 
 /** The title splice: ONE script run inside the display word, set by eye
@@ -127,19 +189,49 @@ const sourceLines = computed(() => [
 
 onMounted(() => {
   live.value = true
+  nextTick(placeLeader)
+
+  // The leader's target moves with any relayout (the strata are sized in fr)
+  // and with the font swap. TWO independent paths on purpose: a missed
+  // re-aim is silent and permanent, and a ResizeObserver notification can go
+  // undelivered in a throttled or non-compositing context (measured here: the
+  // leader kept a 12px stale offset across a width change until the plain
+  // resize listener was added).
+  if ('ResizeObserver' in window && root.value) {
+    const stack = root.value.querySelector('.asm__stack')
+    if (stack) fx.ro(placeLeader).observe(stack)
+  }
+  fx.on(window, 'resize', placeLeader, { passive: true })
+  document.fonts?.ready.then(placeLeader)
+  // A selection changes which callout is mounted, which can change the stack's
+  // height — re-aim explicitly rather than leaning on observing our own effect.
+  watch(probe, () => nextTick(placeLeader))
+
   // Reduced motion: the composed rest IS the finished state — no sweep, the
-  // dial fully operable, the ground flip lands instantly (base.css kill-switch).
+  // dial and the strata fully operable, the ground flip lands instantly
+  // (base.css kill-switch).
   if (prefersReducedMotion()) return
   // No IntersectionObserver → no sweep. Never park on 0 without a way to
   // render: the composed rest stays.
   if (!('IntersectionObserver' in window) || !screen.value) return
-  scan.value = 0 // arrive as raw source; the pass renders it
+  scan.value = 0 // arrive as raw source; the pass renders it after the beat
   const io = fx.io(
     (entries) => {
       for (const e of entries) {
-        if (!e.isIntersecting) continue
-        io.disconnect()
-        fx.setTimeout(sweep, SWEEP_DELAY_MS)
+        if (e.isIntersecting) {
+          if (!holdTimer && !done) {
+            holdTimer = fx.setTimeout(() => {
+              holdTimer = 0
+              io.disconnect()
+              sweep()
+            }, SWEEP_HOLD_MS)
+          }
+        } else if (holdTimer) {
+          // Left the screen mid-beat: disarm. Coming back re-arms it, so the
+          // pass only ever happens to someone who stayed to read.
+          clearTimeout(holdTimer)
+          holdTimer = 0
+        }
       }
     },
     { threshold: SWEEP_VISIBLE },
@@ -156,6 +248,7 @@ onUnmounted(() => {
 <template>
   <section
     id="nevidno"
+    ref="root"
     class="trad"
     :class="{ 'trad--live': live, 'trad--edge': edge }"
   >
@@ -173,28 +266,6 @@ onUnmounted(() => {
       </header>
 
       <div class="trad__set">
-        <!-- The dial: the two states name the slider's ends — machine left
-             (0, all source), human right (100, rendered). -->
-        <div class="trad__dial">
-          <span class="trad__end">{{ invisible.machineLabel }}</span>
-          <input
-            v-if="live"
-            ref="gripEl"
-            class="trad__grip"
-            type="range"
-            min="0"
-            max="100"
-            step="1"
-            :value="Math.round(scan)"
-            :aria-label="invisible.feedback.scanLabel"
-            @input="onGrip"
-            @pointerdown="takeOver"
-            @keydown="takeOver"
-          />
-          <span v-else class="trad__grip-ghost" aria-hidden="true"></span>
-          <span class="trad__end">{{ invisible.humanLabel }}</span>
-        </div>
-
         <!-- The screen. The rendered page is the geometry authority (in flow,
              real content); the source layer is absolute behind it, opaque
              black, clipped complementarily by the same --scan. -->
@@ -204,18 +275,58 @@ onUnmounted(() => {
               <p>{{ invisible.quote }}</p>
             </blockquote>
             <p class="trad__intro">{{ invisible.intro }}</p>
-            <div class="trad__rows">
-              <article
-                v-for="(item, n) in invisible.items"
-                :id="item.id"
-                :key="item.id"
-                class="trad__row"
+
+            <!-- THE INTERACTIVE LAYER: a section through the site's own
+                 build-up. Four strata of unequal thickness, stepping darker
+                 with depth; probing one fills it with ink and swings the
+                 leader across to its callout. The article ids are real, so
+                 the source layer's <article id="…"> depicts a tag we ship. -->
+            <div class="asm">
+              <div
+                class="asm__stack"
+                :role="live ? 'tablist' : undefined"
+                :aria-label="live ? invisible.feedback.layersLabel : undefined"
+                aria-orientation="vertical"
+                @keydown="live && onProbeKeys($event)"
               >
-                <span class="trad__index" aria-hidden="true">00{{ n + 1 }}</span>
-                <h3 class="trad__row-label">{{ item.label }}</h3>
-                <p class="trad__row-detail">{{ item.detail }}</p>
-              </article>
+                <component
+                  :is="live ? 'button' : 'div'"
+                  v-for="(item, n) in invisible.items"
+                  :id="live ? `tab-${item.id}` : undefined"
+                  :key="item.id"
+                  class="asm__band"
+                  :class="[`asm__band--${n}`, { 'asm__band--on': live && n === probe }]"
+                  :type="live ? 'button' : undefined"
+                  :role="live ? 'tab' : undefined"
+                  :aria-selected="live ? String(n === probe) : undefined"
+                  :aria-controls="live ? item.id : undefined"
+                  :tabindex="live ? (n === probe ? 0 : -1) : undefined"
+                  @click="live && (probe = n)"
+                >
+                  <span class="asm__index" aria-hidden="true">00{{ n + 1 }}</span>
+                  <span class="asm__band-label">{{ item.label }}</span>
+                </component>
+
+                <!-- Swung to the probed stratum's measured centre. -->
+                <span v-if="live" class="asm__leader" aria-hidden="true"></span>
+              </div>
+
+              <div class="asm__panels">
+                <article
+                  v-for="(item, n) in invisible.items"
+                  :id="item.id"
+                  :key="item.id"
+                  class="asm__panel"
+                  :role="live ? 'tabpanel' : undefined"
+                  :aria-labelledby="live ? `tab-${item.id}` : undefined"
+                  :hidden="live && n !== probe"
+                >
+                  <h3 class="asm__label">{{ item.label }}</h3>
+                  <p class="asm__detail">{{ item.detail }}</p>
+                </article>
+              </div>
             </div>
+
             <p class="trad__outro">{{ invisible.outro }}</p>
           </div>
 
@@ -232,8 +343,30 @@ onUnmounted(() => {
           <span class="trad__beam" aria-hidden="true"></span>
         </div>
 
-        <!-- The legend: why the source half matters. Constant dark strip. -->
-        <p class="trad__legend">{{ invisible.machineGloss }}</p>
+        <!-- The bezel, under the screen: why the source half matters, then the
+             dial. A constant black strip, so nothing in it rides the flip. -->
+        <div class="trad__bezel">
+          <p class="trad__legend">{{ invisible.machineGloss }}</p>
+          <div class="trad__dial">
+            <span class="trad__end">{{ invisible.machineLabel }}</span>
+            <input
+              v-if="live"
+              ref="gripEl"
+              class="trad__grip"
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              :value="Math.round(scan)"
+              :aria-label="invisible.feedback.scanLabel"
+              @input="onGrip"
+              @pointerdown="takeOver"
+              @keydown="takeOver"
+            />
+            <span v-else class="trad__grip-ghost" aria-hidden="true"></span>
+            <span class="trad__end">{{ invisible.humanLabel }}</span>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -242,13 +375,14 @@ onUnmounted(() => {
 <style scoped>
 /* Transparent root: the section sits ON the flipping page ground — arriving
    here is what turns the page dark (ground.ts), and the tween is visible
-   exactly where the visitor is looking. Both instrument panels are constant,
+   exactly where the visitor is looking. Both instrument surfaces are constant,
    so no body copy rides the flip. */
 .trad {
   /* Tighter than the standard section frame: the settle wants the whole
-     instrument inside one viewport, and the centre-snap crops padding first —
-     so the padding is the sacrificial zone. */
-  padding-block: var(--space-16);
+     instrument inside one viewport (measured: 887px at 1440×900, so it fits
+     with the head and both bezel strips), and the centre-snap crops padding
+     first — so the padding is the sacrificial zone. */
+  padding-block: var(--space-12);
 }
 
 /* The settle: a native proximity snap centres the instrument when the scroll
@@ -337,73 +471,6 @@ onUnmounted(() => {
   border: var(--divider-width) solid var(--divider);
 }
 
-/* The dial strip: constant black bezel. */
-.trad__dial {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  column-gap: var(--space-4);
-  row-gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-  background: var(--color-black);
-  border-bottom: var(--divider-width) solid var(--crta-na-temnem);
-}
-
-.trad__end {
-  font-family: var(--font-mono);
-  font-size: var(--type-data-size);
-  letter-spacing: var(--type-data-ls);
-  text-transform: uppercase;
-  color: var(--papir-dim); /* 12.5:1 on black */
-  white-space: nowrap;
-}
-
-/* A real range input: drag, keyboard (arrows / PgUp / Home / End) and touch
-   all work with ZERO custom touch listeners. 44px hit target; the visible
-   thumb is a 20px square riding a 2px track. */
-.trad__grip {
-  -webkit-appearance: none;
-  appearance: none;
-  height: 44px;
-  min-width: 8rem;
-  margin: 0;
-  background: transparent;
-  cursor: ew-resize;
-}
-.trad__grip::-webkit-slider-runnable-track {
-  height: 2px;
-  background: var(--crta-na-temnem);
-}
-.trad__grip::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 20px;
-  height: 20px;
-  margin-top: -9px;
-  border: 0;
-  border-radius: 0;
-  background: var(--color-cut-dark); /* 6.42:1 on the black bezel */
-}
-.trad__grip::-moz-range-track {
-  height: 2px;
-  background: var(--crta-na-temnem);
-}
-.trad__grip::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  border: 0;
-  border-radius: 0;
-  background: var(--color-cut-dark);
-}
-.trad__grip:focus-visible {
-  outline: 2px solid var(--color-cut-dark);
-  outline-offset: 4px;
-}
-
-/* JS-off: the dial keeps its geometry, no dead control appears. */
-.trad__grip-ghost {
-  height: 44px;
-}
-
 /* --- the screen ------------------------------------------------------------ */
 .trad__screen {
   position: relative;
@@ -488,44 +555,6 @@ onUnmounted(() => {
   max-width: 58ch;
 }
 
-.trad__rows {
-  margin-top: var(--space-8);
-  border-top: var(--divider-width) solid var(--mreza-strong);
-}
-
-.trad__row {
-  display: grid;
-  grid-template-columns: 2rem minmax(0, 14rem) minmax(0, 1fr);
-  align-items: baseline;
-  column-gap: var(--space-4);
-  padding-block: var(--space-3);
-  border-bottom: var(--divider-width) solid var(--mreza-strong);
-}
-
-.trad__index {
-  font-family: var(--font-mono);
-  font-size: var(--type-data-size);
-  letter-spacing: var(--type-data-ls);
-  color: var(--color-ink-2);
-}
-
-.trad__row-label {
-  font-family: var(--font-sans);
-  font-size: 1.0625rem;
-  font-weight: 500;
-  line-height: 1.25;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--color-ink);
-}
-
-.trad__row-detail {
-  color: var(--color-ink-2);
-  font-size: 0.9375rem;
-  line-height: 1.5;
-  max-width: 44ch;
-}
-
 .trad__outro {
   margin-top: var(--space-8);
   color: var(--color-ink);
@@ -533,30 +562,312 @@ onUnmounted(() => {
   max-width: 50ch;
 }
 
-/* --- the legend -------------------------------------------------------------- */
+/* --- the strata (the interactive layer) -------------------------------------
+   A section through the build-up. Unequal thicknesses are the point: a
+   membrane is thin, a substrate is thick — equal slabs would read as a bar
+   chart. The grounds step darker with depth (paper family), the probed one
+   fills with ink, which is a documented job of that token ("selected fills").
+   Depth is DRAWN — steps, rules, a leader — never a shadow, and no hatches:
+   the page already carries one texture (the grain), and a second would fight
+   it. Every ink pairing here is measured in the step-1 verification. */
+.asm {
+  --asm-gap: clamp(1.5rem, 4vw, 3rem);
+  margin-top: var(--space-8);
+  display: grid;
+  gap: var(--space-6);
+}
+
+.asm__stack {
+  position: relative;
+  display: grid;
+  grid-template-rows: 1.4fr 0.72fr 0.95fr 1.95fr;
+  min-height: clamp(13rem, 30vw, 16rem);
+  border: var(--divider-width) solid var(--mreza-strong);
+  /* The leader reaches out of this box. */
+  overflow: visible;
+}
+
+.asm__band {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--space-2) var(--space-4);
+  margin: 0;
+  border: 0;
+  border-bottom: var(--divider-width) solid var(--mreza-strong);
+  font: inherit;
+  text-align: left;
+  /* The fill SNAPS — deliberately no tween, and this is a measured decision,
+     not a style preference. Probing inverts a ground (paper→ink) UNDER text
+     that inverts with it (ink→paper); tweened, the two cross and the label's
+     contrast collapses to 1.0:1 at the midpoint (measured), i.e. 200ms of
+     invisible type on every hover. Snapping the text at the crossover does not
+     save it either: the ground passes through mid-grey, where BOTH inks sit
+     near 2.9:1 — under the 4.5 floor for 14px type. A ground tween is simply
+     incompatible with small text on it. The reference snaps its own state
+     colours for the same reason (its rule colour is excluded from the
+     transition), so this is in character as well as correct. */
+}
+
+.asm__band:last-of-type {
+  border-bottom: 0;
+}
+
+button.asm__band {
+  cursor: pointer;
+}
+
+/* The four materials, stepping darker with depth. Ink on each: 13.9 / 13.1 /
+   10.7 / 7.1 — the deepest is the darkest ground a label sits on. */
+.asm__band--0 {
+  background: var(--color-paper);
+}
+.asm__band--1 {
+  background: var(--color-paper-2);
+}
+.asm__band--2 {
+  background: var(--mreza);
+}
+.asm__band--3 {
+  background: var(--mreza-strong);
+}
+
+/* The interface onto the substrate is the drawing's ground line — heavier, the
+   way a section marks the boundary you build on. */
+.asm__band--3 {
+  border-top: 2px solid var(--color-ink);
+}
+
+/* Probed: the stratum fills with ink and its type inverts to paper (13.9:1). */
+.asm__band--on {
+  background: var(--color-ink);
+  color: var(--color-paper);
+}
+
+/* Hover is the same move at the reference's 200ms tween, so pointer and
+   keyboard read identically — GATED on a hovering pointer: on touch,
+   mouseleave never fires, so an ungated rule leaves the tapped stratum
+   looking filled next to the one that is actually probed. */
+@media (hover: hover) {
+  button.asm__band:hover {
+    background: var(--color-ink);
+    color: var(--color-paper);
+  }
+}
+
+.asm__band:focus-visible {
+  outline: 2px solid var(--color-cut);
+  outline-offset: -4px;
+}
+
+.asm__index {
+  font-family: var(--font-mono);
+  font-size: var(--type-data-size);
+  letter-spacing: var(--type-data-ls);
+  color: var(--color-ink-2);
+  flex: 0 0 auto;
+}
+
+/* The deepest stratum is the darkest ground: the secondary ink measures
+   4.45:1 there — a hair under the 4.5 floor for 13/14px type — so the index
+   takes the full ink (6.87:1). The label/index hierarchy still reads, carried
+   by weight and case rather than by tone. */
+.asm__band--3 .asm__index {
+  color: var(--color-ink);
+}
+
+.asm__band-label {
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  font-weight: 500;
+  letter-spacing: var(--type-label-ls);
+  text-transform: uppercase;
+  color: var(--color-ink);
+}
+
+/* Inverted together, so the whole row reads as one filled object. */
+.asm__band--on .asm__index,
+.asm__band--on .asm__band-label {
+  color: var(--color-paper);
+}
+@media (hover: hover) {
+  button.asm__band:hover .asm__index,
+  button.asm__band:hover .asm__band-label {
+    color: var(--color-paper);
+  }
+}
+
+/* The leader: a hairline in the cut red from the probed stratum across to its
+   callout, with a terminal dot at the stack's edge. Desktop only — where
+   there is a gap to cross. */
+.asm__leader {
+  position: absolute;
+  display: none;
+  left: 100%;
+  width: var(--asm-gap);
+  height: 1px;
+  top: var(--lead-y, 50%);
+  background: var(--color-cut);
+  transition: top 300ms var(--ease-spring);
+  pointer-events: none;
+}
+.asm__leader::before {
+  content: '';
+  position: absolute;
+  left: -3px;
+  top: -2.5px;
+  width: 6px;
+  height: 6px;
+  background: var(--color-cut);
+}
+
+/* --- the callouts ----------------------------------------------------------- */
+.asm__panel[hidden] {
+  display: none;
+}
+
+/* Only genuinely adjacent VISIBLE callouts are spaced — the JS-off case where
+   all four stand open. `+` still matches across `display:none` siblings, so a
+   plain sibling selector gives the one visible panel a phantom top margin. */
+.asm__panel:not([hidden]) + .asm__panel:not([hidden]) {
+  margin-top: var(--space-6);
+}
+
+/* The swap is a fade-in on the panel that appears — the reference's 150ms
+   crossfade. One-shot by construction (the element is created on selection),
+   so there is no state to defend; the kill-switch zeroes it under reduced
+   motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .trad--live .asm__panel:not([hidden]) {
+    animation: asm-in var(--dur-fast) var(--ease-hover) both;
+  }
+}
+
+@keyframes asm-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.asm__label {
+  font-family: var(--font-sans);
+  font-size: clamp(1.25rem, 1rem + 1.1vw, 1.75rem);
+  font-weight: 400;
+  line-height: var(--type-display-l-lh);
+  letter-spacing: var(--type-display-l-ls);
+  text-transform: uppercase;
+  color: var(--color-ink);
+  padding-bottom: var(--space-2);
+  border-bottom: var(--divider-width) solid var(--mreza-strong);
+}
+
+.asm__detail {
+  margin-top: var(--space-3);
+  color: var(--color-ink-2);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  max-width: 44ch;
+}
+
+/* --- the bezel: legend, then the dial --------------------------------------- */
+.trad__bezel {
+  background: var(--color-black);
+  border-top: var(--divider-width) solid var(--divider);
+}
+
 .trad__legend {
   margin: 0;
   padding: var(--space-3) var(--space-4);
-  background: var(--color-black);
-  border-top: var(--divider-width) solid var(--crta-na-temnem);
-  color: var(--papir-dim);
+  color: var(--papir-dim); /* 12.5:1 on black */
   font-size: 0.875rem;
   max-width: none;
 }
 
+/* The dial strip, at the bottom of the instrument. */
+.trad__dial {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  column-gap: var(--space-4);
+  row-gap: var(--space-2);
+  padding: var(--space-2) var(--space-4) var(--space-3);
+  border-top: var(--divider-width) solid var(--crta-na-temnem);
+}
+
+.trad__end {
+  font-family: var(--font-mono);
+  font-size: var(--type-data-size);
+  letter-spacing: var(--type-data-ls);
+  text-transform: uppercase;
+  color: var(--papir-dim);
+  white-space: nowrap;
+}
+
+/* A real range input: drag, keyboard (arrows / PgUp / Home / End) and touch
+   all work with ZERO custom touch listeners. 44px hit target; the visible
+   thumb is a 20px square riding a 2px track. */
+.trad__grip {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 44px;
+  min-width: 8rem;
+  margin: 0;
+  background: transparent;
+  cursor: ew-resize;
+}
+.trad__grip::-webkit-slider-runnable-track {
+  height: 2px;
+  background: var(--crta-na-temnem);
+}
+.trad__grip::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: -9px;
+  border: 0;
+  border-radius: 0;
+  background: var(--color-cut-dark); /* 6.42:1 on the black bezel */
+}
+.trad__grip::-moz-range-track {
+  height: 2px;
+  background: var(--crta-na-temnem);
+}
+.trad__grip::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 0;
+  background: var(--color-cut-dark);
+}
+.trad__grip:focus-visible {
+  outline: 2px solid var(--color-cut-dark);
+  outline-offset: 4px;
+}
+
+/* JS-off: the dial keeps its geometry, no dead control appears. */
+.trad__grip-ghost {
+  height: 44px;
+}
+
 /* --- desktop: the page under the beam is a real desktop composition ---------
-   The system's dominant split: statement + intro on the left, the ruled rows
-   on the right. This is also what lets the whole instrument fit a ~900px
-   viewport for the settle. */
+   The system's dominant split: statement + intro on the left, the strata and
+   their callout on the right, the closing line across both. This is also what
+   keeps the whole instrument inside a ~900px viewport for the settle. */
 @media (min-width: 1200px) {
   .trad__made {
     display: grid;
     grid-template-columns: minmax(0, 30fr) minmax(0, 68fr);
     /* Explicit areas — auto-placement would stagger the two columns. */
     grid-template-areas:
-      'quote rows'
-      'intro rows'
-      'intro outro';
+      'quote asm'
+      'intro asm'
+      'outro outro';
     column-gap: var(--space-8);
     align-items: start;
     align-content: start;
@@ -568,24 +879,32 @@ onUnmounted(() => {
     grid-area: intro;
     align-self: start;
   }
-  .trad__made > .trad__rows {
-    grid-area: rows;
+  .trad__made > .asm {
+    grid-area: asm;
+    margin-top: 0;
+    /* The strata are a fixed-width instrument beside a fluid callout — the
+       reference's own habit of holding decorative widths in pixels. */
+    grid-template-columns: 13rem minmax(0, 1fr);
+    column-gap: var(--asm-gap);
+    align-items: start;
   }
   .trad__made > .trad__outro {
     grid-area: outro;
   }
-  .trad__rows {
-    margin-top: 0;
+  .asm__leader {
+    display: block;
   }
-  .trad__row {
-    grid-template-columns: 2rem minmax(0, 15rem) minmax(0, 1fr);
+  /* The callout swaps content on selection; reserving the tallest keeps the
+     strata from jumping as the leader swings. */
+  .asm__panels {
+    min-height: 10rem;
   }
 }
 
 /* --- phone (system breakpoint) ----------------------------------------------
    The section exceeds the viewport here by design: normal flow, no settle,
-   the sweep still fires on intersection. The dial re-stacks deterministically:
-   labels row, then the full-width control. */
+   the sweep still fires after the reading beat. The dial re-stacks
+   deterministically: labels row, then the full-width control. */
 @media (max-width: 809px) {
   .trad__dial {
     grid-template-columns: 1fr auto;
@@ -598,12 +917,11 @@ onUnmounted(() => {
   .trad__end:last-of-type {
     justify-self: end;
   }
-  .trad__row {
-    grid-template-columns: 2rem minmax(0, 1fr);
-    row-gap: var(--space-1);
-  }
-  .trad__row-detail {
-    grid-column: 2;
+  /* Phones lose the leader, so the link between a stratum and its callout is
+     proximity plus this rule, in the same red. */
+  .asm__panels {
+    border-top: 2px solid var(--color-cut);
+    padding-top: var(--space-4);
   }
 }
 </style>
