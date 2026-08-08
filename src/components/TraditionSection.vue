@@ -428,7 +428,12 @@ onUnmounted(() => {
      the beam runs the full height. */
   overflow: hidden;
   padding-block: var(--space-16);
-  background-color: var(--color-bronze-deep);
+  /* The band runs one step brighter than the closing band, and the page
+     canvas is set to this same value (tokens.css) so the two never show a
+     seam. Under a press-screen highlight dot — the worst case on a screened
+     ground — paper 7.40:1, secondary 4.94:1, bone 6.31:1. That secondary
+     figure is what caps it: the next step up (#52402c) falls to 4.37. */
+  background-color: var(--color-bronze);
   transition: background-color var(--dur-ground) var(--ease-ground);
   color: var(--color-paper); /* 18.8:1 on the settled ground */
 }
@@ -503,9 +508,13 @@ onUnmounted(() => {
   inset: 0;
   z-index: 1;
   /* One step off the section's own ground: the two halves read as different
-     material even where the beam has passed off-screen. Paper-dim mono on it
-     measures 11.9:1. */
-  background: #14171a;
+     material even where the beam has passed off-screen. It keeps the original
+     relationship — the machine half sits LIGHTER than the band — now in the
+     band's own family rather than the cool near-black it inherited, which
+     read as a cold panel dropped into a warm section. Being an opaque child
+     it covers the press screen, so this is measured flat: paper-dim mono on
+     it is 5.39:1. */
+  background: var(--color-bronze-2);
   clip-path: inset(0 0 0 calc(var(--scan, 55) * 1%));
   overflow: hidden;
 }
@@ -691,7 +700,7 @@ button.asm__band {
 
 /* Structure — 45° section hatch. */
 .asm__band--0 {
-  background: var(--grafit-inset); /* #24282c */
+  background: #5f4a33; /* the surface layer — the lightest step of the ramp */
 }
 .asm__band--0 .asm__fill {
   background: repeating-linear-gradient(
@@ -703,7 +712,7 @@ button.asm__band {
 
 /* Membrane — a thin laminated sheet, ruled very fine. */
 .asm__band--1 {
-  background: #1e2226;
+  background: #55402b;
 }
 .asm__band--1 .asm__fill {
   background: repeating-linear-gradient(0deg, transparent 0 2px, rgb(245 242 235 / 0.26) 2px 3px);
@@ -711,7 +720,7 @@ button.asm__band {
 
 /* Granular fill — stipple, the drafting convention for loose material. */
 .asm__band--2 {
-  background: #191d21;
+  background: #4b3724;
 }
 .asm__band--2 .asm__fill {
   background-image: radial-gradient(rgb(245 242 235 / 0.42) 1px, transparent 1.3px);
@@ -725,11 +734,15 @@ button.asm__band {
    in its own `.asm__band--3 { border-top }` block, and the CSS minifier merges
    duplicate selectors and can drop declarations while doing it. */
 .asm__band--3 {
-  /* A literal, not --zemlja: the adapter maps that to pure black, which is the
-     SECTION's own ground — the deepest stratum would have dissolved into the
-     band around it. This keeps the four materials an even ramp that stays
-     above the section ground: 36,40,44 → 30,34,38 → 25,29,33 → 20,23,26. */
-  background: #14171a;
+  /* THE RAMP DESCENDS THROUGH THE BAND, not above it. While the section was
+     pure black nothing could sit below it, so the four materials had to stack
+     upward; a mid-bronze band frees them to do what a section drawing
+     actually does — go deeper, ending on the same value as the closing band,
+     the mass everything sits on. Measured, band 0 → 3:
+       95,74,51 → 85,64,43 → 75,55,36 → 64,46,32
+     Each step is opaque, so it covers the press screen and is measured flat:
+     secondary text runs 4.99:1 on the lightest and 7.70:1 on this one. */
+  background: var(--color-bronze-deep);
   /* The interface onto the substrate is the drawing's ground line — heavier,
      the way a section marks the boundary you build on. */
   border-top: 2px solid var(--papir-dim);

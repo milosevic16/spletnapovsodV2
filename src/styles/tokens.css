@@ -328,9 +328,16 @@
    under 4.5:1, and it had to be papered over with a mid-tween colour snap.
    --muted and --divider were always constant here (#9e9e9e reads on both
    grounds, 7.84:1 on #000) — the reference leaves them still too. */
+/* THE CANVAS TAKES THE BAND'S OWN COLOUR, and only the colour. It is what
+   shows in overscroll, behind the sections, and on the prerendered page
+   before anything paints over it, so it matches the band the flip belongs to
+   (Tradicija) rather than the closing band — otherwise the seam between the
+   two is visible wherever the canvas shows. The press screen deliberately
+   does NOT come with it: the screen is a per-section background-image, and a
+   screened canvas would tile dots through overscroll and behind every gap. */
 :root[data-ground='dark'] {
-  --surface: var(--color-bronze-deep);
-  --surface-soft: var(--color-bronze-deep);
+  --surface: var(--color-bronze);
+  --surface-soft: var(--color-bronze);
 }
 
 /* Reference breakpoints as measured in the served CSS: base ≥1200,
