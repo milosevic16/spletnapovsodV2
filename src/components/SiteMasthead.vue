@@ -115,7 +115,7 @@ onUnmounted(() => {
 
 <template>
   <header
-    class="masthead"
+    class="masthead press press--light"
     :class="{
       'masthead--live': live,
       'masthead--open': open,
@@ -183,7 +183,7 @@ onUnmounted(() => {
            measured, the whole expanded nav showed for 460ms on every load. -->
       <div
         id="glavni-meni"
-        class="masthead__panel"
+        class="masthead__panel press press--light"
         :inert="live && phone && !open ? true : undefined"
       >
         <nav class="masthead__nav" aria-label="Glavna navigacija">
@@ -217,6 +217,12 @@ onUnmounted(() => {
    phone while the row it lives in stays inside the centred measure. */
 .masthead {
   position: relative;
+  /* A GROUND OF ITS OWN. The strip used to be transparent and simply showed
+     the page canvas; a screen needs a surface to sit on, and the header now
+     reads as the same treated paper as the references band. background-COLOR,
+     never the shorthand — the shorthand resets background-image and would
+     silently drop the screen. */
+  background-color: var(--list);
   color: var(--grafit);
   border-bottom: 1px solid var(--mreza);
   transition:
@@ -231,6 +237,15 @@ onUnmounted(() => {
   flex-wrap: wrap;
   /* Same as the nav's internal gap, so all five items are evenly spaced. */
   gap: 0 clamp(1rem, 4vw, 3rem);
+}
+
+/* The panel carries .press for the PHONE menu, where it paints its own ground
+   and has to bring its own screen. On desktop it is just the inline nav row
+   with no ground of its own, so the screen is switched off here — left on it
+   would print a second set of dots over the masthead's own and read as a
+   denser patch behind the nav. The phone rule turns it back on. */
+.masthead__panel {
+  background-image: none;
 }
 
 .masthead__panel,
@@ -293,7 +308,12 @@ onUnmounted(() => {
     left: 0;
     right: 0;
     z-index: 50;
-    background: transparent;
+    /* No bar at the top of a phone: the chrome is only the corner control, so
+       there is no surface here and the screen must go with it. Both stated
+       explicitly — a later change to background-color alone would otherwise
+       leave the dots floating over the hero. */
+    background-color: transparent;
+    background-image: none;
     border-bottom-color: transparent;
     /* The hero face's box is as tall as the (invisible) brand inside it, so it
        must not sit over the page swallowing taps. Only its controls take any. */
@@ -348,7 +368,13 @@ onUnmounted(() => {
   }
 
   .masthead--live.masthead--pinned:not(.masthead--open) {
-    background: var(--list);
+    background-color: var(--list);
+    /* Back on for this face: the hero-face rule above kills the screen for
+       the no-bar state, and it matches whenever the masthead is live. Taken
+       from .press's own custom properties so it cannot drift from the
+       utility. */
+    background-image: var(--press-dot-hi), var(--press-dot-lo), var(--press-dot-hi),
+      var(--press-dot-lo);
     border-bottom-color: var(--mreza);
   }
 
@@ -554,7 +580,13 @@ onUnmounted(() => {
   /* The strip takes the menu's ground, and its own seam disappears so the
      ground runs unbroken into the panel below. */
   .masthead--live.masthead--open {
-    background: var(--list-2);
+    background-color: var(--list-2);
+    /* Back on for this face: the hero-face rule above kills the screen for
+       the no-bar state, and it matches whenever the masthead is live. Taken
+       from .press's own custom properties so it cannot drift from the
+       utility. */
+    background-image: var(--press-dot-hi), var(--press-dot-lo), var(--press-dot-hi),
+      var(--press-dot-lo);
     border-bottom-color: transparent;
   }
 
@@ -567,7 +599,12 @@ onUnmounted(() => {
     flex-direction: column;
     align-items: stretch;
     column-gap: 0;
-    background: var(--list-2);
+    background-color: var(--list-2);
+    /* The screen comes back here, where the panel is an opaque surface that
+       would otherwise cover the masthead's. Re-declared from .press's own
+       custom properties rather than restated by value, so it cannot drift. */
+    background-image: var(--press-dot-hi), var(--press-dot-lo), var(--press-dot-hi),
+      var(--press-dot-lo);
     border-bottom: 1px solid var(--mreza-strong);
     /* ONE number unfolds the ground and carries the plane (see tokens.css).
        Shut it clips to zero height, which also stops it hit-testing; `inert`
