@@ -368,8 +368,10 @@ onUnmounted(() => {
     letter-spacing: -0.025em;
     margin-top: -0.11em;
     padding-block: calc((var(--hero-wordmark-scaley) - 1) * 0.5em);
-    /* The same strip the hero's own brand reserves for the button. */
-    padding-right: 3rem;
+    /* The strip the button stands in, plus air. 3rem left the wordmark
+       touching the glyph at 375 (measured: brand + reserve ran 342px into a
+       335px row, so the nowrap text ran under the control). */
+    padding-right: 4.25rem;
     color: var(--grafit);
     opacity: 0;
     transition:
@@ -393,9 +395,20 @@ onUnmounted(() => {
     opacity: 1;
   }
 
-  /* Open, from either face, it stands at hero size. */
+  /* Open, from either face, it stands at hero scale — but SIZED TO FIT rather
+     than copied. The button now holds a fixed corner (see below), so the brand
+     has a fixed strip to live in, and at hero size it did not: "SpletnaPovsod"
+     measures 6.45em wide at this weight and tracking (measured at 100px), the
+     mark adds 0.78em and its gap 0.5em, so the row needs 7.73em plus the
+     button's strip. Solving that against the available width is the second
+     term below; whichever is smaller wins, so the wordmark shrinks a little on
+     the narrowest screens and is the hero's own size everywhere else. */
   .masthead--live.masthead--open .masthead__brand {
     opacity: 1;
+    font-size: min(
+      var(--hero-wordmark),
+      calc((100vw - 2 * var(--hero-inset) - 4.25rem) / 7.73)
+    );
   }
 
   .masthead__brandmark {
@@ -407,12 +420,19 @@ onUnmounted(() => {
   .masthead--live .masthead__toggle {
     display: inline-flex;
     align-items: center;
-    /* Out of flow, pinned to the corner. The vertical anchor is the WORDMARK's
-       own centre — inset, less the brand's 0.11em optical pull, plus half its
-       stretched line — so the glyph lines up with the lettering rather than
-       with whatever box happens to be tallest. */
+    /* THE SHEET'S TOP-RIGHT REGISTER. The hero is a drafting sheet whose frame
+       is inset by --hero-inset on every side (StatementSection), so its
+       top-right corner — where the two drawn lines meet — sits at exactly
+       (--hero-inset, --hero-inset) from the viewport. The glyph centres on
+       that intersection: the pd stamp holds the sheet's top-LEFT corner and
+       this holds its top-right, which is why the hero drops its own crop mark
+       there on phones.
+       The anchor is the MASTHEAD (fixed at the viewport's top), not the row,
+       so the position is identical in the hero face and the open face — the
+       control never moves when the menu opens. Pinned, the bar is thin and it
+       centres in the bar instead (below). */
     position: absolute;
-    top: calc(var(--hero-inset) + 0.45 * var(--hero-wordmark));
+    top: var(--hero-inset);
     right: calc(var(--hero-inset) - 1.5px);
     transform: translateY(-50%);
     /* Ink, not box: the glyph is flush right and pulled out by the 1.5px its
@@ -474,6 +494,25 @@ onUnmounted(() => {
     width: 24px;
     height: 16px;
     overflow: visible;
+  }
+
+  /* In the hero face the control sits ON the sheet's frame corner, so it
+     punches the two lines with its own patch of paper — the same device the pd
+     stamp uses at the opposite corner. Not needed in the other two faces: the
+     pinned bar and the open menu both paint their own ground across the whole
+     width, which covers the frame already. */
+  .masthead--live:not(.masthead--pinned):not(.masthead--open) .masthead__glyph {
+    --punch: 0.34rem;
+    box-sizing: content-box;
+    padding: 0.3rem var(--punch);
+    /* The patch grows the box, and the box is flush right — so without this
+       the INK moves left by exactly the padding and the glyph stops meeting
+       the frame's right line (measured 4.9px short). One variable drives both
+       so they cannot drift apart. Only the padding is compensated here: the
+       button already carries the −1.5px that pulls the glyph's own viewBox
+       inset off the edge. */
+    margin-right: calc(var(--punch) * -1);
+    background: var(--list);
   }
 
   .masthead__gr {

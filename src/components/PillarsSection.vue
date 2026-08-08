@@ -54,8 +54,21 @@ function onSectionKeys(e: KeyboardEvent) {
   closeFromPanel(open.value)
 }
 
+/**
+ * Whether the fold may ANIMATE. The panels ship open (progressive disclosure),
+ * so the very first thing hydration does is close all three — and that must be
+ * instant, not three panels visibly folding away on every page load. `live`
+ * flips in a microtask, this in a macrotask after it, so the initial collapse
+ * is evaluated with the Transition's CSS disabled and every later toggle with
+ * it enabled.
+ */
+const armed = ref(false)
+
 onMounted(() => {
   live.value = true
+  fx.setTimeout(() => {
+    armed.value = true
+  }, 0)
 })
 
 onUnmounted(() => {
@@ -188,31 +201,41 @@ onUnmounted(() => {
             </span>
           </component>
 
-          <!-- The reading surface: prints inside the widened plate. -->
-          <div
-            :id="`paketi-panel-${item.id}`"
-            class="pil__reveal"
-          >
-            <p class="pil__summary">{{ item.summary }}</p>
-            <ul class="pil__points">
-              <li v-for="(pt, k) in item.points" :key="k" class="pil__point">
-                <span class="pil__point-label">{{ pt.label }}</span>
-                <span class="pil__point-detail">{{ pt.detail }}</span>
-              </li>
-            </ul>
-            <p v-if="item.prerez" class="pil__prerez">
-              <span class="annot">{{ item.prerez.annotation }}</span>
-              <span class="pil__prerez-gloss">{{ item.prerez.gloss }}</span>
-            </p>
-            <button
-              v-if="live"
-              type="button"
-              class="pil__close annot"
-              @click="closeFromPanel(n)"
+          <!-- The reading surface: prints inside the widened plate.
+               `v-if` rather than a CSS hide, so a closing panel can be HELD in
+               the DOM for the length of its own leave — a display:none reveal
+               has nothing to animate out. The condition keeps the progressive
+               -disclosure contract exactly as it was: not live (prerender, JS
+               off) renders every panel open in flow. -->
+          <Transition name="fold" :css="armed">
+            <div
+              v-if="!live || open === n"
+              :id="`paketi-panel-${item.id}`"
+              class="pil__fold"
             >
-              {{ pillars.feedback.closeLabel }}
-            </button>
-          </div>
+              <div class="pil__reveal">
+                <p class="pil__summary">{{ item.summary }}</p>
+                <ul class="pil__points">
+                  <li v-for="(pt, k) in item.points" :key="k" class="pil__point">
+                    <span class="pil__point-label">{{ pt.label }}</span>
+                    <span class="pil__point-detail">{{ pt.detail }}</span>
+                  </li>
+                </ul>
+                <p v-if="item.prerez" class="pil__prerez">
+                  <span class="annot">{{ item.prerez.annotation }}</span>
+                  <span class="pil__prerez-gloss">{{ item.prerez.gloss }}</span>
+                </p>
+                <button
+                  v-if="live"
+                  type="button"
+                  class="pil__close annot"
+                  @click="closeFromPanel(n)"
+                >
+                  {{ pillars.feedback.closeLabel }}
+                </button>
+              </div>
+            </div>
+          </Transition>
         </article>
       </div>
     </div>
@@ -476,16 +499,74 @@ button.pil__face {
 }
 
 /* --- resting flow (phones, pre-hydration) ------------------------------------
-   A column of plates; before hydration every reveal is visible. Once live,
-   closed reveals leave the flow — the opening motion is the plate itself. */
+   A column of plates; before hydration every reveal is visible. Once live, a
+   closed plate simply has no panel in the DOM (v-if) — nothing is hidden with
+   CSS, which is what lets the close animate. */
 .pil__wall {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
 }
 
-.pil--live .pil__plate:not(.pil__plate--open) .pil__reveal {
-  display: none;
+/* --- the fold ----------------------------------------------------------------
+   MAXIMIZE / MINIMIZE. Each breakpoint animates the thing that actually
+   changes there, and the leave is the enter run backwards through the mirrored
+   easing — a close that is not simply the open reversed is what reads as
+   glitchy.
+
+   PHONES: the plate has to grow taller, so the fold animates its own row from
+   0fr to 1fr — the one honest way to transition to an auto height — while the
+   content rises and fades inside it.
+   DESKTOP: the plate's own flex-grow already carries the size (see the wall
+   block below), so the fold does NOT animate height at all; the content simply
+   arrives a beat later, once the plate has finished widening.
+
+   Under reduced motion the global kill-switch zeroes every duration here, so
+   the panel appears and disappears with no travel — the same states, no
+   animation. */
+.pil__fold {
+  display: grid;
+  grid-template-rows: 1fr;
+}
+
+.pil__reveal {
+  /* The grid row's size is what animates; the content must be allowed to be
+     clipped by it, and a grid item's default min-height:auto refuses to go
+     below its content. */
+  min-height: 0;
+  overflow: hidden;
+}
+
+.fold-enter-active,
+.fold-leave-active {
+  transition: grid-template-rows var(--fold-ms, 420ms) var(--fold-ease, var(--ease-spring));
+}
+
+.fold-enter-active .pil__reveal,
+.fold-leave-active .pil__reveal {
+  transition:
+    opacity var(--fold-content-ms, 260ms) var(--fold-ease, var(--ease-spring)) var(--fold-content-delay, 120ms),
+    transform var(--fold-content-ms, 260ms) var(--fold-ease, var(--ease-spring)) var(--fold-content-delay, 120ms);
+}
+
+/* The leaving side takes the mirror: quicker, no delay on the content (it
+   goes first, then the fold closes under it), and the reversed easing. */
+.fold-leave-active {
+  --fold-ms: 340ms;
+  --fold-ease: cubic-bezier(0.64, 0, 0.78, 0);
+  --fold-content-ms: 180ms;
+  --fold-content-delay: 0ms;
+}
+
+.fold-enter-from,
+.fold-leave-to {
+  grid-template-rows: 0fr;
+}
+
+.fold-enter-from .pil__reveal,
+.fold-leave-to .pil__reveal {
+  opacity: 0;
+  transform: translateY(-8px);
 }
 
 /* The plate's mark on the sheet — phones only (the desktop wall has no
@@ -599,9 +680,28 @@ button.pil__face {
     align-items: stretch;
   }
 
-  .pil__plate--open .pil__reveal {
+  /* The fold is the flex child now; on desktop it never animates its height —
+     the plate's flex-grow is the maximize, and the content fades in behind it
+     (see the fold block above). grid-template-rows is pinned at 1fr in every
+     transition state so the row can never collapse here. */
+  .pil__plate--open .pil__fold {
     flex: 1;
     min-width: 0;
+  }
+
+  /* No height travel here — the row is 1fr in every state — but the fold KEEPS
+     its declared transition duration. Vue times a leave from the transitioned
+     element itself, not from its children, so zeroing it here would strip the
+     classes on the next tick and take the content's own fade down with it
+     (measured: the text snapped in at the start of the widen instead of
+     arriving with it). The content's 120ms delay + 260ms then lands exactly as
+     the plate's 380ms flex-grow finishes. */
+  .fold-enter-from,
+  .fold-leave-to {
+    grid-template-rows: 1fr;
+  }
+
+  .pil__plate--open .pil__reveal {
     padding: var(--space-4);
     overflow-y: auto;
   }

@@ -333,6 +333,16 @@ const WORD_2 = 'Povsod'
    sheet's own frame padding) costs ~290px of it. That leaves ~420px for the
    pair, which is a 228px first course — and 78cqw lands there. Re-derive if
    any of those fixed costs change. */
+/* On phones the menu control IS the sheet's top-right register: it centres on
+   that corner and punches the frame there (SiteMasthead), so a crop mark under
+   it would only be a line the control has to cover. Desktop has no such
+   control and keeps all three. */
+@media (max-width: 899.98px) {
+  .stmt__crop--tr {
+    display: none;
+  }
+}
+
 @media (min-width: 1200px) {
   .stmt__sheet {
     min-height: calc(100svh - 45px - 2 * var(--hero-inset));
