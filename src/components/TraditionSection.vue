@@ -40,7 +40,7 @@
  * the same content module so it cannot depict tags we do not ship, and it
  * opens with the guard-checked head emissions (data-fact).
  */
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { invisible } from '@/content/home'
 import { factLines } from '@/lib/machine-facts'
 import { createFx, prefersReducedMotion } from '@/lib/fx'
@@ -128,17 +128,15 @@ function bandAt(i: number): HTMLElement | undefined {
   return root.value?.querySelectorAll<HTMLElement>('.asm__band')[i]
 }
 
-/**
- * Aim the leader at the probed stratum's MEASURED centre. Measured, not
- * derived from the index: the strata have different thicknesses, so any
- * (n + 0.5) / count arithmetic points at the wrong place on most of them.
- */
-function placeLeader() {
-  const stack = root.value?.querySelector<HTMLElement>('.asm__stack')
-  const band = bandAt(probe.value)
-  if (!stack || !band) return
-  stack.style.setProperty('--lead-y', `${band.offsetTop + band.offsetHeight / 2}px`)
-}
+/* THE LEADER IS NOT MEASURED. Each stratum owns its own leader, centred on
+ * itself in CSS, revealed when that stratum is probed — so it is exact at
+ * every size by construction. The earlier version aimed ONE leader from JS at
+ * the probed band's measured centre, and it went stale twice here (12px and
+ * 15px offsets that survived width changes, because a re-measure depends on a
+ * ResizeObserver notification or a font-load promise actually arriving). A
+ * geometry that cannot be stale beats a measurement with two rescue paths;
+ * the cost is that the leader appears at the new layer instead of sliding to
+ * it, which suits the system's decisive temperament anyway. */
 
 /** Vertical tablist: arrows move and select, Home/End jump to the ends. */
 function onProbeKeys(e: KeyboardEvent) {
@@ -189,23 +187,6 @@ const sourceLines = computed(() => [
 
 onMounted(() => {
   live.value = true
-  nextTick(placeLeader)
-
-  // The leader's target moves with any relayout (the strata are sized in fr)
-  // and with the font swap. TWO independent paths on purpose: a missed
-  // re-aim is silent and permanent, and a ResizeObserver notification can go
-  // undelivered in a throttled or non-compositing context (measured here: the
-  // leader kept a 12px stale offset across a width change until the plain
-  // resize listener was added).
-  if ('ResizeObserver' in window && root.value) {
-    const stack = root.value.querySelector('.asm__stack')
-    if (stack) fx.ro(placeLeader).observe(stack)
-  }
-  fx.on(window, 'resize', placeLeader, { passive: true })
-  document.fonts?.ready.then(placeLeader)
-  // A selection changes which callout is mounted, which can change the stack's
-  // height — re-aim explicitly rather than leaning on observing our own effect.
-  watch(probe, () => nextTick(placeLeader))
 
   // Reduced motion: the composed rest IS the finished state — no sweep, the
   // dial and the strata fully operable, the ground flip lands instantly
@@ -271,16 +252,22 @@ onUnmounted(() => {
              black, clipped complementarily by the same --scan. -->
         <div ref="screen" class="trad__screen" :style="live ? { '--scan': String(scan) } : undefined">
           <div class="trad__made">
-            <blockquote class="trad__quote">
-              <p>{{ invisible.quote }}</p>
-            </blockquote>
-            <p class="trad__intro">{{ invisible.intro }}</p>
+            <!-- The statement band: the argument, then a rule. Grouped so the
+                 rule belongs to the band rather than to a paragraph. -->
+            <div class="trad__argument">
+              <blockquote class="trad__quote">
+                <p>{{ invisible.quote }}</p>
+              </blockquote>
+              <p class="trad__intro">{{ invisible.intro }}</p>
+            </div>
 
             <!-- THE INTERACTIVE LAYER: a section through the site's own
-                 build-up. Four strata of unequal thickness, stepping darker
-                 with depth; probing one fills it with ink and swings the
-                 leader across to its callout. The article ids are real, so
-                 the source layer's <article id="…"> depicts a tag we ship. -->
+                 build-up. Four strata of unequal thickness, each in its own
+                 drafting hatch, stepping darker with depth; probing one draws
+                 the CUT PLANES at its two interfaces, fills its terminal and
+                 swings the leader across to its callout. The article ids are
+                 real, so the source layer's <article id="…"> depicts a tag we
+                 actually ship. -->
             <div class="asm">
               <div
                 class="asm__stack"
@@ -289,6 +276,10 @@ onUnmounted(() => {
                 aria-orientation="vertical"
                 @keydown="live && onProbeKeys($event)"
               >
+                <!-- Dimension rule down the left edge: extension ticks only,
+                     never a figure — this drawing measures nothing we could
+                     honestly put a number on. -->
+                <span class="asm__dim" aria-hidden="true"></span>
                 <component
                   :is="live ? 'button' : 'div'"
                   v-for="(item, n) in invisible.items"
@@ -303,12 +294,22 @@ onUnmounted(() => {
                   :tabindex="live ? (n === probe ? 0 : -1) : undefined"
                   @click="live && (probe = n)"
                 >
-                  <span class="asm__index" aria-hidden="true">00{{ n + 1 }}</span>
+                  <!-- The material's own drafting hatch. Half-strength at
+                       rest, full when probed — the drawing's way of saying
+                       "this is the layer we are looking at". -->
+                  <span class="asm__fill" aria-hidden="true"></span>
+                  <!-- The cut planes BOUNDING the probed stratum: drawn at its
+                       two interfaces with square end ticks, so they mark the
+                       layer without ever crossing its name. -->
+                  <span class="asm__plane" aria-hidden="true"></span>
                   <span class="asm__band-label">{{ item.label }}</span>
+                  <!-- Leader terminal: hollow reads as available, filled as
+                       taken — the drawing's own way of saying "press me". -->
+                  <span class="asm__node" aria-hidden="true"></span>
+                  <!-- Each stratum owns its leader, centred on ITSELF: exact at
+                       every size, nothing to measure or re-measure. -->
+                  <span v-if="live" class="asm__leader" aria-hidden="true"></span>
                 </component>
-
-                <!-- Swung to the probed stratum's measured centre. -->
-                <span v-if="live" class="asm__leader" aria-hidden="true"></span>
               </div>
 
               <div class="asm__panels">
@@ -531,7 +532,13 @@ onUnmounted(() => {
   opacity: 0;
 }
 
-/* --- the rendered page's own composition ------------------------------------ */
+/* --- the rendered page's own composition ------------------------------------
+   Three bands, ruled apart, in the system's own archetypes: the STATEMENT
+   BAND (a statement at the 65% measure with its intro under it, the right
+   third deliberately empty — the reference's asymmetry spent as a void),
+   then INDEX + PREVIEW (the drawing beside its callout), then a closing line.
+   The rules are what hold it together at any clip width: whatever the beam
+   leaves standing still reads as a composed page, not a fragment. */
 .trad__quote {
   margin: 0;
 }
@@ -546,70 +553,99 @@ onUnmounted(() => {
      air to keep ascenders clear of the line above. */
   line-height: 1.02;
   color: var(--color-ink);
-  max-width: 24ch;
+  max-width: 26ch;
 }
 
 .trad__intro {
   margin-top: var(--space-6);
   color: var(--color-ink-2); /* 8.99:1 on paper */
-  max-width: 58ch;
+  max-width: 54ch;
 }
 
 .trad__outro {
-  margin-top: var(--space-8);
+  margin-top: var(--space-6);
+  padding-top: var(--space-6);
+  border-top: var(--divider-width) solid var(--mreza-strong);
   color: var(--color-ink);
   font-weight: 500;
-  max-width: 50ch;
+  max-width: 54ch;
 }
 
 /* --- the strata (the interactive layer) -------------------------------------
    A section through the build-up. Unequal thicknesses are the point: a
    membrane is thin, a substrate is thick — equal slabs would read as a bar
-   chart. The grounds step darker with depth (paper family), the probed one
-   fills with ink, which is a documented job of that token ("selected fills").
-   Depth is DRAWN — steps, rules, a leader — never a shadow, and no hatches:
-   the page already carries one texture (the grain), and a second would fight
-   it. Every ink pairing here is measured in the step-1 verification. */
+   chart. Grounds step darker with depth through the paper family; each
+   material carries its OWN drafting hatch, at half strength until probed.
+
+   Probing is signalled the way a section drawing signals it — and never by
+   tone alone: the CUT PLANES appear at the layer's two interfaces with square
+   end ticks, the terminal fills, the hatch comes up to full, the label
+   brightens, and the leader swings across to the callout. The band's own
+   GROUND never changes, which is what keeps the label's contrast constant
+   through every state (a ground tween under 14px type crosses mid-grey and
+   drops both possible inks under 4.5:1 — measured; that is why the earlier
+   ink-fill version was replaced by this one). */
 .asm {
   --asm-gap: clamp(1.5rem, 4vw, 3rem);
-  margin-top: var(--space-8);
   display: grid;
-  gap: var(--space-6);
+  gap: var(--space-8);
 }
 
 .asm__stack {
   position: relative;
   display: grid;
   grid-template-rows: 1.4fr 0.72fr 0.95fr 1.95fr;
-  min-height: clamp(13rem, 30vw, 16rem);
+  min-height: clamp(19rem, 34vw, 26rem);
   border: var(--divider-width) solid var(--mreza-strong);
-  /* The leader reaches out of this box. */
+  /* The leader and the dimension rule reach out of this box. */
   overflow: visible;
+  margin-left: 1.25rem;
+}
+
+/* Dimension rule: extension ticks top and bottom, no figure. */
+.asm__dim {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -1.25rem;
+  width: 1px;
+  background: var(--mreza-strong);
+  pointer-events: none;
+}
+.asm__dim::before,
+.asm__dim::after {
+  content: '';
+  position: absolute;
+  left: -3px;
+  width: 7px;
+  height: 1px;
+  background: var(--mreza-strong);
+}
+.asm__dim::before {
+  top: 0;
+}
+.asm__dim::after {
+  bottom: 0;
 }
 
 .asm__band {
   position: relative;
   display: flex;
   align-items: center;
-  gap: var(--space-3);
   width: 100%;
   min-height: 44px;
-  padding: var(--space-2) var(--space-4);
+  padding: 0;
   margin: 0;
   border: 0;
   border-bottom: var(--divider-width) solid var(--mreza-strong);
+  background: none;
   font: inherit;
+  color: inherit;
   text-align: left;
-  /* The fill SNAPS — deliberately no tween, and this is a measured decision,
-     not a style preference. Probing inverts a ground (paper→ink) UNDER text
-     that inverts with it (ink→paper); tweened, the two cross and the label's
-     contrast collapses to 1.0:1 at the midpoint (measured), i.e. 200ms of
-     invisible type on every hover. Snapping the text at the crossover does not
-     save it either: the ground passes through mid-grey, where BOTH inks sit
-     near 2.9:1 — under the 4.5 floor for 14px type. A ground tween is simply
-     incompatible with small text on it. The reference snaps its own state
-     colours for the same reason (its rule colour is excluded from the
-     transition), so this is in character as well as correct. */
+  /* VISIBLE, deliberately: the band's own leader reaches out of it into the
+     gap. Nothing inside can overflow — the hatch and the cut planes are both
+     `inset: 0` — so there is nothing to clip. */
+  overflow: visible;
 }
 
 .asm__band:last-of-type {
@@ -620,98 +656,211 @@ button.asm__band {
   cursor: pointer;
 }
 
-/* The four materials, stepping darker with depth. Ink on each: 13.9 / 13.1 /
-   10.7 / 7.1 — the deepest is the darkest ground a label sits on. */
-.asm__band--0 {
-  background: var(--color-paper);
-}
-.asm__band--1 {
-  background: var(--color-paper-2);
-}
-.asm__band--2 {
-  background: var(--mreza);
-}
-.asm__band--3 {
-  background: var(--mreza-strong);
-}
-
-/* The interface onto the substrate is the drawing's ground line — heavier, the
-   way a section marks the boundary you build on. */
-.asm__band--3 {
-  border-top: 2px solid var(--color-ink);
-}
-
-/* Probed: the stratum fills with ink and its type inverts to paper (13.9:1). */
-.asm__band--on {
-  background: var(--color-ink);
-  color: var(--color-paper);
-}
-
-/* Hover is the same move at the reference's 200ms tween, so pointer and
-   keyboard read identically — GATED on a hovering pointer: on touch,
-   mouseleave never fires, so an ungated rule leaves the tapped stratum
-   looking filled next to the one that is actually probed. */
-@media (hover: hover) {
-  button.asm__band:hover {
-    background: var(--color-ink);
-    color: var(--color-paper);
-  }
-}
-
 .asm__band:focus-visible {
   outline: 2px solid var(--color-cut);
   outline-offset: -4px;
 }
 
-.asm__index {
-  font-family: var(--font-mono);
-  font-size: var(--type-data-size);
-  letter-spacing: var(--type-data-ls);
-  color: var(--color-ink-2);
-  flex: 0 0 auto;
+/* The hatch: half strength at rest, full when probed. Opacity only — the
+   band's ground is constant, so the label's worst-case composite is the
+   hatch LINE over that ground, and every alpha below is chosen against the
+   4.5:1 floor for the 14px label (computed per band; the deepest ground takes
+   the lightest hatch). SCALE contrast, not just pitch: a 3px lamination
+   against a 22px poché is what makes two fills read as different MATERIALS
+   rather than the same material drawn twice. */
+.asm__fill {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  transition: opacity var(--dur-tween) var(--ease-hover);
 }
 
-/* The deepest stratum is the darkest ground: the secondary ink measures
-   4.45:1 there — a hair under the 4.5 floor for 13/14px type — so the index
-   takes the full ink (6.87:1). The label/index hierarchy still reads, carried
-   by weight and case rather than by tone. */
-.asm__band--3 .asm__index {
-  color: var(--color-ink);
+/* Structure — 45° section hatch. */
+.asm__band--0 {
+  background: var(--color-paper);
+}
+.asm__band--0 .asm__fill {
+  background: repeating-linear-gradient(
+    45deg,
+    transparent 0 10px,
+    rgb(36 36 36 / 0.28) 10px 11px
+  );
 }
 
+/* Membrane — a thin laminated sheet, ruled very fine. */
+.asm__band--1 {
+  background: var(--color-paper-2);
+}
+.asm__band--1 .asm__fill {
+  background: repeating-linear-gradient(0deg, transparent 0 2px, rgb(36 36 36 / 0.26) 2px 3px);
+}
+
+/* Granular fill — stipple, the drafting convention for loose material. */
+.asm__band--2 {
+  background: var(--mreza);
+}
+.asm__band--2 .asm__fill {
+  background-image: radial-gradient(rgb(36 36 36 / 0.4) 1px, transparent 1.3px);
+  background-size: 8px 8px;
+}
+
+/* Substrate — coarse cross-hatched poché, the mass everything sits on. Its
+   ground is already the darkest, so the hatch is the lightest of the four.
+
+   The tone is a component-local material step, NOT --mreza-strong (#b3ac9c):
+   the cut red measures 2.79:1 on that, so the cut planes — a state indicator —
+   would have missed the 3:1 floor on this one stratum. Solved numerically
+   against the HATCH-COMPOSITED ground (the hatch darkens it further, which a
+   flat-ground calculation misses: #bdb6a6 reads 3.07 flat but 2.85 composited).
+   #c5bfb0 is the first step that clears it composited (3.14:1) while keeping a
+   real depth gradient (245 → 236 → 217 → 197) and ink at 8.11:1.
+
+   ONE rule block for this selector, deliberately: the ground line below used to
+   live in its own `.asm__band--3 { border-top }` block, and the CSS minifier
+   merges duplicate selectors and can drop declarations while doing it (both
+   blocks did survive this build — checked in dist — but the house rule is one
+   block per selector for anything load-bearing). */
+.asm__band--3 {
+  background: #c5bfb0;
+  /* The interface onto the substrate is the drawing's ground line — heavier,
+     the way a section marks the boundary you build on. */
+  border-top: 2px solid var(--color-ink);
+}
+.asm__band--3 .asm__fill {
+  background:
+    repeating-linear-gradient(45deg, transparent 0 21px, rgb(36 36 36 / 0.16) 21px 23px),
+    repeating-linear-gradient(-45deg, transparent 0 21px, rgb(36 36 36 / 0.16) 21px 23px);
+}
+
+.asm__band--on .asm__fill {
+  opacity: 1;
+}
+/* Hover echoes the probe — GATED on a hovering pointer: on touch mouseleave
+   never fires, so an ungated rule leaves the tapped stratum looking probed
+   next to the one that actually is. */
+@media (hover: hover) {
+  button.asm__band:hover .asm__fill {
+    opacity: 1;
+  }
+}
+
+/* --- naming and the terminal ------------------------------------------------
+   The band names its layer and the callout expands it; that shared word is the
+   link between the drawing and the text. The terminal is the affordance —
+   hollow means available, filled means probed. */
 .asm__band-label {
+  position: relative;
+  z-index: 1;
+  padding: var(--space-2) 2.9rem var(--space-2) var(--space-4);
   font-family: var(--font-mono);
   font-size: var(--type-label-size);
   font-weight: 500;
   letter-spacing: var(--type-label-ls);
   text-transform: uppercase;
+  color: var(--color-ink-2);
+  transition: color var(--dur-tween) var(--ease-hover);
+}
+
+/* The two DEEPEST strata take full ink even at rest. Computed against the
+   hatch composite rather than the flat ground: on band 3 the secondary ink
+   over the coverage-weighted average (≈rgb(175)) measures 4.6:1 — inside the
+   floor but with no margin, and 3.6:1 where a glyph crosses a hatch line. Full
+   ink puts them at 7.1:1 and 5.6:1. Their selection is still unmistakable: the
+   cut planes, the filled terminal, the leader and the hatch all change. */
+.asm__band--2 .asm__band-label,
+.asm__band--3 .asm__band-label {
   color: var(--color-ink);
 }
 
-/* Inverted together, so the whole row reads as one filled object. */
-.asm__band--on .asm__index,
 .asm__band--on .asm__band-label {
-  color: var(--color-paper);
+  color: var(--color-ink);
 }
 @media (hover: hover) {
-  button.asm__band:hover .asm__index,
   button.asm__band:hover .asm__band-label {
-    color: var(--color-paper);
+    color: var(--color-ink);
   }
 }
 
-/* The leader: a hairline in the cut red from the probed stratum across to its
-   callout, with a terminal dot at the stack's edge. Desktop only — where
+.asm__node {
+  position: absolute;
+  z-index: 1;
+  right: var(--space-4);
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  margin-top: -4.5px;
+  border: 1px solid var(--color-ink-2);
+  transition:
+    background-color var(--dur-tween) var(--ease-hover),
+    border-color var(--dur-tween) var(--ease-hover);
+}
+
+@media (hover: hover) {
+  button.asm__band:hover .asm__node {
+    border-color: var(--color-ink);
+  }
+}
+
+/* Filled, but the INK border stays: the ink delineates the terminal against
+   every stratum ground (≥6.6:1) while the red says "taken". A red border on a
+   red fill would leave the deepest stratum's terminal at 3.07:1 — passing, but
+   with the outline doing no work; this way the shape never depends on the
+   accent's own contrast. */
+.asm__band--on .asm__node {
+  background: var(--color-cut);
+  border-color: var(--color-ink);
+}
+
+/* The cut planes BOUNDING the probed layer — drawn at its two interfaces, so
+   they mark the layer without crossing its name. Square end ticks at the left,
+   the site's own cut motif. */
+.asm__plane {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-top: 2px solid var(--color-cut);
+  border-bottom: 2px solid var(--color-cut);
+  opacity: 0;
+  transition: opacity var(--dur-tween) var(--ease-hover);
+  pointer-events: none;
+}
+.asm__plane::before,
+.asm__plane::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  background: var(--color-cut);
+}
+.asm__plane::before {
+  top: 0;
+}
+.asm__plane::after {
+  bottom: 0;
+}
+
+.asm__band--on .asm__plane {
+  opacity: 1;
+}
+
+/* The leader: a hairline in the cut red reaching from the probed stratum across
+   the gap to its callout, with a terminal dot at the stratum's edge. One per
+   band, centred on its own band — see the note in the script block on why this
+   is CSS geometry rather than a measured position. Two columns only, where
    there is a gap to cross. */
 .asm__leader {
   position: absolute;
   display: none;
   left: 100%;
+  top: 50%;
+  margin-top: -0.5px;
   width: var(--asm-gap);
   height: 1px;
-  top: var(--lead-y, 50%);
   background: var(--color-cut);
-  transition: top 300ms var(--ease-spring);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-hover);
   pointer-events: none;
 }
 .asm__leader::before {
@@ -722,6 +871,10 @@ button.asm__band {
   width: 6px;
   height: 6px;
   background: var(--color-cut);
+}
+
+.asm__band--on .asm__leader {
+  opacity: 1;
 }
 
 /* --- the callouts ----------------------------------------------------------- */
@@ -755,24 +908,27 @@ button.asm__band {
   }
 }
 
+/* The callout answers the drawing at display scale — the reference's violent
+   scale jump (a 14px mono name in the drawing, the same word at 40px+ here) is
+   what makes the pairing read as one gesture rather than two labels. */
 .asm__label {
   font-family: var(--font-sans);
-  font-size: clamp(1.25rem, 1rem + 1.1vw, 1.75rem);
+  font-size: clamp(1.5rem, 1.05rem + 1.9vw, 2.75rem);
   font-weight: 400;
   line-height: var(--type-display-l-lh);
   letter-spacing: var(--type-display-l-ls);
   text-transform: uppercase;
   color: var(--color-ink);
-  padding-bottom: var(--space-2);
+  padding-bottom: var(--space-3);
   border-bottom: var(--divider-width) solid var(--mreza-strong);
 }
 
 .asm__detail {
-  margin-top: var(--space-3);
+  margin-top: var(--space-4);
   color: var(--color-ink-2);
-  font-size: 0.9375rem;
+  font-size: 1.0625rem;
   line-height: 1.5;
-  max-width: 44ch;
+  max-width: 38ch;
 }
 
 /* --- the bezel: legend, then the dial --------------------------------------- */
@@ -855,57 +1011,47 @@ button.asm__band {
   height: 44px;
 }
 
-/* --- desktop: the page under the beam is a real desktop composition ---------
-   The system's dominant split: statement + intro on the left, the strata and
-   their callout on the right, the closing line across both. This is also what
-   keeps the whole instrument inside a ~900px viewport for the settle. */
-@media (min-width: 1200px) {
-  .trad__made {
-    display: grid;
-    grid-template-columns: minmax(0, 30fr) minmax(0, 68fr);
-    /* Explicit areas — auto-placement would stagger the two columns. */
-    grid-template-areas:
-      'quote asm'
-      'intro asm'
-      'outro outro';
-    column-gap: var(--space-8);
-    align-items: start;
-    align-content: start;
+/* --- the statement band's own asymmetry --------------------------------------
+   The argument sits in the left two-thirds and the right third is EMPTY — the
+   reference achieves its off-centre composition with voids rather than
+   alignment, and that void is also where the beam's first work is visible. */
+@media (min-width: 810px) {
+  .trad__argument {
+    max-width: var(--measure-statement);
+    padding-bottom: var(--space-8);
+    border-bottom: var(--divider-width) solid var(--mreza-strong);
+    margin-bottom: var(--space-8);
   }
-  .trad__made > .trad__quote {
-    grid-area: quote;
-  }
-  .trad__made > .trad__intro {
-    grid-area: intro;
-    align-self: start;
-  }
-  .trad__made > .asm {
-    grid-area: asm;
-    margin-top: 0;
-    /* The strata are a fixed-width instrument beside a fluid callout — the
-       reference's own habit of holding decorative widths in pixels. */
-    grid-template-columns: 13rem minmax(0, 1fr);
+
+  /* Index + preview: the drawing at 5fr against its callout at 7fr, the
+     callout CENTRED on the drawing's height so the tall strata read as the
+     section's subject rather than as a list with dead air beside it. */
+  .asm {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
     column-gap: var(--asm-gap);
-    align-items: start;
-  }
-  .trad__made > .trad__outro {
-    grid-area: outro;
+    align-items: center;
   }
   .asm__leader {
     display: block;
   }
   /* The callout swaps content on selection; reserving the tallest keeps the
-     strata from jumping as the leader swings. */
+     drawing from shifting as the leader swings. */
   .asm__panels {
-    min-height: 10rem;
+    min-height: 12rem;
   }
 }
 
-/* --- phone (system breakpoint) ----------------------------------------------
-   The section exceeds the viewport here by design: normal flow, no settle,
-   the sweep still fires after the reading beat. The dial re-stacks
-   deterministically: labels row, then the full-width control. */
+/* --- phone / narrow (system breakpoint) -------------------------------------
+   One column, the drawing full width above its callout. The section exceeds
+   the viewport here by design: normal flow, no settle, and the sweep still
+   fires after the reading beat. The dial re-stacks deterministically: labels
+   row, then the full-width control. */
 @media (max-width: 809px) {
+  .trad__argument {
+    padding-bottom: var(--space-6);
+    border-bottom: var(--divider-width) solid var(--mreza-strong);
+    margin-bottom: var(--space-6);
+  }
   .trad__dial {
     grid-template-columns: 1fr auto;
   }
