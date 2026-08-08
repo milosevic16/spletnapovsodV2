@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Tradicija in izkušnje — the section that shows its own source. THE WHOLE
+ * Spletna pod površino — the section that shows its own source. THE WHOLE
  * SECTION is the screen: no frame, no inset panel, one dark field running the
  * full bleed, split by a vertical red beam. LEFT of the beam the rendered
  * page, RIGHT of it the source a crawler receives (mono). One number drives

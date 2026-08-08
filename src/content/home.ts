@@ -93,7 +93,7 @@ export const hero: Hero = {
 
 export const invisible = {
   kicker: 'Kaj dobite',
-  title: 'Tradicija in izkušnje.',
+  title: 'Spletna pod površino.',
   quote:
     'Spletna stran ni zgolj tisto, kar vidite, temveč se pomemben del skriva tudi v tistem, česar ne.',
   intro:

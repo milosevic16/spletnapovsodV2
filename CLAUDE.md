@@ -70,7 +70,7 @@ corners absolute (not even pills).
 are machine identifiers, unchanged): veil (»Zarez«) → masthead strip (four nav buttons +
 the page's single CTA) → statement band (brand wordmark tight top-left, claim + lead
 right) → work carousel (full-bleed pigment stage, in-frame previews porting each client
-site's own landing animation) → Tradicija in izkušnje (the viewport cut line — see
+site's own landing animation) → Spletna pod površino (the viewport cut line — see
 `TraditionSection.vue` header) → pillar chapters → differentiators → below-grade contact
 + footer. (The plates theatre, the cut scene, the ledger and the WordPress comparison
 from the original REZ build were removed in the avgust 2026 REF-layout pivots; their
