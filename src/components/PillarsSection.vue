@@ -26,7 +26,7 @@
  */
 import { nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { pillars } from '@/content/home'
-import { createFx } from '@/lib/fx'
+import { createFx, prefersReducedMotion } from '@/lib/fx'
 
 const fx = createFx()
 const host = ref<HTMLElement | null>(null)
@@ -64,11 +64,61 @@ function onSectionKeys(e: KeyboardEvent) {
  */
 const armed = ref(false)
 
+/**
+ * THE PLATE LOOPS. Which pillars have an encoded clip
+ * (scripts/build-pillar-videos.mjs → public/video/pillar-<id>-<version>.*).
+ * A pillar not listed here keeps its drawn plate, so the two can be replaced
+ * one at a time without the section ever being half-broken.
+ *
+ * PAIRED with VERSION in that script: /video/* ships an immutable year-long
+ * cache header, so a re-encode under the same name never reaches a repeat
+ * visitor — bump both together.
+ */
+const PLATE_VERSION = 'v1'
+const PLATE_CLIPS = new Set(['design'])
+
+function hasClip(id: string): boolean {
+  return PLATE_CLIPS.has(id)
+}
+function clip(id: string, ext: string): string {
+  return `/video/pillar-${id}-${PLATE_VERSION}.${ext}`
+}
+
+/**
+ * The loops are DECORATION, so they obey the house rule for loops: they run
+ * only while their plate is on screen, and they never run at all under reduced
+ * motion. Autoplay is therefore NOT an attribute — the markup ships a paused
+ * video showing its poster, which is exactly what a JS-off reader and a
+ * reduced-motion visitor should get, and JS is what starts it.
+ */
+function wireClips(host: HTMLElement) {
+  if (prefersReducedMotion() || !('IntersectionObserver' in window)) return
+  const vids = Array.from(host.querySelectorAll<HTMLVideoElement>('.pil__clip'))
+  if (!vids.length) return
+  const io = fx.io(
+    (entries) => {
+      for (const e of entries) {
+        const v = e.target as HTMLVideoElement
+        if (e.isIntersecting) {
+          // play() rejects when the tab is backgrounded or the decode is
+          // refused; the poster stays, which is a fine resting state.
+          void v.play().catch(() => {})
+        } else {
+          v.pause()
+        }
+      }
+    },
+    { threshold: 0.2 },
+  )
+  for (const v of vids) io.observe(v)
+}
+
 onMounted(() => {
   live.value = true
   fx.setTimeout(() => {
     armed.value = true
   }, 0)
+  if (host.value) wireClips(host.value)
 })
 
 onUnmounted(() => {
@@ -108,10 +158,38 @@ onUnmounted(() => {
             :aria-controls="live ? `paketi-panel-${item.id}` : undefined"
             @click="live && choose(n)"
           >
+            <!-- THE PLATE LOOP, where one exists: it takes the drawing's place
+                 entirely, and only the name block below it stays. No autoplay
+                 attribute — the markup ships paused on its poster (what JS-off
+                 and reduced-motion readers get) and wireClips() starts it when
+                 the plate is on screen. muted+playsinline are what make an
+                 inline autostart legal on iOS at all; preload="none" keeps
+                 three clips off the wire until one is actually wanted. -->
+            <video
+              v-if="hasClip(item.id)"
+              class="pl pil__clip"
+              :poster="clip(item.id, 'jpg')"
+              muted
+              loop
+              playsinline
+              preload="none"
+              disablepictureinpicture
+              aria-hidden="true"
+              tabindex="-1"
+            >
+              <source :src="clip(item.id, 'webm')" type="video/webm" />
+              <source :src="clip(item.id, 'mp4')" type="video/mp4" />
+            </video>
+
             <!-- dizajn — the browser window being drafted: chrome dots, an
                  asymmetric composition blocked out, guides and one dimension
                  line still on the sheet. -->
-            <svg v-if="item.id === 'design'" class="pl" viewBox="0 0 800 600" aria-hidden="true">
+            <svg
+              v-else-if="item.id === 'design'"
+              class="pl"
+              viewBox="0 0 800 600"
+              aria-hidden="true"
+            >
               <rect x="90" y="70" width="620" height="460" class="pl-line" />
               <line x1="90" y1="130" x2="710" y2="130" class="pl-line" />
               <circle cx="126" cy="100" r="7" class="pl-dot" />
@@ -325,6 +403,35 @@ button.pil__face {
   flex: 1;
   min-height: 0;
   display: block;
+}
+
+/* The plate loop fills the drawing's slot. `cover` on purpose: the clips are
+   portrait and the slot's shape changes across breakpoints and again when a
+   plate opens, so the frame is cropped to the slot rather than the slot bent
+   to the frame. object-position is high because the composition sits in the
+   upper half of the frame. The box carries the plate's own ground so nothing
+   flashes through before the first frame decodes. */
+.pil__clip {
+  /* A DECLARED plate shape, not whatever flex hands out: stacked on a phone the
+     clip took its height from `flex: 1` and came out 416px against the drawn
+     plates' 173, which is not a shape anyone chose. 3:4 is the portrait
+     footage's own bearing, cropped gently. Desktop drops it — there the wall
+     sets the height and the plate is a tall column. */
+  aspect-ratio: 3 / 4;
+  height: auto;
+  object-fit: cover;
+  /* The composition sits in the upper half of the frame. */
+  object-position: 50% 42%;
+  background: var(--grafit);
+  /* A tap on the plate must reach the button, never the media element. */
+  pointer-events: none;
+}
+
+@media (min-width: 900px) {
+  .pil__clip {
+    aspect-ratio: auto;
+    height: 100%;
+  }
 }
 
 /* Engraving vocabulary: paper strokes on the dark plate, one red. */

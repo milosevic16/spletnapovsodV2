@@ -54,6 +54,14 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
+# The plate loops. Version-stamped filenames (scripts/build-pillar-videos.mjs),
+# so the same immutable year applies — a re-encode MUST bump the version or it
+# never reaches a repeat visitor.
+[[headers]]
+  for = "/video/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
 # --- Redirects -------------------------------------------------------------
 # First match wins. Everything unknown is a REAL 404, never a Home bounce.
 

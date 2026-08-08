@@ -7,3 +7,6 @@ dist/
 
 # headless-Edge scratch profiles (capture tooling)
 scripts/edge-tmp*/
+
+# raw generator clips for scripts/build-pillar-videos.mjs (outputs are committed, sources are not)
+video-src/
