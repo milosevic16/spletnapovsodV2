@@ -1,60 +1,51 @@
 <script setup lang="ts">
 /**
- * Vsi paketi — the exploded view. A technical drawing's native way of saying
- * "here is what's inside": each pillar is an abstract plate REDRAWN as a
- * layered inline drawing, and choosing one pulls its layers apart — the
- * drawing opens, the pillar names itself in the opened seam, and its points
- * unfold as ruled callouts under the row that chose it.
+ * Vsi paketi — three dark plates in a row, each an engraved drawing of its
+ * own theme: the browser window being drafted (dizajn), the hatched shield
+ * with the keyway (varnost), the lens over the page with rings radiating
+ * (vidnost). Big pictures first; the section IS the pictures.
  *
- * Layout is the design system's index + preview archetype: a numbered list
- * (30%) beside the stage (68%). Hovering or focusing a row PREVIEWS its
- * drawing (150ms crossfade — the reference's measured tempo); activating it
- * EXPLODES the drawing (four layers, staggered, zero overshoot) and expands
- * the row's callout panel. One open at a time, Escape closes, the panel's
- * closing control returns focus to its row.
+ * THE JOURNEY, built for scanning:
+ *  · At rest: three plates side by side, titles on the plates. Hovering
+ *    swells one (pure CSS, hover devices only).
+ *  · Choosing one: the plate WIDENS ACROSS THE ROW and becomes the reading
+ *    surface — summary and points print inside it, wide and shallow, while
+ *    the other two fold into slim labeled spines. The row's height does not
+ *    change: opening never adds scroll on desktop.
+ *  · The spines stay buttons — switching pillars is one click, no close-
+ *    then-reopen. Escape or »Zapri« closes; focus returns to the plate.
  *
- * THE STAGE IS AN INSTRUMENT, NOT CONTENT: every string lives in the
- * accessible flow (rows + panels); the drawings and the seam title are
- * aria-hidden theatre. With JS off (or before hydration) the section is the
- * stacked layout with every panel open and every drawing composed — nobody
- * meets a dead control, crawlers read everything (progressive disclosure
- * ships expanded; the collapse is hydration-gated). Under reduced motion the
- * explosion and crossfades land instantly (global kill-switch) and
- * everything stays operable.
+ * Phones stack the plates; opening unfolds the text below the drawing
+ * inside the plate (single column), others stay full plates.
  *
- * ONE SET OF DRAWINGS, TWO PLACEMENTS: on desktop the three drawing cells
- * are stacked into the same grid cell (the stage) and crossfade; below the
- * breakpoint the same elements fall back into each pillar's own block flow.
- * No duplication, no JS re-parenting.
+ * With JS off (or before hydration) every plate stands full-width with its
+ * text visible — progressive disclosure ships expanded, the collapse is
+ * hydration-gated. Under reduced motion all movement lands instantly
+ * (global kill-switch); everything stays operable. Every string lives in
+ * the accessible flow; the drawings are aria-hidden theatre.
  */
-import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { pillars } from '@/content/home'
-import { canHover, createFx } from '@/lib/fx'
+import { createFx } from '@/lib/fx'
 
 const fx = createFx()
 const host = ref<HTMLElement | null>(null)
 const live = ref(false)
 
-/** The open pillar (−1 = none) and the previewed one (hover/focus). */
+/** The open pillar; −1 = the resting wall. */
 const open = ref(-1)
-const preview = ref(0)
 
-/** What the stage shows: the open drawing wins; otherwise the preview. */
-const staged = computed(() => (open.value >= 0 ? open.value : preview.value))
-
-function rowAt(i: number): HTMLElement | undefined {
-  return host.value?.querySelectorAll<HTMLElement>('.pil__row')[i]
+function faceAt(i: number): HTMLElement | undefined {
+  return host.value?.querySelectorAll<HTMLElement>('.pil__face')[i]
 }
 
-function toggle(i: number) {
+function choose(i: number) {
   open.value = open.value === i ? -1 : i
 }
 
-/** The panel's closing control: collapse, then hand focus back to the row
- *  that owns the panel (focus must never strand inside a closing region). */
 function closeFromPanel(i: number) {
   open.value = -1
-  nextTick(() => rowAt(i)?.focus({ preventScroll: true }))
+  nextTick(() => faceAt(i)?.focus({ preventScroll: true }))
 }
 
 function onSectionKeys(e: KeyboardEvent) {
@@ -65,15 +56,6 @@ function onSectionKeys(e: KeyboardEvent) {
 
 onMounted(() => {
   live.value = true
-  // Hover previews only where hover exists (touch would stick them);
-  // focus previews everywhere — keyboard parity is not optional.
-  if (canHover() && host.value) {
-    host.value.querySelectorAll<HTMLElement>('.pil__row').forEach((row, i) => {
-      fx.on(row, 'mouseenter', () => {
-        preview.value = i
-      })
-    })
-  }
 })
 
 onUnmounted(() => {
@@ -90,180 +72,148 @@ onUnmounted(() => {
         <p class="pil__intro">{{ pillars.intro }}</p>
       </header>
 
-      <div class="pil__body">
-        <template v-for="(item, n) in pillars.items" :key="item.id">
-          <!-- THE ROW: index, name, artifact claim, state node. A real button
-               once live; plain flow before that. -->
+      <div class="pil__wall">
+        <article
+          v-for="(item, n) in pillars.items"
+          :key="item.id"
+          class="pil__plate"
+          :class="{
+            'pil__plate--open': live && open === n,
+            'pil__plate--spine': live && open >= 0 && open !== n,
+          }"
+        >
+          <!-- The plate's mark on the sheet. Phones only (see the datum block
+               in the styles); decorative, so it stays out of the button. -->
+          <span class="pil__plate-index" aria-hidden="true">00{{ n + 1 }}</span>
+          <!-- The face: the whole plate is the control. Click opens (or, as a
+               spine, switches); click again closes. -->
           <component
             :is="live ? 'button' : 'div'"
-            class="pil__row"
-            :class="[`pil__cell--${n}`, { 'pil__row--open': live && open === n }]"
+            class="pil__face"
             :type="live ? 'button' : undefined"
             :aria-expanded="live ? String(open === n) : undefined"
             :aria-controls="live ? `paketi-panel-${item.id}` : undefined"
-            @click="live && toggle(n)"
-            @focusin="preview = n"
+            @click="live && choose(n)"
           >
-            <span class="pil__index" aria-hidden="true">00{{ n + 1 }}</span>
-            <span class="pil__row-main">
-              <span class="pil__row-kicker annot">{{ item.kicker }}</span>
-              <h3 class="pil__row-title">{{ item.title }}</h3>
-              <span class="pil__row-artifact annot">{{ item.artifact }}</span>
+            <!-- dizajn — the browser window being drafted: chrome dots, an
+                 asymmetric composition blocked out, guides and one dimension
+                 line still on the sheet. -->
+            <svg v-if="item.id === 'design'" class="pl" viewBox="0 0 800 600" aria-hidden="true">
+              <rect x="90" y="70" width="620" height="460" class="pl-line" />
+              <line x1="90" y1="130" x2="710" y2="130" class="pl-line" />
+              <circle cx="126" cy="100" r="7" class="pl-dot" />
+              <circle cx="156" cy="100" r="7" class="pl-dot" />
+              <circle cx="186" cy="100" r="7" class="pl-dot" />
+              <rect x="240" y="92" width="380" height="16" class="pl-faint" />
+              <!-- the composition: one bold mass, one red bar, type rules -->
+              <rect x="130" y="170" width="270" height="200" class="pl-solid" />
+              <rect x="130" y="404" width="120" height="86" class="pl-line" />
+              <rect x="440" y="170" width="230" height="26" class="pl-red-solid" />
+              <line x1="440" y1="238" x2="670" y2="238" class="pl-rule" />
+              <line x1="440" y1="268" x2="632" y2="268" class="pl-rule" />
+              <line x1="440" y1="298" x2="658" y2="298" class="pl-rule" />
+              <line x1="440" y1="328" x2="600" y2="328" class="pl-rule" />
+              <rect x="440" y="404" width="230" height="86" class="pl-hatch-r" />
+              <!-- construction: guides run off the sheet, a dimension line -->
+              <line x1="130" y1="40" x2="130" y2="560" class="pl-guide" />
+              <line x1="440" y1="40" x2="440" y2="560" class="pl-guide" />
+              <line x1="60" y1="170" x2="740" y2="170" class="pl-guide" />
+              <line x1="130" y1="562" x2="400" y2="562" class="pl-dim" />
+              <line x1="130" y1="554" x2="130" y2="570" class="pl-dim" />
+              <line x1="400" y1="554" x2="400" y2="570" class="pl-dim" />
+            </svg>
+
+            <!-- varnost — the shield in section: one half hatched (the cut
+                 matter), the keyway red, calibration ticks around the crown. -->
+            <svg v-else-if="item.id === 'security'" class="pl" viewBox="0 0 800 600" aria-hidden="true">
+              <path
+                d="M 400 78 L 620 140 L 620 320 C 620 440 520 510 400 552 C 280 510 180 440 180 320 L 180 140 Z"
+                class="pl-line"
+              />
+              <path
+                d="M 400 118 L 582 170 L 582 316 C 582 416 500 476 400 512 C 300 476 218 416 218 316 L 218 170 Z"
+                class="pl-faint"
+              />
+              <!-- the cut half: section hatch -->
+              <path
+                d="M 400 118 L 400 512 C 300 476 218 416 218 316 L 218 170 Z"
+                class="pl-hatch"
+              />
+              <!-- the keyway -->
+              <circle cx="400" cy="300" r="34" class="pl-red" />
+              <rect x="388" y="330" width="24" height="74" class="pl-red-solid" />
+              <!-- crown ticks -->
+              <line x1="260" y1="96" x2="268" y2="116" class="pl-tick" />
+              <line x1="330" y1="76" x2="335" y2="97" class="pl-tick" />
+              <line x1="470" y1="76" x2="465" y2="97" class="pl-tick" />
+              <line x1="540" y1="96" x2="532" y2="116" class="pl-tick" />
+            </svg>
+
+            <!-- vidnost — the page that gets FOUND. The document emits from
+                 its own edge; the signal weakens outward across the reach
+                 frontier; three systems sit out there and receive it, and one
+                 has answered — the red axis and its lit node. (A magnifier
+                 would have said "we inspect your page"; this says "they find
+                 it", which is what the pillar is about.) -->
+            <svg v-else class="pl" viewBox="0 0 800 600" aria-hidden="true">
+              <!-- the page -->
+              <rect x="90" y="150" width="250" height="330" class="pl-line" />
+              <rect x="120" y="185" width="130" height="24" class="pl-solid" />
+              <line x1="120" y1="252" x2="310" y2="252" class="pl-rule" />
+              <line x1="120" y1="288" x2="272" y2="288" class="pl-rule" />
+              <line x1="120" y1="324" x2="300" y2="324" class="pl-rule" />
+              <line x1="120" y1="360" x2="256" y2="360" class="pl-rule" />
+              <line x1="120" y1="396" x2="292" y2="396" class="pl-rule" />
+              <line x1="120" y1="432" x2="236" y2="432" class="pl-rule" />
+              <!-- emission, weakening outward -->
+              <path d="M 403 225 A 110 110 0 0 1 403 405" class="pl-line" />
+              <path d="M 443 168 A 180 180 0 0 1 443 462" class="pl-faint" />
+              <path d="M 501 124 A 250 250 0 0 1 501 507" class="pl-faint" />
+              <!-- the reach frontier -->
+              <path d="M 552 103 A 300 300 0 0 1 552 527" class="pl-ring" />
+              <!-- the systems out there -->
+              <rect x="588" y="118" width="28" height="28" class="pl-line" />
+              <circle cx="602" cy="132" r="5" class="pl-solid" />
+              <rect x="588" y="484" width="28" height="28" class="pl-line" />
+              <circle cx="602" cy="498" r="5" class="pl-solid" />
+              <rect x="646" y="301" width="28" height="28" class="pl-line" />
+              <!-- the one that answered -->
+              <line x1="344" y1="315" x2="640" y2="315" class="pl-red" />
+              <circle cx="660" cy="315" r="6" class="pl-red-solid" />
+            </svg>
+
+            <span class="pil__plate-name">
+              <span class="pil__plate-title">{{ item.title }}</span>
+              <span class="pil__plate-artifact annot">{{ item.artifact }}</span>
             </span>
-            <span class="pil__node" aria-hidden="true"></span>
           </component>
 
-          <!-- THE DRAWING: the pillar's abstract plate, four layers that part
-               when its row opens. Desktop stacks all three into the stage
-               cell; phones keep each in its pillar's flow. Pure instrument —
-               aria-hidden, no strings. -->
-          <div
-            class="pil__art"
-            :class="[`pil__cell--${n}`, { 'pil__art--staged': staged === n, 'pil__art--open': live && open === n }]"
-            aria-hidden="true"
-          >
-            <!-- The staged pillar's name, ABOVE the drawing — a label, not a
-                 layer (visual only; the row's h3 is the accessible name). -->
-            <span class="pil__stage-title">{{ item.title }}</span>
-
-            <!-- design — a composition study: guides, masses, type rules,
-                 the red registration. The canvas carries ±60px headroom so
-                 the exploded layers never cross the viewBox edge. -->
-            <svg v-if="item.id === 'design'" class="xp" viewBox="0 -60 800 760">
-              <g class="xp__l xp__l--1">
-                <rect x="120" y="120" width="560" height="400" class="xp-line" />
-                <line x1="120" y1="220" x2="680" y2="220" class="xp-hair" />
-                <line x1="120" y1="420" x2="680" y2="420" class="xp-hair" />
-                <line x1="320" y1="120" x2="320" y2="520" class="xp-hair" />
-                <line x1="540" y1="120" x2="540" y2="520" class="xp-hair" />
-              </g>
-              <g class="xp__l xp__l--2">
-                <rect x="150" y="150" width="140" height="140" class="xp-fill" />
-                <rect x="350" y="250" width="300" height="140" class="xp-line" />
-                <rect x="150" y="330" width="140" height="160" class="xp-line" />
-              </g>
-              <g class="xp__l xp__l--3">
-                <line x1="360" y1="160" x2="640" y2="160" class="xp-rule" />
-                <line x1="360" y1="184" x2="580" y2="184" class="xp-rule" />
-                <line x1="360" y1="208" x2="610" y2="208" class="xp-rule" />
-                <line x1="180" y1="450" x2="290" y2="450" class="xp-rule" />
-                <line x1="360" y1="440" x2="560" y2="440" class="xp-rule" />
-                <line x1="360" y1="464" x2="520" y2="464" class="xp-rule" />
-              </g>
-              <g class="xp__l xp__l--4">
-                <rect x="104" y="104" width="560" height="400" class="xp-red" />
-                <line x1="84" y1="104" x2="124" y2="104" class="xp-red" />
-                <line x1="104" y1="84" x2="104" y2="124" class="xp-red" />
-              </g>
-              <g class="xp__tags">
-                <text x="700" y="126" class="xp-tag">001</text>
-                <text x="700" y="256" class="xp-tag">002</text>
-                <text x="700" y="386" class="xp-tag">003</text>
-                <text x="700" y="516" class="xp-tag">004</text>
-              </g>
-            </svg>
-
-            <!-- security — the seal in section: perimeter, gauge rings, the
-                 pin row over the keyway, the red seal arc. -->
-            <svg v-else-if="item.id === 'security'" class="xp" viewBox="0 -60 800 760">
-              <g class="xp__l xp__l--1">
-                <rect x="160" y="80" width="480" height="480" class="xp-line" />
-                <line v-for="t in 12" :key="t" :x1="160 + (t - 1) * 43.6" y1="80"
-                  :x2="160 + (t - 1) * 43.6 + 16" y2="64" class="xp-hair" />
-              </g>
-              <g class="xp__l xp__l--2">
-                <circle cx="400" cy="320" r="170" class="xp-line" />
-                <circle cx="400" cy="320" r="120" class="xp-hair" />
-                <circle cx="400" cy="320" r="66" class="xp-line" />
-              </g>
-              <g class="xp__l xp__l--3">
-                <line x1="330" y1="320" x2="330" y2="252" class="xp-pin" />
-                <line x1="365" y1="320" x2="365" y2="230" class="xp-pin" />
-                <line x1="400" y1="320" x2="400" y2="272" class="xp-pin" />
-                <line x1="435" y1="320" x2="435" y2="214" class="xp-pin" />
-                <line x1="470" y1="320" x2="470" y2="258" class="xp-pin" />
-                <rect x="318" y="320" width="164" height="34" class="xp-fill" />
-              </g>
-              <g class="xp__l xp__l--4">
-                <path d="M 400 150 A 170 170 0 0 1 570 320" class="xp-red" />
-                <circle cx="570" cy="320" r="7" class="xp-red-fill" />
-              </g>
-              <g class="xp__tags">
-                <text x="672" y="96" class="xp-tag">001</text>
-                <text x="672" y="226" class="xp-tag">002</text>
-                <text x="672" y="356" class="xp-tag">003</text>
-                <text x="672" y="486" class="xp-tag">004</text>
-              </g>
-            </svg>
-
-            <!-- seo — the page radiating: the document node, detection arcs,
-                 the constellation, the red beacon. -->
-            <svg v-else class="xp" viewBox="0 -60 800 760">
-              <g class="xp__l xp__l--1">
-                <rect x="120" y="240" width="150" height="190" class="xp-line" />
-                <line x1="140" y1="272" x2="250" y2="272" class="xp-rule" />
-                <line x1="140" y1="296" x2="226" y2="296" class="xp-rule" />
-                <line x1="140" y1="320" x2="238" y2="320" class="xp-rule" />
-                <line x1="140" y1="356" x2="214" y2="356" class="xp-rule" />
-              </g>
-              <g class="xp__l xp__l--2">
-                <path d="M 330 160 A 240 240 0 0 1 330 500" class="xp-dash" />
-                <path d="M 390 210 A 165 165 0 0 1 390 450" class="xp-dash" />
-                <path d="M 440 258 A 95 95 0 0 1 440 402" class="xp-dash" />
-              </g>
-              <g class="xp__l xp__l--3">
-                <circle cx="560" cy="180" r="9" class="xp-node" />
-                <circle cx="640" cy="300" r="9" class="xp-node" />
-                <circle cx="600" cy="450" r="9" class="xp-node" />
-                <circle cx="500" cy="530" r="9" class="xp-node" />
-                <line x1="270" y1="330" x2="551" y2="185" class="xp-hair" />
-                <line x1="270" y1="335" x2="631" y2="300" class="xp-hair" />
-                <line x1="270" y1="345" x2="592" y2="446" class="xp-hair" />
-              </g>
-              <g class="xp__l xp__l--4">
-                <line x1="270" y1="340" x2="676" y2="120" class="xp-red" />
-                <circle cx="684" cy="116" r="7" class="xp-red-fill" />
-              </g>
-              <g class="xp__tags">
-                <text x="700" y="256" class="xp-tag">001</text>
-                <text x="700" y="326" class="xp-tag">002</text>
-                <text x="700" y="396" class="xp-tag">003</text>
-                <text x="700" y="466" class="xp-tag">004</text>
-              </g>
-            </svg>
-          </div>
-
-          <!-- THE PANEL: the pillar's whole content, in the accessible flow.
-               Ships open; hydration collapses it under its row. -->
+          <!-- The reading surface: prints inside the widened plate. -->
           <div
             :id="`paketi-panel-${item.id}`"
-            class="pil__panel"
-            :class="[`pil__cell--${n}`, { 'pil__panel--open': !live || open === n }]"
+            class="pil__reveal"
           >
-            <div class="pil__panel-inner">
-              <p class="pil__summary">{{ item.summary }}</p>
-              <ul class="pil__points">
-                <li v-for="(pt, k) in item.points" :key="k" class="pil__point">
-                  <span class="pil__point-index" aria-hidden="true">{{ String(k + 1).padStart(3, '0') }}</span>
-                  <span class="pil__point-label">{{ pt.label }}</span>
-                  <span class="pil__point-detail">{{ pt.detail }}</span>
-                </li>
-              </ul>
-              <p v-if="item.prerez" class="pil__prerez">
-                <span class="annot">{{ item.prerez.annotation }}</span>
-                <span class="pil__prerez-gloss">{{ item.prerez.gloss }}</span>
-              </p>
-              <button
-                v-if="live"
-                type="button"
-                class="pil__close annot"
-                @click="closeFromPanel(n)"
-              >
-                {{ pillars.feedback.closeLabel }}
-              </button>
-            </div>
+            <p class="pil__summary">{{ item.summary }}</p>
+            <ul class="pil__points">
+              <li v-for="(pt, k) in item.points" :key="k" class="pil__point">
+                <span class="pil__point-label">{{ pt.label }}</span>
+                <span class="pil__point-detail">{{ pt.detail }}</span>
+              </li>
+            </ul>
+            <p v-if="item.prerez" class="pil__prerez">
+              <span class="annot">{{ item.prerez.annotation }}</span>
+              <span class="pil__prerez-gloss">{{ item.prerez.gloss }}</span>
+            </p>
+            <button
+              v-if="live"
+              type="button"
+              class="pil__close annot"
+              @click="closeFromPanel(n)"
+            >
+              {{ pillars.feedback.closeLabel }}
+            </button>
           </div>
-        </template>
+        </article>
       </div>
     </div>
   </section>
@@ -279,7 +229,6 @@ onUnmounted(() => {
   margin-bottom: var(--v-block);
 }
 
-/* The mono chip kicker — same constant plate as the Tradicija section's. */
 .pil__kicker {
   display: inline-block;
   font-family: var(--font-mono);
@@ -310,260 +259,174 @@ onUnmounted(() => {
   max-width: 58ch;
 }
 
-/* --- the rows ---------------------------------------------------------------- */
-.pil__row {
+/* --- the plates -------------------------------------------------------------
+   Dark plates on the paper band: the machine-world ground carrying paper
+   strokes and the red. Text on them: paper 13.9:1, papir-dim 10.4:1. */
+.pil__plate {
+  position: relative;
+  background: var(--grafit);
+  border: var(--divider-width) solid var(--grafit);
   display: flex;
-  align-items: baseline;
-  gap: var(--space-4);
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pil__face {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
   width: 100%;
-  min-height: 44px;
-  padding: var(--space-3) 0;
+  padding: var(--space-4);
   margin: 0;
   border: 0;
-  border-top: var(--divider-width) solid var(--mreza-strong);
   background: none;
   font: inherit;
   color: inherit;
   text-align: left;
 }
 
-button.pil__row {
+button.pil__face {
   cursor: pointer;
 }
 
-.pil__index {
-  font-family: var(--font-mono);
-  font-size: var(--type-data-size);
-  letter-spacing: var(--type-data-ls);
-  color: var(--grafit-2);
-  flex: 0 0 2rem;
+.pil__face:focus-visible {
+  outline: 2px solid var(--rez-na-temnem);
+  outline-offset: -6px;
 }
 
-.pil__row-main {
+.pl {
+  width: 100%;
+  height: auto;
+  flex: 1;
+  min-height: 0;
+  display: block;
+}
+
+/* Engraving vocabulary: paper strokes on the dark plate, one red. */
+.pl-line {
+  fill: none;
+  stroke: rgb(245 242 235 / 0.85);
+  stroke-width: 2.5;
+}
+.pl-faint {
+  fill: none;
+  stroke: rgb(245 242 235 / 0.35);
+  stroke-width: 2;
+}
+.pl-rule {
+  fill: none;
+  stroke: rgb(245 242 235 / 0.55);
+  stroke-width: 4;
+}
+.pl-solid {
+  fill: rgb(245 242 235 / 0.85);
+}
+.pl-dot {
+  fill: rgb(245 242 235 / 0.85);
+}
+.pl-guide {
+  fill: none;
+  stroke: rgb(245 242 235 / 0.18);
+  stroke-width: 1.5;
+}
+.pl-dim {
+  fill: none;
+  stroke: rgb(245 242 235 / 0.45);
+  stroke-width: 1.5;
+}
+.pl-tick {
+  fill: none;
+  stroke: rgb(245 242 235 / 0.5);
+  stroke-width: 2.5;
+}
+.pl-hatch {
+  fill: none;
+  stroke: rgb(245 242 235 / 0.3);
+  stroke-width: 1.5;
+}
+.pl-hatch-r {
+  fill: none;
+  stroke: rgb(245 242 235 / 0.35);
+  stroke-width: 1.5;
+}
+.pl-ring {
+  fill: none;
+  stroke: rgb(245 242 235 / 0.25);
+  stroke-width: 1.5;
+  stroke-dasharray: 10 10;
+}
+.pl-red {
+  fill: none;
+  stroke: var(--rez-na-temnem);
+  stroke-width: 5;
+}
+.pl-red-solid {
+  fill: var(--rez-na-temnem);
+}
+
+/* The shield's hatch and the template block: patterned via SVG lines is
+   heavy — a CSS repeating gradient cannot reach inside SVG, so those two
+   paths carry a light stroke fill instead and the density reads from the
+   plate itself. */
+
+.pil__plate-name {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-width: 0;
+  padding-top: var(--space-3);
 }
 
-.pil__row-kicker {
-  color: var(--grafit-2);
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-}
-
-.pil__row-title {
+.pil__plate-title {
   font-family: var(--font-sans);
   font-size: 1.25rem;
   font-weight: 500;
   line-height: 1.15;
   letter-spacing: -0.01em;
+  color: var(--color-paper);
 }
 
-.pil__row-artifact {
-  color: var(--grafit-2);
+.pil__plate-artifact {
+  color: var(--papir-dim);
 }
 
-/* Hollow = available, red = open — the drawing's own terminal language. */
-.pil__node {
-  margin-left: auto;
-  align-self: center;
-  width: 9px;
-  height: 9px;
-  flex: 0 0 auto;
-  border: 1px solid var(--grafit-2);
-  transition:
-    background var(--dur-tween) var(--ease-hover),
-    border-color var(--dur-tween) var(--ease-hover);
-}
-
-@media (hover: hover) {
-  button.pil__row:hover .pil__node {
-    border-color: var(--grafit);
-  }
-}
-
-.pil__row--open .pil__node {
-  background: var(--rez);
-  border-color: var(--rez);
-}
-
-/* --- the drawings ------------------------------------------------------------ */
-.pil__art {
-  position: relative;
-  padding-block: var(--space-2);
-}
-
-.xp {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-/* Stroke vocabulary: ink hairlines, faint fills, red accents — the plate is
-   DRAWN, never photographed. */
-.xp-line {
-  fill: none;
-  stroke: var(--grafit);
-  stroke-width: 2;
-}
-.xp-hair {
-  fill: none;
-  stroke: var(--mreza-strong);
-  stroke-width: 1;
-}
-.xp-rule {
-  fill: none;
-  stroke: var(--grafit-2);
-  stroke-width: 3;
-}
-.xp-fill {
-  fill: rgb(36 36 36 / 0.1);
-  stroke: var(--grafit);
-  stroke-width: 2;
-}
-.xp-pin {
-  fill: none;
-  stroke: var(--grafit);
-  stroke-width: 6;
-  stroke-linecap: round;
-}
-.xp-dash {
-  fill: none;
-  stroke: var(--grafit-2);
-  stroke-width: 2;
-  stroke-dasharray: 10 8;
-}
-.xp-node {
-  fill: none;
-  stroke: var(--grafit);
-  stroke-width: 2;
-}
-.xp-red {
-  fill: none;
-  stroke: var(--rez);
-  stroke-width: 3;
-}
-.xp-red-fill {
-  fill: var(--rez);
-}
-
-/* THE EXPLOSION: four layers part on the drawing's own vertical, staggered,
-   decisive, zero overshoot. States are stylesheet poses, so the reduced-
-   motion kill-switch lands them instantly. */
-.xp__l {
-  transition: transform 480ms var(--ease-spring);
-}
-/* Travels sized to the canvas' ±60px headroom: the topmost stroke (security's
-   perimeter ticks, y 64) lands at −20 ≥ −60, the deepest (design's red frame,
-   y 504 + 92) at 596 ≤ 700 — nothing ever crosses the viewBox edge, so the
-   explosion can never clip. */
-.pil__art--open .xp__l--1 {
-  transform: translateY(-84px);
-}
-.pil__art--open .xp__l--2 {
-  transform: translateY(-30px);
-  transition-delay: 60ms;
-}
-.pil__art--open .xp__l--3 {
-  transform: translateY(36px);
-  transition-delay: 120ms;
-}
-.pil__art--open .xp__l--4 {
-  transform: translateY(92px);
-  transition-delay: 180ms;
-}
-
-/* Layer indexes: mono, present only once the drawing has opened. */
-.xp__tags {
-  opacity: 0;
-  transition: opacity 240ms var(--ease-spring) 240ms;
-}
-.pil__art--open .xp__tags {
-  opacity: 1;
-}
-.xp-tag {
-  font-family: var(--font-mono);
-  font-size: 22px;
-  letter-spacing: 0.03em;
-  fill: var(--grafit-2);
-}
-
-/* The staged pillar's name, above its drawing — a label in flow, never baked
-   into the picture. It travels with its art cell (crossfades with it), so the
-   stage always names what it shows. */
-.pil__stage-title {
-  display: block;
-  font-family: var(--font-sans);
-  font-size: clamp(1.25rem, 1rem + 1vw, 1.75rem);
-  font-weight: 500;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
-  color: var(--grafit);
-  padding-bottom: var(--space-2);
-  border-bottom: var(--divider-width) solid var(--mreza-strong);
-  margin-bottom: var(--space-3);
-}
-
-/* --- the panels -------------------------------------------------------------- */
-/* Ships open (static HTML, JS off); once live, closed panels collapse via the
-   0fr/1fr grid — animatable, and the kill-switch makes it instant. */
-.pil__panel {
-  display: grid;
-  grid-template-rows: 1fr;
-  transition: grid-template-rows 420ms var(--ease-spring);
-}
-
-.pil--live .pil__panel {
-  grid-template-rows: 0fr;
-}
-
-.pil--live .pil__panel--open {
-  grid-template-rows: 1fr;
-}
-
-.pil__panel-inner {
-  overflow: hidden;
-  min-height: 0;
+/* --- the reading surface ----------------------------------------------------- */
+.pil__reveal {
+  padding: 0 var(--space-4) var(--space-4);
+  color: var(--papir-dim);
 }
 
 .pil__summary {
-  padding-top: var(--space-3);
-  color: var(--grafit-2);
-  max-width: 52ch;
+  color: var(--papir-dim);
+  max-width: 58ch;
 }
 
 .pil__points {
   list-style: none;
   margin-top: var(--space-4);
-  border-top: var(--divider-width) solid var(--mreza-strong);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--space-3) var(--space-6);
+  border-top: var(--divider-width) solid var(--crta-na-temnem);
+  padding-top: var(--space-3);
 }
 
 .pil__point {
-  display: grid;
-  grid-template-columns: 2rem minmax(0, 12rem) minmax(0, 1fr);
-  align-items: baseline;
-  column-gap: var(--space-4);
-  padding-block: var(--space-2);
-  border-bottom: var(--divider-width) solid var(--mreza);
-}
-
-.pil__point-index {
-  font-family: var(--font-mono);
-  font-size: var(--type-data-size);
-  letter-spacing: var(--type-data-ls);
-  color: var(--grafit-2);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .pil__point-label {
   font-weight: 500;
   font-size: 0.9375rem;
   line-height: 1.3;
+  color: var(--color-paper);
 }
 
 .pil__point-detail {
-  color: var(--grafit-2);
+  color: var(--papir-dim);
   font-size: 0.9375rem;
   line-height: 1.45;
 }
@@ -573,25 +436,25 @@ button.pil__row {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  max-width: 52ch;
+  max-width: 58ch;
 }
 
 .pil__prerez .annot {
-  color: var(--grafit);
+  color: var(--color-paper);
 }
 
 .pil__prerez-gloss {
-  color: var(--grafit-2);
+  color: var(--papir-dim);
   font-size: 0.9375rem;
 }
 
 .pil__close {
-  margin-block: var(--space-4) var(--space-2);
+  margin-top: var(--space-4);
   padding: 0.55rem 1rem;
   min-height: 44px;
   background: none;
-  border: 1px solid var(--mreza-strong);
-  color: var(--grafit);
+  border: 1px solid var(--crta-na-temnem);
+  color: var(--color-paper);
   text-transform: uppercase;
   letter-spacing: 0.09em;
   cursor: pointer;
@@ -602,102 +465,170 @@ button.pil__row {
 
 @media (hover: hover) {
   .pil__close:hover {
-    border-color: var(--rez);
-    color: var(--rez);
+    border-color: var(--rez-na-temnem);
+    color: var(--rez-na-temnem);
   }
 }
 
-/* --- stacked flow (phones, and every pre-hydration reader) ------------------
-   Natural order per pillar: row, drawing, panel. Once live, phones show only
-   the OPEN pillar's drawing — three standing figures would push each row a
-   full plate away from its neighbour. */
+.pil__close:focus-visible {
+  outline: 2px solid var(--rez-na-temnem);
+  outline-offset: 2px;
+}
+
+/* --- resting flow (phones, pre-hydration) ------------------------------------
+   A column of plates; before hydration every reveal is visible. Once live,
+   closed reveals leave the flow — the opening motion is the plate itself. */
+.pil__wall {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.pil--live .pil__plate:not(.pil__plate--open) .pil__reveal {
+  display: none;
+}
+
+/* The plate's mark on the sheet — phones only (the desktop wall has no
+   margin to hold it, and the plate titles already carry the order). */
+.pil__plate-index {
+  display: none;
+}
+
+/* --- phones: plates pinned along a datum -------------------------------------
+   Not a list of pictures: a drafting DATUM runs down the left margin, the
+   plates hang off it at three different indents, and each overlaps the one
+   above by a sliver — so the stack reads as drawings laid on a table, not as
+   three equal cards. The paper keyline (an outline, so it costs no layout)
+   is what makes the overlap read as intentional rather than as a collision;
+   depth here is still drawn, never cast. Opening a plate takes the full
+   measure back, which is the layout's own way of saying "this one now". */
 @media (max-width: 899.98px) {
-  .pil--live .pil__art {
-    display: none;
+  .pil__wall {
+    position: relative;
+    gap: 0;
+    padding-left: 2.8rem;
   }
-  .pil--live .pil__art--open {
+
+  /* the datum */
+  .pil__wall::before {
+    content: '';
+    position: absolute;
+    left: 0.5rem;
+    top: 0.4rem;
+    bottom: 0.4rem;
+    width: 1px;
+    background: var(--mreza-strong);
+  }
+
+  .pil__plate {
+    outline: 4px solid var(--list-2);
+    margin-top: -1rem;
+  }
+
+  .pil__plate:first-of-type {
+    margin-top: 0;
+  }
+
+  /* the irregular rhythm */
+  .pil__plate:nth-of-type(2) {
+    margin-left: 1.6rem;
+  }
+
+  .pil__plate:nth-of-type(3) {
+    margin-right: 2.2rem;
+  }
+
+  /* Doubled class on purpose: the indent rules above are :nth-of-type
+     (specificity 0,2,0) and would otherwise outrank a single class — the
+     open plate kept its indent and never took the full measure (measured). */
+  .pil__plate.pil__plate--open {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .pil__plate-index {
     display: block;
-  }
-  /* The row directly above already names the drawing — a stage label here
-     would say it twice in a row. */
-  .pil__stage-title {
-    display: none;
+    position: absolute;
+    top: var(--space-2);
+    left: -1.75rem;
+    writing-mode: vertical-rl;
+    font-family: var(--font-mono);
+    font-size: var(--type-data-size);
+    letter-spacing: var(--type-data-ls);
+    color: var(--grafit-2);
   }
 }
 
-/* --- desktop: index + preview (30 / 68) -------------------------------------- */
+/* --- desktop: the wall ------------------------------------------------------- */
 @media (min-width: 900px) {
-  .pil__body {
-    position: relative;
-    display: grid;
-    grid-template-columns: minmax(0, 30fr) minmax(0, 68fr);
-    column-gap: var(--space-8);
-    /* Six left-column slots: row, its panel, row, its panel, row, its panel.
-       Each pair gets its OWN grid row — sharing one row overlaps the items. */
-    grid-template-rows: repeat(6, auto);
-    align-content: start;
-    align-items: start;
-    /* Room for the stage at rest (the drawings are ABSOLUTE — in the grid
-       they would span the tracks and inflate the list's gaps, measured at
-       112px per closed panel). */
+  .pil__wall {
+    flex-direction: row;
+    gap: var(--space-3);
+    align-items: stretch;
     min-height: 34rem;
   }
 
-  .pil__row.pil__cell--0 {
-    grid-column: 1;
-    grid-row: 1;
-  }
-  .pil__panel.pil__cell--0 {
-    grid-column: 1;
-    grid-row: 2;
-  }
-  .pil__row.pil__cell--1 {
-    grid-column: 1;
-    grid-row: 3;
-  }
-  .pil__panel.pil__cell--1 {
-    grid-column: 1;
-    grid-row: 4;
-  }
-  .pil__row.pil__cell--2 {
-    grid-column: 1;
-    grid-row: 5;
-  }
-  .pil__panel.pil__cell--2 {
-    grid-column: 1;
-    grid-row: 6;
+  .pil__plate {
+    flex: 1 1 0;
+    transition: flex-grow 380ms var(--ease-spring);
   }
 
-  /* …and the three drawings stack into ONE absolute stage over the right
-     column — out of the grid's track sizing on purpose (see min-height
-     above). PINNED to the top, with the rest-state height: when a panel
-     opens and the body grows, the stage must NOT re-centre against the new
-     height (measured: it slid ~580px down and out of the viewport — the
-     visitor never saw the explosion they had just asked for). */
-  .pil__art {
-    position: absolute;
-    top: 0;
-    height: 34rem;
-    left: calc((100% - var(--space-8)) * 0.3061 + var(--space-8));
-    right: 0;
-    display: flex;
-    flex-direction: column;
+  /* Hover: the pointed-at plate swells, the others give way (CSS only,
+     hover devices only, never while one is open). */
+  @media (hover: hover) {
+    .pil--live .pil__wall:not(:has(.pil__plate--open)):hover .pil__plate {
+      flex-grow: 0.9;
+    }
+    .pil--live .pil__wall:not(:has(.pil__plate--open)) .pil__plate:hover {
+      flex-grow: 1.35;
+    }
+  }
+
+  /* Open: the plate takes the row; text prints beside its drawing. */
+  .pil__plate--open {
+    flex-grow: 5;
+  }
+
+  .pil__plate--open .pil__face {
+    flex: 0 0 38%;
+    align-self: stretch;
+  }
+
+  .pil__plate--open {
+    flex-direction: row-reverse;
     align-items: stretch;
-    opacity: 0;
-    transition: opacity var(--dur-fast) linear;
-    pointer-events: none;
-    padding-block: 0;
   }
 
-  .pil__art .xp {
+  .pil__plate--open .pil__reveal {
     flex: 1;
-    min-height: 0;
-    width: 100%;
-    height: 100%;
+    min-width: 0;
+    padding: var(--space-4);
+    overflow-y: auto;
   }
 
-  .pil__art--staged {
-    opacity: 1;
+  /* The spines: slim, label rotated, still buttons — switching is one
+     click. Their drawings and artifacts step aside. */
+  .pil__plate--spine {
+    flex-grow: 0.16;
+  }
+
+  .pil__plate--spine .pl,
+  .pil__plate--spine .pil__plate-artifact {
+    display: none;
+  }
+
+  .pil__plate--spine .pil__face {
+    align-items: flex-start;
+  }
+
+  .pil__plate--spine .pil__plate-name {
+    padding-top: 0;
+  }
+
+  .pil__plate--spine .pil__plate-title {
+    writing-mode: vertical-rl;
+    font-size: 1.0625rem;
+    white-space: nowrap;
   }
 }
 </style>
