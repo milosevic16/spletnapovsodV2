@@ -85,7 +85,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section id="reference" class="wk">
+  <section id="reference" class="wk press press--light">
     <header class="container wk__head">
       <p class="kicker">{{ references.kicker }}</p>
       <h2 class="wk__title">{{ references.title }}</h2>
@@ -179,8 +179,11 @@ onUnmounted(() => {
 <style scoped>
 /* The sheet. Full bleed: the elevation runs off the page's left edge, which
    is what makes it read as a drawing that continues rather than a widget. */
+/* background-COLOR, never the shorthand: the shorthand resets
+   background-image, and this scoped rule would silently win over the .press
+   utility that supplies the screen — the texture would simply not appear. */
 .wk {
-  background: var(--list);
+  background-color: var(--list);
   padding-block: var(--section-block);
 }
 

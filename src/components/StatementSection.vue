@@ -118,7 +118,14 @@ const WORD_2 = 'Povsod'
 .stmt {
   position: relative;
   overflow: clip;
-  background: var(--list);
+  /* The deeper beige (owner's call): the opening band takes the darker of the
+     two papers, which also sets the page's alternation — beige hero, paper
+     references, beige paketi. THREE THINGS ARE PAIRED TO THIS VALUE and must
+     move with it: the veil's ground and the theme-color meta (index.html —
+     the surface the intro and the status bar meet, where a mismatch shows as
+     the page darkening under the veil as it lifts), and the mark's cut-out
+     below, which is painted in this fill to read as a hole. */
+  background: var(--list-2);
   padding: var(--hero-inset);
 }
 
@@ -184,7 +191,9 @@ const WORD_2 = 'Povsod'
   top: calc(var(--divider-width) * -1);
   display: block;
   padding: 0 var(--space-3) var(--space-3) 0;
-  background: var(--list);
+  /* Painted in the band's OWN fill so it reads as a cut-out — it follows
+     every change of .stmt's background, or it becomes a visible patch. */
+  background: var(--list-2);
 }
 
 .stmt__mark {
