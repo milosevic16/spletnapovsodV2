@@ -218,6 +218,12 @@ onUnmounted(() => {
      is exactly what it is for. Re-measure page overflow-x if this line ever
      goes. */
   contain: paint;
+  /* A swipe that runs past the last work must not chain to the page — on touch
+     that is what pans the document sideways (and on some engines arms the
+     back-navigation gesture). `contain: paint` keeps the rail from GROWING the
+     page; this keeps the gesture from MOVING it. The two are different
+     failures with the same symptom. */
+  overscroll-behavior-x: contain;
   scroll-snap-type: x proximity;
   scrollbar-width: thin;
   scrollbar-color: var(--mreza-strong) transparent;

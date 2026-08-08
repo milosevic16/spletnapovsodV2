@@ -127,14 +127,14 @@
   --ease-ground: cubic-bezier(0.45, 0, 0.15, 1);
 
   /* -------------------------------------------------------------------------
-     TYPE — Geist (display/UI/body), Geist Mono (labels/data), Inspiration
-     (script glyphs spliced INSIDE display words — editorial, once per heading,
-     never the first glyph, never in body/labels/mono). Weights in use: 400 &
-     500 only — hierarchy is scale, not boldness.
+     TYPE — Geist (display/UI/body) and Geist Mono (labels/data). TWO faces,
+     and ONE FACE PER TITLE: the extracted register spliced a script face into
+     display words, and the owner cancelled that device outright (avgust 2026),
+     so there is no --font-script and nothing loads Inspiration. Weights in
+     use: 400 & 500 only — hierarchy is scale, not boldness.
      ---------------------------------------------------------------------- */
   --font-sans: 'Geist', 'Geist fallback', Arial, sans-serif;
   --font-mono: 'Geist Mono', 'Geist Mono fallback', 'Courier New', monospace;
-  --font-script: 'Inspiration', cursive;
 
   /* display XL — hero wordmark (h1). 164 / 132 / 80 px per breakpoint */
   --type-display-xl-size: 10.25rem; /* 164px */

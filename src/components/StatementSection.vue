@@ -1,34 +1,37 @@
 <script setup lang="ts">
 /**
- * The opening band — the brand name as an ARCHITECTURAL ELEVATION.
+ * The opening band — A TITLE SHEET. The whole hero is one drafting sheet: a
+ * hairline frame inset from the page edges, crop marks at its corners, a
+ * construction line where the type stops, and a title block along the bottom
+ * carrying the claim. The brand name is the drawing on it.
  *
- * Two courses of monumental type, flush to each other, separated by the site's
- * own cut plane: above the cut »Spletna« is DRAWN (outlined letterforms — the
- * elevation, what you see), below it »Povsod« is BUILT (solid ink — the poché,
- * the cut matter that holds it up). One red rule with square end ticks divides
- * them. That is the whole thesis of the site stated in its own name, with no
- * animation, no second layer and nothing to reveal.
+ * THE MARK IS THE SHEET'S CORNER STAMP. It sits ON the frame's top-left
+ * corner, punched into the border on its own patch of paper, the way a stamp
+ * or a register mark sits on a real sheet — not fenced off in a strip of its
+ * own above a rule, which is what made it read as a separate object. That
+ * position is also exactly what the intro veil's landing formula wants: the
+ * frame corner IS --hero-inset, so ink-left = ink-top = --hero-inset (+ the
+ * 45px desktop masthead strip), ink-height = 0.55em of --hero-display. The
+ * veil (index.html) copies those as literals — change either, change both.
  *
- * THE COURSES ARE FLUSH BY ARITHMETIC, not by eye. Measured once at 100px in
- * the real faces (Geist 400, uppercase, ls −0.02em, with the script splice on
- * the »od« tail): »Spletna« sets 4.218em wide, »Povsod« 3.118em. That ratio is
- * a property of the strings, not of the size, so dividing one target width by
- * each constant makes the two words span EXACTLY the same measure at every
- * viewport. Re-measure both constants if the lettering, the tracking or either
- * face ever changes.
+ * THE DRAWING. Two courses of monumental type divided by the site's cut plane:
+ * above it »Spletna« is DRAWN (outlined letterforms — the elevation, what you
+ * see), below it »Povsod« is BUILT (solid ink poché — the matter that holds it
+ * up). One red rule with square end ticks, exactly as wide as the courses.
  *
- * THE MARK is the intro veil's landing target and the composition's datum. It
- * stands alone on the section's inset, so its SVG box IS its ink: ink-left =
- * ink-top = --hero-inset (+ the 45px desktop masthead strip), ink-height =
- * 0.55em of --hero-display. The veil (index.html) copies those as literals —
- * change either, change both. --hero-display now sizes NOTHING ELSE, which is
- * what keeps that pairing safe from the monument's own sizing.
+ * THE COURSES ARE FLUSH BY ARITHMETIC, not by eye. Measured at 100px in the
+ * real face (Geist 400, uppercase, ls −0.02em): »SPLETNA« sets 4.218em wide,
+ * »POVSOD« 3.951em. Those ratios are properties of the strings, not of the
+ * size, so dividing one target width by each constant makes both words span
+ * EXACTLY the same measure at every viewport. Re-measure both if the lettering
+ * or the tracking ever changes. (They changed once already: the second word
+ * was 3.118em while it carried a script splice on its tail. That device is
+ * cancelled — one face per title, everywhere.)
  *
- * There is no JavaScript in this section and nothing to reveal: no scan, no
- * x-ray, no drift, no hover ornament. The rendered composition is the whole
- * design, identical with JS off and under reduced motion. (The page's arrival
- * settle still applies through base.css's html[data-intro] hooks, which is the
- * veil handoff, not an effect of this component.)
+ * No JavaScript, no animation, nothing to reveal. The rendered sheet is the
+ * whole design, identical with JS off and under reduced motion. On phones the
+ * sheet deliberately stops short of the fold so the work below shows through —
+ * a hero that ends where the next thing begins.
  */
 import { hero } from '@/content/home'
 
@@ -38,76 +41,70 @@ const accentValid = hero.title.startsWith(hero.titleAccent)
 const titleAccent = accentValid ? hero.titleAccent : ''
 const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero.title
 
-/** The two courses. The script splice takes the »od« tail of the second word —
- *  one run, never the first glyph (the art direction's rule), derived from the
- *  literal so a lettering change degrades to the plain word. */
 const WORD_1 = 'Spletna'
 const WORD_2 = 'Povsod'
-const SPLICE_RUN = 'od'
-const spliceAt = WORD_2.endsWith(SPLICE_RUN) ? WORD_2.length - SPLICE_RUN.length : -1
-const word2Head = spliceAt > 0 ? WORD_2.slice(0, spliceAt) : WORD_2
-const word2Run = spliceAt > 0 ? SPLICE_RUN : ''
 </script>
 
 <template>
   <section class="stmt">
-    <!-- data-brand-sentinel is a contract with SiteMasthead: the phone bar
-         appears exactly when this element leaves the screen, so the brand is
-         never absent from the page. -->
-    <div class="stmt__brand" data-brand-sentinel>
-      <!-- The pd mark: two overlapping discs carrying Povsod's first and last
-           letters; the d is the p rotated 180° (the mark's point symmetry).
-           THE VEIL'S LANDING FORMULA copies this box exactly — see the header
-           comment before touching its size or its position. -->
-      <svg class="stmt__mark" viewBox="0 0 244 144" aria-hidden="true">
-        <circle cx="72" cy="72" r="72" fill="var(--rez)" />
-        <circle cx="172" cy="72" r="72" fill="var(--rez)" />
-        <g fill="none" stroke="var(--list)" stroke-width="18" stroke-linecap="round">
-          <circle cx="79" cy="79" r="33" />
-          <line x1="46" y1="55" x2="46" y2="118" />
-        </g>
-        <g fill="none" stroke="var(--list)" stroke-width="18" stroke-linecap="round"
-          transform="rotate(180 122 72)">
-          <circle cx="79" cy="79" r="33" />
-          <line x1="46" y1="55" x2="46" y2="118" />
-        </g>
-      </svg>
-    </div>
+    <!-- The sheet. data-brand-sentinel is a contract with SiteMasthead: the
+         phone bar appears exactly when this element leaves the screen, so the
+         brand is never absent from the page. -->
+    <div class="stmt__sheet" data-brand-sentinel>
+      <!-- Crop marks on the three free corners; the fourth is the mark. -->
+      <span class="stmt__crop stmt__crop--tr" aria-hidden="true"></span>
+      <span class="stmt__crop stmt__crop--bl" aria-hidden="true"></span>
+      <span class="stmt__crop stmt__crop--br" aria-hidden="true"></span>
 
-    <!-- The datum: the drawing's first rule, full bleed. -->
-    <span class="stmt__rule stmt__rule--datum" aria-hidden="true"></span>
+      <!-- The corner stamp: the pd mark, punched into the frame. Two
+           overlapping discs carrying Povsod's first and last letters; the d is
+           the p rotated 180° (the mark's point symmetry). THE VEIL LANDS HERE
+           — see the header comment before touching its size or position. -->
+      <span class="stmt__stamp">
+        <svg class="stmt__mark" viewBox="0 0 244 144" aria-hidden="true">
+          <circle cx="72" cy="72" r="72" fill="var(--rez)" />
+          <circle cx="172" cy="72" r="72" fill="var(--rez)" />
+          <g fill="none" stroke="var(--list)" stroke-width="18" stroke-linecap="round">
+            <circle cx="79" cy="79" r="33" />
+            <line x1="46" y1="55" x2="46" y2="118" />
+          </g>
+          <g fill="none" stroke="var(--list)" stroke-width="18" stroke-linecap="round"
+            transform="rotate(180 122 72)">
+            <circle cx="79" cy="79" r="33" />
+            <line x1="46" y1="55" x2="46" y2="118" />
+          </g>
+        </svg>
+      </span>
 
-    <!-- THE ELEVATION. A container query context: both courses size themselves
-         from THIS box's inline width, so they are flush to each other and to
-         the measure without measuring anything at runtime. -->
-    <div class="stmt__elevation">
-      <!-- The construction line: a box exactly as wide as the courses, showing
-           only its right edge — the line the type stops on. A CHILD, not a
-           pseudo-element of the container: container-query units cannot query
-           the container they are declared on, so `cqw` inside
-           `.stmt__elevation::after` silently fell back to the viewport. -->
-      <span class="stmt__edge" aria-hidden="true"></span>
+      <!-- THE DRAWING. A container query context: both courses size themselves
+           from THIS box's inline width, so they are flush to each other and to
+           the measure without measuring anything at runtime. -->
+      <div class="stmt__elevation">
+        <!-- The construction line: a box exactly as wide as the courses,
+             showing only its right edge — the line the type stops on. A CHILD,
+             not a pseudo-element of the container: container-query units
+             cannot query the container they are declared on. -->
+        <span class="stmt__edge" aria-hidden="true"></span>
 
-      <p class="stmt__course stmt__course--drawn">
-        <span class="stmt__wordmark">{{ WORD_1 }}</span>
-      </p>
+        <p class="stmt__course stmt__course--drawn">
+          <span class="stmt__wordmark">{{ WORD_1 }}</span>
+        </p>
 
-      <!-- The cut plane: the site's signature — one red rule, square end
-           ticks, exactly as wide as the courses it divides. -->
-      <span class="stmt__cut" aria-hidden="true"></span>
+        <!-- The cut plane: one red rule, square end ticks, exactly as wide as
+             the courses it divides. -->
+        <span class="stmt__cut" aria-hidden="true"></span>
 
-      <p class="stmt__course stmt__course--solid">
-        <span class="stmt__wordmark"
-          >{{ word2Head }}<span v-if="word2Run" class="stmt__script">{{ word2Run }}</span></span
-        >
-      </p>
-    </div>
+        <p class="stmt__course stmt__course--solid">
+          <span class="stmt__wordmark">{{ WORD_2 }}</span>
+        </p>
+      </div>
 
-    <!-- The claim, hung under its own rule in the void at the foot. -->
-    <div class="stmt__foot">
-      <h1 class="stmt__title">
-        <span v-if="titleAccent" class="stmt__hl">{{ titleAccent }}</span>{{ titleRest }}
-      </h1>
+      <!-- The title block: the sheet's own register strip, along the bottom. -->
+      <div class="stmt__block">
+        <h1 class="stmt__title">
+          <span v-if="titleAccent" class="stmt__hl">{{ titleAccent }}</span>{{ titleRest }}
+        </h1>
+      </div>
     </div>
   </section>
 </template>
@@ -115,79 +112,116 @@ const word2Run = spliceAt > 0 ? SPLICE_RUN : ''
 <style scoped>
 /* PINNED light: the page root flips with the ground switch and this section's
    inks are the paper world's. `overflow: clip` is load-bearing, not tidiness:
-   the courses are sized so the REAL faces span the measure exactly, and for
+   the courses are sized so the REAL face spans the measure exactly, and for
    the instant before the webfont swaps, the metric-matched fallback's wider
-   advances would push the ink past the margin. */
+   advances would push the ink past the frame. */
 .stmt {
   position: relative;
   overflow: clip;
   background: var(--list);
   padding: var(--hero-inset);
-  /* Clear the desktop masthead's in-flow strip (paired with the veil's
-     landing formula, which carries the same 45px). */
-  min-height: calc(100svh - 45px);
-  display: flex;
-  flex-direction: column;
 }
 
-/* --- the datum ------------------------------------------------------------- */
-/* The mark stands alone: its box IS its ink, which is what makes the veil's
-   landing exact. Nothing else may share this row — a sibling would change the
-   mark's own top. */
-.stmt__brand {
+/* --- the sheet --------------------------------------------------------------
+   The frame is inset by exactly --hero-inset, which is what puts its top-left
+   corner where the veil lands the mark. */
+.stmt__sheet {
+  position: relative;
   display: flex;
-  /* Clear the phone menu button standing in the top-right corner. */
-  padding-right: 3rem;
+  flex-direction: column;
+  border: var(--divider-width) solid var(--mreza-strong);
+  /* Clear the corner stamp; the rest of the sheet's own frame padding. */
+  padding: calc(0.55 * var(--hero-display) + var(--space-4)) var(--space-4) var(--space-4);
+  /* Short of the fold ON PURPOSE (phones): the work below has to show through,
+     so the hero ends where the next thing begins. Desktop takes the full
+     screen below. */
+  min-height: 72svh;
+}
+
+/* Crop marks: two hairlines meeting at a corner, the drafting sheet's own
+   registration.
+   Each is a box showing only the two borders that form its corner. */
+.stmt__crop {
+  position: absolute;
+  width: var(--space-6);
+  height: var(--space-6);
+  pointer-events: none;
+}
+.stmt__crop--tr {
+  top: 0;
+  right: 0;
+  border-top: var(--divider-width) solid var(--grafit);
+  border-right: var(--divider-width) solid var(--grafit);
+  margin: -1px -1px 0 0;
+}
+.stmt__crop--bl {
+  bottom: 0;
+  left: 0;
+  border-bottom: var(--divider-width) solid var(--grafit);
+  border-left: var(--divider-width) solid var(--grafit);
+  margin: 0 0 -1px -1px;
+}
+.stmt__crop--br {
+  bottom: 0;
+  right: 0;
+  border-bottom: var(--divider-width) solid var(--grafit);
+  border-right: var(--divider-width) solid var(--grafit);
+  margin: 0 -1px -1px 0;
+}
+
+/* The stamp sits ON the corner: its own patch of paper punches the frame's
+   two lines, so the mark reads as part of the sheet's furniture rather than as
+   an object fenced above it. The padding extends the paper past the ink on the
+   inside edges only — the ink's top-left stays exactly on the corner, which is
+   the veil's landing formula. */
+.stmt__stamp {
+  position: absolute;
+  /* Pulled out by the border's own width: an absolute box is positioned
+     against the PADDING box, so `0` would sit the ink one border inside the
+     frame — and the veil lands on --hero-inset exactly, which is the frame's
+     OUTER corner. Measured: 21px against a 20px inset before this. */
+  left: calc(var(--divider-width) * -1);
+  top: calc(var(--divider-width) * -1);
+  display: block;
+  padding: 0 var(--space-3) var(--space-3) 0;
+  background: var(--list);
 }
 
 .stmt__mark {
+  display: block;
   height: 0.55em;
   width: auto;
   font-size: var(--hero-display);
 }
 
-/* Full-bleed rules: they escape the section's inset so the elevation reads as
-   courses in a wall rather than boxes on a page. */
-.stmt__rule {
-  display: block;
-  height: var(--divider-width);
-  background: var(--mreza-strong);
-  margin-inline: calc(var(--hero-inset) * -1);
-}
-
-.stmt__rule--datum {
-  margin-top: clamp(0.75rem, 1.1vw, 1rem);
-}
-
-/* --- the elevation ---------------------------------------------------------
-   THE SIZING. `--mon-span` is the width both courses span; each course divides
-   it by its own measured em-width (see the header comment), so both land on
-   exactly that width. cqw, not vw: the container's inline size excludes the
-   scrollbar and the section's padding, so the ink lands inside the margin by
-   construction rather than by subtraction.
+/* --- the drawing ------------------------------------------------------------
+   `--mon-span` is the width both courses span; each divides it by its own
+   measured em-width (see the header), so both land on exactly that width. cqw,
+   not vw: the container's inline size already excludes the scrollbar, the
+   section's inset and the sheet's own padding, so the ink lands inside the
+   frame by construction rather than by subtraction.
 
    The cap stops the type growing without bound on very wide screens; because
-   both caps carry the same 4.218 : 3.118 relation, capping never breaks the
+   both caps carry the same 4.218 : 3.951 relation, capping never breaks the
    flush. */
 .stmt__elevation {
   position: relative;
   container-type: inline-size;
   --mon-span: 100cqw;
-  --mon-cap: 15rem;
+  --mon-cap: 16rem;
   /* The courses' shared width, for anything that must align to where the type
      ends. Declared here but RESOLVED in the children that use it, which is the
      only context where cqw can see this container. */
   --mon-w: calc(min(calc(var(--mon-span) / 4.218), var(--mon-cap)) * 4.218);
-  /* auto ABOVE and auto on the foot below: the free space divides equally, so
-     the elevation floats centred in its own field instead of the void pooling
-     in one place. The padding is the floor the auto margin cannot give — an
-     auto margin resolves to 0 when space runs out. */
+  /* auto ABOVE and auto on the title block below: the free space divides
+     equally, so the drawing floats centred on the sheet instead of the void
+     pooling in one place. */
   margin-top: auto;
-  padding-top: clamp(1rem, 1.8vw, 1.75rem);
+  padding-block: clamp(1rem, 2vw, 2rem);
 }
 
-/* Hidden by default: on a phone the courses already reach both margins, so a
-   line at their right edge would just double the margin. Desktop turns it on. */
+/* Hidden by default: on a phone the courses already reach both edges of the
+   frame, so a line at their right edge would just double the frame. */
 .stmt__edge {
   display: none;
 }
@@ -202,19 +236,20 @@ const word2Run = spliceAt > 0 ? SPLICE_RUN : ''
   white-space: nowrap;
   color: var(--grafit);
   /* The 0.8 line-height crops the caps' own box; a hair of leading keeps the
-     rule off the letterforms. */
+     cut off the letterforms. */
   padding-block: 0.04em;
 }
 
-/* »Spletna« — 4.218em wide in the real face (measured). */
+/* »SPLETNA« — 4.218em wide in the real face (measured). */
 .stmt__course--drawn {
   font-size: min(calc(var(--mon-span) / 4.218), var(--mon-cap));
 }
 
-/* »Povsod« with the script tail — 3.118em wide (measured). The cap carries the
-   same ratio (15rem × 4.218 / 3.118 = 20.29rem) so the two stay flush. */
+/* »POVSOD« — 3.951em (measured). The cap carries the same ratio
+   (16rem × 4.218 / 3.951 = 17.08rem) so the two stay flush. */
 .stmt__course--solid {
-  font-size: min(calc(var(--mon-span) / 3.118), calc(var(--mon-cap) * 1.353));
+  font-size: min(calc(var(--mon-span) / 3.951), calc(var(--mon-cap) * 1.0676));
+  color: var(--grafit);
 }
 
 /* ABOVE THE CUT the word is DRAWN: outlined letterforms, the elevation. The
@@ -229,13 +264,9 @@ const word2Run = spliceAt > 0 ? SPLICE_RUN : ''
   }
 }
 
-/* BELOW THE CUT it is BUILT: solid ink poché. */
-.stmt__course--solid {
-  color: var(--grafit);
-}
-
-/* The cut plane, exactly as wide as the courses: the red rule and its two
-   square end ticks — the site's own motif, at the composition's centre. */
+/* The cut plane, exactly as wide as the courses, with its square end ticks —
+   and extension lines dropping the full height of the sheet from both ends,
+   the dimension convention that ties the drawing to its frame. */
 .stmt__cut {
   position: relative;
   display: block;
@@ -265,25 +296,14 @@ const word2Run = spliceAt > 0 ? SPLICE_RUN : ''
   display: inline-block;
 }
 
-/* The splice: the script face at the same size, lowercase against the caps,
-   lh 1 / ls 0 — the measured convention. */
-.stmt__script {
-  font-family: var(--font-script);
-  font-weight: 400;
-  text-transform: none;
-  line-height: 1;
-  letter-spacing: 0;
-}
-
-/* --- the claim -------------------------------------------------------------
-   The void between the elevation and the foot is RULED, which is what makes it
-   read as a composed field rather than a gap. */
-.stmt__foot {
+/* --- the title block --------------------------------------------------------
+   The sheet's register strip: a ruled band along the bottom edge, spanning the
+   frame's full inner width, carrying the claim. */
+.stmt__block {
   margin-top: auto;
-  padding-top: clamp(1rem, 1.8vw, 1.5rem);
+  margin-inline: calc(var(--space-4) * -1);
+  padding: var(--space-4) var(--space-4) 0;
   border-top: var(--divider-width) solid var(--mreza-strong);
-  margin-inline: calc(var(--hero-inset) * -1);
-  padding-inline: var(--hero-inset);
 }
 
 .stmt__title {
@@ -302,26 +322,28 @@ const word2Run = spliceAt > 0 ? SPLICE_RUN : ''
 }
 
 /* --- desktop ---------------------------------------------------------------
-   The courses stop short of the right margin and the leftover column is the
-   composition's void — the archetype's empty spacer, marked by one vertical
-   construction line where the type ends. */
-@media (min-width: 1200px) {
-  /* The courses stop short of the right margin and the leftover column is the
-     composition's void — the archetype's empty spacer.
+   The sheet takes the whole first screen (less the masthead's in-flow strip),
+   the courses stop short of the frame's right edge, and the leftover column is
+   the composition's void — marked by the construction line where the type
+   ends.
 
-     64%, not more: the whole band has to fit the first screen, and the courses
-     are the only elastic part of it. Measured at 1440×900 — everything that is
-     NOT the two courses (inset, mark, rules, gaps, claim) costs ~450px of the
-     855px available, which leaves room for a 195px first course. 64cqw lands
-     at 195. Re-measure that fixed cost if the mark, the claim or the gaps
-     change. */
-  .stmt__elevation {
-    --mon-span: 64cqw;
+   78%, and the number is arithmetic rather than taste: at 1440×900 the sheet
+   has 713px to work in, and everything that is NOT the two courses (the mark's
+   clearance, the cut's gaps, the drawing's padding, the title block, the
+   sheet's own frame padding) costs ~290px of it. That leaves ~420px for the
+   pair, which is a 228px first course — and 78cqw lands there. Re-derive if
+   any of those fixed costs change. */
+@media (min-width: 1200px) {
+  .stmt__sheet {
+    min-height: calc(100svh - 45px - 2 * var(--hero-inset));
+    padding: calc(0.55 * var(--hero-display) + var(--space-6)) var(--space-8) var(--space-8);
   }
 
-  /* The line the type stops on: a box the courses' own width, showing only its
-     right edge. It states a real fact about the composition (where the type
-     ends and the void begins) rather than decorating it. */
+  .stmt__elevation {
+    --mon-span: 78cqw;
+    padding-block: var(--space-4);
+  }
+
   .stmt__edge {
     display: block;
     position: absolute;
@@ -333,21 +355,15 @@ const word2Run = spliceAt > 0 ? SPLICE_RUN : ''
     pointer-events: none;
   }
 
-  /* 30ch, not tighter: it is what sets the claim in TWO lines instead of
-     three, and that one line is the last 32px the band needs to finish above
-     the fold (measured — 880px at a 22ch measure against an 855px budget). */
+  .stmt__block {
+    margin-inline: calc(var(--space-8) * -1);
+    padding: var(--space-6) var(--space-8) 0;
+  }
+
+  /* 30ch keeps the claim in two lines, which is what lets the sheet finish
+     above the fold (measured). */
   .stmt__title {
     max-width: 30ch;
-  }
-}
-
-/* --- phone -----------------------------------------------------------------
-   Same composition, no reflow of its logic: the courses simply span the whole
-   measure (--mon-span is already 100cqw), which is what makes a 375px screen
-   read as monumental rather than as a shrunken desktop. */
-@media (max-width: 899.98px) {
-  .stmt {
-    min-height: 100svh;
   }
 }
 </style>

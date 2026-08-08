@@ -137,6 +137,16 @@ export const invisible = {
 }
 
 export const references = {
+  /**
+   * The band's own heading. RESTORED verbatim from the owner-approved copy
+   * (commit c3533de, "Owner corrections from Popravk SpletnaPovsod.docx") —
+   * it was dropped when the band went heading-less, and is back at the
+   * owner's request. Nothing here is newly written.
+   */
+  kicker: 'Reference',
+  title: 'Nekaj uspešnih prejšnjih projektov',
+  intro:
+    'Od osebnih predstavitev, pravnih pisarn, forenzičnih podjetij in apartmajskih nastanitev pokrivamo vse sektorje in se prilagodimo vsebini. Vsaka stran je oblikovana posebej za namen projekta in ni predloga.',
   /** Screen-reader suffix on each reference link (target="_blank" warning). */
   newWindowNote: 'odpre se v novem zavihku',
   /**
@@ -144,8 +154,7 @@ export const references = {
    * that exist ONLY once the carousel hydrates — with JS off every plate is
    * visible in flow and there are no controls — so they live under the
    * `feedback` key the content guard skips by contract, exactly like the
-   * form's interaction strings. regionLabel is the section's aria-label (the
-   * band deliberately carries no visible heading).
+   * form's interaction strings.
    */
   feedback: {
     regionLabel: 'Reference',

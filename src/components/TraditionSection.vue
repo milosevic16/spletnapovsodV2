@@ -166,17 +166,10 @@ function onProbeKeys(e: KeyboardEvent) {
   nextTick(() => bandAt(next)?.focus())
 }
 
-/** The title splice: ONE script run inside the display word, set by eye
- *  (art direction: never the first glyph, one run per word, tail runs read
- *  best). Derived from the real title so a copy edit degrades to the plain
- *  word rather than mis-slicing it. */
-const SPLICE_RUN = 'nje'
-const title = computed(() => {
-  const t = invisible.title
-  const at = t.lastIndexOf(SPLICE_RUN)
-  if (at <= 0) return { before: t, run: '', after: '' }
-  return { before: t.slice(0, at), run: SPLICE_RUN, after: t.slice(at + SPLICE_RUN.length) }
-})
+/* ONE FACE PER TITLE. The extracted register splices a script face into
+ * display words; the owner cancelled that device outright, so titles are set
+ * in the sans, whole. Removed here, in the hero, in the tokens and in the
+ * font faces — nothing loads Inspiration any more. */
 
 /** The source the crawler receives — derived from the content module and the
  *  guard-checked fact lines, so the depiction cannot drift from the shipped
@@ -305,11 +298,7 @@ onUnmounted(() => {
     <div class="container trad__world">
       <header class="trad__head">
         <p class="kicker kicker--on-dark">{{ invisible.kicker }}</p>
-        <h2 class="trad__title">
-          {{ title.before
-          }}<span v-if="title.run" class="trad__script">{{ title.run }}</span
-          >{{ title.after }}
-        </h2>
+        <h2 class="trad__title">{{ invisible.title }}</h2>
       </header>
 
       <div class="trad__made">
@@ -496,16 +485,6 @@ onUnmounted(() => {
   text-transform: uppercase;
   color: var(--color-paper);
   overflow-wrap: anywhere;
-}
-
-/* The script splice: same size, its own face, lowercase against the machined
-   caps, lh 1 / ls 0 (measured convention from the reference). */
-.trad__script {
-  font-family: var(--font-script);
-  text-transform: none;
-  line-height: 1;
-  letter-spacing: 0;
-  font-weight: 400;
 }
 
 /* --- the two layers --------------------------------------------------------
