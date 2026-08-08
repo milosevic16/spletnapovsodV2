@@ -425,12 +425,12 @@ button.pil__face {
 .pil__clip {
   /* A DECLARED plate shape, not whatever flex hands out: stacked on a phone the
      clip took its height from `flex: 1` and came out 416px against the drawn
-     plates' 173, which is not a shape anyone chose. 6:5 is the encode's OWN
+     plates' 173, which is not a shape anyone chose. 4:3 is the encode's OWN
      ratio (scripts/build-pillar-videos.mjs crops to it), so a stacked plate
      shows the whole frame and crops nothing. Desktop drops the ratio — there
      the wall sets the height and `cover` does the cropping as the plate
      widens and narrows. */
-  aspect-ratio: 6 / 5;
+  aspect-ratio: 4 / 3;
   height: auto;
   object-fit: cover;
   /* The composition sits in the upper half of the frame. */
@@ -769,19 +769,26 @@ button.pil__face {
     min-height: 34rem;
   }
 
-  /* THE WALL IS NEVER EVEN. One plate holds half the wall and the other two a
-     quarter each — 2 : 1 : 1 — and at rest that majority belongs to the FIRST
-     pillar. Hovering any plate hands it the majority and returns the others to
-     a quarter, so the same 2:1:1 shape simply slides along the row. The clips
-     inside are all playing at once either way; what changes is how much of
-     each you are given to look at. */
+  /* THE WALL IS NEVER EVEN. The majority plate holds 3/5 of the row and the
+     other two a fifth each — 3 : 1 : 1 = 60/20/20, a fifth more than a half,
+     which is what makes it read as the one being looked at rather than merely
+     the larger one. At rest that majority belongs to the FIRST pillar;
+     hovering any plate hands it the majority and returns the others to a
+     fifth, so the same shape slides along the row. All three clips play the
+     whole time — what changes is how much of each you are given.
+
+     THE SPLIT IS ALSO THE ENCODE'S SPEC: 60% of the row against the wall's
+     height makes the majority plate ~1.31:1 and a minority plate ~0.44:1, and
+     scripts/build-pillar-videos.mjs crops to the first while the second is
+     what sets the clips' safe area. Change these numbers and that script's
+     TARGET_RATIO changes with them. */
   .pil__plate {
     flex: 1 1 0;
     transition: flex-grow 380ms var(--ease-spring);
   }
 
   .pil__plate:first-of-type {
-    flex-grow: 2;
+    flex-grow: 3;
   }
 
   @media (hover: hover) {
@@ -792,7 +799,7 @@ button.pil__face {
       flex-grow: 1;
     }
     .pil--live .pil__wall:not(:has(.pil__plate--open)) .pil__plate:hover {
-      flex-grow: 2;
+      flex-grow: 3;
     }
   }
 

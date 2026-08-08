@@ -54,18 +54,21 @@ const VERSION = 'v1'
 
 /**
  * THE PLATE RATIO, and it is arithmetic rather than taste. The wall is three
- * plates split 2 : 1 : 1, so the majority plate is half of it; measured at
- * 1440 the three come out 636 / 319 / 319 against a 592px-tall wall, which
- * makes the majority plate 1.07 : 1. 6:5 (1.2) is the clean ratio just above
- * that — deliberately a little generous, because the wall's height follows its
- * content and a crop that is slightly too WIDE only means `cover` trims a few
- * per cent, while one that is too narrow would letterbox. Everything wider
- * than this in the source is never visible even in the majority state, so
- * cropping here throws away nothing and pays for itself in bytes. The
- * quarter-width plates crop further from the same file — that is what `cover`
- * is for, and why one encode serves every state.
+ * plates split 3 : 1 : 1 (PillarsSection), so the majority plate is 60% of the
+ * row: at 1440 that is ~773 wide against a ~592-tall wall, i.e. 1.31 : 1. 4:3
+ * (1.333) is the clean ratio just above it — deliberately a shade generous,
+ * because the wall's height follows its content, and a crop that is slightly
+ * too WIDE only means `cover` trims a few per cent while one too narrow would
+ * letterbox. Anything wider than this is never visible even in the majority
+ * state, so cropping here throws away nothing and is paid back in bytes.
+ *
+ * THE MINORITY PLATE IS WHAT CONSTRAINS THE FOOTAGE: at 20% of the row it is
+ * ~258 × 592, i.e. 0.44 : 1, so `cover` shows only 0.44/1.333 ≈ 33% of the
+ * frame's width — its CENTRAL THIRD. Anything that has to survive in a
+ * shrunken plate must be composed inside that third; the generation prompts
+ * carry the same rule.
  */
-const TARGET_RATIO = 6 / 5
+const TARGET_RATIO = 4 / 3
 
 /**
  * Per-source treatment. `cropBottom` is the watermark strip, in SOURCE pixels,
