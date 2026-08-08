@@ -260,6 +260,9 @@ textarea {
      margin back at the same time. */
   --press-hi: rgb(245 242 235 / 0.11);
   --press-lo: rgb(0 0 0 / 0.34);
+  /* Tuned for DARK grounds. A light band takes .press--light below — the same
+     emboss, re-aimed: on paper the shadow is what shows, so a 34% black dot
+     would print as a grey polka dot rather than as relief. */
   --press-cell: 9px;
   --press-r: 1.15px;
   --press-relief: 1px;
@@ -282,6 +285,17 @@ textarea {
     calc(var(--press-cell) / 2) calc(var(--press-cell) / 2),
     calc(var(--press-cell) / 2 + var(--press-relief))
       calc(var(--press-cell) / 2 + var(--press-relief));
+}
+
+/* The same screen on a LIGHT ground. The roles swap: on paper the highlight
+   has almost nowhere to go (white on beige is a whisper) and the shadow does
+   the work, so the shadow drops from 34% black to 10% ink and the highlight
+   rises to 55% white. Measured on the beige band (#ece8de): a highlight pixel
+   lands at #f6f4ef and a shadow pixel at #d8d5cc, leaving body ink at 14.5:1
+   and 11:1 — the emboss reads as pressed stock and costs no legibility. */
+.press--light {
+  --press-hi: rgb(255 255 255 / 0.55);
+  --press-lo: rgb(36 36 36 / 0.1);
 }
 
 /* --- the grain ------------------------------------------------------------ */

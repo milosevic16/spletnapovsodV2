@@ -95,7 +95,7 @@ const WORD_2 = 'Povsod'
         <span class="stmt__cut" aria-hidden="true"></span>
 
         <p class="stmt__course stmt__course--solid">
-          <span class="stmt__wordmark">{{ WORD_2 }}</span>
+          <span class="stmt__wordmark press">{{ WORD_2 }}</span>
         </p>
       </div>
 
@@ -260,6 +260,29 @@ const WORD_2 = 'Povsod'
 @supports (-webkit-text-stroke: 1px currentColor) {
   .stmt__course--drawn .stmt__wordmark {
     -webkit-text-stroke: 0.013em var(--grafit);
+    color: transparent;
+  }
+}
+
+/* BELOW THE CUT the word is BUILT, and now it is built out of the same
+   material the dark bands are printed on: the press screen, clipped to the
+   letterforms. The ink becomes the background and the glyphs become the
+   window, so »POVSOD« reads as a solid mass that has been SCREENED — which is
+   what the poché below a cut line is, and the reason the texture belongs here
+   and nowhere else in the hero.
+
+   »SPLETNA« deliberately does not take it: above the cut the word is DRAWN,
+   an outline with no fill, so there is no interior for a screen to live in —
+   texturing a 0.013em stroke would only muddy it.
+
+   Gated, and the gate is load-bearing: background-clip:text needs `color:
+   transparent` to show anything, so an engine without it would render the
+   brand name invisible. Outside the guard the word stays solid ink. */
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .stmt__course--solid .stmt__wordmark {
+    background-color: var(--grafit);
+    -webkit-background-clip: text;
+    background-clip: text;
     color: transparent;
   }
 }

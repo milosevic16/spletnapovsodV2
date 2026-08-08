@@ -106,7 +106,12 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section id="razlike" ref="root" class="dif press" :class="{ 'dif--live': live }">
+  <section
+    id="razlike"
+    ref="root"
+    class="dif press press--light"
+    :class="{ 'dif--live': live }"
+  >
     <div class="container dif__head">
       <p class="kicker kicker--on-dark">{{ differentiators.kicker }}</p>
       <h2 class="dif__title">{{ differentiators.title }}</h2>
@@ -172,9 +177,31 @@ onUnmounted(() => {
    --grafit would have turned every paragraph on the paper half brown. The
    band now names the ground it means. Measured under a press-screen highlight
    dot, the worst case here: paper 7.44:1, secondary 4.97:1. */
+/* THE BRIGHT BAND (owner's call): this section is paper, not board — it sits
+   between two dark bands and lifts the page's second half rather than
+   continuing it.
+
+   IT INVERTS BY REMAPPING FOUR TOKENS, not by rewriting twenty rules. Custom
+   properties inherit, so re-pointing the dark-world names at their paper-world
+   twins here flips every colour in the section at once. Checked before doing
+   it — inside this section --list and --papir-dim are ONLY ever text, and
+   --rez-na-temnem and --crta-na-temnem ONLY ever lines, so nothing below
+   wanted a light value from them and nothing can invert the wrong way.
+
+   Measured in-page on the beige ground (#ece8de): body ink 12.69:1, secondary
+   8.21:1, the cut 4.91:1. On a LIGHT ground the worst pixel is a text pixel
+   sitting on a SHADOW dot rather than a highlight one — the screen's roles
+   invert with the ground — and there they read 10.53:1, 6.82:1 and 4.08:1.
+   The cut clears its 3:1 floor with room; it is only ever a mark here (ticks,
+   the claim's edge), never text, which is what makes 4.08 fine. */
 .dif {
-  background-color: var(--color-bronze);
-  color: var(--list);
+  --list: var(--grafit);
+  --papir-dim: var(--grafit-2);
+  --rez-na-temnem: var(--rez);
+  --crta-na-temnem: var(--mreza-strong);
+
+  background-color: var(--list-2);
+  color: var(--grafit);
   padding-block: var(--section-block);
 }
 
@@ -206,8 +233,10 @@ onUnmounted(() => {
      1280). cqw ties the type to the box that has to hold it, at every width. */
   container-type: inline-size;
   /* The band's own ground, so the register never shows through behind the
-     roll as it passes under. */
-  background: var(--color-bronze);
+     roll as it passes under. Opaque on purpose, which is also why it carries
+     no press screen: it would print a second screen over the section's own as
+     it slides. */
+  background: var(--list-2);
   padding-bottom: var(--space-4);
   margin-bottom: var(--space-6);
 }
