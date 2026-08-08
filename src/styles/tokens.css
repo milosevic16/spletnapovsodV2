@@ -142,13 +142,12 @@
 
   /* THE CODE INK. The source half of Tradicija speaks in a different voice
      from the rendered half beside it, and that difference is the point: one
-     is the page, the other is what the machine receives. Paper-dim (#c6c9c3)
-     was a cool grey sitting on warm bronze — legible but mismatched, and only
-     1.50:1 away from the paper text opposite it, so the two halves read as
-     the same ink at two brightnesses. This amber is warm enough to belong to
-     the bronze, far enough from paper (1.32:1) to read as its own register,
-     and measures 8.72:1 on the ground it sits on. */
-  --color-code: #e6d3a3;
+     is the page, the other is what the machine receives. The owner asked for
+     BLACK code letters, which decides the source half with it: black on the
+     old bronze ground measures 1.37:1, so the half turns to paper and the
+     code takes the palette’s primary ink — 13.88:1, and the two halves now
+     read apart by SURFACE rather than by two brightnesses of one. */
+  --color-code: #242424;
 
   /* The accent — the cut red. JOBS: the scanline/beam, the slider thumb,
      the pd mark, the primary CTA, focus rings. Never a status colour, never
@@ -156,6 +155,12 @@
   --color-cut: #b03b22; /* on light grounds */
   --color-cut-deep: #93301b; /* pressed/hover step; white on it 7.84:1 */
   --color-cut-dark: #e4694a; /* the cut's voice on dark grounds */
+  /* The BEAM only. It stands ON the seam between the paper source half and the
+     bronze band, so it is the one mark that must clear the 3:1 UI floor against
+     BOTH — and neither existing cut does (cut-dark 3.48 bronze / 2.93 paper;
+     cut 1.89 / 5.37). Solved along the cut hue: this is the centre of the only
+     window that passes, at 3.19:1 either side. */
+  --color-cut-seam: #dc6244;
 
   /* Role tokens — the LIGHT state; [data-ground='dark'] below swaps them.
      Registered above so the swap tweens. */

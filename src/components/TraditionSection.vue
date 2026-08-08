@@ -507,14 +507,13 @@ onUnmounted(() => {
   position: absolute;
   inset: 0;
   z-index: 1;
-  /* One step off the section's own ground, and now DOWN rather than up: the
-     machine half sitting lighter than the band made the two read as
-     mismatched brightnesses of one surface rather than as two surfaces. Going
-     deeper instead is both quieter (1.13:1 apart, so the halves differ
-     without competing) and truer — the source is what lies under the page.
-     Being an opaque child it covers the press screen, so it is measured
-     flat. */
-  background: var(--color-bronze-deep);
+  /* PAPER, because the owner asked for BLACK code letters and black needs a
+     light ground (on the old bronze it measured 1.37:1). The halves no longer
+     differ by two brightnesses of one surface — the failing the previous
+     values were tuned against — but by being two SURFACES: paper source
+     against bronze band, 10.17:1 apart. Being an opaque child it covers the
+     press screen, so it is measured flat. */
+  background: var(--color-paper);
   clip-path: inset(0 0 0 calc(var(--scan, 55) * 1%));
   overflow: hidden;
 }
@@ -527,16 +526,19 @@ onUnmounted(() => {
 
 .trad__line {
   display: block;
-  /* The machine's own voice — see --color-code. 8.72:1 on the source
-     ground, and deliberately unlike the paper ink opposite it. */
+  /* The machine's own voice — see --color-code. Black on the paper source
+     half: 13.88:1. */
   color: var(--color-code);
   font-size: 0.8125rem;
   line-height: 1.75;
   overflow-wrap: anywhere;
 }
 
-/* The beam: the cut's on-dark voice, 2px, standing on the seam and running the
-   band's full height — 6.4:1 on both grounds. No glow: depth is drawn. */
+/* The beam: 2px, standing on the seam and running the band's full height. Its
+   own cut (--color-cut-seam) because the halves it divides are now a PAPER
+   source and a bronze band, and it must clear the 3:1 UI floor against both —
+   3.19:1 either side, where the on-dark cut managed only 2.93 on paper. No
+   glow: depth is drawn. */
 .trad__beam {
   position: absolute;
   z-index: 3;
@@ -545,7 +547,7 @@ onUnmounted(() => {
   left: calc(var(--scan, 55) * 1%);
   width: 2px;
   margin-left: -1px;
-  background: var(--color-cut-dark);
+  background: var(--color-cut-seam);
 }
 
 /* No split, no beam (fully source / fully rendered). Its own transition, so
