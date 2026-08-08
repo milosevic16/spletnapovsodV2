@@ -36,8 +36,8 @@
  *
  * FILENAMES CARRY A VERSION. /video/* ships an immutable year-long cache
  * header (netlify.toml), exactly like /img/*, so a re-encode under the same
- * name would never reach a repeat visitor. Bump VERSION and update the
- * component's own constant when a clip is replaced.
+ * name would never reach a repeat visitor. Bump the file's version constant
+ * below AND its pair in the consuming component when a clip is replaced.
  */
 import { execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync, readdirSync, statSync } from 'node:fs'
@@ -49,8 +49,17 @@ const ROOT = resolve(HERE, '..')
 const SRC_DIR = join(ROOT, 'video-src')
 const OUT_DIR = join(ROOT, 'public', 'video')
 
-/** PAIRED with PLATE_VERSION in src/components/PillarsSection.vue. */
-const VERSION = 'v1'
+/**
+ * PAIRED with the version constant in whichever component consumes the file:
+ * PLATE_VERSION in src/components/PillarsSection.vue, CLIP_VERSION in
+ * src/components/StatementSection.vue. /video/* is immutable-cached, so a
+ * re-encode must bump its pair — and only that pair. The two move
+ * independently on purpose: renaming a file whose bytes did not change buys a
+ * repeat visitor nothing and costs an edit in a component that had no reason
+ * to be touched.
+ */
+const PLATE_VERSION = 'v2'
+const BAND_VERSION = 'v1'
 
 /**
  * THE PLATE RATIO, and it is arithmetic rather than taste. The wall is three
@@ -71,13 +80,32 @@ const VERSION = 'v1'
 const TARGET_RATIO = 4 / 3
 
 /**
- * Per-source treatment. `cropBottom` is the watermark strip, in SOURCE pixels,
- * measured off a still: the Kling badge sits in the bottom-right corner, about
- * 55px up from the bottom of a 720-tall frame, and 75 clears it with margin.
- * Check a still before trusting a number here — it differs with frame height.
+ * Per-source treatment.
+ *
+ * `cropBottom` is the watermark strip, in SOURCE pixels, measured off a still:
+ * the Kling badge sits in the bottom-right corner, about 55px up from the
+ * bottom of a 720-tall frame, and 75 clears it with margin. Check a still
+ * before trusting a number here — it differs with frame height (on design's
+ * 1280-tall frame the badge measures y 1230..1257, so 75 still clears it).
+ *
+ * `band` is the crop's TOP edge, and it only means anything for a PORTRAIT
+ * source: there the plate's landscape ratio is satisfied long before the frame
+ * runs out of height, which leaves a real vertical choice — 665px of it on a
+ * 720×1280 clip. A landscape source has none (the crop already spans every row
+ * the watermark left), so it omits this and the code falls back to centring.
+ *
+ * MEASURED, never guessed. design.mp4 dollies in: the graphite block grows from
+ * 516px tall at t=2.60 to 655px by the last frame, so NO 540-tall band can hold
+ * all of it and the only question is which edge to keep. It is the top — the
+ * cast shadow below the block is expendable and the block's lit top face is
+ * not — and 300 is the highest band that still keeps the block's bottom edge in
+ * the poster frame (t=2.89, which is what reduced-motion and JS-off readers
+ * see). Raise it to favour the opening drawing beat, lower it for the settled
+ * block; the apex of the drawn triangle sits at y≈130 and cannot coexist with
+ * the block in one 540-tall band at all.
  */
 const CLIPS = {
-  design: { cropBottom: 75 },
+  design: { cropBottom: 75, band: 300 },
   security: { cropBottom: 75 },
   seo: { cropBottom: 75 },
 }
@@ -143,17 +171,33 @@ for (const file of sources) {
   }
   const src = join(SRC_DIR, file)
   const { width, height, duration } = probe(src)
-  // Watermark off the bottom first, then centre-crop what is left to the
-  // plate's ratio. Even numbers: yuv420p subsamples chroma 2×2 and both
-  // encoders reject an odd dimension.
-  const cropH = even(height - cfg.cropBottom)
-  const cropW = even(Math.min(width, Math.round(cropH * TARGET_RATIO)))
+  // Watermark off the bottom first, then take the LARGEST plate-ratio rectangle
+  // that fits in what is left. WHICH DIMENSION BINDS DEPENDS ON THE SOURCE, and
+  // getting it wrong fails silently: the first PORTRAIT clip through here
+  // (720×1280) came out 720×1204 — 0.60:1 — because the old form assumed height
+  // was the scarce one and only ever clamped the width. ffmpeg accepts that and
+  // it plays; it simply is not the plate's ratio any more, which breaks the
+  // `aspect-ratio: 4/3` the stacked phone plate declares against this encode.
+  // So derive the width first and the height FROM it, and the output is the
+  // target ratio whichever way the frame is turned. Even numbers throughout:
+  // yuv420p subsamples chroma 2×2 and both encoders reject an odd dimension.
+  const usableH = even(height - cfg.cropBottom)
+  const cropW = even(Math.min(width, Math.round(usableH * TARGET_RATIO)))
+  const cropH = even(Math.round(cropW / TARGET_RATIO))
   const cropX = even(Math.round((width - cropW) / 2))
-  const vf = `crop=${cropW}:${cropH}:${cropX}:0`
+  // Centred in the usable frame unless the clip names its own band (see CLIPS).
+  const cropY = even(cfg.band ?? Math.round((usableH - cropH) / 2))
+  if (cropY < 0 || cropY + cropH > usableH) {
+    console.error(
+      `MISS: "${id}" band ${cropY}..${cropY + cropH} falls outside the usable ${width}×${usableH}.`,
+    )
+    process.exit(1)
+  }
+  const vf = `crop=${cropW}:${cropH}:${cropX}:${cropY}`
 
-  const mp4 = join(OUT_DIR, `pillar-${id}-${VERSION}.mp4`)
-  const webm = join(OUT_DIR, `pillar-${id}-${VERSION}.webm`)
-  const poster = join(OUT_DIR, `pillar-${id}-${VERSION}.jpg`)
+  const mp4 = join(OUT_DIR, `pillar-${id}-${PLATE_VERSION}.mp4`)
+  const webm = join(OUT_DIR, `pillar-${id}-${PLATE_VERSION}.webm`)
+  const poster = join(OUT_DIR, `pillar-${id}-${PLATE_VERSION}.jpg`)
 
   // h264 — the fallback everything plays. yuv420p + faststart or Safari and
   // every in-app browser refuse it.

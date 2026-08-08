@@ -70,11 +70,11 @@ const armed = ref(false)
  * A pillar not listed here keeps its drawn plate, so the two can be replaced
  * one at a time without the section ever being half-broken.
  *
- * PAIRED with VERSION in that script: /video/* ships an immutable year-long
+ * PAIRED with PLATE_VERSION in that script: /video/* ships an immutable year-long
  * cache header, so a re-encode under the same name never reaches a repeat
  * visitor — bump both together.
  */
-const PLATE_VERSION = 'v1'
+const PLATE_VERSION = 'v2'
 const PLATE_CLIPS = new Set(['design'])
 
 function hasClip(id: string): boolean {
@@ -416,12 +416,11 @@ button.pil__face {
   display: block;
 }
 
-/* The plate loop fills the drawing's slot. `cover` on purpose: the clips are
-   portrait and the slot's shape changes across breakpoints and again when a
-   plate opens, so the frame is cropped to the slot rather than the slot bent
-   to the frame. object-position is high because the composition sits in the
-   upper half of the frame. The box carries the plate's own ground so nothing
-   flashes through before the first frame decodes. */
+/* The plate loop fills the drawing's slot. `cover` on purpose: the slot's shape
+   changes across breakpoints and again when a plate opens, so the frame is
+   cropped to the slot rather than the slot bent to the frame. The box carries
+   the plate's own ground so nothing flashes through before the first frame
+   decodes. */
 .pil__clip {
   /* A DECLARED plate shape, not whatever flex hands out: stacked on a phone the
      clip took its height from `flex: 1` and came out 416px against the drawn
@@ -433,8 +432,16 @@ button.pil__face {
   aspect-ratio: 4 / 3;
   height: auto;
   object-fit: cover;
-  /* The composition sits in the upper half of the frame. */
-  object-position: 50% 42%;
+  /* Centred — and the VERTICAL half of that is inert in every shape this box
+     actually takes, which is why the clip's band is chosen at encode time
+     instead (scripts/build-pillar-videos.mjs, `band` per clip). Measured on the
+     built page at a 1280 viewport: stacked on a phone the box is the declared
+     4:3, i.e. the encode's own ratio; as the desktop MAJORITY it comes out
+     632×474 — the encode's ratio again, so `cover` crops nothing at all; as a
+     MINORITY it is 189×474 (0.40:1) and `cover` crops the sides, leaving the
+     central ~30% of the frame's width. Every one of those overflows
+     horizontally or not at all, so only the 50% on the left is ever read. */
+  object-position: 50% 50%;
   background: var(--grafit);
   /* A tap on the plate must reach the button, never the media element. */
   pointer-events: none;
