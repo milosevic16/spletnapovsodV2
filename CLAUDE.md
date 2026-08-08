@@ -198,6 +198,18 @@ Netlify free plan + private repo: **no Co-Authored-By trailers in commits**.
   suspends rAF, IO callbacks AND the dialog `close` event task — for anything
   frame-driven, inject the dist-only rAF/IO shim (pattern in the redesign verification
   commits) and drive frames by hand; report measured-not-seen.
+- **Two measurement traps this pane sets, both of which produced wrong conclusions:**
+  `scrollWidth` on a block reports the BOX, so a clipped `nowrap` line looks like a
+  perfect fit — measure text with a Range over the text node. And `:focus` cannot match
+  while `document.hasFocus()` is false, so a focus-state check here reads as "broken"
+  when it is fine; assert `document.hasFocus()` before believing a focus measurement.
+- **A state-style that "does not apply" in the pane is usually the pane.** Measured on
+  the contact chips: the element matched the rule, the rule was the only higher-specificity
+  match, its tokens resolved — and the base values stayed applied, with no forced recalc
+  rescuing it. A freshly created element with the same classes computed exactly as
+  declared, which proves the CSS and indicts the pane's invalidation. Before "fixing" such
+  a rule, build a probe element; the first two diagnoses here (sibling combinator, then
+  stale recalc) were both wrong.
 - Anything touching effects: navigate away/back twice — no stacked observers/animations
   (everything routes through `src/lib/fx.ts`, disposed on unmount).
 - The cut scene after changes: scroll-drive lands on theory (12 + p×76), grip override

@@ -1,20 +1,46 @@
 <script setup lang="ts">
 /**
- * Contact: real <form>, client-side POST to Web3Forms (wired in mount, key
- * from env). Honeypot + render-time stamp filter bots without gating humans.
- * Degrades open: with no key or a failed request, the visitor is pointed at
- * the direct e-mail that is already on the page.
+ * Kontakt — THE TITLE BLOCK, and sending it STAMPS THE SHEET.
+ *
+ * A drawing is signed off in its title block: the ruled panel that records who
+ * asked, for what, and when. This form is that block — the one CENTRED thing
+ * on the page (the extracted system's own rule: the single place that asks
+ * something of the visitor is the single place that abandons the asymmetry),
+ * ruled cell by cell, closed by the motif's heavy right edge.
+ *
+ * IT COMPLETES AS YOU FILL IT. Each cell's rule is dim until the field is
+ * focused or holds a value, then it inks — the reference's measured field
+ * behaviour (focus and filled are the SAME state) doing the concept's work:
+ * the block visibly fills in, and what is left to do is legible at a glance
+ * without a single word of instruction.
+ *
+ * SENDING STAMPS IT. The success state the reference never authored is a seal
+ * landing on the block, off-angle, over its corner — one impact, once, and the
+ * live region still carries the words. That is the one moment of theatre here,
+ * and it belongs to the only irreversible action on the page.
+ *
+ * The topic is CHIPS, not a select: exclusive radios styled as the system's
+ * chips, so every option is visible, each is a 44px target, arrow keys move
+ * between them, and no dropdown opens over the sheet on a phone.
+ *
+ * The machinery underneath is unchanged and deliberately boring: a real
+ * <form>, client-side POST to Web3Forms wired in mount, honeypot plus a
+ * render-time stamp (both silent for real people), named missing fields with
+ * aria-invalid and focus moved to the first offender, a live region that
+ * exists from first render, and degrade-open — with no key or a failed
+ * request the visitor is pointed at the e-mail already on the page.
  */
 import { onMounted, onUnmounted, ref } from 'vue'
 import { contact } from '@/content/home'
 import { CONTACT_EMAIL } from '@/lib/constants'
-import { createFx } from '@/lib/fx'
+import { createFx, prefersReducedMotion } from '@/lib/fx'
 
 const fx = createFx()
 const sending = ref(false)
 const status = ref<'idle' | 'success' | 'error'>('idle')
 const statusText = ref('')
 const progressEl = ref<HTMLElement | null>(null)
+const sealEl = ref<HTMLElement | null>(null)
 
 const name = ref('')
 const email = ref('')
@@ -29,6 +55,8 @@ const invalidFields = ref<Set<string>>(new Set())
 const PROGRESS_CAP_MS = 4000
 /** Sub-2s submissions are bots, not typists. */
 const MIN_FILL_MS = 2000
+/** The seal's impact: fast, decisive, no overshoot. */
+const SEAL_MS = 420
 let renderedAt = 0
 let progress: Animation | null = null
 
@@ -53,6 +81,24 @@ function stopProgress() {
   progress = null
 }
 
+/** The stamp landing. Last keyframe equals the stylesheet's rest (the seal is
+ *  simply present once status is success), so fill:'none' leaves nothing to
+ *  defend and it is cancel-safe at any instant. Reduced motion skips the
+ *  impact — the seal is still there, it just does not arrive. */
+function stamp() {
+  if (prefersReducedMotion()) return
+  const el = sealEl.value
+  if (!el) return
+  fx.anim(
+    el,
+    [
+      { transform: 'rotate(-12deg) scale(1.65)', opacity: 0 },
+      { transform: 'rotate(-12deg) scale(1)', opacity: 1 },
+    ],
+    { duration: SEAL_MS, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'none' },
+  )
+}
+
 function fail(text: string) {
   status.value = 'error'
   statusText.value = text
@@ -60,6 +106,14 @@ function fail(text: string) {
 
 function focusField(id: string) {
   document.getElementById(id)?.focus()
+}
+
+/** A stamped block that has been written in again would be lying: the first
+ *  keystroke after a send clears the seal and the status line. */
+function onEdit() {
+  if (status.value === 'idle') return
+  status.value = 'idle'
+  statusText.value = ''
 }
 
 async function onSubmit() {
@@ -90,6 +144,7 @@ async function onSubmit() {
   if (botcheck.value !== '' || Date.now() - renderedAt < MIN_FILL_MS) {
     status.value = 'success'
     statusText.value = contact.form.feedback.success
+    stamp()
     return
   }
 
@@ -123,6 +178,7 @@ async function onSubmit() {
       email.value = ''
       topic.value = ''
       message.value = ''
+      stamp()
     } else {
       fail(contact.form.feedback.error)
     }
@@ -139,33 +195,45 @@ onUnmounted(() => fx.dispose())
 
 <template>
   <section id="kontakt" class="contact">
-    <div class="container contact__grid">
-      <div class="contact__intro">
+    <div class="container">
+      <header class="contact__head">
         <p class="kicker kicker--on-dark">{{ contact.kicker }}</p>
         <h2 class="contact__title">{{ contact.title }}</h2>
         <p class="contact__lead">{{ contact.intro }}</p>
-
         <p class="contact__mail">
           <a :href="`mailto:${CONTACT_EMAIL}`" class="contact__mail-link emisija">{{
             CONTACT_EMAIL
           }}</a>
         </p>
+      </header>
 
-        <div class="contact__steps">
-          <p class="contact__steps-title">{{ contact.stepsTitle }}</p>
-          <ol class="contact__steps-list">
-            <li v-for="s in contact.steps" :key="s.label" class="contact__step">
-              <span class="contact__step-label">{{ s.label }}</span>
-              <span class="contact__step-detail">{{ s.detail }}</span>
-            </li>
-          </ol>
-        </div>
-      </div>
+      <!-- What happens after sending — a genuinely sequential process, which is
+           the one case the house rules let carry numbers. -->
+      <section class="contact__steps" :aria-label="contact.stepsTitle">
+        <p class="contact__steps-title annot">{{ contact.stepsTitle }}</p>
+        <ol class="contact__steps-list">
+          <li v-for="(s, i) in contact.steps" :key="s.label" class="contact__step">
+            <span class="contact__step-index" aria-hidden="true">{{
+              String(i + 1).padStart(2, '0')
+            }}</span>
+            <span class="contact__step-label">{{ s.label }}</span>
+            <span class="contact__step-detail">{{ s.detail }}</span>
+          </li>
+        </ol>
+      </section>
 
-      <!-- method="post": with JS disabled a bare <form> would GET-navigate and
-           leak the message into the URL/history; a POST leaks nothing. -->
-      <form class="form" method="post" novalidate @submit.prevent="onSubmit">
-        <div class="form__field">
+      <!-- THE TITLE BLOCK. method="post": with JS disabled a bare <form> would
+           GET-navigate and leak the message into the URL/history; a POST leaks
+           nothing. -->
+      <form
+        class="form"
+        :class="{ 'form--stamped': status === 'success' }"
+        method="post"
+        novalidate
+        @submit.prevent="onSubmit"
+        @input="onEdit"
+      >
+        <div class="form__cell">
           <label class="form__label" for="f-name">{{ contact.form.nameLabel }}</label>
           <input
             id="f-name"
@@ -174,43 +242,54 @@ onUnmounted(() => fx.dispose())
             type="text"
             name="name"
             autocomplete="name"
+            placeholder=" "
             :aria-invalid="invalidFields.has('f-name') || undefined"
             required
           />
         </div>
 
-        <div class="form__field">
+        <div class="form__cell">
           <label class="form__label" for="f-email">{{ contact.form.emailLabel }}</label>
           <input
             id="f-email"
             v-model="email"
-            class="form__input"
+            class="form__input form__input--plain"
             type="email"
             name="email"
             autocomplete="email"
+            placeholder=" "
             :aria-invalid="invalidFields.has('f-email') || undefined"
             required
           />
         </div>
 
-        <div class="form__field">
-          <label class="form__label" for="f-topic">{{ contact.form.topicLabel }}</label>
-          <select
-            id="f-topic"
-            v-model="topic"
-            class="form__input form__select"
-            name="topic"
-            :aria-invalid="invalidFields.has('f-topic') || undefined"
-            required
-          >
-            <option value="" disabled>{{ contact.form.topicPlaceholder }}</option>
-            <option v-for="t in contact.topics" :key="t.value" :value="t.value">
-              {{ t.label }}
-            </option>
-          </select>
-        </div>
+        <!-- Chips, not a dropdown: every option visible, each its own 44px
+             target, arrow keys between them, nothing opening over the sheet. -->
+        <fieldset class="form__cell form__cell--chips">
+          <legend class="form__label">{{ contact.form.topicLabel }}</legend>
+          <div class="form__chips">
+            <label
+              v-for="(t, i) in contact.topics"
+              :key="t.value"
+              class="form__chip"
+              :class="{ 'form__chip--on': topic === t.value }"
+            >
+              <input
+                :id="i === 0 ? 'f-topic' : `f-topic-${t.value}`"
+                v-model="topic"
+                class="form__chip-input"
+                type="radio"
+                name="topic"
+                :value="t.value"
+                :required="i === 0"
+                :aria-invalid="invalidFields.has('f-topic') || undefined"
+              />
+              <span class="form__chip-face">{{ t.label }}</span>
+            </label>
+          </div>
+        </fieldset>
 
-        <div class="form__field">
+        <div class="form__cell">
           <label class="form__label" for="f-message">{{ contact.form.messageLabel }}</label>
           <textarea
             id="f-message"
@@ -218,6 +297,7 @@ onUnmounted(() => fx.dispose())
             class="form__input form__textarea"
             name="message"
             rows="5"
+            placeholder=" "
             :aria-invalid="invalidFields.has('f-message') || undefined"
             required
           ></textarea>
@@ -236,29 +316,20 @@ onUnmounted(() => fx.dispose())
           />
         </div>
 
-        <button class="form__submit" type="submit" :disabled="sending">
-          <span ref="progressEl" class="form__progress" aria-hidden="true"></span>
-          {{ sending ? contact.form.feedback.submitting : contact.form.submitLabel }}
-        </button>
+        <div class="form__issue">
+          <button class="form__submit" type="submit" :disabled="sending">
+            <span ref="progressEl" class="form__progress" aria-hidden="true"></span>
+            <span class="form__submit-label">{{
+              sending ? contact.form.feedback.submitting : contact.form.submitLabel
+            }}</span>
+          </button>
+        </div>
 
         <!-- Live region exists from first render — a region inserted together
              with its text is routinely missed by screen readers. -->
         <p class="form__status" :class="`form__status--${status}`" role="status" aria-live="polite">
           <svg
-            v-if="status === 'success'"
-            class="form__glyph"
-            viewBox="0 0 16 16"
-            width="16"
-            height="16"
-            aria-hidden="true"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path d="M2.5 8.5 6 12l7.5-8" />
-          </svg>
-          <svg
-            v-else-if="status === 'error'"
+            v-if="status === 'error'"
             class="form__glyph"
             viewBox="0 0 16 16"
             width="16"
@@ -274,6 +345,37 @@ onUnmounted(() => fx.dispose())
         </p>
 
         <p class="form__privacy">{{ contact.form.privacyNote }}</p>
+
+        <!-- THE SEAL: the success state, landing off-angle over the block's
+             corner. Decorative — the live region above carries the words. -->
+        <span v-if="status === 'success'" ref="sealEl" class="form__seal" aria-hidden="true">
+          <svg viewBox="0 0 200 200" width="132" height="132">
+            <circle cx="100" cy="100" r="88" class="seal-ring" />
+            <circle cx="100" cy="100" r="74" class="seal-ring seal-ring--thin" />
+            <!-- The tick collar: one dashed stroke between the rings does the
+                 work of two dozen marks. -->
+            <circle cx="100" cy="100" r="81" class="seal-ticks" />
+            <!-- The pd mark, same geometry as the hero's. -->
+            <g transform="translate(50 71) scale(0.41)">
+              <circle cx="72" cy="72" r="72" fill="var(--rez-na-temnem)" />
+              <circle cx="172" cy="72" r="72" fill="var(--rez-na-temnem)" />
+              <g fill="none" stroke="var(--zemlja)" stroke-width="18" stroke-linecap="round">
+                <circle cx="79" cy="79" r="33" />
+                <line x1="46" y1="55" x2="46" y2="118" />
+              </g>
+              <g
+                fill="none"
+                stroke="var(--zemlja)"
+                stroke-width="18"
+                stroke-linecap="round"
+                transform="rotate(180 122 72)"
+              >
+                <circle cx="79" cy="79" r="33" />
+                <line x1="46" y1="55" x2="46" y2="118" />
+              </g>
+            </g>
+          </svg>
+        </span>
       </form>
     </div>
   </section>
@@ -283,27 +385,32 @@ onUnmounted(() => fx.dispose())
 .contact {
   background: var(--zemlja);
   color: var(--list);
-  padding-block: var(--section-y) clamp(3rem, 2.5rem + 3vw, 5rem);
+  padding-block: var(--section-block) clamp(3rem, 2.5rem + 3vw, 5rem);
 }
 
-.contact__grid {
-  display: grid;
-  gap: 3rem;
+.contact__head {
+  max-width: 46rem;
 }
 
 .contact__title {
-  margin-top: 1rem;
+  margin-top: var(--space-3);
+  font-size: var(--type-display-l-size);
+  font-weight: var(--type-display-l-weight);
+  line-height: var(--type-display-l-lh);
+  letter-spacing: var(--type-display-l-ls);
+  text-transform: uppercase;
   color: var(--list);
+  max-width: 14ch;
 }
 
 .contact__lead {
-  margin-top: 1.25rem;
+  margin-top: var(--space-6);
   color: var(--papir-dim);
-  max-width: 46ch;
+  max-width: 52ch;
 }
 
 .contact__mail {
-  margin-top: 1.5rem;
+  margin-top: var(--space-5);
 }
 
 .contact__mail-link {
@@ -315,190 +422,385 @@ onUnmounted(() => fx.dispose())
   text-underline-offset: 0.3em;
 }
 
+/* --- what follows ------------------------------------------------------------- */
 .contact__steps {
-  margin-top: 2.5rem;
-  border-top: 1px solid var(--crta-na-temnem);
-  padding-top: 1.5rem;
+  margin-top: var(--space-16);
+  border-top: var(--divider-width) solid var(--crta-na-temnem);
+  padding-top: var(--space-4);
 }
 
 .contact__steps-title {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1.1rem;
+  color: var(--papir-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
 }
 
 .contact__steps-list {
   list-style: none;
-  margin-top: 1rem;
+  margin-top: var(--space-6);
   display: grid;
-  gap: 1rem;
-  counter-reset: step;
+  gap: var(--space-8);
 }
 
 .contact__step {
   display: grid;
-  gap: 0.2rem;
-  padding-left: 2.1rem;
-  position: relative;
-  counter-increment: step;
+  gap: var(--space-2);
+  align-content: start;
 }
 
-/* A true sequence — the one place a number is earned. */
-.contact__step::before {
-  content: counter(step);
-  position: absolute;
-  left: 0;
-  top: 0.1rem;
-  width: 1.4rem;
-  height: 1.4rem;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--crta-na-temnem);
+.contact__step-index {
+  font-family: var(--font-mono);
+  font-size: var(--type-data-size);
+  letter-spacing: var(--type-data-ls);
   color: var(--rez-na-temnem);
-  font-family: var(--font-display);
-  font-stretch: var(--wdth-datum);
-  font-weight: 500;
-  font-size: 0.72rem;
 }
 
 .contact__step-label {
-  font-weight: 600;
+  font-weight: 500;
+  color: var(--list);
 }
 
 .contact__step-detail {
   color: var(--papir-dim);
-  font-size: 0.92rem;
-  max-width: 44ch;
+  font-size: 0.9375rem;
+  line-height: 1.5;
 }
 
-/* --- form ----------------------------------------------------------------- */
+/* --- the title block ----------------------------------------------------------
+   The one centred block on the page, closed by the motif's heavy right edge. */
 .form {
-  background: var(--zemlja-2);
-  border: 1px solid var(--crta-na-temnem);
-  padding: clamp(1.25rem, 1rem + 1.5vw, 2rem);
+  position: relative;
+  width: min(100%, 37.5rem); /* 600px — the extracted system's measure */
+  margin: var(--space-20) auto 0;
+  padding: var(--space-8) var(--space-8) var(--space-8) 0;
+  border-top: 2px solid var(--list);
+  border-right: 2px solid var(--list);
+  padding-right: var(--space-8);
   display: grid;
-  gap: 1.1rem;
-  align-content: start;
+  gap: var(--space-10);
 }
 
-.form__field {
+.form__cell {
   display: grid;
-  gap: 0.4rem;
+  gap: var(--space-2);
+  padding-left: var(--space-8);
+  border: 0;
+  margin: 0;
+  min-width: 0;
 }
 
 .form__label {
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--papir-dim);
+  padding: 0;
 }
 
-/* 1rem font kills iOS zoom-on-focus; 48px targets. */
+/* The field is a rule, not a box. Dim until the cell is being filled or
+   holds a value — focus and filled are the SAME state (measured on the
+   reference), which is what makes the block visibly complete itself. */
 .form__input {
-  min-height: 3rem;
-  padding: 0.6rem 0.8rem;
-  background: var(--zemlja);
-  border: 1px solid var(--crta-na-temnem);
-  color: var(--list);
-  font-size: 1rem;
+  width: 100%;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid var(--color-input-line);
   border-radius: 0;
+  padding: var(--space-3) 0;
+  font-family: var(--font-mono);
+  font-size: var(--type-data-size);
+  letter-spacing: var(--type-data-ls);
+  text-transform: uppercase;
+  color: var(--list);
+  /* The reference transitions background and box-shadow only — the rule
+     snaps. Kept: a rule that fades reads as a hover effect, not a state. */
+  transition: none;
 }
 
-.form__input:focus-visible {
-  outline: 2px solid var(--rez-na-temnem);
-  outline-offset: 1px;
-}
-
-.form__input[aria-invalid='true'] {
-  border-color: var(--rez-na-temnem);
-  border-width: 2px;
-}
-
-.form__select {
-  appearance: none;
-  padding-right: 2.6rem; /* room for the chevron — text never runs under it */
-  /* chevron: inline SVG data URI, stroke = --papir-dim (#C9CCC4) */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' stroke='%23C6C9C3' stroke-width='1.5'/%3E%3C/svg%3E");
-  background-position: calc(100% - 0.9rem) 50%;
-  background-size: 0.75rem auto;
-  background-repeat: no-repeat;
+/* The e-mail and the message keep the case the visitor typed. */
+.form__input--plain,
+.form__textarea {
+  text-transform: none;
 }
 
 .form__textarea {
+  line-height: 1.55;
   resize: vertical;
-  min-height: 7rem;
+  min-height: 8rem;
 }
 
-.form__hp {
+.form__input:focus,
+.form__input:not(:placeholder-shown) {
+  border-bottom-color: var(--list);
+  outline: none;
+}
+
+/* Keyboard focus still has to be unmistakable — the inked rule alone is the
+   same thing a filled field shows. */
+.form__input:focus-visible {
+  outline: 2px solid var(--rez-na-temnem);
+  outline-offset: 3px;
+}
+
+.form__input[aria-invalid='true'] {
+  border-bottom-color: var(--err-na-temnem);
+}
+
+/* --- the chips ---------------------------------------------------------------- */
+.form__cell--chips {
+  padding-inline: var(--space-8) 0;
+}
+
+.form__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.form__chip {
+  position: relative;
+}
+
+/* The real control: kept in the layout (never display:none, which drops it
+   from the tab order and from arrow-key grouping) and made invisible. */
+.form__chip-input {
   position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.form__chip-face {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: var(--space-4);
+  border: var(--divider-width) solid var(--crta-na-temnem);
+  font-family: var(--font-mono);
+  font-size: var(--type-data-size);
+  letter-spacing: var(--type-data-ls);
+  text-transform: uppercase;
+  color: var(--color-chip-idle);
+  transition: all 0.2s ease; /* the reference's one CSS transition */
+}
+
+/* Two selectors on purpose: Vue puts `--on` on the label (the state the app
+   already owns), and `:checked +` covers the JS-off page, where that class
+   never exists. Either alone would do in a correct engine.
+
+   A NOTE FOR WHOEVER VERIFIES THIS IN THE PREVIEW PANE: the selected chip
+   reads as unstyled there and it is not this rule's fault. Measured — a
+   FRESHLY created element carrying the same classes and scope attribute
+   computes paper-on-black exactly as declared, while the live element whose
+   class Vue toggled keeps the base rule's values; the pane does not
+   invalidate it (and no forced recalc rescued it). Build a probe element
+   before believing a state-style measurement here. */
+.form__chip--on .form__chip-face,
+.form__chip-input:checked + .form__chip-face {
+  color: var(--zemlja);
+  background: var(--list);
+  border-color: var(--list);
+}
+
+.form__chip-input:focus-visible + .form__chip-face {
+  outline: 2px solid var(--rez-na-temnem);
+  outline-offset: 3px;
+}
+
+@media (hover: hover) {
+  .form__chip:not(.form__chip--on):hover .form__chip-face {
+    color: var(--list);
+    border-color: var(--papir-dim);
+  }
+}
+
+.form__chip-input[aria-invalid='true'] + .form__chip-face {
+  border-color: var(--err-na-temnem);
+}
+
+/* --- issue ---------------------------------------------------------------------
+   A text button with a rule under it — the system's submit, not a filled box. */
+.form__issue {
+  padding-left: var(--space-8);
 }
 
 .form__submit {
   position: relative;
-  overflow: hidden;
-  min-height: 3.25rem;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 0 var(--space-2);
+  background: none;
   border: 0;
-  background: var(--rez);
-  color: #fff;
-  font-weight: 600;
-  font-size: 1rem;
+  border-bottom: 2px solid var(--list);
+  color: var(--list);
+  font-family: var(--font-sans);
+  font-size: var(--type-cta-size);
+  font-weight: var(--type-cta-weight);
+  line-height: 1.2;
+  letter-spacing: var(--type-cta-ls);
   cursor: pointer;
+  transition: color var(--dur-tween) var(--ease-hover);
 }
 
+@media (hover: hover) {
+  .form__submit:hover:not(:disabled) {
+    color: var(--rez-na-temnem);
+    border-bottom-color: var(--rez-na-temnem);
+  }
+}
+
+.form__submit:focus-visible {
+  outline: 2px solid var(--rez-na-temnem);
+  outline-offset: 4px;
+}
+
+/* Authored here because the reference has none: the button is never disabled
+   there, including while sending. */
 .form__submit:disabled {
-  cursor: default;
-  opacity: 0.85;
+  cursor: progress;
+  color: var(--papir-dim);
+  border-bottom-color: var(--crta-na-temnem);
 }
 
-/* The Prerez vocabulary measuring the one process the visitor starts. */
+.form__submit-label {
+  position: relative;
+  z-index: 1;
+}
+
+/* The send's own progress, drawn along the button's rule. */
 .form__progress {
   position: absolute;
-  top: 0;
   left: 0;
   right: 0;
+  bottom: -2px;
   height: 2px;
   background: var(--rez-na-temnem);
   transform: scaleX(0);
   transform-origin: left center;
 }
 
+/* --- status + privacy ---------------------------------------------------------- */
 .form__status {
   display: flex;
   align-items: flex-start;
-  gap: 0.5rem;
-  font-size: 0.95rem;
+  gap: var(--space-2);
+  padding-left: var(--space-8);
+  margin: 0;
+  min-height: 1.5rem;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  max-width: 46ch;
+}
+
+.form__status--success {
+  color: var(--ok-na-temnem); /* 10.9:1 on the earth ground */
+}
+
+.form__status--error {
+  color: var(--err-na-temnem); /* 10.6:1 on the earth ground */
 }
 
 .form__glyph {
   flex: 0 0 auto;
-  margin-top: 0.2rem;
-}
-
-.form__status--success {
-  color: var(--rez-na-temnem);
-}
-
-.form__status--error {
-  color: var(--list);
+  margin-top: 0.2em;
 }
 
 .form__privacy {
-  font-size: 0.8rem;
+  padding-left: var(--space-8);
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
   color: var(--papir-dim);
+  max-width: 46ch;
 }
 
+/* The honeypot: out of sight, out of the tab order, still in the DOM. */
+.form__hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* --- the seal ------------------------------------------------------------------ */
+.form__seal {
+  position: absolute;
+  right: calc(var(--space-6) * -1);
+  bottom: calc(var(--space-8) * -1);
+  transform: rotate(-12deg);
+  pointer-events: none;
+  line-height: 0;
+}
+
+.seal-ring {
+  fill: none;
+  stroke: var(--rez-na-temnem);
+  stroke-width: 3;
+}
+
+.seal-ring--thin {
+  stroke-width: 1.5;
+}
+
+/* One dashed stroke between the rings = the tick collar. */
+.seal-ticks {
+  fill: none;
+  stroke: var(--rez-na-temnem);
+  stroke-width: 11;
+  stroke-dasharray: 3 18;
+}
+
+/* --- desktop ------------------------------------------------------------------- */
 @media (min-width: 900px) {
-  .contact__grid {
-    grid-template-columns: 5fr 7fr;
-    gap: 4rem;
+  .contact__steps-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-10);
+  }
+
+  .contact__step {
+    border-top: var(--divider-width) solid var(--crta-na-temnem);
+    padding-top: var(--space-4);
   }
 
   .form {
-    max-width: 34rem;
-    justify-self: end;
-    width: 100%;
+    padding-block: var(--space-12);
+  }
+}
+
+/* --- phones -------------------------------------------------------------------- */
+@media (max-width: 899.98px) {
+  .form {
+    /* The heavy edge stays; the block simply takes the measure it has. */
+    padding-right: var(--space-5);
+  }
+
+  .form__cell,
+  .form__issue,
+  .form__status,
+  .form__privacy {
+    padding-left: var(--space-5);
+  }
+
+  .form__cell--chips {
+    padding-inline: var(--space-5) 0;
+  }
+
+  .form__seal {
+    right: calc(var(--space-3) * -1);
+    bottom: calc(var(--space-6) * -1);
+  }
+
+  .form__seal svg {
+    width: 104px;
+    height: 104px;
   }
 }
 </style>
