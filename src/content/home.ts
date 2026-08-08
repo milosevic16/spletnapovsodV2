@@ -164,16 +164,6 @@ export const references = {
   },
   items: [
     {
-      id: 'lemur',
-      name: 'Lemur Legal',
-      sector: 'Pravna pisarna za tehnološko pravo',
-      url: 'https://lemur.legal',
-      urlLabel: 'lemur.legal',
-      inks: ['#D2DDD7', '#131220', '#7F59F5', '#1FC49A', '#C4823A'],
-      alt: 'Posnetek naslovnice spletne strani Lemur Legal',
-      image: { width: 1552, height: 776, widths: [560, 776, 1104, 1552] },
-    },
-    {
       id: 'mercpeter',
       name: 'Peter Merc',
       sector: 'Osebna predstavitev — pravnik in investitor',
@@ -182,6 +172,16 @@ export const references = {
       inks: ['#ECE9E2', '#26282C', '#D2453E', '#B4AEA1'],
       alt: 'Posnetek naslovnice spletne strani Petra Merca',
       image: { width: 1792, height: 896, widths: [560, 840, 1184, 1792] },
+    },
+    {
+      id: 'lemur',
+      name: 'Lemur Legal',
+      sector: 'Pravna pisarna za tehnološko pravo',
+      url: 'https://lemur.legal',
+      urlLabel: 'lemur.legal',
+      inks: ['#D2DDD7', '#131220', '#7F59F5', '#1FC49A', '#C4823A'],
+      alt: 'Posnetek naslovnice spletne strani Lemur Legal',
+      image: { width: 1552, height: 776, widths: [560, 776, 1104, 1552] },
     },
     {
       id: 'bloctopus',
