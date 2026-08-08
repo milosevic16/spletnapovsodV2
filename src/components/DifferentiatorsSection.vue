@@ -164,9 +164,16 @@ onUnmounted(() => {
 <style scoped>
 /* The ink ground: one step off the black above (Tradicija) and below
    (Kontakt), so the page's dark half reads as one world with this band
-   lifted out of it. Paper on it 13.9:1, papir-dim 10.4:1. */
+   lifted out of it.
+
+   A GROUND TOKEN, not the ink one. This painted --grafit, which is also the
+   paper world's body-text ink (base.css) — fine while both were the same
+   near-black, and a trap the moment the grounds moved to bronze: lightening
+   --grafit would have turned every paragraph on the paper half brown. The
+   band now names the ground it means. Measured under a press-screen highlight
+   dot, the worst case here: paper 7.44:1, secondary 4.97:1. */
 .dif {
-  background-color: var(--grafit);
+  background-color: var(--color-bronze);
   color: var(--list);
   padding-block: var(--section-block);
 }
@@ -200,7 +207,7 @@ onUnmounted(() => {
   container-type: inline-size;
   /* The band's own ground, so the register never shows through behind the
      roll as it passes under. */
-  background: var(--grafit);
+  background: var(--color-bronze);
   padding-bottom: var(--space-4);
   margin-bottom: var(--space-6);
 }

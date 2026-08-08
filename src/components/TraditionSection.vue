@@ -428,7 +428,7 @@ onUnmounted(() => {
      the beam runs the full height. */
   overflow: hidden;
   padding-block: var(--space-16);
-  background-color: var(--color-black);
+  background-color: var(--color-bronze-deep);
   transition: background-color var(--dur-ground) var(--ease-ground);
   color: var(--color-paper); /* 18.8:1 on the settled ground */
 }

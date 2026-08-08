@@ -700,11 +700,14 @@ onUnmounted(() => fx.dispose())
 }
 
 .form__status--success {
-  color: var(--ok-na-temnem); /* 10.9:1 on the earth ground */
+  /* 4.85:1 worst case — on the bronze ground UNDER a press-screen highlight
+     dot. These two inks are why the closing band is the darkest bronze step:
+     they break before any other ink does. */
+  color: var(--ok-na-temnem);
 }
 
 .form__status--error {
-  color: var(--err-na-temnem); /* 10.6:1 on the earth ground */
+  color: var(--err-na-temnem); /* 4.62:1 worst case — see the success rule above */
 }
 
 .form__glyph {

@@ -103,6 +103,43 @@
   --color-chip-idle: #999999; /* budget chip idle text on dark form */
   --color-input-line: #767676; /* form input rule (2px) */
 
+  /* ------------------------------------------------------------------------
+     THE BRONZE GROUNDS (avgust 2026, owner's call). The dark half is no
+     longer neutral black: it is a warm bronze in three steps plus a line.
+     Only the GROUNDS moved — every ink is untouched, and --grafit stays the
+     paper world's text ink rather than becoming a ground with it.
+
+     HOW LIGHT THEY COULD GO WAS MEASURED, NOT CHOSEN. The binding surface is
+     not the flat colour: the press screen lays an 11% paper highlight on
+     every dot, so the worst case for any text is the ground UNDER A HIGHLIGHT
+     DOT (the same discipline the screen's own tuning used). Composited that
+     way, and against the inks that actually sit on each band:
+
+       bronze-deep #402e20 → #544436 under a dot
+         paper 8.36  secondary 5.58  bone 7.13  ok 4.85  err 4.62
+         The closing band and the page canvas. It is the DARKEST step because
+         it is the only ground carrying the form's status inks, and those
+         break first: one step lighter (#463322) drops err to 4.30.
+       bronze #4a3626 → #5d4b3c under a dot
+         paper 7.44  secondary 4.97  bone 6.34
+         The band ground for Kje se ločimo. No status ink lives here, so it
+         can run lighter; secondary text is what caps it (#52402c → 4.37).
+       bronze-2 #5a4530  paper 8.07  secondary 5.39
+         Insets. Measured FLAT on purpose: the screen is a background-image on
+         the section, so any child painting its own fill covers it and never
+         sees the highlight.
+       bronze-line #96784f  2.76:1 against --bronze — line duty, never text.
+
+     The whole ladder is compressed compared with a free hand, and that is the
+     screen's price: it costs roughly a third of the available headroom. If
+     the bands ever need to be lighter than this, --press-hi is the knob to
+     move first, not these values.
+     ---------------------------------------------------------------------- */
+  --color-bronze-deep: #402e20; /* closing band, dark canvas, the machine band */
+  --color-bronze: #4a3626; /* the dark band ground */
+  --color-bronze-2: #5a4530; /* insets on dark go LIGHTER, never darker */
+  --color-bronze-line: #96784f; /* the dark world's hairline — line duty */
+
   /* The accent — the cut red. JOBS: the scanline/beam, the slider thumb,
      the pd mark, the primary CTA, focus rings. Never a status colour, never
      sprinkled. */
@@ -292,8 +329,8 @@
    --muted and --divider were always constant here (#9e9e9e reads on both
    grounds, 7.84:1 on #000) — the reference leaves them still too. */
 :root[data-ground='dark'] {
-  --surface: var(--color-black);
-  --surface-soft: var(--color-black);
+  --surface: var(--color-bronze-deep);
+  --surface-soft: var(--color-bronze-deep);
 }
 
 /* Reference breakpoints as measured in the served CSS: base ≥1200,
@@ -355,15 +392,15 @@
   --mreza-strong: #b3ac9c; /* emphasized rules — line duty */
   --grafit: var(--color-ink); /* ink; and the poché bands' ground */
   --grafit-2: var(--color-ink-2);
-  --grafit-inset: #24282c; /* inset on the poché, one step lighter */
-  --crta-na-temnem: #414a50; /* dark-world hairline — line duty */
+  --grafit-inset: var(--color-bronze-2); /* inset on the band, one step lighter */
+  --crta-na-temnem: var(--color-bronze-line); /* dark-world hairline — line duty */
   --papir-dim: #c6c9c3; /* secondary text on dark */
   --rez: var(--color-cut); /* the accent is back — see the core palette */
   --rez-deep: var(--color-cut-deep); /* pressed/hover step */
   --rez-na-temnem: var(--color-cut-dark); /* accent + focus voice on dark */
   --rez-vodni: #f4eae6; /* quiet wash ground; ink on it 13.5:1 */
-  --zemlja: var(--color-black); /* contact + footer ground */
-  --zemlja-2: var(--color-ink); /* insets on dark go lighter */
+  --zemlja: var(--color-bronze-deep); /* contact + footer ground */
+  --zemlja-2: var(--color-bronze); /* insets on it go lighter */
   --ok-na-temnem: #8fc7a6; /* form success on dark — functional, kept until the
      contact redesign authors the new form states (the reference has none) */
   --err-na-temnem: #f0a48a; /* form error on dark — same */
