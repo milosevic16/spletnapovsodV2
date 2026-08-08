@@ -1,187 +1,170 @@
 <script setup lang="ts">
 /**
- * Kje se ločimo — the SPECIMEN SHEET.
+ * Kje se ločimo — THE SPEC ROLL.
  *
- * Four claims, and each one already owns a measured value ("100 % po meri",
- * "3 delovni dnevi", "24 h"). Those values are set as the sheet's specimens:
- * display type at full size, one per band, walking across the sheet in a
- * zigzag while the claim and its explanation hang beside them. No drawing, no
- * plate, no picture — the type IS the image, which is the one register the
- * page has not used yet and the plainest way to say "here is the number".
+ * The four claims are printed in the page as an ordinary, always-readable
+ * register. Beside them stands an instrument: a slot with the site's red datum
+ * across its head, and behind the slot a continuous roll carrying the four
+ * measured values in monumental type. As you read, the roll ADVANCES — the
+ * value in the slot is always the value of the claim you are level with, and
+ * the frame counter, the sprocket ticks and the inked row all agree with it.
  *
- * THE VALUES RESOLVE OUT OF NOISE. On arrival each specimen scrambles through
- * the symbol alphabet and settles, left to right, in the extracted system's
- * own measured cycle (800ms; motion.md #7 — "text is signal, not paint"). The
- * rule above each band draws itself across at the same moment. Both are
- * one-shot, per band, and the effect READS the text the template already
- * rendered — it never authors it, so the prerendered HTML carries every value
- * and a crawler sees the finished sheet.
+ * WHY THIS AND NOT A LAYOUT: every other idea for this band either hid three
+ * claims behind a control (the page already does that twice) or was a static
+ * arrangement with an effect sprinkled on it. This is a display: it takes an
+ * input the page has not used for a section — WHERE THE READER IS — and turns
+ * it into one moving part. Nothing is gated, nothing is hidden, and the
+ * instrument earns itself because it states a fact (this claim measures this).
  *
- * Accessibility of a scrambling string: the element is marked aria-hidden for
- * the length of its own cycle and unmarked when it settles, so assistive tech
- * is never handed a line of symbols — it either reads the value before the
- * effect or after it, never during. The unmount path restores the captured
- * text and clears the flag together.
+ * THE SAME INSTRUMENT ON A PHONE. The display does not become a stack: it
+ * sticks to the head of the band (clearing the masthead) and the claims run
+ * under it, so the big value rolls as you scroll. The phone gets the liveliest
+ * version of the section rather than the flattest.
  *
- * THIS BAND JOINS THE DARK HALF. The page flips once at Tradicija and stays
- * flipped; this section used to be pinned light against that, which left a
- * paper island between two dark bands. It now paints the ink ground (one step
- * off the black above and below it), so the second half of the page reads as
- * one continuous world — and the pin is gone.
+ * HONEST BY CONSTRUCTION. Every value is ALSO printed in its own claim row, in
+ * the register's mono, so the roll is a MIRROR — aria-hidden theatre — and
+ * assistive tech, JS-off readers and crawlers get value and claim together in
+ * the flow. With JS off the instrument is simply not assembled (it is the
+ * duplicate, not the source); under reduced motion it tracks exactly as it
+ * does otherwise and the roll lands without a tween, because which claim you
+ * are reading is information, not decoration.
  *
- * NOT NUMBERED, deliberately: four claims are not a sequence, and decorative
- * 01/02/03 eyebrows on unordered content are exactly the scaffolding the house
- * rules ban. The ticks under the three-day specimen are the one ordinal thing
- * here, and they are real content (PON · TOR · SRE).
+ * NOT NUMBERED as an outline: the 01–04 by the datum is a live frame counter
+ * that changes as the roll turns — an instrument reading, not an eyebrow.
  */
-import { onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { differentiators } from '@/content/home'
-import { createFx, prefersReducedMotion } from '@/lib/fx'
+import { createFx } from '@/lib/fx'
 
 const fx = createFx()
 const root = ref<HTMLElement | null>(null)
+const slot = ref<HTMLElement | null>(null)
+const live = ref(false)
 
-/** The reference's measured scramble: one 800ms cycle, symbol alphabet. */
-const ALPHABET = '!@#$%^&*()_+-=[]{}|;:,.<>?'
-const SCRAMBLE_MS = 800
-/** The system's explicit delay ladder — 0.1s steps, never staggerChildren. */
-const STAGGER_MS = 90
-/** The rule draws in the same beat as the value it introduces. */
-const DRAW_MS = 620
+const items = differentiators.items
+/** Which claim the reader is level with — drives the roll, the counter, the
+ *  ticks and the inked row from ONE integer, so they cannot disagree. */
+const active = ref(0)
 
-/** Captured DOM text, restored on unmount (an effect must be able to undo
- *  every string it touched). */
-const captured: Array<[HTMLElement, string]> = []
+const counter = computed(() => String(active.value + 1).padStart(2, '0'))
+const total = String(items.length).padStart(2, '0')
 
-function scramble(el: HTMLElement, text: string, delayMs: number) {
-  const chars = [...text]
-  // Symbols in place of a real value must never reach assistive tech.
-  el.setAttribute('aria-hidden', 'true')
-  const settle = () => {
-    el.textContent = text
-    el.removeAttribute('aria-hidden')
+let raf = 0
+
+/** How far into the space below a stacked instrument the reading line sits.
+ *  Only used when the display is ABOVE the register (phones). */
+const READ_ZONE = 0.4
+
+/**
+ * The claim the instrument is reading: the last one whose head has passed the
+ * reading line. Read-only measurement — no writes, so it can never fight the
+ * layout it is measuring.
+ *
+ * THE LINE MOVES WITH THE LAYOUT, and it has to. Beside the register (desktop)
+ * "current" means level with the slot, so the line IS the slot's edge. Stacked
+ * above it (phones) nothing is ever level with the slot, and using its edge
+ * made the instrument read the row that had just left the top of the screen —
+ * measured, it lagged a full claim behind the one filling the viewport. There
+ * the line drops into the reading zone below the pinned instrument instead.
+ * Which case we are in is read from geometry, not from a media query, so the
+ * two can never disagree.
+ */
+function measure() {
+  raf = 0
+  const host = root.value
+  const s = slot.value
+  if (!host || !s) return
+  const register = host.querySelector<HTMLElement>('.dif__register')
+  const slotBox = s.getBoundingClientRect()
+  const beside = register !== null && slotBox.right <= register.getBoundingClientRect().left + 1
+  const line = beside
+    ? slotBox.bottom
+    : slotBox.bottom + (window.innerHeight - slotBox.bottom) * READ_ZONE
+  const rows = host.querySelectorAll<HTMLElement>('.dif__claim')
+  let next = 0
+  for (let i = 0; i < rows.length; i++) {
+    if (rows[i]!.getBoundingClientRect().top <= line) next = i
   }
-  const t0 = performance.now() + delayMs
-  const step = (now: number) => {
-    // A hidden tab suspends rAF; land on the value rather than leaving the
-    // sheet scrambled until the tab returns.
-    if (document.hidden) {
-      settle()
-      return
-    }
-    const t = (now - t0) / SCRAMBLE_MS
-    if (t < 0) {
-      fx.raf(step)
-      return
-    }
-    if (t >= 1) {
-      settle()
-      return
-    }
-    const resolved = Math.floor(t * chars.length)
-    let out = ''
-    for (let i = 0; i < chars.length; i++) {
-      const c = chars[i]!
-      out += i < resolved || c === ' ' ? c : ALPHABET[(Math.random() * ALPHABET.length) | 0]
-    }
-    el.textContent = out
-    fx.raf(step)
-  }
-  fx.raf(step)
+  active.value = next
+}
+
+function onScroll() {
+  if (raf) cancelAnimationFrame(raf)
+  raf = fx.raf(measure)
 }
 
 onMounted(() => {
-  const host = root.value
-  if (!host) return
-  // Reduced motion: the settled sheet IS the design — nothing is created, no
-  // text is touched, no observer is armed.
-  if (prefersReducedMotion() || !('IntersectionObserver' in window)) return
-
-  const bands = Array.from(host.querySelectorAll<HTMLElement>('.dif__spec'))
-  const io = fx.io(
-    (entries) => {
-      for (const e of entries) {
-        if (!e.isIntersecting) continue
-        const band = e.target as HTMLElement
-        io.unobserve(band)
-        const i = bands.indexOf(band)
-        const delay = Math.min(i, 3) * STAGGER_MS
-
-        const value = band.querySelector<HTMLElement>('.dif__value')
-        if (value) {
-          const text = value.textContent ?? ''
-          captured.push([value, text])
-          scramble(value, text, delay)
-        }
-
-        const rule = band.querySelector<HTMLElement>('.dif__rule')
-        if (rule) {
-          // Last keyframe equals the stylesheet's rest, fill:'none' — nothing
-          // to defend afterwards and cancel-safe at any instant.
-          fx.anim(rule, [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], {
-            duration: DRAW_MS,
-            delay,
-            easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
-            fill: 'none',
-          })
-        }
-      }
-    },
-    { threshold: 0.35 },
-  )
-  for (const b of bands) io.observe(b)
+  live.value = true
+  fx.on(window, 'scroll', onScroll, { passive: true })
+  fx.on(window, 'resize', onScroll, { passive: true })
+  measure()
 })
 
 onUnmounted(() => {
-  for (const [el, text] of captured) {
-    el.textContent = text
-    el.removeAttribute('aria-hidden')
-  }
-  captured.length = 0
   fx.dispose()
 })
 </script>
 
 <template>
-  <section id="razlike" ref="root" class="dif">
+  <section id="razlike" ref="root" class="dif" :class="{ 'dif--live': live }">
     <div class="container dif__head">
       <p class="kicker kicker--on-dark">{{ differentiators.kicker }}</p>
       <h2 class="dif__title">{{ differentiators.title }}</h2>
     </div>
 
-    <ul class="dif__sheet">
-      <li v-for="d in differentiators.items" :key="d.id" class="dif__spec">
-        <span class="dif__rule" aria-hidden="true"></span>
+    <div class="container dif__stage">
+      <!-- THE INSTRUMENT. A mirror of the register beside it: aria-hidden,
+           assembled only once live. -->
+      <div v-if="live" class="dif__display" aria-hidden="true">
+        <div class="dif__datum">
+          <span class="dif__counter">{{ counter }} / {{ total }}</span>
+        </div>
 
-        <div class="container dif__grid">
-          <div class="dif__measure">
-            <p class="dif__value">{{ d.measure.annotation }}</p>
-            <!-- The one ordinal thing on the sheet, and it is real content:
-                 the three working days the claim promises. -->
-            <ul v-if="d.measure.ticks" class="dif__ticks">
-              <li v-for="t in d.measure.ticks" :key="t" class="dif__tick">{{ t }}</li>
-            </ul>
-            <p class="dif__gloss emisija">{{ d.measure.gloss }}</p>
-          </div>
-
-          <div class="dif__caption">
-            <h3 class="dif__claim">{{ d.title }}</h3>
-            <p class="dif__body">{{ d.body }}</p>
-            <p v-if="d.footnote" class="dif__footnote">{{ d.footnote }}</p>
+        <div ref="slot" class="dif__slot">
+          <div class="dif__roll" :style="{ '--i': active }">
+            <p v-for="d in items" :key="d.id" class="dif__value">{{ d.measure.annotation }}</p>
           </div>
         </div>
-      </li>
-    </ul>
 
-    <!-- The sheet closes on its own rule. -->
-    <span class="dif__rule dif__rule--close" aria-hidden="true"></span>
+        <!-- Sprockets: one per frame, the running one filled. -->
+        <ul class="dif__sprockets">
+          <li
+            v-for="(d, i) in items"
+            :key="d.id"
+            class="dif__sprocket"
+            :class="{ 'dif__sprocket--on': i === active }"
+          ></li>
+        </ul>
+      </div>
+
+      <!-- THE REGISTER: the canonical content, always readable, never gated. -->
+      <ol class="dif__register">
+        <li
+          v-for="(d, i) in items"
+          :key="d.id"
+          class="dif__claim"
+          :class="{ 'dif__claim--on': live && i === active }"
+        >
+          <p class="dif__mark annot">{{ d.measure.annotation }}</p>
+          <h3 class="dif__claim-title">{{ d.title }}</h3>
+          <p class="dif__body">{{ d.body }}</p>
+          <p class="dif__gloss">{{ d.measure.gloss }}</p>
+          <!-- The one genuinely sequential thing here: the three working days
+               the claim promises. -->
+          <ul v-if="d.measure.ticks" class="dif__days">
+            <li v-for="t in d.measure.ticks" :key="t" class="dif__day">{{ t }}</li>
+          </ul>
+          <p v-if="d.footnote" class="dif__footnote">{{ d.footnote }}</p>
+        </li>
+      </ol>
+    </div>
   </section>
 </template>
 
 <style scoped>
 /* The ink ground: one step off the black above (Tradicija) and below
    (Kontakt), so the page's dark half reads as one world with this band
-   lifted slightly out of it. Paper on it 13.9:1, papir-dim 10.4:1. */
+   lifted out of it. Paper on it 13.9:1, papir-dim 10.4:1. */
 .dif {
   background: var(--grafit);
   color: var(--list);
@@ -192,8 +175,6 @@ onUnmounted(() => {
   margin-bottom: var(--space-16);
 }
 
-/* The title holds the left two thirds; the right third is left empty on
-   purpose — the system's own asymmetry, spent rather than filled. */
 .dif__title {
   margin-top: var(--space-3);
   font-size: var(--type-display-l-size);
@@ -205,52 +186,169 @@ onUnmounted(() => {
   max-width: 16ch;
 }
 
-.dif__sheet {
+/* --- the instrument ----------------------------------------------------------
+   Phones: it sticks to the head of the band and the register runs under it. */
+.dif__display {
+  position: sticky;
+  top: calc(var(--nav-h) + var(--space-2));
+  z-index: 1;
+  align-self: start;
+  /* The values are set against THIS column, not the viewport: the roll runs
+     nowrap inside a clipped slot, so a value wider than the column would be
+     silently cut off (measured: the longest ran 512px in a 472px slot at
+     1280). cqw ties the type to the box that has to hold it, at every width. */
+  container-type: inline-size;
+  /* The band's own ground, so the register never shows through behind the
+     roll as it passes under. */
+  background: var(--grafit);
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+/* The datum: the red rule across the instrument's head, carrying the frame
+   counter — the one number here, and it is a live reading. */
+.dif__datum {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 2px solid var(--rez-na-temnem);
+  padding-top: var(--space-2);
+}
+
+.dif__counter {
+  font-family: var(--font-mono);
+  font-size: var(--type-data-size);
+  letter-spacing: var(--type-data-ls);
+  color: var(--papir-dim);
+}
+
+/* The slot: exactly one frame tall. The em is the value's own, so the roll's
+   step and the slot's height can never drift apart. */
+/* The longest value ("Google + ChatGPT", 16 caps) is what sizes this: measured
+   with a Range across the text node, it sets 8.99em — IDENTICAL in the real
+   face and in the metric-matched fallback, which is the whole point of the
+   fallback. (Measure it with a Range, never scrollWidth: these are block
+   boxes, so scrollWidth reports the box and a clipped nowrap line looks like
+   a perfect fit. That mistake cost a round here.)
+
+   8.99em against 100cqw allows 11.1cqw exactly; 10cqw keeps ~10% of slack,
+   which is what rounding at odd widths needs. Re-measure if the values
+   change — a nowrap line in a hidden-overflow slot cannot report clipping. */
+.dif__slot {
+  font-size: clamp(1.5rem, 10cqw, 3.75rem);
+  height: 1.16em;
+  overflow: hidden;
+}
+
+.dif__roll {
+  transform: translateY(calc(var(--i, 0) * -1.16em));
+  transition: transform 520ms var(--ease-spring);
+}
+
+.dif__value {
+  height: 1.16em;
+  margin: 0;
+  max-width: none;
+  font-family: var(--font-sans);
+  font-size: 1em;
+  font-weight: 400;
+  line-height: 1.16;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--list);
+}
+
+.dif__sprockets {
+  list-style: none;
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.dif__sprocket {
+  width: 26px;
+  height: 3px;
+  background: var(--crta-na-temnem);
+  transition: background var(--dur-tween) var(--ease-hover);
+}
+
+.dif__sprocket--on {
+  background: var(--rez-na-temnem);
+}
+
+/* --- the register ------------------------------------------------------------- */
+.dif__register {
   list-style: none;
 }
 
-.dif__spec {
-  display: block;
+.dif__claim {
+  position: relative;
+  padding-block: var(--space-10);
+  padding-left: var(--space-6);
+  border-top: var(--divider-width) solid var(--crta-na-temnem);
 }
 
-/* Full-bleed hairlines: the sheet's own ruling, drawn from the left when the
-   band arrives (JS animates from scaleX(0); this IS the rest state). */
-.dif__rule {
-  display: block;
-  height: var(--divider-width);
-  background: var(--crta-na-temnem);
-  transform-origin: left center;
+/* The reading mark: the row the instrument is showing gets the red edge. It
+   is a rule, not a colour swap, so nothing about the text's legibility
+   depends on which row is current. */
+.dif__claim::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--rez-na-temnem);
+  transform: scaleY(0);
+  transform-origin: top center;
+  transition: transform 420ms var(--ease-spring);
 }
 
-.dif__grid {
-  padding-block: var(--space-12);
-  display: grid;
-  gap: var(--space-8);
-  align-items: start;
+.dif__claim--on::before {
+  transform: scaleY(1);
 }
 
-/* --- the specimen ------------------------------------------------------------ */
-.dif__value {
-  font-family: var(--font-sans);
-  font-size: var(--type-display-l-size);
-  font-weight: var(--type-display-l-weight);
-  line-height: 0.85;
-  letter-spacing: var(--type-display-l-ls);
+.dif__mark {
+  color: var(--papir-dim);
   text-transform: uppercase;
-  color: var(--list);
-  max-width: none;
-  overflow-wrap: anywhere;
+  letter-spacing: 0.11em;
 }
 
-.dif__ticks {
+.dif__claim-title {
+  margin-top: var(--space-3);
+  font-family: var(--font-sans);
+  font-stretch: normal;
+  font-size: clamp(1.375rem, 1.1rem + 1.2vw, 2rem);
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  color: var(--list);
+}
+
+.dif__body {
+  margin-top: var(--space-4);
+  color: var(--papir-dim);
+  max-width: 54ch;
+}
+
+.dif__gloss {
+  margin-top: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--type-data-size);
+  line-height: 1.5;
+  letter-spacing: var(--type-data-ls);
+  color: var(--papir-dim);
+  max-width: 46ch;
+}
+
+.dif__days {
   list-style: none;
   display: flex;
   gap: var(--space-4);
   margin-top: var(--space-5);
 }
 
-/* Each day gets its own tick above it — a sequence drawn, not numbered. */
-.dif__tick {
+.dif__day {
   position: relative;
   padding-top: var(--space-3);
   font-family: var(--font-mono);
@@ -259,7 +357,7 @@ onUnmounted(() => {
   color: var(--papir-dim);
 }
 
-.dif__tick::before {
+.dif__day::before {
   content: '';
   position: absolute;
   top: 0;
@@ -269,31 +367,8 @@ onUnmounted(() => {
   background: var(--rez-na-temnem);
 }
 
-.dif__gloss {
-  margin-top: var(--space-5);
-  color: var(--papir-dim); /* 10.4:1 on the ink ground */
-  max-width: 40ch;
-}
-
-/* --- the caption -------------------------------------------------------------- */
-.dif__claim {
-  font-family: var(--font-sans);
-  font-stretch: normal;
-  font-size: clamp(1.25rem, 1.05rem + 0.9vw, 1.75rem);
-  font-weight: 500;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
-  color: var(--list);
-}
-
-.dif__body {
-  margin-top: var(--space-4);
-  color: var(--papir-dim);
-  max-width: 52ch;
-}
-
 .dif__footnote {
-  margin-top: var(--space-3);
+  margin-top: var(--space-4);
   font-size: 0.875rem;
   line-height: 1.45;
   color: var(--papir-dim);
@@ -302,30 +377,30 @@ onUnmounted(() => {
   border-left: var(--divider-width) solid var(--crta-na-temnem);
 }
 
-/* --- desktop: the zigzag ------------------------------------------------------
-   The specimen and its caption swap sides band to band, so the values walk
-   across the sheet instead of stacking in a column. */
+/* --- desktop: the instrument stands beside the register ----------------------- */
 @media (min-width: 900px) {
-  .dif__grid {
-    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  .dif__stage {
+    display: grid;
+    /* The instrument takes a real half of the row: the value is sized against
+       this column (cqw), so a wider column is the only way the display type
+       gets to be display type. */
+    grid-template-columns: minmax(0, 48fr) minmax(0, 52fr);
     column-gap: var(--space-16);
+    align-items: start;
   }
 
-  .dif__spec:nth-child(even) .dif__measure {
-    grid-column: 2;
-    grid-row: 1;
+  .dif__display {
+    /* High enough that the instrument is read first, low enough that several
+       claims are on screen with it. */
+    top: 24vh;
+    padding-bottom: 0;
+    margin-bottom: 0;
+    background: none;
   }
 
-  .dif__spec:nth-child(even) .dif__caption {
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  /* The caption's text hangs from the specimen's baseline rather than its
-     box top — the specimen is display type with a 0.85 line box, so a plain
-     start-alignment leaves the claim floating high. */
-  .dif__caption {
-    padding-top: 0.35em;
+  .dif__claim:first-child {
+    padding-top: 0;
+    border-top: 0;
   }
 }
 </style>
