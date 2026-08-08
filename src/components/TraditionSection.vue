@@ -160,6 +160,59 @@ const HATCH = [
  * notification or a font-load promise actually arriving). A geometry that
  * cannot be stale beats a measurement with two rescue paths. */
 
+/**
+ * Bring the drawing and its callout into view together.
+ *
+ * On the stacked layout the callout sits BELOW the sheets, so choosing one can
+ * select something whose description is off the bottom of the screen — the
+ * reader taps and nothing appears to happen. This scrolls the pair into view,
+ * and ONLY when it needs to:
+ *
+ *  · never when the two stand side by side (read from geometry, not a media
+ *    query, so the two can never disagree),
+ *  · never when both are already fully visible — a reader who is already
+ *    looking at them should not have the page moved under them,
+ *  · centred when the pair fits the viewport, otherwise its top parked just
+ *    under the fixed masthead.
+ *
+ * Behaviour is stated explicitly on every call (house rule); reduced motion
+ * gets the instant jump rather than a glide.
+ */
+function revealPair() {
+  const host = root.value
+  if (!host) return
+  const stack = host.querySelector<HTMLElement>('.asm__stack')
+  const panels = host.querySelector<HTMLElement>('.asm__panels')
+  if (!stack || !panels) return
+
+  const s = stack.getBoundingClientRect()
+  const p = panels.getBoundingClientRect()
+  // Side by side: the callout cannot be off-screen because of the selection.
+  if (p.top < s.bottom - 1) return
+
+  const top = Math.min(s.top, p.top)
+  const bottom = Math.max(s.bottom, p.bottom)
+  const vh = window.innerHeight
+  const navH =
+    parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 0
+  const margin = navH + 12
+  if (top >= margin && bottom <= vh) return // already both in view
+
+  const pairH = bottom - top
+  const delta = pairH <= vh - margin - 12 ? top - (margin + (vh - margin - pairH) / 2) : top - margin
+  window.scrollBy({
+    top: delta,
+    behavior: (prefersReducedMotion() ? 'instant' : 'smooth') as ScrollBehavior,
+  })
+}
+
+/** Choosing a stratum: set it, then make sure its callout is actually on
+ *  screen. nextTick so the panel that just became visible is the one measured. */
+function choose(n: number) {
+  probe.value = n
+  nextTick(revealPair)
+}
+
 /** Vertical tablist: arrows move and select, Home/End jump to the ends. */
 function onProbeKeys(e: KeyboardEvent) {
   const n = invisible.items.length
@@ -173,8 +226,13 @@ function onProbeKeys(e: KeyboardEvent) {
   probe.value = next
   // Focus follows selection — the tablist contract. nextTick, not rAF: this
   // waits on Vue's DOM update, and rAF is throttled to a stop in a background
-  // tab, where the focus must still land.
-  nextTick(() => bandAt(next)?.focus())
+  // tab, where the focus must still land. The reveal runs after the focus, so
+  // it measures what focus's own scroll left behind — arrowing through the
+  // strata has the same reach as tapping through them.
+  nextTick(() => {
+    bandAt(next)?.focus()
+    revealPair()
+  })
 }
 
 /* ONE FACE PER TITLE. The extracted register splices a script face into
@@ -398,7 +456,7 @@ onUnmounted(() => {
                   :aria-selected="live ? String(n === probe) : undefined"
                   :aria-controls="live ? item.id : undefined"
                   :tabindex="live ? (n === probe ? 0 : -1) : undefined"
-                  @click="live && (probe = n)"
+                  @click="live && choose(n)"
                 >
                   <!-- The material's own hatch. Half-strength at rest, full
                        when probed — the drawing's way of saying "this is the
@@ -680,6 +738,18 @@ onUnmounted(() => {
    whole state signal — position, not tone — which is why the cut planes, the
    leader and the dimension rule that used to carry it are gone: three
    redundant devices for something the geometry now says by itself. */
+/* The hatch definitions are a DEFINITION, not a cell. A 0×0 svg is still an
+   in-flow grid item: left in the flow it took the first column, pushed the
+   drawing into the second and wrapped the callout onto a row of its own —
+   which is exactly what the layout looked like. Out of flow it defines its
+   patterns and occupies nothing. */
+.asm__defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
 .asm__stack {
   position: relative;
   height: clamp(20rem, 36vw, 27rem);
