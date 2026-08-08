@@ -58,11 +58,17 @@ const REST = 55
 const SWEEP_MS = 1600
 /**
  * How long the screen must stay continuously visible before the pass fires —
- * the reading beat. Long on purpose: the raw source is the point of the first
- * act, and rendering it early throws the argument away. Leaving the viewport
- * disarms the timer, so the sweep can only happen to someone who lingered.
+ * the reading beat. Leaving the viewport disarms the timer, so the sweep can
+ * only happen to someone who actually stopped here.
+ *
+ * TUNED TWICE, from both ends: 180ms rendered before the raw source had
+ * registered at all; 2600ms read as a wait, because the clock starts at
+ * SWEEP_VISIBLE — while the visitor is still scrolling the section into place
+ * — so a second or more of it is already spent by the time they settle. At
+ * 1100ms someone who lands on it gets a beat long enough to see that it is
+ * source, and someone who scrolled in finds it already going.
  */
-const SWEEP_HOLD_MS = 2600
+const SWEEP_HOLD_MS = 1100
 /** Fires when this share of the screen is visible. Deliberately modest: a tall
  *  screen on a short phone viewport can never reach a high threshold. */
 const SWEEP_VISIBLE = 0.35
