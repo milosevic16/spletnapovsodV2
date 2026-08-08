@@ -53,15 +53,36 @@ const OUT_DIR = join(ROOT, 'public', 'video')
 const VERSION = 'v1'
 
 /**
+ * THE PLATE RATIO, and it is arithmetic rather than taste. The wall is three
+ * plates split 2 : 1 : 1, so the majority plate is half of it; measured at
+ * 1440 the three come out 636 / 319 / 319 against a 592px-tall wall, which
+ * makes the majority plate 1.07 : 1. 6:5 (1.2) is the clean ratio just above
+ * that — deliberately a little generous, because the wall's height follows its
+ * content and a crop that is slightly too WIDE only means `cover` trims a few
+ * per cent, while one that is too narrow would letterbox. Everything wider
+ * than this in the source is never visible even in the majority state, so
+ * cropping here throws away nothing and pays for itself in bytes. The
+ * quarter-width plates crop further from the same file — that is what `cover`
+ * is for, and why one encode serves every state.
+ */
+const TARGET_RATIO = 6 / 5
+
+/**
  * Per-source treatment. `cropBottom` is the watermark strip, in SOURCE pixels,
- * measured off a still — the Kling badge sits ~85px up from the bottom of a
- * 1280-tall frame, and 110 clears it with margin.
+ * measured off a still: the Kling badge sits in the bottom-right corner, about
+ * 55px up from the bottom of a 720-tall frame, and 75 clears it with margin.
+ * Check a still before trusting a number here — it differs with frame height.
  */
 const CLIPS = {
-  design: { cropBottom: 110 },
-  security: { cropBottom: 110 },
-  seo: { cropBottom: 110 },
+  design: { cropBottom: 75 },
+  security: { cropBottom: 75 },
+  seo: { cropBottom: 75 },
 }
+
+/** Three of these decode at once, so quality is spent carefully. VP9 first
+ *  (roughly half the h264 bytes on this footage), h264 as the fallback. */
+const VP9_CRF = 42
+const H264_CRF = 30
 
 function ff(args) {
   return execFileSync('ffmpeg', args, { stdio: ['ignore', 'pipe', 'pipe'] })
@@ -93,6 +114,11 @@ function kb(file) {
   return Math.round(statSync(file).size / 1024)
 }
 
+/** yuv420p subsamples chroma 2×2, so every crop dimension has to be even. */
+function even(n) {
+  return n - (n % 2)
+}
+
 if (!existsSync(SRC_DIR)) {
   console.error(`MISS: no ${SRC_DIR}. Put raw clips there as <pillar-id>.mp4.`)
   process.exit(1)
@@ -114,8 +140,13 @@ for (const file of sources) {
   }
   const src = join(SRC_DIR, file)
   const { width, height, duration } = probe(src)
-  const cropH = height - cfg.cropBottom
-  const vf = `crop=${width}:${cropH}:0:0`
+  // Watermark off the bottom first, then centre-crop what is left to the
+  // plate's ratio. Even numbers: yuv420p subsamples chroma 2×2 and both
+  // encoders reject an odd dimension.
+  const cropH = even(height - cfg.cropBottom)
+  const cropW = even(Math.min(width, Math.round(cropH * TARGET_RATIO)))
+  const cropX = even(Math.round((width - cropW) / 2))
+  const vf = `crop=${cropW}:${cropH}:${cropX}:0`
 
   const mp4 = join(OUT_DIR, `pillar-${id}-${VERSION}.mp4`)
   const webm = join(OUT_DIR, `pillar-${id}-${VERSION}.webm`)
@@ -128,7 +159,7 @@ for (const file of sources) {
     '-i', src,
     '-vf', vf,
     '-an',
-    '-c:v', 'libx264', '-preset', 'veryslow', '-crf', '27',
+    '-c:v', 'libx264', '-preset', 'veryslow', '-crf', String(H264_CRF),
     '-pix_fmt', 'yuv420p', '-profile:v', 'high', '-movflags', '+faststart',
     mp4,
   ])
@@ -139,7 +170,8 @@ for (const file of sources) {
     '-i', src,
     '-vf', vf,
     '-an',
-    '-c:v', 'libvpx-vp9', '-crf', '40', '-b:v', '0', '-row-mt', '1',
+    '-c:v', 'libvpx-vp9', '-crf', String(VP9_CRF), '-b:v', '0', '-row-mt', '1',
+    '-deadline', 'good', '-cpu-used', '1',
     '-pix_fmt', 'yuv420p',
     webm,
   ])
@@ -154,7 +186,7 @@ for (const file of sources) {
   ])
 
   console.log(
-    `${id}: ${width}×${height} ${duration.toFixed(2)}s → ${width}×${cropH}, watermark cropped · ` +
+    `${id}: ${width}×${height} → ${cropW}×${cropH} (${(cropW / cropH).toFixed(2)}:1) ${duration.toFixed(2)}s · ` +
       `mp4 ${kb(mp4)}kB · webm ${kb(webm)}kB · poster ${kb(poster)}kB`,
   )
 }

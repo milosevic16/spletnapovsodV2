@@ -108,7 +108,10 @@ function wireClips(host: HTMLElement) {
         }
       }
     },
-    { threshold: 0.2 },
+    // ANY sliver, deliberately. A share-based threshold can never be met by an
+    // element with no area, and these sit inside a plate whose width is still
+    // animating at mount — the clip would simply never start.
+    { threshold: 0 },
   )
   for (const v of vids) io.observe(v)
 }
@@ -118,7 +121,15 @@ onMounted(() => {
   fx.setTimeout(() => {
     armed.value = true
   }, 0)
-  if (host.value) wireClips(host.value)
+  // AFTER the live re-render, and that is the whole point: the plate's face is
+  // a <component :is="live ? 'button' : 'div'">, so flipping `live` REPLACES
+  // that element and every child with it — including these videos. Observing
+  // them at mount attached the observer to nodes Vue was about to throw away,
+  // and nothing ever played. nextTick waits for the swap and observes the
+  // elements that actually end up on the page.
+  nextTick(() => {
+    if (host.value) wireClips(host.value)
+  })
 })
 
 onUnmounted(() => {
@@ -414,10 +425,12 @@ button.pil__face {
 .pil__clip {
   /* A DECLARED plate shape, not whatever flex hands out: stacked on a phone the
      clip took its height from `flex: 1` and came out 416px against the drawn
-     plates' 173, which is not a shape anyone chose. 3:4 is the portrait
-     footage's own bearing, cropped gently. Desktop drops it — there the wall
-     sets the height and the plate is a tall column. */
-  aspect-ratio: 3 / 4;
+     plates' 173, which is not a shape anyone chose. 6:5 is the encode's OWN
+     ratio (scripts/build-pillar-videos.mjs crops to it), so a stacked plate
+     shows the whole frame and crops nothing. Desktop drops the ratio — there
+     the wall sets the height and `cover` does the cropping as the plate
+     widens and narrows. */
+  aspect-ratio: 6 / 5;
   height: auto;
   object-fit: cover;
   /* The composition sits in the upper half of the frame. */
@@ -756,19 +769,30 @@ button.pil__face {
     min-height: 34rem;
   }
 
+  /* THE WALL IS NEVER EVEN. One plate holds half the wall and the other two a
+     quarter each — 2 : 1 : 1 — and at rest that majority belongs to the FIRST
+     pillar. Hovering any plate hands it the majority and returns the others to
+     a quarter, so the same 2:1:1 shape simply slides along the row. The clips
+     inside are all playing at once either way; what changes is how much of
+     each you are given to look at. */
   .pil__plate {
     flex: 1 1 0;
     transition: flex-grow 380ms var(--ease-spring);
   }
 
-  /* Hover: the pointed-at plate swells, the others give way (CSS only,
-     hover devices only, never while one is open). */
+  .pil__plate:first-of-type {
+    flex-grow: 2;
+  }
+
   @media (hover: hover) {
+    /* Order matters: the wall-hover rule outranks :first-of-type (0,3,0 against
+       0,2,0), so the first plate gives up its default majority the moment any
+       other is pointed at. */
     .pil--live .pil__wall:not(:has(.pil__plate--open)):hover .pil__plate {
-      flex-grow: 0.9;
+      flex-grow: 1;
     }
     .pil--live .pil__wall:not(:has(.pil__plate--open)) .pil__plate:hover {
-      flex-grow: 1.35;
+      flex-grow: 2;
     }
   }
 
