@@ -230,13 +230,23 @@
 
   /* -------------------------------------------------------------------------
      TEXTURE — one noise layer over EVERYTHING (grain above content, like the
-     reference's fixed 400×225 video at opacity 0.1). feTurbulence stand-in
-     tuned to the measured anisotropy (autocorr ~2px x / ~6px y →
-     baseFrequency 0.5 0.17); the shimmer comes from a discrete transform
-     jitter (~3.6 jumps/s ≈ measured |Δ| cadence). Layer: base.css .grain.
+     reference's fixed 400×225 video at opacity 0.1). Layer: base.css .grain.
+
+     The tile is speckle PLUS the reference's vertical striping. Frame analysis
+     of the design package's recording (idle dark-ground patches) found the
+     static is anisotropic: column-band variance ~7× the row bands, near-
+     periodic at ~11.5 recording px ≈ 6 CSS px. The stripe field reproduces
+     that (its own turbulence, long columns, mild contrast lift, blended 0.38).
+
+     INTENSITY IS DELIBERATELY *NOT* THE RECORDING'S. Matching the reference's
+     raw composite numbers (tile std ~59) was built once and rejected on sight
+     as too loud. This tile holds the APPROVED intensity — measured std 14.5
+     against the previous tile's 14.9 — and spends the whole change on
+     structure instead: column-band std 0.99 → 5.45, anisotropy ratio 1.4 →
+     3.1, period minimum at lag 5. Lines you feel, not lines you read.
      ---------------------------------------------------------------------- */
   --noise-opacity: 0.1;
-  --noise-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.5 0.17' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --noise-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.5 0.17' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Cfilter id='l'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.17 0.005' numOctaves='1' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='2' intercept='-0.5'/%3E%3CfeFuncG type='linear' slope='2' intercept='-0.5'/%3E%3CfeFuncB type='linear' slope='2' intercept='-0.5'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3Crect width='100%25' height='100%25' filter='url(%23l)' opacity='0.38'/%3E%3C/svg%3E");
 
   /* -------------------------------------------------------------------------
      MOTION — durations/eases the reference actually runs (motion.md).

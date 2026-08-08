@@ -222,61 +222,119 @@ textarea {
    jittered by a discrete transform loop — compositor-only, ~3.6 jumps/s,
    matching the measured temporal cadence (|Δ| ≈ 1.1 luma / 280ms).
 
-   The element is oversized ±320px so every jitter offset (all within ±320)
-   keeps full coverage. z-index sits above all page content and below the
+   THE PERFORMANCE CONTRACT, paid for once: ONE element, and only `transform`
+   and `opacity` are ever animated — both compositor properties, so the layer
+   is promoted once and never repainted. A previous attempt stacked two extra
+   full-viewport noise layers and animated `mask-position` on one of them;
+   that repaints a viewport-sized layer every frame, three deep, and was
+   visibly laggy. Any future glitch device must fit inside this contract.
+
+   The element is oversized ±120px so every jitter offset (all within ±110)
+   keeps full coverage — sized to the amplitude, because the promoted layer's
+   memory is its area. z-index sits above all page content and below the
    intro veil (index.html, z 9999). NOTE: the native <dialog> phone menu
    escapes to the top layer, above this — accepted until the masthead
    redesign replaces it with the system's fixed z-10 panel.
 
    The element lives in App.vue's template (static, aria-hidden) — no JS
    creates it, so the ground reads the same with JS off. Under
-   prefers-reduced-motion the kill-switch below freezes the jitter: static
-   grain is the documented approximation (background.md). Contrast through
-   the layer is measured, not assumed: composite light ground vs ink
-   12.9:1, dark vs white 19.7:1 (background.md). */
+   prefers-reduced-motion the kill-switch below freezes both loops on their
+   final keyframes, which ARE the rest state (no transform, base opacity):
+   static grain, the documented approximation (background.md). Contrast
+   through the layer is measured, not assumed: composite light ground vs ink
+   12.9:1, dark vs white 19.7:1 (background.md); the flare below tops the
+   layer at 0.17, whose worst pairing still measures far above AA. */
 .grain {
   position: fixed;
-  top: -320px;
-  left: -320px;
-  width: calc(100vw + 640px);
-  height: calc(100vh + 640px);
+  top: -120px;
+  left: -120px;
+  width: calc(100vw + 240px);
+  height: calc(100vh + 240px);
   z-index: 9000;
   pointer-events: none;
   opacity: var(--noise-opacity);
   background-image: var(--noise-tile);
   background-size: 300px 300px;
-  animation: grain-jitter 2.2s steps(1, end) infinite;
+  /* Two clocks, co-prime, so the pair never visibly repeats. Both are
+     compositor-only (see the contract above): the jitter owns `transform`,
+     the glitch owns `opacity`, and they never touch the same property. */
+  animation:
+    grain-jitter 3.1s steps(1, end) infinite,
+    grain-glitch 13.7s steps(1, end) infinite;
 }
 
-/* Eight discrete positions — steps(1, end) holds each segment's start value,
-   so the texture JUMPS between frames (TV static), never slides. */
+/* Discrete positions on an UNEVEN clock — steps(1, end) holds each keyframe's
+   value until the next, so the texture JUMPS (TV static), never slides. The
+   cadence is the recording's: bursts of ~155ms kicks separated by near-still
+   spells of ~700ms (measured |Δ| series runs of 4–7 between long stretches
+   of ~0.1). A metronome reads as strobing; this reads as static. */
 @keyframes grain-jitter {
   0% {
     transform: translate(0, 0);
   }
-  12.5% {
-    transform: translate(-140px, 60px);
+  5% {
+    transform: translate(-88px, 46px);
   }
-  25% {
-    transform: translate(80px, -190px);
+  10% {
+    transform: translate(62px, -104px);
   }
-  37.5% {
-    transform: translate(-220px, -120px);
+  15% {
+    transform: translate(-104px, -72px);
   }
-  50% {
-    transform: translate(160px, 140px);
+  /* still spell */
+  38% {
+    transform: translate(96px, 88px);
   }
-  62.5% {
-    transform: translate(-60px, -260px);
+  43% {
+    transform: translate(-42px, -110px);
   }
-  75% {
-    transform: translate(240px, -40px);
+  /* still spell */
+  66% {
+    transform: translate(110px, -28px);
   }
-  87.5% {
-    transform: translate(-180px, 200px);
+  71% {
+    transform: translate(-96px, 74px);
   }
+  76% {
+    transform: translate(34px, 108px);
+  }
+  /* still spell */
   100% {
     transform: translate(0, 0);
+  }
+}
+
+/* THE OCCASIONAL GLITCH — interference, not decoration: the static flares and
+   drops out for two or three frames, twice per cycle, and sits at its resting
+   strength the other ~96% of the time. Opacity only, so it costs nothing and
+   cannot break the performance contract; the jitter is simultaneously kicking
+   the field, so a flare lands as a burst of brighter static rather than a
+   uniform fade. Amplitudes are deliberately near-threshold — the brief asked
+   for subtle, and the loud version was rejected on sight. */
+@keyframes grain-glitch {
+  0% {
+    opacity: 0.1;
+  }
+  64% {
+    opacity: 0.17;
+  }
+  64.6% {
+    opacity: 0.045;
+  }
+  65.2% {
+    opacity: 0.13;
+  }
+  65.8% {
+    opacity: 0.1;
+  }
+  88.5% {
+    opacity: 0.15;
+  }
+  89.1% {
+    opacity: 0.1;
+  }
+  100% {
+    opacity: 0.1;
   }
 }
 
