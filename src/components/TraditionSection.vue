@@ -26,13 +26,14 @@
  * the right end. At any moment the hand owns the control: dragging is direct,
  * nothing else is coupled to it, scroll never moves it.
  *
- * THE STRATA (the interactive layer). The four things under the surface are a
- * SECTION THROUGH THE SITE: strata of unequal thickness in dark materials,
- * each with its own drafting hatch, probed one at a time. Probing brings its
- * hatch to full, draws the CUT PLANES at its two interfaces, fills its
- * terminal and lights the leader across to the callout. Real tablist
- * semantics; with JS off the strata are an inert drawing and all four callouts
- * stand open in flow, so nobody meets a dead control.
+ * THE STRATA (the interactive layer). The four things under the surface are an
+ * EXPLODED ASSEMBLY: four sheets lying on a shallow axonometric, overlapping
+ * like drawings on a table, each in its own hatch. Probing SLIDES one clear of
+ * the stack and brings it forward — position is the state, which is why the
+ * cut planes, the leader and the dimension rule that used to carry it are
+ * gone: three redundant devices for something the geometry now says by itself.
+ * Real tablist semantics; with JS off the sheets are an inert drawing at rest
+ * and all four callouts stand open in flow, so nobody meets a dead control.
  *
  * REST STATE (stylesheet, no JS, reduced motion): the ground is dark, the
  * content is present, --scan falls back to 55 — the composed split where both
@@ -139,15 +140,25 @@ function bandAt(i: number): HTMLElement | undefined {
   return root.value?.querySelectorAll<HTMLElement>('.asm__band')[i]
 }
 
-/* THE LEADER IS NOT MEASURED. Each stratum owns its own leader, centred on
- * itself in CSS, revealed when that stratum is probed — so it is exact at
- * every size by construction. The earlier version aimed ONE leader from JS at
- * the probed band's measured centre, and it went stale twice here (12px and
- * 15px offsets that survived width changes, because a re-measure depends on a
- * ResizeObserver notification or a font-load promise actually arriving). A
- * geometry that cannot be stale beats a measurement with two rescue paths;
- * the cost is that the leader appears at the new layer instead of sliding to
- * it, which suits the system's decisive temperament anyway. */
+/**
+ * The four sheets' hatches, by stratum. `mask` is the reach gradient, which
+ * only the first one takes — it is the one whose meaning is "this falls off
+ * with distance". Ids are prefixed because SVG defs are document-global.
+ */
+const HATCH = [
+  { id: 'asm-k1', mask: true },
+  { id: 'asm-k2', mask: false },
+  { id: 'asm-k3', mask: false },
+  { id: 'asm-k4', mask: false },
+] as const
+
+/* NOTHING HERE IS MEASURED. The slide, the rest ladder and the stagger are all
+ * CSS geometry keyed off the stratum's index, so they are exact at every size
+ * by construction. An earlier version aimed a leader from JS at the probed
+ * band's measured centre and it went stale twice (12px and 15px offsets that
+ * survived width changes, because a re-measure depends on a ResizeObserver
+ * notification or a font-load promise actually arriving). A geometry that
+ * cannot be stale beats a measurement with two rescue paths. */
 
 /** Vertical tablist: arrows move and select, Home/End jump to the ends. */
 function onProbeKeys(e: KeyboardEvent) {
@@ -319,6 +330,55 @@ onUnmounted(() => {
                  real, so the source layer's <article id="…"> depicts a tag we
                  actually ship. -->
             <div class="asm">
+              <!-- The four hatches, defined once. Each sheet is a different
+                   MATERIAL and its hatch says which: a halftone that opens
+                   from solid to nothing (reach), a field of form rules with a
+                   caret in it, a sampling lattice, and near-solid intaglio.
+                   Scale contrast is deliberate — a 5px intaglio against a 34px
+                   form field is what makes two fills read as two materials
+                   rather than one drawn twice. -->
+              <svg width="0" height="0" class="asm__defs" aria-hidden="true">
+                <defs>
+                  <!-- VIDNOST: an even dot field under ONE gradient mask, so
+                       the reach is a gradient of ink rather than a graduated
+                       tile stamped over and over. -->
+                  <pattern id="asm-k1" width="12" height="12" patternUnits="userSpaceOnUse">
+                    <circle cx="6" cy="6" r="3.1" fill="rgba(245, 242, 235, 0.6)" />
+                  </pattern>
+                  <linearGradient id="asm-kgrad" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0" stop-color="#fff" />
+                    <stop offset="0.55" stop-color="#777" />
+                    <stop offset="1" stop-color="#000" />
+                  </linearGradient>
+                  <mask id="asm-kmask" maskContentUnits="objectBoundingBox">
+                    <rect width="1" height="1" fill="url(#asm-kgrad)" />
+                  </mask>
+                  <!-- OBRAZCI: the field itself, a caret in it, ruled for an
+                       answer. -->
+                  <pattern id="asm-k2" width="34" height="18" patternUnits="userSpaceOnUse">
+                    <rect x="1" y="3" width="30" height="11" fill="none"
+                      stroke="rgba(245, 242, 235, 0.36)" stroke-width="1.2" />
+                    <line x1="5" y1="5.5" x2="5" y2="11.5"
+                      stroke="rgba(245, 242, 235, 0.55)" stroke-width="1.6" />
+                    <line x1="9" y1="10" x2="20" y2="10"
+                      stroke="rgba(245, 242, 235, 0.28)" stroke-width="1.2" />
+                  </pattern>
+                  <!-- PIŠKOTKI: a sampling lattice — discrete points taken off
+                       a continuous person, which is what the law is about. -->
+                  <pattern id="asm-k3" width="11" height="11" patternUnits="userSpaceOnUse">
+                    <path d="M5.5 3 v5 M3 5.5 h5" stroke="rgba(245, 242, 235, 0.44)"
+                      stroke-width="1.1" />
+                  </pattern>
+                  <!-- DOMENA: near-solid intaglio with plate relief — the mass
+                       everything else is published onto. -->
+                  <pattern id="asm-k4" width="5" height="5" patternUnits="userSpaceOnUse">
+                    <rect width="5" height="5" fill="rgba(245, 242, 235, 0.3)" />
+                    <line x1="0" y1="1" x2="5" y2="1" stroke="rgba(245, 242, 235, 0.12)"
+                      stroke-width="1.4" />
+                  </pattern>
+                </defs>
+              </svg>
+
               <div
                 class="asm__stack"
                 :role="live ? 'tablist' : undefined"
@@ -326,10 +386,6 @@ onUnmounted(() => {
                 aria-orientation="vertical"
                 @keydown="live && onProbeKeys($event)"
               >
-                <!-- Dimension rule down the left edge: extension ticks only,
-                     never a figure — this drawing measures nothing we could
-                     honestly put a number on. -->
-                <span class="asm__dim" aria-hidden="true"></span>
                 <component
                   :is="live ? 'button' : 'div'"
                   v-for="(item, n) in invisible.items"
@@ -344,21 +400,23 @@ onUnmounted(() => {
                   :tabindex="live ? (n === probe ? 0 : -1) : undefined"
                   @click="live && (probe = n)"
                 >
-                  <!-- The material's own drafting hatch. Half-strength at
-                       rest, full when probed — the drawing's way of saying
-                       "this is the layer we are looking at". -->
-                  <span class="asm__fill" aria-hidden="true"></span>
-                  <!-- The cut planes BOUNDING the probed stratum: drawn at its
-                       two interfaces with square end ticks, so they mark the
-                       layer without ever crossing its name. -->
-                  <span class="asm__plane" aria-hidden="true"></span>
+                  <!-- The material's own hatch. Half-strength at rest, full
+                       when probed — the drawing's way of saying "this is the
+                       layer we are looking at". -->
+                  <svg class="asm__fill" preserveAspectRatio="none" aria-hidden="true">
+                    <rect
+                      width="100%"
+                      height="100%"
+                      :fill="`url(#${HATCH[n]!.id})`"
+                      :mask="HATCH[n]!.mask ? 'url(#asm-kmask)' : undefined"
+                    />
+                  </svg>
+                  <!-- The name sits on a tab of the sheet's OWN ground, not on
+                       the hatch: see the note on .asm__band-label. -->
                   <span class="asm__band-label">{{ item.label }}</span>
                   <!-- Leader terminal: hollow reads as available, filled as
                        taken — the drawing's own way of saying "press me". -->
                   <span class="asm__node" aria-hidden="true"></span>
-                  <!-- Each stratum owns its leader, centred on ITSELF: exact at
-                       every size, nothing to measure or re-measure. -->
-                  <span v-if="live" class="asm__leader" aria-hidden="true"></span>
                 </component>
               </div>
 
@@ -611,70 +669,82 @@ onUnmounted(() => {
    through every state (a ground tween under 14px type crosses mid-tone and
    drops every possible ink under 4.5:1 — measured). */
 .asm {
-  --asm-gap: clamp(1.5rem, 4vw, 3rem);
+  --asm-gap: clamp(1.5rem, 4vw, 3.5rem);
   display: grid;
   gap: var(--space-8);
 }
 
+/* THE EXPLODED ASSEMBLY. The four sheets no longer stack as flush rows: they
+   lie on a shallow axonometric, overlapping like drawings on a table, and the
+   probed one SLIDES CLEAR of the stack and comes forward. That slide is the
+   whole state signal — position, not tone — which is why the cut planes, the
+   leader and the dimension rule that used to carry it are gone: three
+   redundant devices for something the geometry now says by itself. */
 .asm__stack {
   position: relative;
-  display: grid;
-  grid-template-rows: 1.4fr 0.72fr 0.95fr 1.95fr;
-  min-height: clamp(19rem, 34vw, 26rem);
-  border: var(--divider-width) solid var(--crta-na-temnem);
-  /* The leader and the dimension rule reach out of this box. */
-  overflow: visible;
-  margin-left: 1.25rem;
+  height: clamp(20rem, 36vw, 27rem);
 }
 
-/* Dimension rule: extension ticks top and bottom, no figure. */
-.asm__dim {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: -1.25rem;
-  width: 1px;
-  background: var(--crta-na-temnem);
-  pointer-events: none;
-}
-.asm__dim::before,
-.asm__dim::after {
-  content: '';
-  position: absolute;
-  left: -3px;
-  width: 7px;
-  height: 1px;
-  background: var(--crta-na-temnem);
-}
-.asm__dim::before {
-  top: 0;
-}
-.asm__dim::after {
-  bottom: 0;
-}
+/* Sheets are absolute and equal: the stagger, not the thickness, is what
+   separates them now. The slide rides TRANSFORM rather than `left` — same
+   geometry, but a compositor property instead of a per-frame layout (house
+   rule), which matters with four of them moving at once.
 
+   TRANSLATE FIRST, SKEW SECOND. Transforms apply right-to-left, so this skews
+   the sheet in its own space and then moves it horizontally; the other order
+   feeds x into the skew's y and the sheets would drift vertically as they
+   slide. */
 .asm__band {
-  position: relative;
+  position: absolute;
+  left: 0;
+  width: 82%;
+  height: 29%;
+  min-height: 44px;
   display: flex;
   align-items: center;
-  width: 100%;
-  min-height: 44px;
   padding: 0;
   margin: 0;
-  border: 0;
-  border-bottom: var(--divider-width) solid var(--crta-na-temnem);
-  background: none;
+  border: var(--divider-width) solid var(--crta-na-temnem);
+  background: var(--band-ground);
   font: inherit;
   color: inherit;
   text-align: left;
-  /* VISIBLE, deliberately: the band's own leader reaches out of it into the
-     gap. Nothing inside can overflow — the hatch and the cut planes are both
-     `inset: 0` — so there is nothing to clip. */
-  overflow: visible;
+  overflow: hidden;
+  transform: translateX(var(--rest)) skewY(-7deg);
+  transition:
+    transform 420ms var(--ease-out),
+    border-color var(--dur-tween) var(--ease-hover);
 }
 
-.asm__band:last-of-type {
-  border-bottom: 0;
+/* The rest ladder. The design states it in stack percentages (0/3/6/9, out at
+   14); a translate percentage resolves against the ELEMENT, which is 82% of
+   the stack, so each is divided by 0.82 to land on the same pixels. */
+.asm__band--0 {
+  --rest: 0%;
+  top: 0;
+  z-index: 1;
+}
+.asm__band--1 {
+  --rest: 3.659%;
+  top: 23.5%;
+  z-index: 2;
+}
+.asm__band--2 {
+  --rest: 7.317%;
+  top: 47%;
+  z-index: 3;
+}
+.asm__band--3 {
+  --rest: 10.976%;
+  top: 70.5%;
+  z-index: 4;
+}
+
+/* Probed: clear of the stack and in front of it. */
+.asm__band--on {
+  transform: translateX(17.073%) skewY(-7deg);
+  z-index: 9;
+  border-color: var(--color-cut-dark);
 }
 
 button.asm__band {
@@ -697,64 +767,35 @@ button.asm__band {
 .asm__fill {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
   opacity: 0.5;
   transition: opacity var(--dur-tween) var(--ease-hover);
 }
 
-/* Structure — 45° section hatch. */
+/* The four grounds. `--band-ground` rather than `background` directly: the
+   label's tab reads the same value, so a name can never end up on a ground
+   the sheet does not actually have. */
 .asm__band--0 {
-  background: #5f4a33; /* the surface layer — the lightest step of the ramp */
-}
-.asm__band--0 .asm__fill {
-  background: repeating-linear-gradient(
-    45deg,
-    transparent 0 10px,
-    rgb(245 242 235 / 0.3) 10px 11px
-  );
+  --band-ground: #5f4a33; /* the surface layer — the lightest step of the ramp */
 }
 
-/* Membrane — a thin laminated sheet, ruled very fine. */
 .asm__band--1 {
-  background: #55402b;
-}
-.asm__band--1 .asm__fill {
-  background: repeating-linear-gradient(0deg, transparent 0 2px, rgb(245 242 235 / 0.26) 2px 3px);
+  --band-ground: #55402b;
 }
 
-/* Granular fill — stipple, the drafting convention for loose material. */
 .asm__band--2 {
-  background: #4b3724;
-}
-.asm__band--2 .asm__fill {
-  background-image: radial-gradient(rgb(245 242 235 / 0.42) 1px, transparent 1.3px);
-  background-size: 8px 8px;
+  --band-ground: #4b3724;
 }
 
-/* Substrate — coarse cross-hatched poché, the mass everything sits on: the
-   deepest ground of the four.
-
-   ONE rule block for this selector, deliberately: the ground line used to live
-   in its own `.asm__band--3 { border-top }` block, and the CSS minifier merges
-   duplicate selectors and can drop declarations while doing it. */
+/* Substrate — the mass everything else is published onto, and the deepest
+   ground of the four. THE RAMP DESCENDS THROUGH THE BAND: measured, 0 → 3,
+   95,74,51 → 85,64,43 → 75,55,36 → 64,46,32. Each sheet is opaque, so it
+   covers the press screen and is measured flat — secondary text runs 4.99:1
+   on the lightest and 7.70:1 on this one. */
 .asm__band--3 {
-  /* THE RAMP DESCENDS THROUGH THE BAND, not above it. While the section was
-     pure black nothing could sit below it, so the four materials had to stack
-     upward; a mid-bronze band frees them to do what a section drawing
-     actually does — go deeper, ending on the same value as the closing band,
-     the mass everything sits on. Measured, band 0 → 3:
-       95,74,51 → 85,64,43 → 75,55,36 → 64,46,32
-     Each step is opaque, so it covers the press screen and is measured flat:
-     secondary text runs 4.99:1 on the lightest and 7.70:1 on this one. */
-  background: var(--color-bronze-deep);
-  /* The interface onto the substrate is the drawing's ground line — heavier,
-     the way a section marks the boundary you build on. */
-  border-top: 2px solid var(--papir-dim);
-}
-.asm__band--3 .asm__fill {
-  background:
-    repeating-linear-gradient(45deg, transparent 0 21px, rgb(245 242 235 / 0.22) 21px 23px),
-    repeating-linear-gradient(-45deg, transparent 0 21px, rgb(245 242 235 / 0.22) 21px 23px);
+  --band-ground: var(--color-bronze-deep);
 }
 
 .asm__band--on .asm__fill {
@@ -773,16 +814,27 @@ button.asm__band {
    The band names its layer and the callout expands it; that shared word is the
    link between the drawing and the text. The terminal is the affordance —
    hollow means available, filled means probed. */
+/* THE NAME SITS ON A TAB OF THE SHEET'S OWN GROUND, never on the hatch. The
+   hatches run at the densities the drawing wants (a 0.6-alpha halftone dot,
+   a 0.55 caret), and a 13px glyph stroke landing on one of those measures
+   1.3:1 against the resting label — a quarter of the floor. Backing the name
+   with the sheet's own ground is what a real section drawing does with a
+   label over hatching, and it puts the contrast back on the ground itself:
+   4.99:1 on the lightest sheet, 7.70:1 on the deepest, paper higher still.
+   The inline-block box also keeps the tab off the terminal at the right. */
 .asm__band-label {
   position: relative;
   z-index: 1;
-  padding: var(--space-2) 2.9rem var(--space-2) var(--space-4);
+  margin-left: var(--space-4);
+  margin-right: 2.9rem;
+  padding: 0.35em 0.6em;
+  background: var(--band-ground);
   font-family: var(--font-mono);
   font-size: var(--type-label-size);
   font-weight: 500;
   letter-spacing: var(--type-label-ls);
   text-transform: uppercase;
-  color: var(--papir-dim); /* ≥9.3:1 on every stratum's hatch composite */
+  color: var(--papir-dim);
   transition: color var(--dur-tween) var(--ease-hover);
 }
 
@@ -821,71 +873,6 @@ button.asm__band {
 .asm__band--on .asm__node {
   background: var(--color-cut-dark);
   border-color: var(--color-cut-dark);
-}
-
-/* The cut planes BOUNDING the probed layer — drawn at its two interfaces, so
-   they mark the layer without crossing its name. Square end ticks at the left,
-   the site's own cut motif. */
-.asm__plane {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  border-top: 2px solid var(--color-cut-dark);
-  border-bottom: 2px solid var(--color-cut-dark);
-  opacity: 0;
-  transition: opacity var(--dur-tween) var(--ease-hover);
-  pointer-events: none;
-}
-.asm__plane::before,
-.asm__plane::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  width: 8px;
-  height: 8px;
-  background: var(--color-cut-dark);
-}
-.asm__plane::before {
-  top: 0;
-}
-.asm__plane::after {
-  bottom: 0;
-}
-
-.asm__band--on .asm__plane {
-  opacity: 1;
-}
-
-/* The leader: a hairline in the cut red reaching from the probed stratum across
-   the gap to its callout, with a terminal dot at the stratum's edge. One per
-   band, centred on its own band — see the note in the script block on why this
-   is CSS geometry rather than a measured position. Two columns only, where
-   there is a gap to cross. */
-.asm__leader {
-  position: absolute;
-  display: none;
-  left: 100%;
-  top: 50%;
-  margin-top: -0.5px;
-  width: var(--asm-gap);
-  height: 1px;
-  background: var(--color-cut-dark);
-  opacity: 0;
-  transition: opacity var(--dur-fast) var(--ease-hover);
-  pointer-events: none;
-}
-.asm__leader::before {
-  content: '';
-  position: absolute;
-  left: -3px;
-  top: -2.5px;
-  width: 6px;
-  height: 6px;
-  background: var(--color-cut-dark);
-}
-
-.asm__band--on .asm__leader {
-  opacity: 1;
 }
 
 /* --- the callouts ----------------------------------------------------------- */
@@ -1042,19 +1029,16 @@ button.asm__band {
     margin-bottom: var(--space-8);
   }
 
-  /* Index + preview: the drawing at 5fr against its callout at 7fr, the
-     callout CENTRED on the drawing's height so the tall strata read as the
-     section's subject rather than as a list with dead air beside it. */
+  /* An even split now, not 5/7: the exploded stack needs the room the sliding
+     sheet swings into, and the callout no longer has a leader reaching to it,
+     so it stands as an equal half rather than as the drawing's annotation. */
   .asm {
-    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    grid-template-columns: minmax(0, 6fr) minmax(0, 6fr);
     column-gap: var(--asm-gap);
     align-items: center;
   }
-  .asm__leader {
-    display: block;
-  }
   /* The callout swaps content on selection; reserving the tallest keeps the
-     drawing from shifting as the leader swings. */
+     drawing from shifting as the selection moves. */
   .asm__panels {
     min-height: 12rem;
   }
