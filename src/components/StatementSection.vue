@@ -333,10 +333,12 @@ const WORD_2 = 'Povsod'
    sheet's own frame padding) costs ~290px of it. That leaves ~420px for the
    pair, which is a 228px first course — and 78cqw lands there. Re-derive if
    any of those fixed costs change. */
-/* On phones the menu control IS the sheet's top-right register: it centres on
-   that corner and punches the frame there (SiteMasthead), so a crop mark under
-   it would only be a line the control has to cover. Desktop has no such
-   control and keeps all three. */
+/* Phones give BOTH top corners to marks: the pd stamp on the left and the menu
+   control mirroring it on the right (SiteMasthead). The crop mark that would
+   sit under the control overlaps it — the mark spans 24px down from the corner
+   and the glyph's ink sits 29.6–45.6px down — so it stands down there, exactly
+   as the stamp's own corner has no crop mark. Desktop has no such control and
+   keeps all three. */
 @media (max-width: 899.98px) {
   .stmt__crop--tr {
     display: none;

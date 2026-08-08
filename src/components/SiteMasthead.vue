@@ -371,7 +371,11 @@ onUnmounted(() => {
     /* The strip the button stands in, plus air. 3rem left the wordmark
        touching the glyph at 375 (measured: brand + reserve ran 342px into a
        335px row, so the nowrap text ran under the control). */
-    padding-right: 4.25rem;
+    /* Widened again when the control moved into the corner: nesting it took
+       ~11px out of this strip and the lettering's clearance fell from 25.7px
+       to 16.1px (measured at 375). */
+    --brand-reserve: 5.2rem;
+    padding-right: var(--brand-reserve);
     color: var(--grafit);
     opacity: 0;
     transition:
@@ -395,19 +399,24 @@ onUnmounted(() => {
     opacity: 1;
   }
 
-  /* Open, from either face, it stands at hero scale — but SIZED TO FIT rather
-     than copied. The button now holds a fixed corner (see below), so the brand
-     has a fixed strip to live in, and at hero size it did not: "SpletnaPovsod"
-     measures 6.45em wide at this weight and tracking (measured at 100px), the
-     mark adds 0.78em and its gap 0.5em, so the row needs 7.73em plus the
-     button's strip. Solving that against the available width is the second
-     term below; whichever is smaller wins, so the wordmark shrinks a little on
+  /* Open, the wordmark is SIZED TO FIT rather than copied from the hero. The
+     control holds a fixed strip on the right, so the lettering has a fixed
+     width to live in, and at hero size it did not fit: "SpletnaPovsod"
+     measures 6.45em wide at this weight and tracking (measured at 100px) and
+     its gap adds 0.5em, so the text side needs 6.95em. The mark is NOT part of
+     that term — it is pinned to the hero's absolute size below, so it costs a
+     fixed 0.55 × --hero-display and must be subtracted, not scaled. (It was in
+     the term while the mark was em-sized; leaving it there after the mark went
+     fixed cost the lettering its clearance — measured 11.9px to the glyph.)
+     Whichever of the two is smaller wins, so the wordmark shrinks a little on
      the narrowest screens and is the hero's own size everywhere else. */
   .masthead--live.masthead--open .masthead__brand {
     opacity: 1;
     font-size: min(
       var(--hero-wordmark),
-      calc((100vw - 2 * var(--hero-inset) - 4.25rem) / 7.73)
+      calc(
+        (100vw - 2 * var(--hero-inset) - var(--brand-reserve) - 0.55 * var(--hero-display)) / 6.95
+      )
     );
   }
 
@@ -417,23 +426,48 @@ onUnmounted(() => {
     flex: 0 0 auto;
   }
 
+  /* OPEN, the brand's mark IS the hero's mark: same absolute size, same top,
+     so opening the menu does not move the logo — and the control opposite it
+     keeps mirroring the same box in both faces. The optical pull is dropped
+     here because the mark, not the lettering, is now the row's datum. */
+  .masthead--live.masthead--open .masthead__brand {
+    margin-top: 0;
+  }
+
+  .masthead--live.masthead--open .masthead__brandmark {
+    height: calc(0.55 * var(--hero-display));
+  }
+
   .masthead--live .masthead__toggle {
     display: inline-flex;
     align-items: center;
-    /* THE SHEET'S TOP-RIGHT REGISTER. The hero is a drafting sheet whose frame
-       is inset by --hero-inset on every side (StatementSection), so its
-       top-right corner — where the two drawn lines meet — sits at exactly
-       (--hero-inset, --hero-inset) from the viewport. The glyph centres on
-       that intersection: the pd stamp holds the sheet's top-LEFT corner and
-       this holds its top-right, which is why the hero drops its own crop mark
-       there on phones.
+    /* THE CONTROL MIRRORS THE MARK. The pd mark stands at the sheet's
+       top-left with its ink starting on --hero-inset and standing
+       0.55em of --hero-display tall (StatementSection; the intro veil lands
+       on exactly that box). This is its reflection: ink flush to the RIGHT
+       inset, centred on the SAME line — half the mark's height below the
+       frame's top edge. Sitting on the corner itself put it a mark's-radius
+       too high, which is what read as not meeting the drawing.
        The anchor is the MASTHEAD (fixed at the viewport's top), not the row,
        so the position is identical in the hero face and the open face — the
-       control never moves when the menu opens. Pinned, the bar is thin and it
-       centres in the bar instead (below). */
+       control never moves when the menu opens, and neither does the mark it
+       mirrors (the open brand's own mark is pinned to the same box below).
+       Pinned, the bar is thin and it centres in the bar instead. */
     position: absolute;
-    top: var(--hero-inset);
-    right: calc(var(--hero-inset) - 1.5px);
+    /* THE CORNER GAP — one number, used on both axes, so the glyph sits
+       equidistant from the two drawn lines. Vertically its centre is half the
+       mark's height below the top line, which leaves (that − half the ink) of
+       air above it; the same figure then comes off the right, so the ink nests
+       INSIDE the corner instead of standing on the right line.
+
+       6.5px, not 8: the bracket's INK is 13px of the glyph's 16px box (the
+       paths run y 1.5–14.5 of a 16-unit viewBox). Measuring the box instead of
+       the ink left the two gaps 2px apart — 11.1 above against 9.1 right. */
+    --corner-gap: calc(0.275 * var(--hero-display) - 6.5px);
+    top: calc(var(--hero-inset) + 0.275 * var(--hero-display));
+    /* −1.5px is the bracket's own inset inside its viewBox: it puts the INK,
+       not the box, at the intended distance. */
+    right: calc(var(--hero-inset) - 1.5px + var(--corner-gap));
     transform: translateY(-50%);
     /* Ink, not box: the glyph is flush right and pulled out by the 1.5px its
        own viewBox holds inside, so its rule ends on exactly the inset the
@@ -496,24 +530,10 @@ onUnmounted(() => {
     overflow: visible;
   }
 
-  /* In the hero face the control sits ON the sheet's frame corner, so it
-     punches the two lines with its own patch of paper — the same device the pd
-     stamp uses at the opposite corner. Not needed in the other two faces: the
-     pinned bar and the open menu both paint their own ground across the whole
-     width, which covers the frame already. */
-  .masthead--live:not(.masthead--pinned):not(.masthead--open) .masthead__glyph {
-    --punch: 0.34rem;
-    box-sizing: content-box;
-    padding: 0.3rem var(--punch);
-    /* The patch grows the box, and the box is flush right — so without this
-       the INK moves left by exactly the padding and the glyph stops meeting
-       the frame's right line (measured 4.9px short). One variable drives both
-       so they cannot drift apart. Only the padding is compensated here: the
-       button already carries the −1.5px that pulls the glyph's own viewBox
-       inset off the edge. */
-    margin-right: calc(var(--punch) * -1);
-    background: var(--list);
-  }
+  /* NO PAPER PUNCH. The glyph used to stand on the frame's right line and cut
+     both lines with a patch of paper behind it; nested inside the corner it
+     crosses nothing, so the patch would only be an eraser taking bites out of
+     a drawing that should run unbroken to its corner. */
 
   .masthead__gr {
     transition:
