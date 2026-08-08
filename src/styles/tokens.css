@@ -381,8 +381,18 @@
 
   /* The opening band's one margin, on all four sides. The masthead reads it
      too; THE VEIL'S LANDING FORMULA (index.html) copies it as literals —
-     change either, change both. Unchanged until the hero redesign. */
+     change either, change both. */
   --hero-inset: clamp(1.25rem, 4.9vw, 4.5rem);
+
+  /* The hero monument's display size — the design system's display-XL role
+     fitted to this lettering (»SPLETNA«, 7 caps, must clear the phone menu
+     button's corner strip): ~76px at 390, 132 through the tablet band, 164
+     at ≥1444 (desktop override below). THE VEIL COPIES THESE CLAMPS as its
+     landing-height literals (index.html) — change either, change both.
+     Deliberately separate from --hero-wordmark: that token still sizes the
+     phone masthead's open-menu lettering, which pairs with the OLD hero and
+     is re-cut in the masthead's own redesign step. */
+  --hero-display: clamp(3rem, 0.25rem + 16vw, 8.25rem);
   --hero-wordmark: clamp(1.7rem, -0.6rem + 12.7vw, 5rem);
   --hero-wordmark-wdth: 88%;
   --hero-wordmark-scaley: 1;
@@ -393,11 +403,12 @@
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Desktop has no button sharing the wordmark's row, so it keeps the brand's
-   own monumental cut at full width and no stretch. (Legacy — hero redesign
-   pending.) */
+/* Desktop: the monument runs to the reference's 164px ceiling (132 at 900
+   → 164 from ~1444). --hero-wordmark keeps its legacy desktop cut for the
+   masthead pairing (see above). */
 @media (min-width: 900px) {
   :root {
+    --hero-display: clamp(8.25rem, 4.9rem + 5.93vw, 10.25rem);
     --hero-wordmark: clamp(1.6rem, 0.52rem + 5.9vw, 6rem);
     --hero-wordmark-wdth: var(--wdth-monument);
     --hero-wordmark-scaley: 1;

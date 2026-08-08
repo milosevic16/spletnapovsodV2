@@ -31,11 +31,12 @@
          crossfades onto it.
 
          THE LANDING IS A COPIED FORMULA, NOT A MEASUREMENT: left/top/height
-         below repeat --hero-inset, --hero-wordmark (tokens.css) and the
-         desktop masthead's 45px flow height as literals. StatementSection's
-         own comment proves mark-ink-top = inset by construction (its -0.11em
-         pull cancels the mark's centring offset). Change any of those and
-         these literals change with them — each side names the other.
+         below repeat --hero-inset, --hero-display (tokens.css) and the
+         desktop masthead's 45px flow height as literals. The hero's mark now
+         stands ALONE above the wordmark lines (StatementSection), so its SVG
+         box IS its ink: ink-left = ink-top = the inset exactly, height =
+         0.55em of --hero-display. Change any of those and these literals
+         change with them — each side names the other.
 
          TIMELINE (base.css settle delays and App.vue's cleanup are keyed to
          it — change one, change all): type 0.12+i*0.065s (done ~0.9s), hold,
@@ -56,20 +57,18 @@
           veil-done 0.01s linear 3.2s forwards;
         /* Where the mark lands = the hero brand mark, by shared formula:
            left/top: --hero-inset (+ the desktop masthead's 45px in-flow
-           strip); height: 0.78em of --hero-wordmark. Paired with tokens.css
-           and StatementSection.vue — change there, change here. */
+           strip); height: 0.55em of --hero-display — the mark stands alone
+           above the wordmark lines, so its SVG box top IS its ink top.
+           Paired with tokens.css and StatementSection.vue — change there,
+           change here. */
         --land-left: clamp(1.25rem, 4.9vw, 4.5rem);
-        /* + 0.06em of the wordmark font: the phone brand row pads itself by
-           (--hero-wordmark-scaley 1.12 − 1) × 0.5em for the text's vertical
-           stretch, which pushes the mark down by exactly that (measured:
-           2.3px at 375). Desktop scaleY is 1, so its formula carries no term. */
-        --land-top: calc(clamp(1.25rem, 4.9vw, 4.5rem) + 0.06 * clamp(1.7rem, -0.6rem + 12.7vw, 5rem));
-        --land-h: calc(0.78 * clamp(1.7rem, -0.6rem + 12.7vw, 5rem));
+        --land-top: clamp(1.25rem, 4.9vw, 4.5rem);
+        --land-h: calc(0.55 * clamp(3rem, 0.25rem + 16vw, 8.25rem));
       }
       @media (min-width: 900px) {
         #veil {
           --land-top: calc(45px + clamp(1.25rem, 4.9vw, 4.5rem));
-          --land-h: calc(0.78 * clamp(1.6rem, 0.52rem + 5.9vw, 6rem));
+          --land-h: calc(0.55 * clamp(8.25rem, 4.9rem + 5.93vw, 10.25rem));
         }
       }
       /* The word: one flex row, everything in em so the fly can scale the
