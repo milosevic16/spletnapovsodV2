@@ -122,12 +122,14 @@ onUnmounted(() => {
             :class="[`pil__cell--${n}`, { 'pil__art--staged': staged === n, 'pil__art--open': live && open === n }]"
             aria-hidden="true"
           >
-            <!-- The seam: the drawing names itself when it opens. -->
-            <span class="pil__seam">{{ item.title }}</span>
+            <!-- The staged pillar's name, ABOVE the drawing — a label, not a
+                 layer (visual only; the row's h3 is the accessible name). -->
+            <span class="pil__stage-title">{{ item.title }}</span>
 
             <!-- design — a composition study: guides, masses, type rules,
-                 the red registration. -->
-            <svg v-if="item.id === 'design'" class="xp" viewBox="0 0 800 640">
+                 the red registration. The canvas carries ±60px headroom so
+                 the exploded layers never cross the viewBox edge. -->
+            <svg v-if="item.id === 'design'" class="xp" viewBox="0 -60 800 760">
               <g class="xp__l xp__l--1">
                 <rect x="120" y="120" width="560" height="400" class="xp-line" />
                 <line x1="120" y1="220" x2="680" y2="220" class="xp-hair" />
@@ -163,7 +165,7 @@ onUnmounted(() => {
 
             <!-- security — the seal in section: perimeter, gauge rings, the
                  pin row over the keyway, the red seal arc. -->
-            <svg v-else-if="item.id === 'security'" class="xp" viewBox="0 0 800 640">
+            <svg v-else-if="item.id === 'security'" class="xp" viewBox="0 -60 800 760">
               <g class="xp__l xp__l--1">
                 <rect x="160" y="80" width="480" height="480" class="xp-line" />
                 <line v-for="t in 12" :key="t" :x1="160 + (t - 1) * 43.6" y1="80"
@@ -196,7 +198,7 @@ onUnmounted(() => {
 
             <!-- seo — the page radiating: the document node, detection arcs,
                  the constellation, the red beacon. -->
-            <svg v-else class="xp" viewBox="0 0 800 640">
+            <svg v-else class="xp" viewBox="0 -60 800 760">
               <g class="xp__l xp__l--1">
                 <rect x="120" y="240" width="150" height="190" class="xp-line" />
                 <line x1="140" y1="272" x2="250" y2="272" class="xp-rule" />
@@ -452,19 +454,23 @@ button.pil__row {
 .xp__l {
   transition: transform 480ms var(--ease-spring);
 }
+/* Travels sized to the canvas' ±60px headroom: the topmost stroke (security's
+   perimeter ticks, y 64) lands at −20 ≥ −60, the deepest (design's red frame,
+   y 504 + 92) at 596 ≤ 700 — nothing ever crosses the viewBox edge, so the
+   explosion can never clip. */
 .pil__art--open .xp__l--1 {
-  transform: translateY(-96px);
+  transform: translateY(-84px);
 }
 .pil__art--open .xp__l--2 {
-  transform: translateY(-34px);
+  transform: translateY(-30px);
   transition-delay: 60ms;
 }
 .pil__art--open .xp__l--3 {
-  transform: translateY(40px);
+  transform: translateY(36px);
   transition-delay: 120ms;
 }
 .pil__art--open .xp__l--4 {
-  transform: translateY(108px);
+  transform: translateY(92px);
   transition-delay: 180ms;
 }
 
@@ -483,33 +489,21 @@ button.pil__row {
   fill: var(--grafit-2);
 }
 
-/* The seam: the drawing names itself in display type behind the parted
-   layers. Ghost ink — theatre, not content (aria-hidden host). */
-.pil__seam {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-inline: 8%;
-  text-align: center;
+/* The staged pillar's name, above its drawing — a label in flow, never baked
+   into the picture. It travels with its art cell (crossfades with it), so the
+   stage always names what it shows. */
+.pil__stage-title {
+  display: block;
   font-family: var(--font-sans);
-  font-size: clamp(1.75rem, 1.2rem + 2.2vw, 3.25rem);
-  font-weight: 400;
-  line-height: 0.9;
-  letter-spacing: -0.03em;
+  font-size: clamp(1.25rem, 1rem + 1vw, 1.75rem);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
   text-transform: uppercase;
-  color: var(--ghost);
-  opacity: 0;
-  transform: scale(0.985);
-  transition:
-    opacity 280ms var(--ease-spring) 200ms,
-    transform 280ms var(--ease-spring) 200ms;
-  pointer-events: none;
-}
-.pil__art--open .pil__seam {
-  opacity: 1;
-  transform: scale(1);
+  color: var(--grafit);
+  padding-bottom: var(--space-2);
+  border-bottom: var(--divider-width) solid var(--mreza-strong);
+  margin-bottom: var(--space-3);
 }
 
 /* --- the panels -------------------------------------------------------------- */
@@ -624,6 +618,11 @@ button.pil__row {
   .pil--live .pil__art--open {
     display: block;
   }
+  /* The row directly above already names the drawing — a stage label here
+     would say it twice in a row. */
+  .pil__stage-title {
+    display: none;
+  }
 }
 
 /* --- desktop: index + preview (30 / 68) -------------------------------------- */
@@ -671,15 +670,19 @@ button.pil__row {
 
   /* …and the three drawings stack into ONE absolute stage over the right
      column — out of the grid's track sizing on purpose (see min-height
-     above) — letterboxed and vertically centred against the whole body. */
+     above). PINNED to the top, with the rest-state height: when a panel
+     opens and the body grows, the stage must NOT re-centre against the new
+     height (measured: it slid ~580px down and out of the viewport — the
+     visitor never saw the explosion they had just asked for). */
   .pil__art {
     position: absolute;
     top: 0;
-    bottom: 0;
+    height: 34rem;
     left: calc((100% - var(--space-8)) * 0.3061 + var(--space-8));
     right: 0;
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
     opacity: 0;
     transition: opacity var(--dur-fast) linear;
     pointer-events: none;
@@ -687,6 +690,8 @@ button.pil__row {
   }
 
   .pil__art .xp {
+    flex: 1;
+    min-height: 0;
     width: 100%;
     height: 100%;
   }
