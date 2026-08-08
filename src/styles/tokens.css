@@ -140,6 +140,16 @@
   --color-bronze-2: #5a4530; /* insets on dark go LIGHTER, never darker */
   --color-bronze-line: #96784f; /* the dark world's hairline — line duty */
 
+  /* THE CODE INK. The source half of Tradicija speaks in a different voice
+     from the rendered half beside it, and that difference is the point: one
+     is the page, the other is what the machine receives. Paper-dim (#c6c9c3)
+     was a cool grey sitting on warm bronze — legible but mismatched, and only
+     1.50:1 away from the paper text opposite it, so the two halves read as
+     the same ink at two brightnesses. This amber is warm enough to belong to
+     the bronze, far enough from paper (1.32:1) to read as its own register,
+     and measures 8.72:1 on the ground it sits on. */
+  --color-code: #e6d3a3;
+
   /* The accent — the cut red. JOBS: the scanline/beam, the slider thumb,
      the pd mark, the primary CTA, focus rings. Never a status colour, never
      sprinkled. */

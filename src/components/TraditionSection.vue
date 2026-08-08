@@ -507,14 +507,14 @@ onUnmounted(() => {
   position: absolute;
   inset: 0;
   z-index: 1;
-  /* One step off the section's own ground: the two halves read as different
-     material even where the beam has passed off-screen. It keeps the original
-     relationship — the machine half sits LIGHTER than the band — now in the
-     band's own family rather than the cool near-black it inherited, which
-     read as a cold panel dropped into a warm section. Being an opaque child
-     it covers the press screen, so this is measured flat: paper-dim mono on
-     it is 5.39:1. */
-  background: var(--color-bronze-2);
+  /* One step off the section's own ground, and now DOWN rather than up: the
+     machine half sitting lighter than the band made the two read as
+     mismatched brightnesses of one surface rather than as two surfaces. Going
+     deeper instead is both quieter (1.13:1 apart, so the halves differ
+     without competing) and truer — the source is what lies under the page.
+     Being an opaque child it covers the press screen, so it is measured
+     flat. */
+  background: var(--color-bronze-deep);
   clip-path: inset(0 0 0 calc(var(--scan, 55) * 1%));
   overflow: hidden;
 }
@@ -527,7 +527,9 @@ onUnmounted(() => {
 
 .trad__line {
   display: block;
-  color: var(--papir-dim); /* 11.9:1 on the source ground */
+  /* The machine's own voice — see --color-code. 8.72:1 on the source
+     ground, and deliberately unlike the paper ink opposite it. */
+  color: var(--color-code);
   font-size: 0.8125rem;
   line-height: 1.75;
   overflow-wrap: anywhere;
