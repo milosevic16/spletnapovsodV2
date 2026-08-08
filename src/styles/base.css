@@ -228,23 +228,60 @@ textarea {
    pseudo-element, no extra DOM, no stacking context, and cannot disturb the
    clipped and z-indexed layers these sections already run.
 
-   IT MUST STAY QUIET. At ~7% dot coverage and 5.5% ink the average lift is a
-   fraction of a percent — the screen is felt as texture and changes no
-   contrast pairing (measured after applying). It is a tint, not a pattern.
+   THE DOTS ARE EMBOSSED, NOT FLAT. A single-tone dot can only ever read as a
+   tint; relief needs a lit side and a shadowed one. So every lattice point is
+   drawn TWICE — a highlight, and a shadow offset down-right by --press-relief
+   — with the highlight stacked on top, which leaves the shadow showing as a
+   crescent on the lower right of each dot. One light source, top-left,
+   consistent across the whole field: that is the whole trick, and it is why
+   the screen now reads as pressed into the ground rather than printed on it.
+
+   Four layers, one 45° lattice: highlight + shadow at the cell origin, and
+   the same pair at the half-cell stagger. A single background-size and
+   background-repeat govern all four, so the relief can never drift out of
+   register with the dots.
+
+   IT STAYS A TINT, NOT A PATTERN. The shadow only ever DARKENS a dark ground,
+   so it cannot cost contrast; the highlight is the binding one, and at 13% on
+   the worst ground it still leaves paper well clear of its floor (measured
+   after applying). Strength and relief are two knobs: --press-hi/--press-lo
+   for how deep the emboss reads, --press-cell for its frequency.
 
    Sections opt in with the class AND must set `background-color`, never the
    `background` shorthand: the shorthand resets background-image, and a scoped
    component rule would silently win over this one. */
 .press {
-  --press-ink: rgb(245 242 235 / 0.055);
-  --press-cell: 7px;
-  background-image:
-    radial-gradient(circle, var(--press-ink) 0.75px, transparent 0.9px),
-    radial-gradient(circle, var(--press-ink) 0.75px, transparent 0.9px);
+  /* Relief is the DIFFERENCE between these two, so depth and legibility are
+     not actually in tension: the shadow only ever darkens a dark ground and
+     can be spent freely, while the highlight is the one that costs contrast.
+     Measured at hi 0.13 the accent on a highlight dot fell to 3.23:1 against
+     a 3:1 floor — too close to ship. Moving weight from the highlight into
+     the shadow (0.13/0.30 → 0.11/0.34) makes the emboss DEEPER and buys the
+     margin back at the same time. */
+  --press-hi: rgb(245 242 235 / 0.11);
+  --press-lo: rgb(0 0 0 / 0.34);
+  --press-cell: 9px;
+  --press-r: 1.15px;
+  --press-relief: 1px;
+  --press-dot-hi: radial-gradient(
+    circle,
+    var(--press-hi) var(--press-r),
+    transparent calc(var(--press-r) + 0.35px)
+  );
+  --press-dot-lo: radial-gradient(
+    circle,
+    var(--press-lo) var(--press-r),
+    transparent calc(var(--press-r) + 0.35px)
+  );
+  background-image: var(--press-dot-hi), var(--press-dot-lo), var(--press-dot-hi),
+    var(--press-dot-lo);
   background-size: var(--press-cell) var(--press-cell);
   background-position:
     0 0,
-    calc(var(--press-cell) / 2) calc(var(--press-cell) / 2);
+    var(--press-relief) var(--press-relief),
+    calc(var(--press-cell) / 2) calc(var(--press-cell) / 2),
+    calc(var(--press-cell) / 2 + var(--press-relief))
+      calc(var(--press-cell) / 2 + var(--press-relief));
 }
 
 /* --- the grain ------------------------------------------------------------ */
@@ -292,8 +329,8 @@ textarea {
      compositor-only (see the contract above): the jitter owns `transform`,
      the glitch owns `opacity`, and they never touch the same property. */
   animation:
-    grain-jitter 3.1s steps(1, end) infinite,
-    grain-glitch 13.7s steps(1, end) infinite;
+    grain-jitter 5.3s steps(1, end) infinite,
+    grain-glitch 23s steps(1, end) infinite;
 }
 
 /* Discrete positions on an UNEVEN clock — steps(1, end) holds each keyframe's
@@ -305,31 +342,25 @@ textarea {
   0% {
     transform: translate(0, 0);
   }
-  5% {
-    transform: translate(-88px, 46px);
+  4% {
+    transform: translate(-34px, 18px);
   }
-  10% {
-    transform: translate(62px, -104px);
-  }
-  15% {
-    transform: translate(-104px, -72px);
+  8% {
+    transform: translate(23px, -40px);
   }
   /* still spell */
-  38% {
-    transform: translate(96px, 88px);
+  41% {
+    transform: translate(-38px, -26px);
   }
-  43% {
-    transform: translate(-42px, -110px);
+  45% {
+    transform: translate(30px, 33px);
   }
   /* still spell */
-  66% {
-    transform: translate(110px, -28px);
+  74% {
+    transform: translate(41px, -12px);
   }
-  71% {
-    transform: translate(-96px, 74px);
-  }
-  76% {
-    transform: translate(34px, 108px);
+  78% {
+    transform: translate(-27px, 28px);
   }
   /* still spell */
   100% {
@@ -337,37 +368,35 @@ textarea {
   }
 }
 
-/* THE OCCASIONAL GLITCH — interference, not decoration: the static flares and
-   drops out for two or three frames, twice per cycle, and sits at its resting
-   strength the other ~96% of the time. Opacity only, so it costs nothing and
-   cannot break the performance contract; the jitter is simultaneously kicking
-   the field, so a flare lands as a burst of brighter static rather than a
-   uniform fade. Amplitudes are deliberately near-threshold — the brief asked
-   for subtle, and the loud version was rejected on sight. */
+/* THE OCCASIONAL GLITCH — interference, not decoration: the static shifts for
+   two or three frames, ONCE per cycle now, and sits at its resting strength
+   the other ~99% of the time. Opacity only, so it costs nothing and cannot
+   break the performance contract.
+
+   CALMED (owner's call): the cycle went 13.7s → 23s, the flare 1.7× → 1.2×
+   the resting strength and the dropout 0.45× → 0.8×, and the second event of
+   the pair is gone. Every value is now expressed AGAINST --noise-opacity
+   rather than hardcoded, so the resting strength has one source of truth —
+   change the token and the whole behaviour scales with it, including the
+   reduced-motion state, which is simply the token with nothing running. */
 @keyframes grain-glitch {
   0% {
-    opacity: 0.1;
+    opacity: var(--noise-opacity);
   }
-  64% {
-    opacity: 0.17;
+  72% {
+    opacity: calc(var(--noise-opacity) * 1.2);
   }
-  64.6% {
-    opacity: 0.045;
+  72.7% {
+    opacity: calc(var(--noise-opacity) * 0.8);
   }
-  65.2% {
-    opacity: 0.13;
+  73.4% {
+    opacity: calc(var(--noise-opacity) * 1.08);
   }
-  65.8% {
-    opacity: 0.1;
-  }
-  88.5% {
-    opacity: 0.15;
-  }
-  89.1% {
-    opacity: 0.1;
+  74.1% {
+    opacity: var(--noise-opacity);
   }
   100% {
-    opacity: 0.1;
+    opacity: var(--noise-opacity);
   }
 }
 
