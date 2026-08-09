@@ -68,6 +68,10 @@ const visibleClips = new Set<HTMLVideoElement>()
  *  (the 300ms open) plus a beat. Shares its budget with CLOSE_HOLD_MS below. */
 const FOLD_HOLD_MS = 340
 let foldTimer = 0
+/** The end of the active hold window, as a timestamp — never a flag. The
+ *  observer checks it before auto-playing; a stale value lies harmlessly in
+ *  the past. */
+let holdUntil = 0
 
 /**
  * A FOLD IS THE MOST EXPENSIVE THING THIS SECTION DOES, and on a phone it is
@@ -78,35 +82,31 @@ let foldTimer = 0
  * see — they are ambient loops, not content — and takes the decode out of the
  * frame budget at exactly the moment the frame budget is under pressure.
  *
- * Playback comes back through the observer's own set, so this can never leave
- * a clip paused that the observer would not itself have paused; and the observer keeps
- * running throughout, so scrolling the plate away and back restarts it anyway.
+ * Playback comes back through the observer's own set — the settle resumes
+ * EVERY clip the observer says is on screen, not a remembered list, so a
+ * second toggle inside the window cannot strand the first toggle's clips
+ * paused (found in review: the old per-call list died with its cleared
+ * timer). The observer also respects the window in the other direction: a
+ * plate whose box changes mid-fold re-fires the callback, and without the
+ * holdUntil check it would play() the very clip the hold had just paused.
  * Under reduced motion there is nothing to hold: the fold lands on one frame,
  * so the window is zero and the framing must not linger either.
  */
 function holdFold(prev: number, next: number) {
   const ms = prefersReducedMotion() ? 0 : FOLD_HOLD_MS
   settling.value = prev >= 0 && prev !== next && ms > 0 ? prev : -1
-  const held: HTMLVideoElement[] = []
-  for (const i of [prev, next]) {
-    if (i < 0) continue
-    const v = clipAt(i)
-    if (v && ms > 0) {
-      v.pause()
-      held.push(v)
+  holdUntil = ms > 0 ? performance.now() + ms : 0
+  if (ms > 0) {
+    for (const i of [prev, next]) {
+      if (i < 0) continue
+      clipAt(i)?.pause()
     }
   }
   clearTimeout(foldTimer)
   foldTimer = fx.setTimeout(() => {
     settling.value = -1
-    for (const v of held) if (visibleClips.has(v)) void v.play().catch(() => {})
+    for (const v of visibleClips) if (v.paused) void v.play().catch(() => {})
   }, ms)
-}
-
-function choose(i: number) {
-  const prev = open.value
-  open.value = prev === i ? -1 : i
-  nextTick(() => holdFold(prev, open.value))
 }
 
 /**
@@ -116,6 +116,31 @@ function choose(i: number) {
  * the other.
  */
 const CLOSE_HOLD_MS = 340
+
+function choose(i: number) {
+  const prev = open.value
+  const face = faceAt(i)
+  const anchor = face?.getBoundingClientRect().top
+  open.value = prev === i ? -1 : i
+  nextTick(() => {
+    holdFold(prev, open.value)
+    // HOLD THE TAPPED FACE STILL — the same invariant closeFromPanel keeps,
+    // which a switch was violating: collapsing the open panel ABOVE the tapped
+    // plate removed a screenful of document over the reader's scroll offset
+    // and threw them down the page (found in review). The face survives both
+    // states, so it is its own anchor; when everything that moves is below it
+    // the drift reads zero and the loop idles. Desktop rows never drift — the
+    // wall's height is fixed — so this is inert there by construction.
+    if (prev < 0 || !face || anchor === undefined) return
+    const until = performance.now() + CLOSE_HOLD_MS
+    const hold = () => {
+      const drift = face.getBoundingClientRect().top - anchor
+      if (drift) window.scrollBy({ top: drift, behavior: 'instant' })
+      if (performance.now() < until) fx.raf(hold)
+    }
+    fx.raf(hold)
+  })
+}
 
 /**
  * CLOSING MUST NOT MOVE THE READER, and on phones it did — badly. »Zapri« sits
@@ -133,9 +158,10 @@ const CLOSE_HOLD_MS = 340
  *
  * Per frame rather than once at the end, because the fold animates: measure the
  * anchor's drift, take exactly that out of the scroll position, repeat for the
- * transition's length. `behavior: 'instant'` is required, not stylistic —
- * base.css turns on `scroll-behavior: smooth` at ≥1200px and a corrective loop
- * chasing an animated target would never settle. Under reduced motion the
+ * transition's length. `behavior: 'instant'` is belt and braces: nothing here
+ * sets `scroll-behavior: smooth` today, but a corrective loop chasing an
+ * animated target under it would never settle, so the loop must not depend on
+ * that staying true. Under reduced motion the
  * collapse lands on the first frame, so the first pass corrects everything and
  * the rest find no drift.
  */
@@ -212,9 +238,14 @@ function wireClips(host: HTMLElement) {
         const v = e.target as HTMLVideoElement
         if (e.isIntersecting) {
           visibleClips.add(v)
-          // play() rejects when the tab is backgrounded or the decode is
-          // refused; the poster stays, which is a fine resting state.
-          void v.play().catch(() => {})
+          // Mid-fold the callback re-fires for the very plates whose boxes are
+          // animating; starting a clip the hold just paused defeats the hold,
+          // so inside the window arrival only registers — the settle plays it.
+          if (performance.now() >= holdUntil) {
+            // play() rejects when the tab is backgrounded or the decode is
+            // refused; the poster stays, which is a fine resting state.
+            void v.play().catch(() => {})
+          }
         } else {
           visibleClips.delete(v)
           v.pause()
@@ -1160,7 +1191,11 @@ button.pil__face {
   /* And the text's own ground is the fold's, so it covers the text and nothing
      else. It needs no fade of its own: the fold grows out of the ramp's dense
      end, so the two meet at the same value and read as one surface. */
-  .pil__plate--clip.pil__plate--open .pil__fold {
+  /* :is(--open, --settling), like every other open-state rule: the wash has
+     to survive the leave or the collapsing text sits on bare picture for the
+     length of its own animation (found in review — this was the one open-state
+     rule the settling machinery never reached). */
+  .pil__plate--clip:is(.pil__plate--open, .pil__plate--settling) .pil__fold {
     background: color-mix(
       in srgb,
       var(--plate-wash, var(--grafit)) var(--plate-alpha, 80%),

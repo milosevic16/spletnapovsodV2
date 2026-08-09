@@ -71,8 +71,12 @@ const SWEEP_MS = 1600
  * source, and someone who scrolled in finds it already going.
  */
 const SWEEP_HOLD_MS = 1100
-/** Fires when this share of the screen is visible. Deliberately modest: a tall
- *  screen on a short phone viewport can never reach a high threshold. */
+/** Fires when this share of the screen is visible. Deliberately modest — and
+ *  CAPPED AT WIRE TIME against the real geometry: 0.35 of a screen taller than
+ *  ~2.86 viewports can never be visible at once, so on the smallest phones the
+ *  fixed share was unreachable and the sweep never fired at all (the house
+ *  IO-threshold trap, found in review). The cap is 90% of the share that CAN
+ *  be reached, so the beat still demands most of what the viewport can show. */
 const SWEEP_VISIBLE = 0.35
 
 /** Safety net for the ground fade: if the observer never delivers a callback,
@@ -127,6 +131,25 @@ function takeOver() {
 function onGrip() {
   takeOver()
   if (gripEl.value) scan.value = Number(gripEl.value.value)
+}
+
+/** Only keys that OPERATE a range are a hand on the control. A keyboard user
+ *  tabbing through the page lands here on the way past, and Tab must not
+ *  count — it disarmed the sweep permanently for exactly the visitors who
+ *  never touched the value (found in review). */
+const GRIP_KEYS = new Set([
+  'ArrowLeft',
+  'ArrowRight',
+  'ArrowUp',
+  'ArrowDown',
+  'Home',
+  'End',
+  'PageUp',
+  'PageDown',
+])
+
+function onGripKeys(e: KeyboardEvent) {
+  if (GRIP_KEYS.has(e.key)) takeOver()
 }
 
 /**
@@ -316,7 +339,14 @@ onMounted(() => {
         }
       }
     },
-    { threshold: SWEEP_VISIBLE },
+    {
+      threshold: Math.min(
+        SWEEP_VISIBLE,
+        screen.value.offsetHeight > 0
+          ? (window.innerHeight / screen.value.offsetHeight) * 0.9
+          : SWEEP_VISIBLE,
+      ),
+    },
   )
   io.observe(screen.value)
 })
@@ -394,7 +424,7 @@ onUnmounted(() => {
                 class="asm__stack"
                 :role="live ? 'tablist' : undefined"
                 :aria-label="live ? invisible.feedback.layersLabel : undefined"
-                aria-orientation="vertical"
+                :aria-orientation="live ? 'vertical' : undefined"
                 @keydown="live && onProbeKeys($event)"
               >
                 <component
@@ -465,7 +495,7 @@ onUnmounted(() => {
           :aria-label="invisible.feedback.scanLabel"
           @input="onGrip"
           @pointerdown="takeOver"
-          @keydown="takeOver"
+          @keydown="onGripKeys"
         />
         <span v-else class="trad__grip-ghost" aria-hidden="true"></span>
         <span class="trad__end">{{ invisible.humanLabel }}</span>

@@ -14,9 +14,3 @@ export const SITE_NAME = 'SpletnaPovsod'
  */
 export const CONTACT_EMAIL = 'info@spletnapovsod.si'
 
-/** Portfolio reference URLs — live client sites. */
-export const REFERENCE_URLS = {
-  lemur: 'https://lemur.legal',
-  mercpeter: 'https://mercpeter.netlify.app',
-  bloctopus: 'https://bloctopus.net',
-} as const

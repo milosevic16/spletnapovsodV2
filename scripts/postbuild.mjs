@@ -25,10 +25,25 @@ const dist = join(process.cwd(), 'dist')
 const failures = []
 const fail = (page, msg) => failures.push(`${page}: ${msg}`)
 
-// Text-NODE escaping as Vue SSR performs it: & < > only — quotes stay raw.
-const escapeText = (s) => s.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+// Text escaping as Vue SSR actually performs it (@vue/shared escapeHtml):
+// all five of " & ' < > — the old three-character version would false-fail
+// the content guard the first time a copy string carried a straight quote.
+// Ampersand first on the way in, last on the way out, or entities double-escape.
+const escapeText = (s) =>
+  s
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
 const unescapeText = (s) =>
-  s.replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&quot;', '"').replaceAll('&amp;', '&')
+  s
+    .replaceAll('&lt;', '<')
+    .replaceAll('&gt;', '>')
+    .replaceAll('&quot;', '"')
+    .replaceAll('&#39;', "'")
+    .replaceAll('&apos;', "'")
+    .replaceAll('&amp;', '&')
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
 /** Attribute-order-agnostic: find tags matching all given attribute regexes. */

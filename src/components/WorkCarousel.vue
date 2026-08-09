@@ -47,8 +47,9 @@ const items = references.items
  */
 const AT_REST = 3
 
-/** Which plate the reader has brought forward BY TAPPING. -1 = none; on
- *  pointer devices this stays -1 forever and :hover does the work. */
+/** Which plate holds the majority: set by the pointer on hover-capable
+ *  devices (onPlatePoint) and by the first tap on touch (onPick). -1 = the
+ *  resting row, first plate majority. */
 const active = ref(-1)
 /** Devices with a real pointer take the majority on hover, so a tap there
  *  should follow the link at once. Read on mount — never at module scope. */
@@ -99,11 +100,18 @@ const HIDE_HOLD_MS = 440
  * above it, and that is the reveal doing its job: pinning the button there
  * would scroll the new work past the reader instead of showing it to them.
  */
+let holdGeneration = 0
+
 function toggle() {
   const closing = revealed.value
   const btn = moreEl.value
   const anchor = btn?.getBoundingClientRect().top
   revealed.value = !revealed.value
+  // Any press invalidates an older hold: a reader who closes and reopens
+  // within the hold window must not have the opening fought by a loop still
+  // pinning the button for the close (found in review — the reveal pushes the
+  // button down BY DESIGN, and the stale loop was scrolling that away).
+  const generation = ++holdGeneration
   // A plate that is being HIDDEN cannot keep the majority: pointerleave never
   // fires for an element that vanished, so the flag would survive the collapse
   // and pin every remaining plate at a fifth — measured, the row came back even
@@ -113,6 +121,7 @@ function toggle() {
   nextTick(() => {
     const until = performance.now() + HIDE_HOLD_MS
     const hold = () => {
+      if (generation !== holdGeneration) return
       const drift = btn.getBoundingClientRect().top - anchor
       if (drift) window.scrollBy({ top: drift, behavior: 'instant' })
       if (performance.now() < until) fx.raf(hold)
@@ -128,16 +137,24 @@ function srcset(id: string, ext: string, widths: number[]): string {
   return widths.map((w) => `/img/refs/${id}-${w}.${ext} ${w}w`).join(', ')
 }
 
-/** The majority plate's real measure at each breakpoint (see the wall block). */
-const SIZES = '(min-width: 900px) 62vw, 92vw'
+/** The majority plate's real measure at each breakpoint (see the wall block).
+ *  The phone term is the belt's: full bleed, edge to edge. */
+const SIZES = '(min-width: 900px) 62vw, 100vw'
 
 /**
- * Touch only: the first tap gives the plate the majority, the second follows it.
- * On a pointer device the pointer has already done the giving, so the tap goes
- * straight through.
+ * Touch only, DESKTOP ROW ONLY: the first tap gives the plate the majority,
+ * the second follows it. On a pointer device the pointer has already done the
+ * giving, so the tap goes straight through — and on the phone stack the tap
+ * must too, because the majority mechanic does not exist there: every --front
+ * rule lives inside the min-width: 900px block, so intercepting a phone tap
+ * bought nothing and cost the reader a second tap on every reference link
+ * (found in review; the media check below mirrors the CSS boundary). Checked
+ * at tap time rather than latched at mount, so rotating a tablet across the
+ * boundary cannot strand the wrong behaviour.
  */
 function onPick(e: MouseEvent, n: number) {
   if (hoverCapable.value || active.value === n) return
+  if (!window.matchMedia('(min-width: 900px)').matches) return
   e.preventDefault()
   active.value = n
 }
@@ -818,14 +835,9 @@ onUnmounted(() => {
 
   /* HELD BACK, NOT REMOVED. The two sit in the row at zero width, so revealing
      them is a flex-grow transition from 0 to 1 — they open out of the right-hand
-     edge rather than appearing. The negative margin cancels the gap a zero-width
-     item would still be given, so the collapsed row measures the same as a row
-     of three. */
-  .wkr__stage--collapsed .wkr__plate--extra {
-    flex: 0 0 0;
-    margin-left: calc(var(--space-3) * -1);
-    overflow: hidden;
-  }
+     edge rather than appearing. The rule itself lives at the END of this block
+     with a doubled class (see THE SPECIFICITY note there); an identical copy
+     that used to stand here was pure shadow and is gone. */
 
   /* Room for the sliver. Reserved whenever the control exists — not only while
      the row is short — so opening and closing the set never shifts the row's
@@ -904,6 +916,16 @@ onUnmounted(() => {
     flex: 0 0 0;
     margin-left: calc(var(--space-3) * -1);
     overflow: hidden;
+    /* Zero width is not out of the TAB ORDER: the two hidden links were still
+       focus stops — invisible focus, WCAG 2.4.11's exact failure — while the
+       control declared the set closed. visibility removes them from it, delayed
+       by the collapse's own 280ms so the plates are seen folding shut, instant
+       on the way back in (the transition list reverts to the base rule's the
+       moment the class lifts). The same pattern the phone belts use. */
+    visibility: hidden;
+    transition:
+      flex-grow 280ms var(--ease-spring),
+      visibility 0s 280ms;
   }
 
   /* A fifth of the row is a narrow plate, so the name block loses its indent

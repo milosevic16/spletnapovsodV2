@@ -3,10 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <!-- The opening band is the light ground — the surface the status bar
-         meets. Mirrors --surface (light state = the drafting paper); html/body
-         carry it too (base.css). -->
-    <meta name="theme-color" content="#ece8de" />
+    <!-- The surface the browser chrome meets. MIRRORS html/body (base.css
+         paints them --surface #f5f2eb): iOS samples the painted page and
+         ignores this meta, Android reads the meta — the two must agree or the
+         two platforms frame the page in different colours. It read #ece8de
+         from the era when the opening band carried the deeper beige. -->
+    <meta name="theme-color" content="#f5f2eb" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <!-- Above-the-fold font subsets. Latin only: the veil word, kicker and h1's
@@ -210,7 +212,12 @@
         to { opacity: 0; width: 0; }
       }
       @keyframes v-join {
-        to { margin-left: -0.4584em; }
+        /* The logo overlap is 44/144 of a 1.5em disc = 0.4584em — but the
+           p's own 0.06em margin-inline still stands between the two, so the
+           pull must absorb it too or the contraction stops 0.06em short of
+           the mark it crossfades onto (found in review, arithmetically:
+           0.06 − 0.4584 = −0.3984, not the −0.4584 the landing needs). */
+        to { margin-left: -0.5184em; }
       }
       @keyframes v-tail {
         to { transform: scaleY(0.7043); }

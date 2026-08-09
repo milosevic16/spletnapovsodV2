@@ -41,9 +41,9 @@ export interface FactLine {
 }
 
 /**
- * Every mono line the page displays, in the order the x-ray panel prints
- * them. `XraySection.vue` renders these verbatim inside `data-fact="<id>"`
- * nodes; the guard does the rest.
+ * Every mono line the page displays. Components render these verbatim inside
+ * `data-fact="<id>"` nodes (TraditionSection's source layer is the current
+ * consumer); the guard does the rest.
  *
  * This list stays EXACTLY as long as what the machine layer shows — the guard
  * is bidirectional, so an enumerated fact nobody displays fails the build just
@@ -59,4 +59,3 @@ export const factLines: FactLine[] = [
   { id: 'head-hreflang', text: `<link rel="alternate" hreflang="sl" href="${SITE_ORIGIN}/">`, artifact: 'head' },
 ]
 
-export const factsById = new Map(factLines.map((f) => [f.id, f]))
