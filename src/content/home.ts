@@ -150,17 +150,16 @@ export const references = {
   /** Screen-reader suffix on each reference link (target="_blank" warning). */
   newWindowNote: 'odpre se v novem zavihku',
   /**
-   * Interaction-and-attribute strings. The control labels name affordances
-   * that exist ONLY once the carousel hydrates — with JS off every plate is
-   * visible in flow and there are no controls — so they live under the
-   * `feedback` key the content guard skips by contract, exactly like the
-   * form's interaction strings.
+   * Interaction-and-attribute strings — never rendered as visible copy, which
+   * is why they live under the `feedback` key the content guard skips by
+   * contract, exactly like the form's interaction strings.
+   *
+   * The step-control labels (prev/next/pick) left with the carousel: the pile
+   * has no controls, because the browser's own focus order and a tap on a
+   * sheet are the whole navigation.
    */
   feedback: {
     regionLabel: 'Reference',
-    prevLabel: 'Prejšnji projekt',
-    nextLabel: 'Naslednji projekt',
-    pickLabel: 'Izberite projekt',
   },
   items: [
     {

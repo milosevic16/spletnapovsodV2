@@ -1,45 +1,48 @@
 <script setup lang="ts">
 /**
- * Reference — the built work drawn as a STREET ELEVATION.
+ * Reference — the built work drawn as a PILE OF SHEETS.
  *
- * Three finished sites stand side by side on ONE continuous datum, read left
- * to right the way an elevation of a street is read. Each is a real
- * screenshot in a thin ink frame (the built thing), with extension ticks
- * dropping across the datum at its edges — the dimension convention, and
- * deliberately WITHOUT a figure, because nothing here is a measurement we
- * could honestly put a number on. Under the datum each work carries a real
- * TITLE BLOCK — the site's own motif: sheet index, name, sector, address,
- * closed by a heavy right edge, so the three read as cells of one register
- * rather than as three cards.
+ * Three finished drawings lie on the table, each offset down-right from the
+ * one above it. You see the top sheet whole, the other two as the slivers they
+ * leave showing; point at one (or tap it) and it comes to the top of the pile.
+ * That is the whole interaction — a sheet is pulled, not a card is flipped.
  *
- * THE DATUM IS THE WHOLE IDEA: it is a border on each title block and the
- * works sit flush against each other, so the line runs unbroken from the
- * screen's left edge through all three. Nothing else joins them — no rail
- * outline, no gaps, no chrome.
+ * THE STEP IS THE TITLE BLOCK. The diagonal offset is not a chosen number: it
+ * equals the height of the title block, so every sheet's block lands exactly in
+ * the strip the sheet in front leaves open. The three blocks meet edge to edge
+ * and read as ONE ledger stepping down-right — the drawing's legend, in the
+ * gaps the pile itself makes. Change --rung and the whole composition follows.
  *
- * NAVIGATION IS THE BROWSER'S. The strip is a native horizontal scroll
- * region: swipe on touch, thin scrollbar and two step controls on pointer
- * devices, arrow keys when focused. No JS scroll-jacking, no autoplay
- * stealing the reader's place, no dots. JS contributes exactly two things —
- * the step controls, and lifting the trailing fade once the last work is
- * reached so it is never dimmed at rest.
+ * NOTHING IS HIDDEN AT REST. Every name, sector and address is visible in the
+ * resting composition, which is why the stack needs no hydration gate and
+ * causes no first-paint shift: the prerendered HTML is already the finished
+ * drawing. Coming to the front reveals an IMAGE, never a word.
  *
- * THE WHOLE WORK IS THE LINK. Facade and title block sit inside one anchor
- * to the live site, so there is one tab stop and one obvious target per
- * project, and the new-window warning rides with it.
+ * DEPTH IS DRAWN, never blurred — the house rule, and here the mechanism:
+ * occlusion does the work (an opaque sheet covers what is under it), the ink
+ * frame turns to the cut red, and the fronted sheet steps a few pixels out of
+ * the pile. No shadow anywhere.
+ *
+ * FRONTING IS CSS ON POINTER DEVICES: :hover and :focus-within raise the sheet,
+ * so a mouse and a keyboard both work with JS off. JS contributes exactly one
+ * thing — on touch, where there is no hover, the first tap brings a sheet
+ * forward and the second follows its link. With JS off a tap simply follows the
+ * link, which is the safe degradation.
  *
  * SSG contract: every plate, name, sector and address is in the prerendered
- * HTML; with JS off the strip still scrolls and every link works.
+ * HTML; with JS off the composition is complete and every link works.
  */
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { references } from '@/content/home'
-import { createFx, prefersReducedMotion } from '@/lib/fx'
 
-const fx = createFx()
 const items = references.items
-const live = ref(false)
-const atEnd = ref(false)
-const strip = ref<HTMLElement | null>(null)
+
+/** Which sheet the reader has brought forward BY TAPPING. -1 = none; on
+ *  pointer devices this stays -1 forever and :hover does the work. */
+const active = ref(-1)
+/** Devices with a real pointer front on hover, so a tap there should follow
+ *  the link at once. Read on mount — never at module scope (prerender). */
+const hoverCapable = ref(true)
 
 /** Variants are generated per project (scripts/build-reference-images.mjs);
  *  the widths list lives with the item, so the srcset cannot claim a file
@@ -48,62 +51,52 @@ function srcset(id: string, ext: string, widths: number[]): string {
   return widths.map((w) => `/img/refs/${id}-${w}.${ext} ${w}w`).join(', ')
 }
 
-/** Matches the facade's real measure at both breakpoints (see the styles). */
-const SIZES = '(min-width: 900px) min(76vw, 60rem), 88vw'
+/** Matches the sheet's real measure at both breakpoints (see the styles). */
+const SIZES = '(min-width: 900px) min(72vw, 56rem), 84vw'
 
-function measureEnd() {
-  const el = strip.value
-  if (!el) return
-  atEnd.value = el.scrollLeft + el.clientWidth >= el.scrollWidth - 2
-}
-
-/** One work per press. Reduced motion gets the instant jump — the house rule
- *  that every programmatic scroll states its behaviour explicitly. */
-function step(dir: number) {
-  const el = strip.value
-  if (!el) return
-  const work = el.querySelector<HTMLElement>('.wk__work')
-  const delta = (work?.getBoundingClientRect().width ?? el.clientWidth * 0.8) * dir
-  el.scrollBy({
-    left: delta,
-    behavior: (prefersReducedMotion() ? 'instant' : 'smooth') as ScrollBehavior,
-  })
+/**
+ * Touch only: the first tap pulls the sheet to the top of the pile, the second
+ * follows it. Without this a reader on a phone could never LOOK at a sheet —
+ * every tap would leave the site. On a pointer device hover has already done
+ * the pulling, so the tap goes straight through.
+ */
+function onPick(e: MouseEvent, n: number) {
+  if (hoverCapable.value || active.value === n) return
+  e.preventDefault()
+  active.value = n
 }
 
 onMounted(() => {
-  live.value = true
-  const el = strip.value
-  if (!el) return
-  fx.on(el, 'scroll', measureEnd, { passive: true })
-  fx.on(window, 'resize', measureEnd, { passive: true })
-  measureEnd()
-})
-
-onUnmounted(() => {
-  fx.dispose()
+  hoverCapable.value = window.matchMedia('(hover: hover)').matches
 })
 </script>
 
 <template>
-  <section id="reference" class="wk press press--light">
-    <header class="container wk__head">
+  <section id="reference" class="wkr press press--light">
+    <header class="container wkr__head">
       <p class="kicker">{{ references.kicker }}</p>
-      <h2 class="wk__title">{{ references.title }}</h2>
-      <p class="wk__intro">{{ references.intro }}</p>
+      <h2 class="wkr__title">{{ references.title }}</h2>
+      <p class="wkr__intro">{{ references.intro }}</p>
     </header>
 
-    <div
-      ref="strip"
-      class="wk__strip"
-      :class="{ 'wk__strip--end': atEnd }"
-      tabindex="0"
-      role="group"
-      :aria-label="references.feedback.regionLabel"
-    >
-      <div class="wk__rail">
-        <article v-for="(item, n) in items" :key="item.id" class="wk__work">
-          <a class="wk__link" :href="item.url" target="_blank" rel="noopener noreferrer">
-            <div class="wk__facade">
+    <div class="container">
+      <ol class="wkr__stage" :aria-label="references.feedback.regionLabel">
+        <li
+          v-for="(item, n) in items"
+          :key="item.id"
+          class="wkr__sheet"
+          :class="{ 'wkr__sheet--lead': n === 0, 'wkr__sheet--front': active === n }"
+          :style="{ '--i': n }"
+        >
+          <a
+            class="wkr__link"
+            :href="item.url"
+            target="_blank"
+            rel="noopener noreferrer"
+            @click="onPick($event, n)"
+          >
+            <!-- The plate: the built thing, in a thin ink frame. -->
+            <div class="wkr__plate">
               <picture>
                 <source
                   type="image/avif"
@@ -128,72 +121,41 @@ onUnmounted(() => {
               </picture>
             </div>
 
-            <!-- The title block: the drawing's own register strip. -->
-            <div class="wk__block">
-              <div class="wk__block-inner">
-                <span class="wk__index" aria-hidden="true">{{
-                  String(n + 1).padStart(3, '0')
-                }}</span>
-                <div class="wk__id">
-                  <h3 class="wk__name">{{ item.name }}</h3>
-                  <p class="wk__sector">{{ item.sector }}</p>
-                </div>
-                <span class="wk__url emisija">{{ item.urlLabel }}</span>
-              </div>
+            <!-- The title block. Opaque paper: it is what covers the sheet
+                 below, and the covering is how the pile reads as a pile. -->
+            <div class="wkr__block">
+              <span class="wkr__index emisija" aria-hidden="true">{{
+                String(n + 1).padStart(3, '0')
+              }}</span>
+              <span class="wkr__id">
+                <span class="wkr__name">{{ item.name }}</span>
+                <span class="wkr__sector">{{ item.sector }}</span>
+              </span>
+              <span class="wkr__url emisija">{{ item.urlLabel }}</span>
             </div>
 
             <span class="visually-hidden">{{ references.newWindowNote }}</span>
           </a>
-        </article>
-      </div>
-    </div>
-
-    <!-- Pointer devices only: on touch the trailing fade and the swipe are
-         the affordance, and a control sitting on the drawing is worse than
-         none (house rule). -->
-    <div v-if="live" class="wk__controls container">
-      <button
-        type="button"
-        class="wk__step"
-        :aria-label="references.feedback.prevLabel"
-        @click="step(-1)"
-      >
-        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-          <path d="M15 4 L7 12 L15 20" fill="none" stroke="currentColor" stroke-width="2" />
-        </svg>
-      </button>
-      <button
-        type="button"
-        class="wk__step"
-        :aria-label="references.feedback.nextLabel"
-        @click="step(1)"
-      >
-        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-          <path d="M9 4 L17 12 L9 20" fill="none" stroke="currentColor" stroke-width="2" />
-        </svg>
-      </button>
+        </li>
+      </ol>
     </div>
   </section>
 </template>
 
 <style scoped>
-/* The sheet. Full bleed: the elevation runs off the page's left edge, which
-   is what makes it read as a drawing that continues rather than a widget. */
 /* background-COLOR, never the shorthand: the shorthand resets
    background-image, and this scoped rule would silently win over the .press
    utility that supplies the screen — the texture would simply not appear. */
-.wk {
+.wkr {
   background-color: var(--list);
   padding-block: var(--section-block);
 }
 
-/* The band's heading, in the system's statement-band shape: mono kicker,
-   display title, intro at a real measure, the right third left empty. */
-.wk__head {
+.wkr__head {
   margin-bottom: var(--space-10);
 }
 
-.wk__title {
+.wkr__title {
   margin-top: var(--space-3);
   font-size: var(--type-display-l-size);
   font-weight: var(--type-display-l-weight);
@@ -204,146 +166,122 @@ onUnmounted(() => {
   max-width: 18ch;
 }
 
-.wk__intro {
+.wkr__intro {
   margin-top: var(--space-6);
   color: var(--grafit-2); /* 8.99:1 on paper */
   max-width: 62ch;
 }
 
-.wk__strip {
-  overflow-x: auto;
-  overflow-y: hidden;
-  /* The strip's own scroll area must never become the PAGE's. Measured: with
-     overflow alone the document's scroll width grew to the rail's extent and
-     the whole page scrolled sideways — and forcing overflow-x: hidden did not
-     fix it, while paint containment did. `contain: paint` states the thing
-     directly ("nothing here paints outside this box"), and a scroll container
-     is exactly what it is for. Re-measure page overflow-x if this line ever
-     goes. */
-  contain: paint;
-  /* A swipe that runs past the last work must not chain to the page — on touch
-     that is what pans the document sideways (and on some engines arms the
-     back-navigation gesture). `contain: paint` keeps the rail from GROWING the
-     page; this keeps the gesture from MOVING it. The two are different
-     failures with the same symptom. */
-  overscroll-behavior-x: contain;
-  scroll-snap-type: x proximity;
-  scrollbar-width: thin;
-  scrollbar-color: var(--mreza-strong) transparent;
-  /* The trailing-edge fade: the touch affordance for "more". A MASK, not an
-     overlay — the system allows gradients only as masks — and lifted the
-     moment the last work is reached so nothing sits dimmed at rest. */
-  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 5rem), transparent 100%);
-  mask-image: linear-gradient(90deg, #000 calc(100% - 5rem), transparent 100%);
+/* --- the pile ----------------------------------------------------------------
+   THE THREE NUMBERS THAT MAKE THE COMPOSITION:
+
+   --rung   the title block's height, and therefore the vertical step. Setting
+            them from one token is what makes the blocks meet edge to edge
+            instead of overlapping or leaving a sliver of the next plate.
+   --stride the horizontal step. Free — it only decides how far the pile leans.
+   --lift   how far a fronted sheet steps out of the pile, up and left.
+
+   The stage reserves exactly the room the pile needs: two strides on the right,
+   two rungs at the bottom, one lift at the top-left. The last sheet's bottom
+   edge lands flush with the stage's, so nothing is guessed. */
+.wkr__stage {
+  --rung: clamp(3.75rem, 4.6vw, 5rem);
+  --stride: clamp(2.5rem, 6.5vw, 7rem);
+  --lift: 6px;
+
+  position: relative;
+  padding: var(--lift) calc(2 * var(--stride)) calc(2 * var(--rung)) var(--lift);
+  list-style: none;
 }
 
-.wk__strip--end {
-  -webkit-mask-image: none;
-  mask-image: none;
+.wkr__sheet {
+  position: absolute;
+  top: calc(var(--lift) + var(--i) * var(--rung));
+  left: calc(var(--lift) + var(--i) * var(--stride));
+  width: calc(100% - var(--lift) - 2 * var(--stride));
+  /* Resting order: the first sheet on top, the rest receding down-right. */
+  z-index: calc(9 - var(--i));
 }
 
-.wk__strip:focus-visible {
-  outline: 2px solid var(--rez);
-  outline-offset: -2px;
+/* The lead sheet stays IN FLOW — it is what gives the stage its height, and
+   with it the other two are positioned against a box that cannot be wrong. */
+.wkr__sheet--lead {
+  position: relative;
+  top: auto;
+  left: auto;
+  width: 100%;
 }
 
-/* padding-block gives the focus ring room: overflow-y is hidden, and an
-   outline drawn outside the rail would otherwise be clipped. */
-.wk__rail {
-  display: flex;
-  align-items: flex-end;
-  width: max-content;
-  padding-block: 4px;
-}
-
-.wk__work {
-  flex: 0 0 auto;
-  width: min(76vw, 60rem);
-  scroll-snap-align: start;
-}
-
-/* The set closes on the page margin rather than on the viewport edge. */
-.wk__work:last-child {
-  margin-right: var(--gutter);
-}
-
-.wk__link {
+.wkr__link {
   display: block;
   text-decoration: none;
   color: inherit;
+  /* Tabbing to a sheet must not park it under the fixed masthead (WCAG 2.4.11
+     — focused and VISIBLE are different things). The browser's own
+     scroll-into-view knows nothing about fixed chrome, so the margin says it. */
+  scroll-margin-top: calc(var(--nav-h, 0px) + var(--space-4));
+  /* Only transform and colour: both compositor-cheap, and the resting values
+     are the stylesheet's own, so there is no end state to defend. */
+  transition: transform var(--dur-tween) var(--ease-hover);
 }
 
-.wk__link:focus-visible {
+.wkr__link:focus-visible {
   outline: 2px solid var(--rez);
-  outline-offset: -2px;
+  outline-offset: 3px;
 }
 
-/* --- the facade ------------------------------------------------------------- */
-.wk__facade {
-  position: relative;
-  margin-inline: calc(var(--gutter) / 2);
-  margin-bottom: var(--space-4);
+/* --- the plate ---------------------------------------------------------------- */
+.wkr__plate {
   border: var(--divider-width) solid var(--grafit);
+  border-bottom: 0;
+  transition: border-color var(--dur-tween) var(--ease-hover);
 }
 
-.wk__facade img {
+.wkr__plate img {
   display: block;
   width: 100%;
+  /* height:auto is LOAD-BEARING, not tidiness. The width/height attributes map
+     to CSS presentational hints, and an explicit height beats aspect-ratio — so
+     without this every plate takes its own file's height and the three sheets
+     come out different sizes, which breaks the whole ledger (measured: sheet 2
+     short by exactly 896-776=120px, the two files' height attributes). */
   height: auto;
+  aspect-ratio: 2 / 1;
+  object-fit: cover;
+  object-position: top center;
 }
 
-/* Extension ticks crossing the datum at the facade's own edges — the
-   dimension convention with no figure attached. */
-.wk__facade::before,
-.wk__facade::after {
-  content: '';
-  position: absolute;
-  bottom: -24px;
-  width: 1px;
-  height: 16px;
-  background: var(--mreza-strong);
-}
-
-.wk__facade::before {
-  left: -1px;
-}
-
-.wk__facade::after {
-  right: -1px;
-}
-
-/* --- the title block --------------------------------------------------------
-   The datum is this border: works sit flush, so the line runs unbroken
-   through the whole set. */
-.wk__block {
-  border-top: var(--divider-width) solid var(--grafit);
-}
-
-.wk__block-inner {
+/* --- the title block ----------------------------------------------------------
+   Height IS the step (see --rung). Opaque, because covering the sheet beneath
+   is the whole depth cue on a page with no shadows. The heavy right edge is the
+   title-block motif's own closing rule. */
+.wkr__block {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-4);
-  margin-inline: calc(var(--gutter) / 2);
-  padding-top: var(--space-3);
-  padding-right: var(--space-3);
-  min-height: 4.25rem;
-  /* the title block's heavy right edge — the motif's own closing rule */
-  border-right: 2px solid var(--grafit);
+  height: var(--rung);
+  padding-inline: var(--space-4);
+  background: var(--list);
+  border: var(--divider-width) solid var(--grafit);
+  border-right-width: 2px;
+  transition: border-color var(--dur-tween) var(--ease-hover);
 }
 
-.wk__index {
+.wkr__index {
   flex: 0 0 auto;
-  font-family: var(--font-mono);
   font-size: var(--type-data-size);
   letter-spacing: var(--type-data-ls);
   color: var(--grafit-2);
 }
 
-.wk__id {
+.wkr__id {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.wk__name {
+.wkr__name {
   font-family: var(--font-sans);
   font-stretch: normal;
   font-size: 1.25rem;
@@ -353,111 +291,114 @@ onUnmounted(() => {
   color: var(--grafit);
 }
 
-.wk__sector {
-  margin-top: 2px;
+.wkr__sector {
   color: var(--grafit-2);
   font-size: 0.9375rem;
-  line-height: 1.35;
-  max-width: 46ch;
+  line-height: 1.3;
 }
 
-.wk__url {
+.wkr__url {
   flex: 0 0 auto;
   margin-left: auto;
   color: var(--grafit-2);
   border-bottom: var(--divider-width) solid currentColor;
   padding-bottom: 2px;
+  transition: color var(--dur-tween) var(--ease-hover);
 }
 
-/* Hover is wired in CSS only and gated to devices that have it — on touch a
-   stuck hover state would outlive the tap. */
+/* --- coming to the front -------------------------------------------------------
+   Three signals, no shadow: the sheet covers the others, its frame turns to the
+   cut red, and it steps out of the pile. Keyboard gets it everywhere (a focused
+   sheet the reader cannot see is a WCAG 2.4.11 failure); hover is gated to
+   devices that have one, or the state would stick on touch after a tap. */
+.wkr__sheet:focus-within,
+.wkr__sheet--front {
+  z-index: 20;
+}
+
+.wkr__sheet:focus-within .wkr__link,
+.wkr__sheet--front .wkr__link {
+  transform: translate(calc(var(--lift) * -1), calc(var(--lift) * -1));
+}
+
+.wkr__sheet:focus-within .wkr__plate,
+.wkr__sheet:focus-within .wkr__block,
+.wkr__sheet--front .wkr__plate,
+.wkr__sheet--front .wkr__block {
+  border-color: var(--rez);
+}
+
+.wkr__sheet:focus-within .wkr__url,
+.wkr__sheet--front .wkr__url {
+  color: var(--rez);
+}
+
 @media (hover: hover) {
-  .wk__facade,
-  .wk__url {
-    transition:
-      border-color var(--dur-tween) var(--ease-hover),
-      color var(--dur-tween) var(--ease-hover);
+  .wkr__sheet:hover {
+    z-index: 20;
   }
 
-  .wk__link:hover .wk__facade {
+  .wkr__sheet:hover .wkr__link {
+    transform: translate(calc(var(--lift) * -1), calc(var(--lift) * -1));
+  }
+
+  .wkr__sheet:hover .wkr__plate,
+  .wkr__sheet:hover .wkr__block {
     border-color: var(--rez);
   }
 
-  .wk__link:hover .wk__url {
+  .wkr__sheet:hover .wkr__url {
     color: var(--rez);
   }
 }
 
-/* --- the step controls -------------------------------------------------------- */
-.wk__controls {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-2);
-  margin-top: var(--space-6);
-}
-
-@media (hover: none) {
-  .wk__controls {
-    display: none;
-  }
-}
-
-.wk__step {
-  width: 44px;
-  height: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: var(--divider-width) solid var(--mreza-strong);
-  color: var(--grafit);
-  cursor: pointer;
-  transition:
-    border-color var(--dur-tween) var(--ease-hover),
-    color var(--dur-tween) var(--ease-hover);
-}
-
-@media (hover: hover) {
-  .wk__step:hover {
-    border-color: var(--rez);
-    color: var(--rez);
-  }
-}
-
-.wk__step:focus-visible {
-  outline: 2px solid var(--rez);
-  outline-offset: 2px;
-}
-
-/* --- phones -------------------------------------------------------------------
-   The elevation holds; only the crop and the register change. The facade is
-   cut to a taller window on the site's own head, so a phone shows the work
-   at a readable scale instead of a 2:1 sliver, and the title block stacks
-   into two ruled lines. */
+/* --- phones --------------------------------------------------------------------
+   The pile holds; it just leans mostly DOWNWARD so the plates stay near full
+   width and the screenshots stay legible. The block takes three ruled lines,
+   and --rung grows to hold them: the step follows the block, always. */
 @media (max-width: 899.98px) {
-  .wk__work {
-    width: 88vw;
+  .wkr__stage {
+    --rung: 6rem;
+    --stride: 0.875rem;
+    --lift: 4px;
   }
 
-  .wk__facade img {
+  .wkr__plate img {
     aspect-ratio: 16 / 11;
-    object-fit: cover;
-    object-position: top center;
   }
 
-  .wk__block-inner {
+  .wkr__block {
     flex-wrap: wrap;
-    row-gap: var(--space-2);
-    min-height: 0;
+    align-content: center;
+    /* Tight on purpose. The block's height IS the diagonal step, so content
+       that outgrows it would not merely look cramped — the ledger rows would
+       overlap and the composition would break. Measured at the 320px floor,
+       where the sector takes two lines: content 86px in a 96px rung, 10px of
+       headroom for font-metric drift. Re-measure this slack before enlarging
+       anything in here. */
+    row-gap: 2px;
+    column-gap: var(--space-3);
+    padding-inline: var(--space-3);
   }
 
-  .wk__id {
-    flex: 1 1 60%;
+  .wkr__name {
+    font-size: 1.125rem;
   }
 
-  .wk__url {
+  .wkr__id {
     flex: 1 1 100%;
-    margin-left: 0;
+    /* Atomic group: the name and its sector never break apart (house rule —
+       wrapping rows break on flex-basis, before any shrinking). */
+    order: 2;
+  }
+
+  .wkr__index {
+    order: 1;
+  }
+
+  .wkr__url {
+    order: 1;
+    margin-left: auto;
   }
 }
 </style>
