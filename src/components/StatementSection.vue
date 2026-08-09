@@ -17,8 +17,9 @@
  * DESKTOP: the top-RIGHT, because the two courses are left-aligned and stop
  * well short of the frame, so the right of the sheet is the composition's void
  * and the mark is what fills it; the crop mark that stood there steps aside.
- * PHONES: nowhere on the sheet at all — the header bar is the logo there
- * (SiteMasthead), and all four crop marks come back.
+ * PHONES: the top-LEFT, unchanged — there is no header over the hero on a
+ * phone, only the menu control floating in the opposite corner, so the sheet's
+ * own stamp is the brand and the control mirrors it.
  * Both positions are CORNERS on purpose, because that is what keeps the intro
  * veil's landing expressible as a formula rather than a measurement: every
  * coordinate is an inset from a viewport edge. index.html copies them as
@@ -288,11 +289,8 @@ onUnmounted(() => {
    inside edges only — the ink's top-left stays exactly on the corner, which is
    the veil's landing formula. */
 .stmt__stamp {
-  /* PHONES HAVE NO STAMP ON THE SHEET: the header bar is the logo there
-     (SiteMasthead), and two of the same mark one above the other is one too
-     many. Desktop turns it back on, across the sheet — see the block at the
-     end. */
-  display: none;
+  /* The sheet's top-LEFT corner, which is where a phone keeps it. Desktop moves
+     it across to the right — see the block at the end. */
   position: absolute;
   /* Pulled out by the border's own width: an absolute box is positioned
      against the PADDING box, so `0` would sit the ink one border inside the
@@ -471,19 +469,22 @@ onUnmounted(() => {
    sheet's own frame padding) costs ~290px of it. That leaves ~420px for the
    pair, which is a 228px first course — and 78cqw lands there. Re-derive if
    any of those fixed costs change. */
-@media (max-width: 899.98px) {
-  /* The sheet's top padding existed only to clear the corner stamp, and a
-     phone has no stamp — the header bar is the logo there (SiteMasthead), and
-     the intro veil lands on it. */
-  .stmt__sheet {
-    padding-top: var(--space-4);
-  }
+/* A PHONE HAS NO HEADER OVER THE HERO — owner's call, and the film is the
+   reason: a bar across the top cut the band off from the screen's edge, and the
+   whole point of the film is that it runs to it. So the chrome up here is the
+   menu control alone, floating on the sheet (SiteMasthead), and the brand stays
+   where it was, stamped on the sheet's own top-left corner.
 
-  /* Clear of the fixed bar. 52px is the bar's own height — its mark (2.5rem)
-     plus its padding (2 × 0.375rem) — and it is stated in SiteMasthead as the
-     same arithmetic. Change one, change both. */
-  .stmt {
-    padding-top: calc(52px + var(--hero-inset));
+   That gives BOTH top corners to marks — the stamp on the left, the control
+   mirroring it on the right — so both crop marks stand down there. The one
+   under the control would overlap it (the mark spans 24px down from the corner
+   and the glyph's ink sits 29.6–45.6px down), and the one under the stamp has
+   the stamp on it. Desktop keeps its top-left mark and gives only the right
+   corner away, because there the stamp has crossed the sheet. */
+@media (max-width: 899.98px) {
+  .stmt__crop--tl,
+  .stmt__crop--tr {
+    display: none;
   }
 
   /* HALF THE AIR. The two `margin-top: auto`s split whatever the sheet has
@@ -512,7 +513,6 @@ onUnmounted(() => {
    not be — change this and the veil's desktop landing changes with it. */
 @media (min-width: 900px) {
   .stmt__stamp {
-    display: block;
     left: auto;
     right: calc(var(--divider-width) * -1);
     padding: 0 0 var(--space-3) var(--space-3);
