@@ -1,11 +1,12 @@
 <script setup lang="ts">
 /**
- * The opening band — A TITLE SHEET. The whole hero is one drafting sheet: a
- * hairline frame inset from the page edges, crop marks at its corners, and a
- * title block along the bottom carrying the claim. The brand name is the
- * drawing on it. (A construction line used to run down the right of the
- * courses, where the type stops; it is gone on the owner's call — the frame,
- * the crop marks and the cut plane are enough furniture for one sheet.)
+ * The opening band — A TITLE SHEET, and by now a sheet with nothing ruled on
+ * it. It carried a hairline frame, crop marks at every corner, a construction
+ * line down the right of the courses and a rule under the claim; all four are
+ * gone on the owner's call, in that order. Over a film that furniture was
+ * competing with the one line that carries meaning. What draws the band now is
+ * the mark, the two courses, the red cut plane between them, and the claim —
+ * the sheet is a measure and a padding rather than a box.
  *
  * THE BAND IS A FILM. The clip fills the whole hero, edge to edge, untreated —
  * its own brightness, its own colour — and the sheet is drawn on top of it.
@@ -122,14 +123,6 @@ onUnmounted(() => {
          phone bar appears exactly when this element leaves the screen, so the
          brand is never absent from the page. -->
     <div class="stmt__sheet" data-brand-sentinel>
-      <!-- Crop marks on the free corners. Desktop gives the top-right to the
-           mark and keeps the other three; a phone has no stamp on the sheet at
-           all and keeps all four. -->
-      <span class="stmt__crop stmt__crop--tl" aria-hidden="true"></span>
-      <span class="stmt__crop stmt__crop--tr" aria-hidden="true"></span>
-      <span class="stmt__crop stmt__crop--bl" aria-hidden="true"></span>
-      <span class="stmt__crop stmt__crop--br" aria-hidden="true"></span>
-
       <!-- The corner stamp: the pd mark, punched into the frame. Two
            overlapping discs carrying Povsod's first and last letters; the d is
            the p rotated 180° (the mark's point symmetry). THE VEIL LANDS HERE
@@ -188,11 +181,6 @@ onUnmounted(() => {
 .stmt {
   position: relative;
   overflow: clip;
-  /* ONE FLAT LINE COLOUR for the whole sheet — frame, crop marks, the rule
-     under the claim. It was paper at 55% while the film was darkened, so that
-     it composited into whatever passed behind it; with the film untreated the
-     lines take the same ink the type does and stay one colour everywhere. */
-  --sheet-line: var(--grafit);
   /* THE GROUND UNDER THE FILM, and it has to be a real one: it is what a
      visitor sees for the moment before the poster decodes, and what fills any
      part of the band `cover` cannot reach. The film runs untreated and this
@@ -234,53 +222,20 @@ onUnmounted(() => {
   z-index: 1;
   display: flex;
   flex-direction: column;
-  /* The dark world's own hairline: the frame is drawn ON the film now, so it
-     takes the line colour the rest of the page's dark bands use. */
-  border: var(--divider-width) solid var(--sheet-line);
-  /* Clear the corner stamp; the rest of the sheet's own frame padding. */
+  /* NO FRAME. The sheet was drawn as a ruled rectangle with crop marks at its
+     corners and a rule under the claim — drafting furniture that made sense
+     when the band was paper. Over the film it was three kinds of line competing
+     with the one line that means something, and it is all gone on the owner's
+     call. What is left draws itself: the mark, the two courses, the red cut,
+     the claim. The sheet is now a measure and a padding, not a box.
+
+     The padding stays: it is what holds the ink off the band's edges, and the
+     stamp's clearance term is what the veil's landing formula reads. */
   padding: calc(0.55 * var(--hero-display) + var(--space-4)) var(--space-4) var(--space-4);
   /* Short of the fold ON PURPOSE (phones): the work below has to show through,
      so the hero ends where the next thing begins. Desktop takes the full
      screen below. */
   min-height: 72svh;
-}
-
-/* Crop marks: two hairlines meeting at a corner, the drafting sheet's own
-   registration.
-   Each is a box showing only the two borders that form its corner. */
-.stmt__crop {
-  position: absolute;
-  width: var(--space-6);
-  height: var(--space-6);
-  pointer-events: none;
-}
-.stmt__crop--tl {
-  top: 0;
-  left: 0;
-  border-top: var(--divider-width) solid var(--sheet-line);
-  border-left: var(--divider-width) solid var(--sheet-line);
-  margin: -1px 0 0 -1px;
-}
-.stmt__crop--tr {
-  top: 0;
-  right: 0;
-  border-top: var(--divider-width) solid var(--sheet-line);
-  border-right: var(--divider-width) solid var(--sheet-line);
-  margin: -1px -1px 0 0;
-}
-.stmt__crop--bl {
-  bottom: 0;
-  left: 0;
-  border-bottom: var(--divider-width) solid var(--sheet-line);
-  border-left: var(--divider-width) solid var(--sheet-line);
-  margin: 0 0 -1px -1px;
-}
-.stmt__crop--br {
-  bottom: 0;
-  right: 0;
-  border-bottom: var(--divider-width) solid var(--sheet-line);
-  border-right: var(--divider-width) solid var(--sheet-line);
-  margin: 0 -1px -1px 0;
 }
 
 /* The stamp sits ON the corner: its own patch of paper punches the frame's
@@ -292,12 +247,13 @@ onUnmounted(() => {
   /* The sheet's top-LEFT corner, which is where a phone keeps it. Desktop moves
      it across to the right — see the block at the end. */
   position: absolute;
-  /* Pulled out by the border's own width: an absolute box is positioned
-     against the PADDING box, so `0` would sit the ink one border inside the
-     frame — and the veil lands on --hero-inset exactly, which is the frame's
-     OUTER corner. Measured: 21px against a 20px inset before this. */
-  left: calc(var(--divider-width) * -1);
-  top: calc(var(--divider-width) * -1);
+  /* Flush with the corner, full stop. It used to be pulled out by the frame's
+     own border width, because an absolute box resolves against the PADDING box
+     and the veil lands on --hero-inset — the frame's OUTER corner. With the
+     frame gone the padding box IS that corner, so the compensation goes with
+     it or the mark sits 1px outside the formula the veil copies. */
+  left: 0;
+  top: 0;
   padding: 0 var(--space-3) var(--space-3) 0;
   /* NO PATCH ON THE FILM. Punching the frame with a rectangle of the band's
      own fill was right while the band was flat paper; over a moving image any
@@ -439,7 +395,6 @@ onUnmounted(() => {
   margin-top: auto;
   margin-inline: calc(var(--space-4) * -1);
   padding: var(--space-4) var(--space-4) 0;
-  border-top: var(--divider-width) solid var(--sheet-line);
 }
 
 .stmt__title {
@@ -482,11 +437,6 @@ onUnmounted(() => {
    the stamp on it. Desktop keeps its top-left mark and gives only the right
    corner away, because there the stamp has crossed the sheet. */
 @media (max-width: 899.98px) {
-  .stmt__crop--tl,
-  .stmt__crop--tr {
-    display: none;
-  }
-
   /* HALF THE AIR. The two `margin-top: auto`s split whatever the sheet has
      left over after its fixed costs equally above and below the drawing, so
      the free space IS the spacing and shrinking the sheet is what halves it.
@@ -518,9 +468,6 @@ onUnmounted(() => {
     padding: 0 0 var(--space-3) var(--space-3);
   }
 
-  .stmt__crop--tr {
-    display: none;
-  }
 }
 
 @media (min-width: 1200px) {

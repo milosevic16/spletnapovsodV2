@@ -96,6 +96,10 @@ export const invisible = {
   title: 'Spletna pod površino.',
   quote:
     'Spletna stran ni zgolj tisto, kar vidite, temveč se pomemben del skriva tudi v tistem, česar ne.',
+  /** Owner-supplied, VERBATIM — including »npr. Niste« and the missing final
+   *  stop. Flagged for sign-off rather than corrected. */
+  lead:
+    'S pomočjo sliderja si oglejte, kako brskalniki vidijo vašo stran. Brez te kode, skrite v ozadju, npr. Niste vidni brskalnikom in umetni inteligenci. Je le ena od plasti, ki omogoča učinkovito in pravilno vedenje vaše spletne strani',
   intro:
     'V ozadju mora biti urejeno vse: tisto, kar vas naredi vidne na Googlu, tisto, kar varno sprejema oddane obrazce, ter piškotki in politika zasebnosti, da stran ustreza zakonodaji.',
   humanLabel: 'Kar vidite',
@@ -172,16 +176,6 @@ export const references = {
   },
   items: [
     {
-      id: 'lemur',
-      name: 'Lemur Legal',
-      sector: 'Pravna pisarna za tehnološko pravo',
-      url: 'https://lemur.legal',
-      urlLabel: 'lemur.legal',
-      inks: ['#D2DDD7', '#131220', '#7F59F5', '#1FC49A', '#C4823A'],
-      alt: 'Posnetek naslovnice spletne strani Lemur Legal',
-      image: { width: 1552, height: 776, widths: [560, 776, 1104, 1552] },
-    },
-    {
       id: 'mercpeter',
       name: 'Peter Merc',
       sector: 'Osebna predstavitev — pravnik in investitor',
@@ -190,6 +184,16 @@ export const references = {
       inks: ['#ECE9E2', '#26282C', '#D2453E', '#B4AEA1'],
       alt: 'Posnetek naslovnice spletne strani Petra Merca',
       image: { width: 1792, height: 896, widths: [560, 840, 1184, 1792] },
+    },
+    {
+      id: 'lemur',
+      name: 'Lemur Legal',
+      sector: 'Pravna pisarna za tehnološko pravo',
+      url: 'https://lemur.legal',
+      urlLabel: 'lemur.legal',
+      inks: ['#D2DDD7', '#131220', '#7F59F5', '#1FC49A', '#C4823A'],
+      alt: 'Posnetek naslovnice spletne strani Lemur Legal',
+      image: { width: 1552, height: 776, widths: [560, 776, 1104, 1552] },
     },
     {
       id: 'bloctopus',

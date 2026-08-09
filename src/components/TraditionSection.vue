@@ -263,6 +263,7 @@ const sourceLines = computed(() => [
   ...factLines.map((f) => ({ id: f.id, text: f.text })),
   { id: '', text: `<h2>${invisible.title}</h2>` },
   { id: '', text: `<blockquote>${invisible.quote}</blockquote>` },
+  { id: '', text: `<p>${invisible.lead}</p>` },
   { id: '', text: `<p>${invisible.intro}</p>` },
   ...invisible.items.flatMap((item) => [
     { id: '', text: `<article id="${item.id}">` },
@@ -385,21 +386,60 @@ onUnmounted(() => {
     <!-- THE BEAM — the seam itself, spanning the section's full height. -->
     <span class="trad__beam" aria-hidden="true"></span>
 
-    <!-- THE RENDERED PAGE — in flow, so it defines the section's height and is
-         the complete, real content for crawlers and JS-off readers. -->
-    <div class="container trad__world">
+    <!-- THE RENDERED PAGE, PART ONE — the argument that sets the control up.
+         In flow, clipped by the scan like everything else the page renders. -->
+    <div class="container trad__world trad__world--lead">
       <header class="trad__head">
         <p class="kicker kicker--on-dark">{{ invisible.kicker }}</p>
         <h2 class="trad__title">{{ invisible.title }}</h2>
       </header>
 
+      <div class="trad__argument">
+        <blockquote class="trad__quote">
+          <p>{{ invisible.quote }}</p>
+        </blockquote>
+        <p class="trad__lead">{{ invisible.lead }}</p>
+      </div>
+    </div>
+
+    <!-- THE CHROME — the legend and the dial, and it stands HERE, directly
+         under the paragraph that tells the reader to use it (owner's call; it
+         used to close the section, a screen and a half below the instruction).
+         It is a sibling of the rendered page rather than a child, and that is
+         load-bearing: .trad__world carries the scan's clip-path, so a control
+         inside it would be clipped away as the reader dragged the very handle
+         doing the clipping. Outside it, above both layers, it is operable
+         whichever side of the beam it is standing over. -->
+    <div class="container trad__chrome">
+      <p class="trad__legend">{{ invisible.machineGloss }}</p>
+      <div class="trad__dial">
+        <span class="trad__end">{{ invisible.machineLabel }}</span>
+        <input
+          v-if="live"
+          ref="gripEl"
+          class="trad__grip"
+          type="range"
+          min="0"
+          max="100"
+          step="1"
+          :value="Math.round(scan)"
+          :aria-label="invisible.feedback.scanLabel"
+          @input="onGrip"
+          @pointerdown="takeOver"
+          @keydown="onGripKeys"
+        />
+        <span v-else class="trad__grip-ghost" aria-hidden="true"></span>
+        <span class="trad__end">{{ invisible.humanLabel }}</span>
+      </div>
+    </div>
+
+    <!-- THE RENDERED PAGE, PART TWO — the rest of it. Two boxes rather than
+         one because the control had to come between them; the scan's clip is
+         horizontal only (inset from the right), so two stacked boxes of the
+         same width clip exactly as one box would and the seam is invisible. -->
+    <div class="container trad__world trad__world--rest">
       <div class="trad__made">
-        <!-- The statement band: the argument, then a rule. Grouped so the
-             rule belongs to the band rather than to a paragraph. -->
         <div class="trad__argument">
-          <blockquote class="trad__quote">
-            <p>{{ invisible.quote }}</p>
-          </blockquote>
           <p class="trad__intro">{{ invisible.intro }}</p>
         </div>
 
@@ -475,32 +515,6 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- THE CHROME — the legend and the dial. Above BOTH layers and never
-         clipped, so the control is operable whichever side of the beam it
-         happens to sit over. It is the instrument's own furniture, not part of
-         the page being rendered. -->
-    <div class="container trad__chrome">
-      <p class="trad__legend">{{ invisible.machineGloss }}</p>
-      <div class="trad__dial">
-        <span class="trad__end">{{ invisible.machineLabel }}</span>
-        <input
-          v-if="live"
-          ref="gripEl"
-          class="trad__grip"
-          type="range"
-          min="0"
-          max="100"
-          step="1"
-          :value="Math.round(scan)"
-          :aria-label="invisible.feedback.scanLabel"
-          @input="onGrip"
-          @pointerdown="takeOver"
-          @keydown="onGripKeys"
-        />
-        <span v-else class="trad__grip-ghost" aria-hidden="true"></span>
-        <span class="trad__end">{{ invisible.humanLabel }}</span>
-      </div>
-    </div>
   </section>
 </template>
 
@@ -1007,7 +1021,46 @@ button.asm__band {
 .trad__chrome {
   position: relative;
   z-index: 4;
-  margin-top: var(--space-10);
+  margin-top: var(--space-8);
+  margin-bottom: var(--space-10);
+  /* THE INSTRUMENT STANDS ON ITS OWN GROUND, and that is a contrast fix, not a
+     decoration. The source layer is an OPAQUE PAPER sheet spanning the whole
+     band, revealed from the scan position rightwards — so any chrome sitting
+     over it has paper under its right-hand part and bronze under its left. The
+     legend and the dial's end labels are --papir-dim: 12.5:1 on the band and
+     1.5:1 on the paper, i.e. invisible on whichever side the source has
+     reached (measured). It was true at the foot of the section too and simply
+     went unnoticed there; moving the control up to the instruction it belongs
+     to put it where the split actually happens.
+     Giving the strip the band's own ground says the true thing anyway: the
+     control is the instrument's furniture, not part of the page being
+     rendered, so the page passes UNDER it. Full bleed, because the source it
+     covers is full bleed. */
+  padding-block: var(--space-4);
+}
+
+/* The ground itself, painted by a pseudo-element rather than by the strip's own
+   box. The strip has to stay a plain .container so its text sits on the same
+   left edge as every other line in the band — a bleed built from margin-inline
+   and vw arithmetic put it 7px out, because vw counts the scrollbar and the
+   container does not (measured: legend at 57 against the page's 64). So the
+   box keeps the container's measure and this paints past it. The reach is
+   deliberately far more than any viewport: .trad clips it, and over-reaching
+   costs nothing while under-reaching would show a seam. */
+.trad__chrome::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0 -100vw;
+  background-color: var(--color-bronze);
+  pointer-events: none;
+}
+
+/* The instruction, set as the intro is: the paragraph the dial belongs to. */
+.trad__lead {
+  margin-top: var(--space-6);
+  color: var(--papir-dim);
+  max-width: 62ch;
 }
 
 .trad__legend {
