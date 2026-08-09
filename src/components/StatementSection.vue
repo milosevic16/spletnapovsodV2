@@ -7,22 +7,28 @@
  * courses, where the type stops; it is gone on the owner's call — the frame,
  * the crop marks and the cut plane are enough furniture for one sheet.)
  *
- * THE MARK IS THE SHEET'S CORNER STAMP. It sits ON the frame's top-left
- * corner, punched into the border on its own patch of paper, the way a stamp
- * or a register mark sits on a real sheet — not fenced off in a strip of its
- * own above a rule, which is what made it read as a separate object. That
- * position is also exactly what the intro veil's landing formula wants: the
- * frame corner IS --hero-inset, so ink-left = ink-top = --hero-inset (+ the
- * 45px desktop masthead strip), ink-height = 0.55em of --hero-display. The
- * veil (index.html) copies those as literals — change either, change both.
+ * THE BAND IS A FILM. The clip fills the whole hero, edge to edge, untreated —
+ * its own brightness, its own colour — and the sheet is drawn on top of it.
+ * That is the owner's call and it has a cost, measured and recorded on
+ * .stmt__wordmark: this footage carries near-white wall and a near-black block
+ * in the same frame, so no flat ink clears AA against every part of it.
+ *
+ * THE MARK IS THE SHEET'S CORNER STAMP, and which corner depends on the screen.
+ * DESKTOP: the top-RIGHT, because the two courses are left-aligned and stop
+ * well short of the frame, so the right of the sheet is the composition's void
+ * and the mark is what fills it; the crop mark that stood there steps aside.
+ * PHONES: nowhere on the sheet at all — the header bar is the logo there
+ * (SiteMasthead), and all four crop marks come back.
+ * Both positions are CORNERS on purpose, because that is what keeps the intro
+ * veil's landing expressible as a formula rather than a measurement: every
+ * coordinate is an inset from a viewport edge. index.html copies them as
+ * literals — change either, change both.
  *
  * THE DRAWING. Two courses of monumental type divided by the site's cut plane,
- * both cut from the SAME material — the press screen the contact band is
- * printed on, carried on the ink and clipped to the letterforms. Above the cut
- * »Spletna« is that pressed stock and nothing else; below it »Povsod« has a
- * moving image behind the same glyphs, so what you see is what the page is
- * made of, and what holds it up is the same stock with something running
- * through it. One red rule with square end ticks, exactly as wide as the
+ * set in one flat ink. They carried the page's press screen clipped into the
+ * letterforms, and below the cut »Povsod« was a window onto this same clip seen
+ * through its glyphs; both devices are cancelled — uniform colour, no texture,
+ * no knockout. One red rule with square end ticks, exactly as wide as the
  * courses.
  *
  * THE COURSES ARE FLUSH BY ARITHMETIC, not by eye. Measured at 100px in the
@@ -34,10 +40,13 @@
  * was 3.118em while it carried a script splice on its tail. That device is
  * cancelled — one face per title, everywhere.)
  *
- * No JavaScript, no animation, nothing to reveal. The rendered sheet is the
- * whole design, identical with JS off and under reduced motion. On phones the
+ * The only JavaScript is the one that starts the film, and it is not load-
+ * bearing: the <video> ships in the markup with its poster and no autoplay, so
+ * a JS-off or reduced-motion visitor gets the same composition with the film
+ * held on one frame. Nothing is hidden and nothing is revealed. On phones the
  * sheet deliberately stops short of the fold so the work below shows through —
- * a hero that ends where the next thing begins.
+ * a hero that ends where the next thing begins; on desktop --hero-reveal does
+ * the same job deliberately, standing the band clear of the fold.
  */
 import { nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { hero } from '@/content/home'
@@ -108,15 +117,14 @@ onUnmounted(() => {
       <source :src="clip('webm')" type="video/webm" />
       <source :src="clip('mp4')" type="video/mp4" />
     </video>
-    <!-- The treatment, in CSS rather than baked into the bytes, so it can be
-         measured against the real tokens and tuned without a re-encode. -->
-    <span class="stmt__veil" aria-hidden="true"></span>
-
     <!-- The sheet. data-brand-sentinel is a contract with SiteMasthead: the
          phone bar appears exactly when this element leaves the screen, so the
          brand is never absent from the page. -->
     <div class="stmt__sheet" data-brand-sentinel>
-      <!-- Crop marks on the three free corners; the fourth is the mark. -->
+      <!-- Crop marks on the free corners. Desktop gives the top-right to the
+           mark and keeps the other three; a phone has no stamp on the sheet at
+           all and keeps all four. -->
+      <span class="stmt__crop stmt__crop--tl" aria-hidden="true"></span>
       <span class="stmt__crop stmt__crop--tr" aria-hidden="true"></span>
       <span class="stmt__crop stmt__crop--bl" aria-hidden="true"></span>
       <span class="stmt__crop stmt__crop--br" aria-hidden="true"></span>
@@ -146,7 +154,7 @@ onUnmounted(() => {
            the measure without measuring anything at runtime. -->
       <div class="stmt__elevation">
         <p class="stmt__course stmt__course--drawn">
-          <span class="stmt__wordmark press press--light">{{ WORD_1 }}</span>
+          <span class="stmt__wordmark">{{ WORD_1 }}</span>
         </p>
 
         <!-- The cut plane: one red rule, square end ticks, exactly as wide as
@@ -156,7 +164,7 @@ onUnmounted(() => {
         <p class="stmt__course stmt__course--solid">
           <!-- The film used to be seen only through these letterforms; it is
                the whole band now, so the word is simply set in it. -->
-          <span class="stmt__wordmark press press--light">{{ WORD_2 }}</span>
+          <span class="stmt__wordmark">{{ WORD_2 }}</span>
         </p>
       </div>
 
@@ -179,19 +187,17 @@ onUnmounted(() => {
 .stmt {
   position: relative;
   overflow: clip;
-  /* THE SHEET IS DRAWN IN PAPER AT ALPHA, not in the dark bands own bronze
-     hairline: --crta-na-temnem measures 2.49:1 against the treated film, under
-     the 3:1 floor for a graphic. This is the engraving vocabulary the pillar
-     plates already use on their dark grounds - paper, thinned - and it lands at
-     4.03:1 against the worst frame the clip could hold. */
-  --sheet-line: color-mix(in srgb, var(--list) 55%, transparent);
+  /* ONE FLAT LINE COLOUR for the whole sheet — frame, crop marks, the rule
+     under the claim. It was paper at 55% while the film was darkened, so that
+     it composited into whatever passed behind it; with the film untreated the
+     lines take the same ink the type does and stay one colour everywhere. */
+  --sheet-line: var(--grafit);
   /* THE GROUND UNDER THE FILM, and it has to be a real one: it is what a
      visitor sees for the moment before the poster decodes, and what fills any
-     part of the band `cover` cannot reach. --zemlja is the page's own closing
-     ground, so the band at the top and the earth at the bottom are literally
-     the same colour — which is what the brand name used to say by carrying that
-     bronze inside its letterforms. */
-  background: var(--zemlja);
+     part of the band `cover` cannot reach. The film runs untreated and this
+     footage is paper-toned, so the ground is the page's own second paper —
+     a light band that goes on being a light band if the film never arrives. */
+  background: var(--list-2);
   padding: var(--hero-inset);
 }
 
@@ -202,18 +208,11 @@ onUnmounted(() => {
    horizontal band out of the middle. The encode is the full frame precisely so
    both have material to take (scripts/build-pillar-videos.mjs, BANDS.hero-fill).
 
-   THE TREATMENT IS A FILTER, NOT A HEAVY WASH, and that is measured rather than
-   stylistic. This footage is bright — paper walls at Y≈200 — so light type over
-   it needs the whites brought a long way down. A flat wash does that by
-   collapsing everything toward one colour: at the ~93% needed to carry the red,
-   the film's whole range lands inside about 14 values and the picture stops
-   being a picture. `brightness()` scales instead of collapsing, so the image
-   keeps its own contrast and simply gets darker — the range stays open where a
-   wash would have closed it. The wash that follows is then only a tint, and it
-   is the page's own bronze.
-
-   THE TWO KNOBS ARE HERE: the brightness below and the veil's alpha. Raise
-   either and re-measure the four pairs recorded on .stmt__veil. */
+   NO TREATMENT AT ALL, on the owner's call: the film runs at its own
+   brightness and its own colour. What that costs is recorded on .stmt__wordmark
+   — this footage carries both near-white wall and a near-black block in the
+   same frame, so no single ink can clear AA against every part of it, and the
+   type is set for the wall because that is what most of the band is. */
 .stmt__film {
   position: absolute;
   inset: 0;
@@ -222,29 +221,6 @@ onUnmounted(() => {
   height: 100%;
   object-fit: cover;
   object-position: 50% 50%;
-  filter: brightness(0.28) saturate(0.9);
-  pointer-events: none;
-}
-
-/* The tint, and the guarantee. Measured in-page against the worst frame the
-   clip could ever hold — a pure white one — composited through the filter and
-   then this:
-   the ground under everything comes out rgb(69 64 60), and against it:
-     --list paper, the two courses and the claim      9.18:1
-     --sheet-line, the frame and the crop marks       4.03:1  (3:1 floor)
-     --rez-na-temnem, the cut plane                   3.14:1  (3:1 floor)
-     --rez-na-temnem, the claim's accent              3.14:1  (3:1 floor — it
-                                       is 24px+ at every viewport, i.e. large
-                                       text, which is the only reason a red
-                                       this light passes at all)
-   Worth stating why it is measured against white rather than against these
-   frames: the clip can be replaced, and a treatment that only holds for one
-   piece of footage is not a treatment. */
-.stmt__veil {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background: color-mix(in srgb, var(--zemlja) 30%, transparent);
   pointer-events: none;
 }
 
@@ -277,6 +253,13 @@ onUnmounted(() => {
   height: var(--space-6);
   pointer-events: none;
 }
+.stmt__crop--tl {
+  top: 0;
+  left: 0;
+  border-top: var(--divider-width) solid var(--sheet-line);
+  border-left: var(--divider-width) solid var(--sheet-line);
+  margin: -1px 0 0 -1px;
+}
 .stmt__crop--tr {
   top: 0;
   right: 0;
@@ -305,6 +288,11 @@ onUnmounted(() => {
    inside edges only — the ink's top-left stays exactly on the corner, which is
    the veil's landing formula. */
 .stmt__stamp {
+  /* PHONES HAVE NO STAMP ON THE SHEET: the header bar is the logo there
+     (SiteMasthead), and two of the same mark one above the other is one too
+     many. Desktop turns it back on, across the sheet — see the block at the
+     end. */
+  display: none;
   position: absolute;
   /* Pulled out by the border's own width: an absolute box is positioned
      against the PADDING box, so `0` would sit the ink one border inside the
@@ -312,7 +300,6 @@ onUnmounted(() => {
      OUTER corner. Measured: 21px against a 20px inset before this. */
   left: calc(var(--divider-width) * -1);
   top: calc(var(--divider-width) * -1);
-  display: block;
   padding: 0 var(--space-3) var(--space-3) 0;
   /* NO PATCH ON THE FILM. Punching the frame with a rectangle of the band's
      own fill was right while the band was flat paper; over a moving image any
@@ -378,9 +365,7 @@ onUnmounted(() => {
   letter-spacing: -0.02em;
   text-transform: uppercase;
   white-space: nowrap;
-  /* The fallback ink where background-clip:text is unavailable — paper, not
-     graphite, because what is behind the letters is the darkened film. */
-  color: var(--list);
+  color: var(--grafit);
   /* The 0.8 line-height crops the caps' own box; a hair of leading keeps the
      cut off the letterforms. */
   padding-block: 0.04em;
@@ -398,43 +383,21 @@ onUnmounted(() => {
 .stmt__course--solid {
   position: relative;
   font-size: min(calc(var(--mon-span) / 4.125), calc(var(--mon-cap) * 1.0788));
-  color: var(--list);
+  color: var(--grafit);
 }
 
-/* BOTH COURSES ARE CUT FROM MATERIAL — the press screen (base.css `.press`),
-   carried on the ink and clipped to the letterforms, the same stock the contact
-   band is printed on. What has changed is which way round it runs. The band was
-   paper and the letters were the dark thing on it, filled with the closing
-   band's bronze and, below the cut, with a moving image showing through the
-   glyphs. The band IS the moving image now, so the letters are the light thing
-   on it: paper, with the press screen in its light tuning, and the pair reads
-   as two blocks of stock laid on the film rather than as two windows into it.
+/* THE COURSES ARE FLAT INK, on the owner's call. They carried the press
+   screen clipped into the letterforms — the page's own pressed stock showing
+   through the glyphs — and that device is cancelled here: one uniform colour,
+   no texture, which also retires the background-clip:text guard that existed
+   only to carry it.
 
-   A 45° section hatch stood here first and was wrong — it is the drawing
-   convention for cut EARTH, borrowed from a section further down the page, and
-   on the brand name it read as a pattern rather than as a material. The press
-   screen is the page's own surface, at the same 9px cell it runs at in the
-   contact band, so the hero states what the page is made of instead of quoting
-   a drawing.
-
-   ONE RULE FOR BOTH WORDS, deliberately: identical declarations split across
-   two selectors is exactly the shape the CSS minifier merges and prunes
-   (rendering.md trap 8), and there is no longer anything that should be able to
-   make the two courses drift apart — the film runs behind both of them equally.
-
-   Gated, and the gate is load-bearing: background-clip:text needs `color:
-   transparent` to show anything, so an engine without it would render the
-   brand name invisible. Outside the guard the words fall back to solid ink,
-   which is why the courses' own `color` is the paper below and not the
-   graphite it used to be. */
-@supports ((-webkit-background-clip: text) or (background-clip: text)) {
-  .stmt__wordmark {
-    background-color: var(--list);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-}
+   WHICH ink is decided by the footage, not by the palette. The film is
+   untreated and it is a paper-toned wall for most of its frame, so the type is
+   the page's own graphite and reads as ink on that wall. Where the clip's
+   graphite block passes behind a letter the two are near enough the same value
+   that the letter stops reading — measured on the built page below. That is the
+   cost of running the film untreated and it is stated rather than hidden. */
 
 /* The cut plane, exactly as wide as the courses, with its square end ticks —
    and extension lines dropping the full height of the sheet from both ends,
@@ -445,10 +408,7 @@ onUnmounted(() => {
   width: var(--mon-w);
   max-width: 100%;
   height: 2px;
-  /* The dark world's cut voice: --rez is a light-ground red and measures 1.02:1
-     against the treated film — invisible. --rez-na-temnem lands at 3.32:1,
-     which is the 1.4.11 floor for a graphic element. */
-  background: var(--rez-na-temnem);
+  background: var(--rez);
   margin-block: clamp(0.4rem, 0.8vw, 0.7rem);
 }
 .stmt__cut::before,
@@ -458,7 +418,7 @@ onUnmounted(() => {
   top: -3px;
   width: 8px;
   height: 8px;
-  background: var(--rez-na-temnem);
+  background: var(--rez);
 }
 .stmt__cut::before {
   left: 0;
@@ -490,15 +450,13 @@ onUnmounted(() => {
   line-height: 1;
   letter-spacing: -0.02em;
   text-transform: uppercase;
-  color: var(--list);
+  color: var(--grafit);
   max-width: 26ch;
 }
 
 .stmt__hl {
-  /* Display-adjacent size (24px+), so the 3:1 floor applies: 3.32:1 against the
-     treated film at its worst possible frame. The light-ground --rez would sit
-     at 1.28:1 here and simply vanish. */
-  color: var(--rez-na-temnem);
+  /* Display-adjacent size (24px+), so the 3:1 floor applies. */
+  color: var(--rez);
 }
 
 /* --- desktop ---------------------------------------------------------------
@@ -513,28 +471,10 @@ onUnmounted(() => {
    sheet's own frame padding) costs ~290px of it. That leaves ~420px for the
    pair, which is a 228px first course — and 78cqw lands there. Re-derive if
    any of those fixed costs change. */
-/* Phones give BOTH top corners to marks: the pd stamp on the left and the menu
-   control mirroring it on the right (SiteMasthead). The crop mark that would
-   sit under the control overlaps it — the mark spans 24px down from the corner
-   and the glyph's ink sits 29.6–45.6px down — so it stands down there, exactly
-   as the stamp's own corner has no crop mark. Desktop has no such control and
-   keeps all three. */
 @media (max-width: 899.98px) {
-  .stmt__crop--tr {
-    display: none;
-  }
-
-  /* THE MARK MOVED INTO THE BAR. A phone now carries the same header as the
-     rest of the site (SiteMasthead), and that header's whole content is the pd
-     mark at bar height — so the sheet's corner stamp would be the same logo
-     twice, one above the other. The stamp stands down and the sheet's top
-     padding, which existed only to clear it, comes back to the frame's own
-     figure. The intro veil lands on the BAR's mark on phones; index.html
-     carries that geometry as literals and names this file. */
-  .stmt__stamp {
-    display: none;
-  }
-
+  /* The sheet's top padding existed only to clear the corner stamp, and a
+     phone has no stamp — the header bar is the logo there (SiteMasthead), and
+     the intro veil lands on it. */
   .stmt__sheet {
     padding-top: var(--space-4);
   }
@@ -556,6 +496,30 @@ onUnmounted(() => {
      evenly. Desktop keeps its own min-height below and is untouched. */
   .stmt__sheet {
     min-height: 56svh;
+  }
+}
+
+/* THE MARK STANDS AT THE SHEET'S TOP-RIGHT on desktop, not its top-left. The
+   two courses are left-aligned and stop well short of the frame, so the right
+   of the sheet is the composition's void; the mark fills it, and the corner it
+   takes is the one corner the drawing never reaches. The crop mark that stood
+   there steps aside for it, exactly as the top-left one used to.
+
+   IT IS STILL A CORNER, and that is what keeps the intro veil expressible: both
+   of its coordinates are insets from a viewport edge, so index.html can copy
+   them as a formula (left = 100% − inset − the mark's own width, which is
+   244/144 of its height). A position hung off the drawing's own centre would
+   not be — change this and the veil's desktop landing changes with it. */
+@media (min-width: 900px) {
+  .stmt__stamp {
+    display: block;
+    left: auto;
+    right: calc(var(--divider-width) * -1);
+    padding: 0 0 var(--space-3) var(--space-3);
+  }
+
+  .stmt__crop--tr {
+    display: none;
   }
 }
 
