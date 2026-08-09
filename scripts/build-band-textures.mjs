@@ -56,12 +56,29 @@ mkdirSync(outDir, { recursive: true })
 const BAND_RATIO = 2.3
 const BAND_W = 443 // desktop, measured — only used to report the on-screen size
 
+/**
+ * THE BRIGHTNESS/CONTRAST CURVE (owner's call: "brighten them up a bit and add
+ * some contrast"), applied to the luminance before it becomes the alpha:
+ * out = SLOPE * in + OFFSET, clamped to 0..255. Slope above 1 with a small
+ * negative offset steepens the curve from the dark end — pure black stays pure
+ * black (0 stays 0 through the clamp), while antialiased mids and hairlines
+ * lift toward full white. That is "brighter AND more contrast" in one pair of
+ * numbers, and it is applied identically to all four so the density ladder
+ * between them is preserved. Measured effect on the alpha means:
+ * 10.6/25.4/15.0/36.7 → 11.9/28.2/15.0/41.6 of 255. Privacy does not move:
+ * its threshold already made it binary, and a curve has no mids to lift there —
+ * its share of the brightening comes from the rest-opacity raise in the
+ * component instead.
+ */
+const SLOPE = 1.4
+const OFFSET = -10
+
 const TEXTURES = [
   {
     // VIDNOST NA GOOGLU — a node-and-link web. What finds you is a graph, and
     // crawlers walk links, so the texture states the claim rather than
     // decorating it. Zoomed hard: at full source width its lines were invisible.
-    id: 'mesh-v3',
+    id: 'mesh-v4',
     file: 'capture/tex-mesh-src.png',
     crop: { left: 860, top: 550, width: 1000 },
     repeat: 90, // node spacing in the source, px
@@ -69,7 +86,7 @@ const TEXTURES = [
   },
   {
     // DELUJOČI OBRAZCI — the field itself, ruled, with a caret in it.
-    id: 'forms-v2',
+    id: 'forms-v3',
     file: 'capture/tex-forms-src.png',
     crop: { left: 0, top: 150, width: 2720 },
     repeat: 250, // one field
@@ -85,7 +102,7 @@ const TEXTURES = [
     // below the crosses in luminance, so a cut at 230 drops it and keeps them.
     // It cannot be cropped away instead: it spans y 61-1000 of a 1536 source,
     // and a 2.3:1 crop at full width needs 1183 of those rows.
-    id: 'privacy-v2',
+    id: 'privacy-v3',
     file: 'capture/tex-privacy-src.png',
     crop: { left: 0, top: 150, width: 2720 },
     repeat: 113,
@@ -96,7 +113,7 @@ const TEXTURES = [
     // OBJAVA NA VAŠI DOMENI — the near-solid plate the rest is published onto.
     // Its screen is so fine that at full source width it would land at 0.65px
     // and moiré rather than read; this is the deepest zoom of the four.
-    id: 'domain-v2',
+    id: 'domain-v3',
     file: 'capture/tex-domain-src.png',
     crop: { left: 400, top: 400, width: 400 },
     repeat: 4,
@@ -112,6 +129,7 @@ for (const t of TEXTURES) {
     .toColourspace('b-w')
 
   if (t.threshold) gray = gray.threshold(t.threshold)
+  gray = gray.linear(SLOPE, OFFSET)
 
   const { data, info } = await gray
     .resize({ width: t.width, withoutEnlargement: true })

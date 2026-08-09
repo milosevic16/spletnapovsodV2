@@ -771,15 +771,21 @@ button.asm__band {
    into ink masks) read as nothing. The files carry the generated marks with
    their ground as transparency, so drawn over the band's own black they render
    exactly what the generator produced; the crop removed only the watermark and
-   the one stray non-grey line. Half strength at rest, full when probed — the
-   drawing's way of saying "this is the layer we are looking at".
+   the one stray non-grey line, and one contrast curve in the pipeline steepens
+   the marks (owner's call — "brighten them up a bit and add some contrast").
+
+   0.7 at rest, full when probed — the drawing's way of saying "this is the
+   layer we are looking at". The rest was 0.5, raised with the same call; the
+   raise is the half of the brightening that reaches privacy-v3, whose
+   thresholded (binary) file has no mids for the pipeline's curve to lift. A
+   resting mark now reads 9.9:1 against the black, a probed one 21:1.
 
    `cover`, not `stretch`: each file is cut to 2.30:1 against a band measured at
    2.49:1 on desktop and 2.19:1 on a phone, so cover trims a sliver at either
    end rather than distorting the motif into ellipses. The light-to-heavy
    descent down the stack is the textures' own — their ink coverage runs
-   4.2% / 10% / 5.9% / 14.4% of the frame (measured as alpha means 10.6, 25.4,
-   15.0, 36.7 of 255). */
+   4.7% / 11.1% / 5.9% / 16.3% of the frame (measured as alpha means 11.9,
+   28.2, 15.0, 41.6 of 255). */
 .asm__fill {
   position: absolute;
   inset: 0;
@@ -787,7 +793,7 @@ button.asm__band {
   width: 100%;
   height: 100%;
   pointer-events: none;
-  opacity: 0.5;
+  opacity: 0.7;
   transition: opacity var(--dur-tween) var(--ease-hover);
   background-position: center;
   background-size: cover;
@@ -797,24 +803,24 @@ button.asm__band {
 /* VIDNOST — a node-and-link web. What finds you is a graph and crawlers walk
    links, so the texture states the claim rather than decorating it. */
 .asm__band--0 .asm__fill {
-  background-image: url('/img/tex/mesh-v3.webp');
+  background-image: url('/img/tex/mesh-v4.webp');
 }
 
 /* OBRAZCI — the field itself, ruled, with a caret in it. */
 .asm__band--1 .asm__fill {
-  background-image: url('/img/tex/forms-v2.webp');
+  background-image: url('/img/tex/forms-v3.webp');
 }
 
 /* PIŠKOTKI — a sampling lattice: discrete points taken off a continuous person,
    which is what the law is about. */
 .asm__band--2 .asm__fill {
-  background-image: url('/img/tex/privacy-v2.webp');
+  background-image: url('/img/tex/privacy-v3.webp');
 }
 
 /* DOMENA — the near-solid plate the rest is published onto, and the densest of
    the four by design: it is the ground the other three stand on. */
 .asm__band--3 .asm__fill {
-  background-image: url('/img/tex/domain-v2.webp');
+  background-image: url('/img/tex/domain-v3.webp');
 }
 
 /* ONE ground, and it is the ARTWORK'S: the sources are white marks on pure
