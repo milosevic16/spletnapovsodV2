@@ -436,6 +436,18 @@ onUnmounted(() => {
    strokes and the red. Text on them: paper 13.9:1, papir-dim 10.4:1. */
 .pil__plate {
   position: relative;
+  /* EACH PLATE IS ITS OWN STACKING CONTEXT, and on phones that is load-bearing
+     rather than hygiene. The stack is imbricated — each plate rides 1rem over
+     the one above — and the rule that makes it read is that the LOWER plate
+     covers the upper one. But the face and the fold both claim z-index 1 to sit
+     above their plate's clip, and a plate with z-index:auto is not a stacking
+     context, so those two were promoted into the SECTION's context instead:
+     an open plate's fold painted its wash straight over the top of the plate
+     below it (visible the moment the fold gained a background — a grey belt
+     across the next plate's picture). `isolate` keeps z-index 1 meaning
+     "above this plate's own clip" and nothing more, and tree order then does
+     what it always should have: the next plate covers this one. */
+  isolation: isolate;
   background: var(--grafit);
   border: var(--divider-width) solid var(--grafit);
   display: flex;
@@ -932,55 +944,55 @@ button.pil__face {
      72% sheet over all of it left a dead grey rectangle — and the wash arrives
      underneath it, ramped in, exactly where something has to be read on top.
 
-     THE RAMP IS ANCHORED TO THE FACE, NOT MEASURED IN PIXELS. The face carries
-     the aspect-ratio, so `top: 38%` of it is 38% of the picture at every phone
-     width — no magic number to re-tune when the plate changes size. The top
-     38% is untouched picture; the wash then climbs to full.
-
-     WHERE IT REACHES FULL IS THE MEASURED PART. The plate's name block starts
-     at 66.7% of the face (measured, open, at 390), and the resting ::before
-     scrim is no help to it here — on an open plate that gradient's dense end is
-     at the PLATE's bottom, a thousand pixels below, so at the face it has
-     already run out. The ramp is the title's whole ground. Reaching full at the
-     face's bottom edge leaves the title on 41% wash = 3.82:1 against white,
-     under the 4.5 floor (measured, and it is why this stop is not simply
-     100%). Full at 58% of the face puts the entire name block on the dense end,
-     with 8 points of margin for a title that wraps to two lines on a narrow
-     phone. In the ::after box, which starts at 38% and runs 62% tall, that is
-     (58 − 38) / 62 = 32%.
+     THE RAMP IS ANCHORED TO THE NAME BLOCK, and that is the whole trick. It
+     started life pinned to the FACE — a percentage of the picture — and that
+     is what produced the wide grey belt above the title: the fade had to start
+     high enough to be safe for the longest possible title, so on every plate
+     whose title is short it ran for a third of the picture with nothing in it.
+     Hanging it off .pil__plate-name instead means the ramp always ends exactly
+     where the text begins, whatever the title does — one line, two lines, a
+     longer artifact line — with no percentage to re-derive and nothing to be
+     safe about. 3rem of fade above the block, full wash from its top edge down
+     through the fold. That constant is the only knob: raise it for a softer
+     edge, drop it for a harder one.
 
      AND THE WASH IS 80% HERE, NOT 72%, because the phone keeps the clip in
      COLOUR — the band at the top has to look like the plate did before it was
      opened, so the grayscale/brightness filter that carries the desktop is not
      available to help. The wash alone has to hold the copy against the worst
-     frame the footage could ever show. Measured in-page against pure white, unfiltered:
+     frame the footage could ever show. Measured in-page against pure white,
+     unfiltered:
        72%   ink rgb(97 97 97)  paper 5.51:1 · --papir-dim 3.68:1  (fails)
        78%       rgb(84 84 84)  paper 6.75:1 · --papir-dim 4.51:1  (bare)
        80%       rgb(80 80 80)  paper 7.23:1 · --papir-dim 4.83:1  (taken)
      --papir-dim is the binding one — it carries the summary and every point's
-     detail line at 15px, so it needs the full 4.5. Lift the clear band or drop
-     this number and those are the two pairs to re-measure.
+     detail line at 15px, so it needs the full 4.5. Drop this number and those
+     are the two pairs to re-measure.
 
      z-index −1 keeps it behind the face's own content while staying inside the
      face's stacking context, i.e. still above the clip. A positive z-index
      would paint the ramp OVER the plate title. */
-  .pil__plate--clip .pil__face::after {
+  .pil__plate--clip .pil__plate-name {
+    position: relative;
+  }
+
+  .pil__plate--clip .pil__plate-name::before {
     content: '';
     position: absolute;
-    inset: 38% 0 0;
+    inset: -3rem 0 0;
     z-index: -1;
     pointer-events: none;
     background: linear-gradient(
       to bottom,
-      color-mix(in srgb, var(--grafit) 0%, transparent) 0%,
-      color-mix(in srgb, var(--grafit) 80%, transparent) 32%,
+      color-mix(in srgb, var(--grafit) 0%, transparent) 0,
+      color-mix(in srgb, var(--grafit) 80%, transparent) 3rem,
       color-mix(in srgb, var(--grafit) 80%, transparent) 100%
     );
     opacity: 0;
     transition: opacity 380ms var(--ease-spring);
   }
 
-  .pil__plate--clip.pil__plate--open .pil__face::after {
+  .pil__plate--clip.pil__plate--open .pil__plate-name::before {
     opacity: 1;
   }
 
