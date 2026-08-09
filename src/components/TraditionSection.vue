@@ -217,15 +217,22 @@ const GRIP_GRAB = 10
 
 /**
  * THE REFUSAL IS A GESTURE-SCOPED FLAG, and it is the layer that actually
- * holds. Preventing pointerdown stops a MOUSE from jumping the value, but on
- * phones the native grab rides the TOUCH events — a prevented pointerdown
- * does not cancel that path, so a tap on the bare track still threw the seam
- * (reported). So the same geometry test also prevents touchstart, and — the
- * belt under both braces — any `input` event that arrives while the gesture
- * stands refused is treated as noise and the value is put back. Whatever
- * low-level path an engine drives its slider from, the value cannot move
- * without a gesture this code said yes to. Cleared on every gesture end, and
- * by the keyboard handler, so a missed `up` can never wedge the control.
+ * holds: any `input` event that arrives while the gesture stands refused is
+ * treated as noise and the value is put back. Whatever low-level path an
+ * engine drives its slider from, the value cannot move without a gesture this
+ * code said yes to. Cleared on every gesture end, and by the keyboard handler,
+ * so a missed `up` can never wedge the control.
+ *
+ * THE TOUCH PATH MUST NEVER preventDefault — that is a bug this control
+ * shipped once (reported): killing touchstart kills the WHOLE gesture, and
+ * since the dial's band spans the full measure, the strip became a dead zone
+ * the page could not be scrolled from. The refusal never needed the kill —
+ * the value belt above is what holds — so a refused touch is now left alive
+ * for the browser to spend on scrolling. Which it can: the control carries
+ * `touch-action: pan-y` (see .trad__grip), so a gesture that moves vertically
+ * becomes the page's scroll even when it starts on the thumb, and only a
+ * horizontal drag on the thumb operates the dial. The mouse keeps its
+ * preventDefault — a mouse has a wheel, there is nothing to protect.
  */
 let refused = false
 
@@ -241,7 +248,9 @@ function gripGrabAllowed(clientX: number): boolean {
 function onGripDown(e: PointerEvent) {
   // Inert while the pass runs — see onGripKeys for the same guard.
   if (sweeping.value || !gripGrabAllowed(e.clientX)) {
-    e.preventDefault()
+    // Mouse/pen only. On touch this default is the GESTURE — see the refusal
+    // note above; the value belt refuses, the touch stays scrollable.
+    if (e.pointerType !== 'touch') e.preventDefault()
     refused = true
     return
   }
@@ -249,12 +258,12 @@ function onGripDown(e: PointerEvent) {
   takeOver()
 }
 
-/** iOS and Android drive the native grab from here, not from pointerdown. */
+/** iOS and Android drive the native grab from here, not from pointerdown.
+ *  Refuse by FLAG only — never preventDefault a touch (see the note above). */
 function onGripTouch(e: TouchEvent) {
   const t = e.touches[0]
   if (!t) return
   if (sweeping.value || !gripGrabAllowed(t.clientX)) {
-    e.preventDefault()
     refused = true
     return
   }
@@ -972,11 +981,14 @@ onUnmounted(() => {
   z-index: 4;
 }
 
-/* Probed: clear of the stack and in front of it. */
+/* Probed: clear of the stack and in front of it. Paper, not the accent — the
+   owner pulled the orange from every line in this drawing: over the artwork's
+   own blacks and steels the red read as a foreign ink, and paper is what the
+   sheets' marks are already made of (18.8:1 on the artwork ground). */
 .asm__band--on {
   transform: translateX(17.073%) skewY(-7deg);
   z-index: 9;
-  border-color: var(--color-cut-dark);
+  border-color: var(--color-paper);
 }
 
 button.asm__band {
@@ -984,7 +996,7 @@ button.asm__band {
 }
 
 .asm__band:focus-visible {
-  outline: 2px solid var(--color-cut-dark);
+  outline: 2px solid var(--color-paper);
   outline-offset: -4px;
 }
 
@@ -1131,12 +1143,12 @@ button.asm__band {
   }
 }
 
-/* Filled: on dark the accent's own voice clears the 3:1 UI floor on every
-   stratum ground (≥4.3:1 measured), so the terminal needs no borrowed
-   outline — border and fill are both the cut. */
+/* Filled: paper, with the rest of the drawing's lines (owner's call — no
+   orange in the four layers). 18.8:1 on the artwork ground, so the 3:1 UI
+   floor is cleared many times over; hollow-vs-filled stays the state signal. */
 .asm__band--on .asm__node {
-  background: var(--color-cut-dark);
-  border-color: var(--color-cut-dark);
+  background: var(--color-paper);
+  border-color: var(--color-paper);
 }
 
 /* --- the callouts ----------------------------------------------------------- */
@@ -1259,6 +1271,16 @@ button.asm__band {
   margin: 0;
   background: transparent;
   cursor: ew-resize;
+  /* THE DIAL YIELDS THE VERTICAL AXIS. pan-y hands gestures that move up or
+     down to the browser as ordinary page scroll — even from the thumb — and
+     keeps only horizontal drags for the slider. Without it the control's
+     full-measure band was a strip the page could not be scrolled from
+     (reported). Direction is decided once, at gesture start, by the engine:
+     a drag that sets off sideways drives the dial and never scrolls, a drag
+     that sets off downward scrolls and never moves the value. PAIRED with the
+     no-preventDefault rule in the touch handlers — this declaration is dead
+     if a handler kills the touch first. */
+  touch-action: pan-y;
 }
 .trad__grip::-webkit-slider-runnable-track {
   height: 2px;
@@ -1349,9 +1371,10 @@ button.asm__band {
   }
 
   /* Phones lose the leader, so the link between a stratum and its callout is
-     proximity plus this rule, in the same red. */
+     proximity plus this rule — paper, like every other line in the drawing
+     (the orange left with the rest of them). */
   .asm__panels {
-    border-top: 2px solid var(--color-cut-dark);
+    border-top: 2px solid var(--color-paper);
     padding-top: var(--space-4);
   }
 }

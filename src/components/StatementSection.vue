@@ -292,9 +292,9 @@ onUnmounted(() => {
   container-type: inline-size;
   --mon-span: 100cqw;
   --mon-cap: min(16rem, 22svh);
-  /* auto ABOVE and auto on the title block below: the free space divides
-     equally, so the drawing floats centred on the sheet instead of the void
-     pooling in one place. */
+  /* The ONE flexible margin on the sheet: all free space collects above, so
+     the drawing and its claim stand together at the foot (the title block's
+     margin is a fixed step — see .stmt__block). */
   margin-top: auto;
   padding-block: clamp(1rem, 2vw, 2rem);
 }
@@ -356,13 +356,20 @@ onUnmounted(() => {
    The sheet's register strip: a ruled band along the bottom edge, spanning the
    frame's full inner width, carrying the claim. */
 .stmt__block {
-  margin-top: auto;
+  /* A deliberate step, not a flexible one (owner's call): the drawing stands
+     close over its claim at every width, and the sheet's free space pools
+     above the pair. This used to be `auto`, splitting the void with the
+     elevation's auto and floating the drawing mid-band — phones dropped that
+     first, and the owner then asked the title down to the claim everywhere. */
+  margin-top: var(--space-6);
   margin-inline: calc(var(--space-4) * -1);
   padding: var(--space-4) var(--space-4) 0;
 }
 
 .stmt__title {
-  font-size: clamp(1.5rem, 1.05rem + 1.1vw, 2rem);
+  /* One notch under the original clamp(1.5rem, 1.05rem + 1.1vw, 2rem) —
+     "scale down the subtitle just a bit" (owner), ~10% across the range. */
+  font-size: clamp(1.35rem, 0.95rem + 1vw, 1.8rem);
   font-weight: 500;
   line-height: 1;
   letter-spacing: -0.02em;
@@ -413,15 +420,12 @@ onUnmounted(() => {
     min-height: 56svh;
   }
 
-  /* THE DRAWING DROPS TO THE CLAIM (owner's call). The sheet has two
-     `margin-top: auto`s — one above the drawing, one on the title block — and
-     between them they used to divide the free space evenly, floating the
-     drawing in the middle of the band: measured at 375, 75px of air above it
-     and 71px between it and the claim. Taking the auto off the block leaves
-     ONE flexible margin, so all of that space collects at the top and the two
-     texts stand together at the foot with only a deliberate step between them.
-     The film keeps the void, which is the right thing for a band that IS the
-     film. Desktop is untouched and still floats the drawing. */
+  /* THE DRAWING DROPS TO THE CLAIM (owner's call — phones first, and the base
+     rule has since followed with a wider step). This tightens the base's
+     space-6 to space-2: at phone scale the drawing and its claim are one
+     read, and the film keeps the void above, which is the right thing for a
+     band that IS the film. Measured before the drop: 75px of air above the
+     drawing and 71px between it and the claim at 375. */
   .stmt__block {
     margin-top: var(--space-2);
   }
