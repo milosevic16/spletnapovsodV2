@@ -67,15 +67,17 @@ const armed = ref(false)
 /**
  * THE PLATE LOOPS. Which pillars have an encoded clip
  * (scripts/build-pillar-videos.mjs → public/video/pillar-<id>-<version>.*).
- * A pillar not listed here keeps its drawn plate, so the two can be replaced
- * one at a time without the section ever being half-broken.
+ * A pillar not listed here keeps its drawn plate, which is what let them be
+ * replaced one at a time without the section ever being half-broken. All three
+ * carry a clip now; the drawn plates stay as the path back and as the shape any
+ * fourth pillar would start from.
  *
  * PAIRED with PLATE_VERSION in that script: /video/* ships an immutable year-long
  * cache header, so a re-encode under the same name never reaches a repeat
  * visitor — bump both together.
  */
-const PLATE_VERSION = 'v2'
-const PLATE_CLIPS = new Set(['design'])
+const PLATE_VERSION = 'v3'
+const PLATE_CLIPS = new Set(['design', 'security', 'seo'])
 
 function hasClip(id: string): boolean {
   return PLATE_CLIPS.has(id)

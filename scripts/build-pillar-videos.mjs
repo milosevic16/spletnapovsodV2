@@ -58,7 +58,7 @@ const OUT_DIR = join(ROOT, 'public', 'video')
  * repeat visitor nothing and costs an edit in a component that had no reason
  * to be touched.
  */
-const PLATE_VERSION = 'v2'
+const PLATE_VERSION = 'v3'
 const BAND_VERSION = 'v1'
 
 /**
@@ -83,29 +83,22 @@ const TARGET_RATIO = 4 / 3
  * Per-source treatment.
  *
  * `cropBottom` is the watermark strip, in SOURCE pixels, measured off a still:
- * the Kling badge sits in the bottom-right corner, about 55px up from the
- * bottom of a 720-tall frame, and 75 clears it with margin. Check a still
- * before trusting a number here — it differs with frame height (on design's
- * 1280-tall frame the badge measures y 1230..1257, so 75 still clears it).
+ * the Kling badge sits in the bottom-right corner — on all three of these
+ * 720-tall frames it occupies y 675..695, so 75 clears it with 30px to spare.
+ * Check a still before trusting a number here; it moves with frame height (a
+ * 1280-tall source put the same badge at y 1230..1257).
  *
  * `band` is the crop's TOP edge, and it only means anything for a PORTRAIT
  * source: there the plate's landscape ratio is satisfied long before the frame
  * runs out of height, which leaves a real vertical choice — 665px of it on a
- * 720×1280 clip. A landscape source has none (the crop already spans every row
- * the watermark left), so it omits this and the code falls back to centring.
- *
- * MEASURED, never guessed. design.mp4 dollies in: the graphite block grows from
- * 516px tall at t=2.60 to 655px by the last frame, so NO 540-tall band can hold
- * all of it and the only question is which edge to keep. It is the top — the
- * cast shadow below the block is expendable and the block's lit top face is
- * not — and 300 is the highest band that still keeps the block's bottom edge in
- * the poster frame (t=2.89, which is what reduced-motion and JS-off readers
- * see). Raise it to favour the opening drawing beat, lower it for the settled
- * block; the apex of the drawn triangle sits at y≈130 and cannot coexist with
- * the block in one 540-tall band at all.
+ * 720×1280 clip — and that choice has to be MEASURED off the footage, never
+ * eyeballed. A landscape source has none: the crop already spans every row the
+ * watermark left, so cropY can only be 0 and these three omit it. The guard in
+ * the loop refuses a band that would not fit, which is what catches a `band`
+ * left behind from a portrait clip after a landscape one replaces it.
  */
 const CLIPS = {
-  design: { cropBottom: 75, band: 300 },
+  design: { cropBottom: 75 },
   security: { cropBottom: 75 },
   seo: { cropBottom: 75 },
 }
