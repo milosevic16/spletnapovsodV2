@@ -1,9 +1,11 @@
 <script setup lang="ts">
 /**
  * The opening band — A TITLE SHEET. The whole hero is one drafting sheet: a
- * hairline frame inset from the page edges, crop marks at its corners, a
- * construction line where the type stops, and a title block along the bottom
- * carrying the claim. The brand name is the drawing on it.
+ * hairline frame inset from the page edges, crop marks at its corners, and a
+ * title block along the bottom carrying the claim. The brand name is the
+ * drawing on it. (A construction line used to run down the right of the
+ * courses, where the type stops; it is gone on the owner's call — the frame,
+ * the crop marks and the cut plane are enough furniture for one sheet.)
  *
  * THE MARK IS THE SHEET'S CORNER STAMP. It sits ON the frame's top-left
  * corner, punched into the border on its own patch of paper, the way a stamp
@@ -126,12 +128,6 @@ onUnmounted(() => {
            from THIS box's inline width, so they are flush to each other and to
            the measure without measuring anything at runtime. -->
       <div class="stmt__elevation">
-        <!-- The construction line: a box exactly as wide as the courses,
-             showing only its right edge — the line the type stops on. A CHILD,
-             not a pseudo-element of the container: container-query units
-             cannot query the container they are declared on. -->
-        <span class="stmt__edge" aria-hidden="true"></span>
-
         <p class="stmt__course stmt__course--drawn">
           <span class="stmt__wordmark press">{{ WORD_1 }}</span>
         </p>
@@ -181,14 +177,13 @@ onUnmounted(() => {
                   fill="var(--list-2)"
                   mask="url(#stmt-povsod-mask)"
                 />
-                <!-- THE CONTOUR, and it is structural rather than decorative:
-                     the window's content is a moving image, so the fill inside
-                     a letter is whatever the clip happens to be showing. The
-                     hairline is what guarantees the word is always READ as the
-                     word — the same outline »SPLETNA« carries above the cut,
-                     the same hand. Drawn last so it sits over both the plate
-                     and the video. -->
-                <text class="stmt__masktext stmt__contour" x="0" y="0">{{ WORD_2_CLIP }}</text>
+                <!-- NO CONTOUR. A hairline stood here to guarantee the word's
+                     silhouette whatever frame was passing, and it is gone on
+                     the owner's call: the letters are a HOLE into the film, and
+                     a hole has no drawn edge. What carries the word instead is
+                     the grade on the clip itself (build-pillar-videos.mjs),
+                     which is measured to hold the letters clear of the sheet at
+                     the clip's lightest beat. -->
               </svg>
             </span>
           </span>
@@ -306,14 +301,25 @@ onUnmounted(() => {
    section's inset and the sheet's own padding, so the ink lands inside the
    frame by construction rather than by subtraction.
 
-   The cap stops the type growing without bound on very wide screens; because
-   both caps carry the same 4.218 : 3.951 relation, capping never breaks the
+   THE CAP HAS TWO JOBS AND SO IT HAS TWO TERMS. 16rem stops the type growing
+   without bound on very wide screens. The svh term is the one that keeps the
+   CLAIM ABOVE THE FOLD: the sheet is the viewport's height minus its fixed
+   costs, and the drawing is the only part of it that scales, so on a short
+   screen the courses are what push the title block past the bottom edge —
+   measured at 1440×760, the claim's last line sat 6px below the fold. Tying
+   the cap to viewport height makes the drawing give way instead of the claim.
+   22svh was chosen against measurement, not taste: 25 still left the claim
+   6px under the fold at 1280×650, which is the short-laptop case the report
+   came from. At 22 the term is inert above ~970px of viewport height (the
+   width term wins there, so a tall screen is unchanged) and the claim clears
+   the fold with room at 650, 700 and 760. Both caps carry the same
+   4.4502 : 4.125 relation, so capping — by either term — never breaks the
    flush. */
 .stmt__elevation {
   position: relative;
   container-type: inline-size;
   --mon-span: 100cqw;
-  --mon-cap: 16rem;
+  --mon-cap: min(16rem, 22svh);
   /* The courses' shared width, for anything that must align to where the type
      ends. Declared here but RESOLVED in the children that use it, which is the
      only context where cqw can see this container. */
@@ -323,12 +329,6 @@ onUnmounted(() => {
      pooling in one place. */
   margin-top: auto;
   padding-block: clamp(1rem, 2vw, 2rem);
-}
-
-/* Hidden by default: on a phone the courses already reach both edges of the
-   frame, so a line at their right edge would just double the frame. */
-.stmt__edge {
-  display: none;
 }
 
 .stmt__course {
@@ -378,19 +378,28 @@ onUnmounted(() => {
    contact band, so the hero states what the page is made of instead of quoting
    a drawing.
 
+   AND IT IS THE CONTACT BAND'S COLOUR TOO, not just its screen: --zemlja, the
+   bronze that band is grounded in. Graphite stood here and made the hero read
+   as neutral ink on warm paper — a different world from the one the page ends
+   in. The brand name now carries the closing band's own material AND its own
+   brown, so the sheet at the top and the earth at the bottom are made of the
+   same thing. Measured on the hero's beige (#ece8de): 10.2:1, so the word is
+   nowhere near a contrast question.
+
    ONE RULE FOR BOTH WORDS, deliberately: identical declarations split across
    two selectors is exactly the shape the CSS minifier merges and prunes
    (rendering.md trap 8), and there is no reason for the two courses to be able
    to drift apart. What still separates them is what is behind the glyphs —
    above the cut the pressed stock IS the fill, below it a moving image sits
-   over the fill and shows through instead.
+   over the fill and shows through instead. Below the cut the fill is only ever
+   seen with JS off, and there the pair reading as one material is the point.
 
    Gated, and the gate is load-bearing: background-clip:text needs `color:
    transparent` to show anything, so an engine without it would render the
    brand name invisible. Outside the guard the words stay solid ink. */
 @supports ((-webkit-background-clip: text) or (background-clip: text)) {
   .stmt__wordmark {
-    background-color: var(--grafit);
+    background-color: var(--zemlja);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -493,17 +502,6 @@ onUnmounted(() => {
   transform: translateY(0.7389em);
 }
 
-/* The contour reuses the mask text's geometry wholesale — same class, so the
-   two can never disagree about where a letter is — and only swaps the paint.
-   0.012em matches »SPLETNA«'s stroke above the cut; text-stroke centres its
-   width on the outline while SVG's stroke does too, so the two read as the
-   same hairline at the same size. */
-.stmt__contour {
-  fill: none;
-  stroke: var(--grafit);
-  stroke-width: 0.012em;
-}
-
 /* --- the title block --------------------------------------------------------
    The sheet's register strip: a ruled band along the bottom edge, spanning the
    frame's full inner width, carrying the claim. */
@@ -574,17 +572,6 @@ onUnmounted(() => {
   .stmt__elevation {
     --mon-span: 78cqw;
     padding-block: var(--space-4);
-  }
-
-  .stmt__edge {
-    display: block;
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: var(--mon-w);
-    border-right: var(--divider-width) solid var(--mreza);
-    pointer-events: none;
   }
 
   .stmt__block {
