@@ -577,9 +577,21 @@ button.pil__face {
    what makes three clips shot on three different grounds (measured off their
    posters: Y 178, 24 and 200) behave like one material, and it keeps the page's
    single red where it belongs instead of leaving a ghost of it behind body
-   copy. */
-.pil__plate--clip.pil__plate--open .pil__clip {
-  filter: grayscale(1) brightness(0.72);
+   copy.
+
+   DESKTOP ONLY, and the reason is the shape again. There the open plate is a
+   row: text beside picture, one ground under both, so the picture cannot be
+   left in colour without the copy sitting on it. A phone opens the plate as a
+   column and gives the picture a band of its own above the text — a band whose
+   whole point is that it still looks like the plate did before it was opened,
+   which a filter on the element would take away wholesale (a filter applies to
+   all of it or none of it; there is no gradient of one). The phone block pays
+   for the missing grayscale in wash instead, and the number there is measured
+   against a white frame with no filter at all. */
+@media (min-width: 900px) {
+  .pil__plate--clip.pil__plate--open .pil__clip {
+    filter: grayscale(1) brightness(0.72);
+  }
 }
 
 /* A clip plate carries NO FRAME. The face's padding is what used to read as
@@ -932,11 +944,22 @@ button.pil__face {
      already run out. The ramp is the title's whole ground. Reaching full at the
      face's bottom edge leaves the title on 41% wash = 3.82:1 against white,
      under the 4.5 floor (measured, and it is why this stop is not simply
-     100%). Full at 58% of the face puts the entire name block on the same 72%
-     the flat sheet gave it — 7.52:1 for the title, 5.02:1 for the artifact, the
-     pairs recorded above — with 8 points of margin for a title that wraps to
-     two lines on a narrow phone. In the ::after box, which starts at 38% and
-     runs 62% tall, that is (58 − 38) / 62 = 32%.
+     100%). Full at 58% of the face puts the entire name block on the dense end,
+     with 8 points of margin for a title that wraps to two lines on a narrow
+     phone. In the ::after box, which starts at 38% and runs 62% tall, that is
+     (58 − 38) / 62 = 32%.
+
+     AND THE WASH IS 80% HERE, NOT 72%, because the phone keeps the clip in
+     COLOUR — the band at the top has to look like the plate did before it was
+     opened, so the grayscale/brightness filter that carries the desktop is not
+     available to help. The wash alone has to hold the copy against the worst
+     frame the footage could ever show. Measured in-page against pure white, unfiltered:
+       72%   ink rgb(97 97 97)  paper 5.51:1 · --papir-dim 3.68:1  (fails)
+       78%       rgb(84 84 84)  paper 6.75:1 · --papir-dim 4.51:1  (bare)
+       80%       rgb(80 80 80)  paper 7.23:1 · --papir-dim 4.83:1  (taken)
+     --papir-dim is the binding one — it carries the summary and every point's
+     detail line at 15px, so it needs the full 4.5. Lift the clear band or drop
+     this number and those are the two pairs to re-measure.
 
      z-index −1 keeps it behind the face's own content while staying inside the
      face's stacking context, i.e. still above the clip. A positive z-index
@@ -950,8 +973,8 @@ button.pil__face {
     background: linear-gradient(
       to bottom,
       color-mix(in srgb, var(--grafit) 0%, transparent) 0%,
-      color-mix(in srgb, var(--grafit) 72%, transparent) 32%,
-      color-mix(in srgb, var(--grafit) 72%, transparent) 100%
+      color-mix(in srgb, var(--grafit) 80%, transparent) 32%,
+      color-mix(in srgb, var(--grafit) 80%, transparent) 100%
     );
     opacity: 0;
     transition: opacity 380ms var(--ease-spring);
@@ -965,7 +988,7 @@ button.pil__face {
      else. It needs no fade of its own: the fold grows out of the ramp's dense
      end, so the two meet at the same value and read as one surface. */
   .pil__plate--clip.pil__plate--open .pil__fold {
-    background: color-mix(in srgb, var(--grafit) 72%, transparent);
+    background: color-mix(in srgb, var(--grafit) 80%, transparent);
   }
 
   /* »Zapri« CLEARS THE OVERLAP. The stack is deliberately imbricated — each
