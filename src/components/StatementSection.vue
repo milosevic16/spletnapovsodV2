@@ -14,10 +14,14 @@
  * 45px desktop masthead strip), ink-height = 0.55em of --hero-display. The
  * veil (index.html) copies those as literals — change either, change both.
  *
- * THE DRAWING. Two courses of monumental type divided by the site's cut plane:
- * above it »Spletna« is DRAWN (outlined letterforms — the elevation, what you
- * see), below it »Povsod« is BUILT (solid ink poché — the matter that holds it
- * up). One red rule with square end ticks, exactly as wide as the courses.
+ * THE DRAWING. Two courses of monumental type divided by the site's cut plane,
+ * both cut from the SAME material — the press screen the contact band is
+ * printed on, carried on the ink and clipped to the letterforms. Above the cut
+ * »Spletna« is that pressed stock and nothing else; below it »Povsod« has a
+ * moving image behind the same glyphs, so what you see is what the page is
+ * made of, and what holds it up is the same stock with something running
+ * through it. One red rule with square end ticks, exactly as wide as the
+ * courses.
  *
  * THE COURSES ARE FLUSH BY ARITHMETIC, not by eye. Measured at 100px in the
  * real face (Geist 400, uppercase, ls −0.02em): »SPLETNA« sets 4.218em wide,
@@ -129,7 +133,7 @@ onUnmounted(() => {
         <span class="stmt__edge" aria-hidden="true"></span>
 
         <p class="stmt__course stmt__course--drawn">
-          <span class="stmt__wordmark">{{ WORD_1 }}</span>
+          <span class="stmt__wordmark press">{{ WORD_1 }}</span>
         </p>
 
         <!-- The cut plane: one red rule, square end ticks, exactly as wide as
@@ -360,61 +364,32 @@ onUnmounted(() => {
   color: var(--grafit);
 }
 
-/* ABOVE THE CUT the word is DRAWN: outlined letterforms, the elevation. The
-   stroke is in em so its weight tracks the type at every size. Gated on
-   @supports because the fill only goes transparent where a stroke will
-   actually be painted — without the guard an unsupporting engine would render
-   the brand name invisible. */
-/* ABOVE THE CUT the word is DRAWN, and it is drawn the way this site draws cut
-   matter everywhere else: »SPLETNA« is filled with the 45° SECTION HATCH that
-   the »Kaj dobite« strata are hatched with, held inside a hairline outline.
-   Same convention, same angle, same hand — the hero now states in its own name
-   the drawing language the page uses further down.
+/* BOTH COURSES ARE CUT FROM MATERIAL, and it is the SAME material the contact
+   band »Povejte, kaj potrebujete« is printed on: the press screen (base.css
+   `.press`), carried on the ink and clipped to the letterforms. The glyphs
+   become the window and the pressed stock shows through them, so the pair
+   reads as two blocks milled out of one sheet rather than as type sitting on
+   one.
 
-   Both devices at once, and they need each other: the outline gives the
-   letterform its edge, the hatch gives it its material. The hatch pitch is in
-   em so it scales with the type instead of getting denser as the word grows.
+   A 45° section hatch stood here first and was wrong — it is the drawing
+   convention for cut EARTH, borrowed from a section further down the page, and
+   on the brand name it read as a pattern rather than as a material. The press
+   screen is the page's own surface, at the same 9px cell it runs at in the
+   contact band, so the hero states what the page is made of instead of quoting
+   a drawing.
 
-   Gated, and the gate is load-bearing on both counts: text-stroke and
-   background-clip:text each need `color: transparent` to show anything, so an
-   engine with neither would render the brand name invisible. Outside the
-   guards the word stays solid ink. */
-@supports (-webkit-text-stroke: 1px currentColor) {
-  .stmt__course--drawn .stmt__wordmark {
-    -webkit-text-stroke: 0.012em var(--grafit);
-    color: transparent;
-  }
-}
-
-@supports ((-webkit-background-clip: text) or (background-clip: text)) {
-  .stmt__course--drawn .stmt__wordmark {
-    background-image: repeating-linear-gradient(
-      45deg,
-      transparent 0 0.042em,
-      var(--grafit) 0.042em 0.054em
-    );
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-}
-
-/* BELOW THE CUT the word is BUILT, and now it is built out of the same
-   material the dark bands are printed on: the press screen, clipped to the
-   letterforms. The ink becomes the background and the glyphs become the
-   window, so »POVSOD« reads as a solid mass that has been SCREENED — which is
-   what the poché below a cut line is, and the reason the texture belongs here
-   and nowhere else in the hero.
-
-   »SPLETNA« deliberately does not take it: above the cut the word is DRAWN,
-   an outline with no fill, so there is no interior for a screen to live in —
-   texturing a 0.013em stroke would only muddy it.
+   ONE RULE FOR BOTH WORDS, deliberately: identical declarations split across
+   two selectors is exactly the shape the CSS minifier merges and prunes
+   (rendering.md trap 8), and there is no reason for the two courses to be able
+   to drift apart. What still separates them is what is behind the glyphs —
+   above the cut the pressed stock IS the fill, below it a moving image sits
+   over the fill and shows through instead.
 
    Gated, and the gate is load-bearing: background-clip:text needs `color:
    transparent` to show anything, so an engine without it would render the
-   brand name invisible. Outside the guard the word stays solid ink. */
+   brand name invisible. Outside the guard the words stay solid ink. */
 @supports ((-webkit-background-clip: text) or (background-clip: text)) {
-  .stmt__course--solid .stmt__wordmark {
+  .stmt__wordmark {
     background-color: var(--grafit);
     -webkit-background-clip: text;
     background-clip: text;
@@ -575,6 +550,18 @@ onUnmounted(() => {
 @media (max-width: 899.98px) {
   .stmt__crop--tr {
     display: none;
+  }
+
+  /* HALF THE AIR. The two `margin-top: auto`s split whatever the sheet has
+     left over after its fixed costs equally above and below the drawing, so
+     the free space IS the spacing and shrinking the sheet is what halves it.
+     Measured at 375×812: the sheet stood at 585 (72svh) against 326px of fixed
+     content — stamp clearance 51, drawing 170, title block 89, bottom padding
+     16 — leaving 259 of free space, 129 above and 129 below. 56svh puts the
+     sheet at 455, which is that same 326 plus 129: half the air, still split
+     evenly. Desktop keeps its own min-height below and is untouched. */
+  .stmt__sheet {
+    min-height: 56svh;
   }
 }
 
