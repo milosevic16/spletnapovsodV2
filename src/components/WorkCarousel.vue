@@ -33,7 +33,7 @@
  */
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { references } from '@/content/home'
-import { createFx } from '@/lib/fx'
+import { createFx, prefersReducedMotion } from '@/lib/fx'
 
 const fx = createFx()
 
@@ -82,7 +82,72 @@ const extraIds = computed(() =>
  * why nothing here reaches for focus: a disclosure that stays put should leave
  * the reader on it.
  */
+const sectionEl = ref<HTMLElement | null>(null)
+const groundEl = ref<HTMLElement | null>(null)
 const moreEl = ref<HTMLElement | null>(null)
+
+/**
+ * HOW FAR THE GROUND TRAVELS, in px, and PAIRED with --wkr-reach in the styles:
+ * the layer hangs exactly this far past the section's top and bottom edges, so
+ * the travel can never expose the band underneath. Change one, change the other.
+ */
+const GROUND_REACH = 120
+
+/**
+ * THE PARALLAX. The ground is a LAYER rather than the section's own background,
+ * because a background cannot be moved without repainting the box it is painted
+ * into — and this one carries the press screen, a four-layer dot lattice across
+ * a full-width band. As a layer it is rasterised once and slid on the
+ * compositor, which is the whole difference between a parallax and a stutter.
+ *
+ * The rate is NORMALISED rather than a fixed multiplier. Offset is the section's
+ * centre against the viewport's; dividing by the largest that offset can reach
+ * while any part of the section is on screen — (viewport + section) / 2 — gives
+ * −1 as it arrives and +1 as it leaves, whatever the section's height. So the
+ * ground always travels exactly ±GROUND_REACH, the overhang is exactly right by
+ * construction, and a section that grows (the two held-back projects opening)
+ * cannot push the layer off its own edge. The effective rate on a 900-tall
+ * viewport works out near 0.1, which is the slow end on purpose: this is a sheet
+ * drifting behind a drawing, not a photo carousel.
+ *
+ * Gated on the observer so the listener does nothing while the band is off
+ * screen, rAF-throttled so a scroll burst writes one transform per frame, and
+ * absent entirely under reduced motion — where the layer simply stands still and
+ * the section is exactly what it always was.
+ */
+function wireParallax() {
+  const section = sectionEl.value
+  const ground = groundEl.value
+  if (!section || !ground || prefersReducedMotion() || !('IntersectionObserver' in window)) return
+  let onScreen = false
+  let queued = false
+  const apply = () => {
+    queued = false
+    const r = section.getBoundingClientRect()
+    const reach = (window.innerHeight + r.height) / 2
+    if (reach <= 0) return
+    const offset = r.top + r.height / 2 - window.innerHeight / 2
+    const p = Math.max(-1, Math.min(1, offset / reach))
+    ground.style.transform = `translate3d(0, ${(-p * GROUND_REACH).toFixed(1)}px, 0)`
+  }
+  const schedule = () => {
+    if (!onScreen || queued) return
+    queued = true
+    fx.raf(apply)
+  }
+  const io = fx.io(
+    (entries) => {
+      for (const e of entries) {
+        onScreen = e.isIntersecting
+        if (onScreen) schedule()
+      }
+    },
+    { threshold: 0 },
+  )
+  io.observe(section)
+  fx.on(window, 'scroll', schedule, { passive: true })
+  fx.on(window, 'resize', schedule)
+}
 
 /** Paired with the belts' 340ms collapse below — this is that plus a beat. */
 const HIDE_HOLD_MS = 440
@@ -180,6 +245,7 @@ function onWallLeave() {
 onMounted(() => {
   hoverCapable.value = window.matchMedia('(hover: hover)').matches
   live.value = true
+  wireParallax()
 })
 
 onUnmounted(() => {
@@ -188,7 +254,14 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section id="reference" class="wkr press press--light">
+  <section id="reference" ref="sectionEl" class="wkr">
+    <!-- THE GROUND, and it is a layer rather than the section's own background
+         so it can be MOVED. It carries the band's paper and its press screen;
+         the section keeps only the flat colour underneath, which is what stops
+         a seam ever showing at the edges the layer travels past. Static in the
+         markup and aria-hidden: with JS off, or under reduced motion, this is
+         simply the background the band always had, standing still. -->
+    <div ref="groundEl" class="wkr__ground press press--light" aria-hidden="true"></div>
     <div class="container">
       <header class="wkr__head">
         <p class="wkr__kicker">{{ references.kicker }}</p>
@@ -313,6 +386,35 @@ onUnmounted(() => {
 .wkr {
   background-color: var(--list-2);
   padding-block: var(--section-block);
+  /* The ground hangs past both edges and the content stands on it. */
+  position: relative;
+  overflow: clip;
+  --wkr-reach: 120px; /* PAIRED with GROUND_REACH in the script */
+}
+
+/* The moving ground. It repeats the band's colour so that the moment before a
+   transform is ever written — and every moment under reduced motion — it is
+   indistinguishable from the background it replaced.
+
+   translate3d rather than translateY: the z keeps the layer on the compositor,
+   which is what makes sliding a full-width dot lattice free. No will-change,
+   deliberately — the transform promotes it while it is moving and lets it go
+   again, rather than holding a band-sized layer in memory for the whole page. */
+.wkr__ground {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--wkr-reach) * -1);
+  bottom: calc(var(--wkr-reach) * -1);
+  z-index: 0;
+  background-color: var(--list-2);
+  pointer-events: none;
+}
+
+/* Everything else stands on the ground rather than under it. */
+.wkr > .container {
+  position: relative;
+  z-index: 1;
 }
 
 .wkr__head {
