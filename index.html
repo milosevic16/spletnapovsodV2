@@ -64,9 +64,15 @@
            above the wordmark lines, so its SVG box top IS its ink top.
            Paired with tokens.css and StatementSection.vue — change there,
            change here. */
+        /* PHONES LAND IN THE HEADER BAR, not on the hero sheet. The sheet's
+           corner stamp stands down below 900px (StatementSection) because the
+           bar itself is the logo there, so this copies the BAR's geometry:
+           left = the row's --hero-inset, top = its 0.375rem of padding, height
+           = the mark's own 2.5rem (SiteMasthead — change there, change here).
+           Desktop overrides all three below, where the stamp still stands. */
         --land-left: clamp(1.25rem, 4.9vw, 4.5rem);
-        --land-top: clamp(1.25rem, 4.9vw, 4.5rem);
-        --land-h: calc(0.55 * clamp(3rem, 0.25rem + 16vw, 8.25rem));
+        --land-top: 0.375rem;
+        --land-h: 2.5rem;
       }
       /* THE GROUND. It wears the HEADER's surface, not the hero's: paper plus
          the same press screen (.press .press--light, from the bundled CSS,

@@ -308,16 +308,23 @@ onUnmounted(() => {
     left: 0;
     right: 0;
     z-index: 50;
-    /* No bar at the top of a phone: the chrome is only the corner control, so
-       there is no surface here and the screen must go with it. Both stated
-       explicitly — a later change to background-color alone would otherwise
-       leave the dots floating over the hero. */
-    background-color: transparent;
-    background-image: none;
-    border-bottom-color: transparent;
-    /* The hero face's box is as tall as the (invisible) brand inside it, so it
-       must not sit over the page swallowing taps. Only its controls take any. */
-    pointer-events: none;
+    /* THE BAR IS THE BASE NOW. A phone used to open with no header at all —
+       the hero's own sheet carried the mark in its corner and the chrome was a
+       bare glyph floating on it. The hero is a film today, and a mark standing
+       on moving footage is neither legible nor a header, so the phone gets the
+       same bar as every other screen of the site: paper, the press screen, a
+       hairline under it. The faces that follow now differ only in what stands
+       IN the bar, never in whether there is one.
+       The screen is taken from .press's own custom properties so it cannot
+       drift from the utility. */
+    background-color: var(--list);
+    background-image: var(--press-dot-hi), var(--press-dot-lo), var(--press-dot-hi),
+      var(--press-dot-lo);
+    border-bottom-color: var(--mreza);
+    /* A real surface takes real taps: it is opaque and it covers the top of the
+       page, so a tap that lands on it must stop there rather than fall through
+       to whatever is scrolling underneath. */
+    pointer-events: auto;
     transition:
       background-color 260ms var(--ease-out),
       border-bottom-color 260ms var(--ease-out),
@@ -348,40 +355,31 @@ onUnmounted(() => {
        became the only one and centred with it, landing 5px off the hero's own
        wordmark. Phones start from the left edge. */
     justify-content: flex-start;
-    /* The brand TOP-aligns, so the bar's copy lands exactly where the hero's
-       own wordmark already is (centring it put the two 3px apart, which shows
-       as a jump the moment the menu opens over it). */
-    align-items: flex-start;
-    /* The hero face: the button sits on the wordmark's own inset — which is
-       NOT the container's gutter (they diverge above ~408px, where the gutter
-       is 4vw and the inset 4.9vw). */
+    /* Centred in the bar, in every face. The old top-alignment existed to land
+       the bar's copy on the hero's own wordmark, which the bar was overlaying;
+       there is nothing behind it to line up with any more, so it centres as a
+       bar should — and because all three faces share this, the mark and the
+       control never move when the menu opens.
+
+       THE BAR'S HEIGHT IS THIS ARITHMETIC: the mark's 2.5rem plus 2 × 0.375rem
+       of padding = 52px. StatementSection carries that 52 as a literal, to
+       stand the hero clear of a bar that is fixed — change one, change both. */
+    align-items: center;
+    /* The mark's own inset — NOT the container's gutter (they diverge above
+       ~408px, where the gutter is 4vw and the inset 4.9vw). */
     padding-inline: var(--hero-inset);
-    padding-block: var(--hero-inset) 0;
+    padding-block: 0.375rem;
     transition: padding 320ms var(--ease-out);
   }
 
-  /* Only a SHUT pinned bar draws in; open restores the hero's own padding.
-     There the brand is a small mark, so the row centres as a bar should. */
-  .masthead--live.masthead--pinned:not(.masthead--open) .masthead__row {
-    align-items: center;
-    padding-block: 0.25rem;
-  }
+  /* The pinned face used to draw its own surface and re-centre its own row;
+     both are the base's job now, so it declares nothing here. What it still
+     changes is the brand — see below. */
 
-  .masthead--live.masthead--pinned:not(.masthead--open) {
-    background-color: var(--list);
-    /* Back on for this face: the hero-face rule above kills the screen for
-       the no-bar state, and it matches whenever the masthead is live. Taken
-       from .press's own custom properties so it cannot drift from the
-       utility. */
-    background-image: var(--press-dot-hi), var(--press-dot-lo), var(--press-dot-hi),
-      var(--press-dot-lo);
-    border-bottom-color: var(--mreza);
-  }
-
-  /* The bar's wordmark is the hero's, re-rendered: same tokens, same optical
-     pull, same vertical stretch. Blank in the hero face — the real hero
-     wordmark is showing through — and full size again the moment the menu
-     opens over it, so the brand is never absent from the screen. */
+  /* The bar's wordmark. It used to be blank in the hero face, because the
+     hero's own sheet was carrying the mark in its corner; the sheet's stamp
+     stands down on phones now (StatementSection) and this IS the logo, so it is
+     present in every face and only its size and its lettering change. */
   .masthead--live .masthead__brand {
     display: flex;
     align-items: center;
@@ -403,7 +401,6 @@ onUnmounted(() => {
     --brand-reserve: 5.2rem;
     padding-right: var(--brand-reserve);
     color: var(--grafit);
-    opacity: 0;
     transition:
       opacity 300ms var(--ease-out),
       font-size 380ms var(--ease-out),
@@ -416,13 +413,35 @@ onUnmounted(() => {
     transform-origin: left center;
   }
 
-  /* Shut and pinned, it is the small bar mark. */
+  /* THE HERO FACE IS THE MARK, AS BIG AS THE BAR WILL CARRY IT, and nothing
+     else: no lettering beside it, because the word is already set at full
+     monumental size a few hundred pixels below and the bar does not need to say
+     it twice. 2.5rem against 0.375rem of padding is the bar's own height.
+     THE INTRO VEIL LANDS ON THIS BOX on phones — left = --hero-inset from the
+     row, top = the padding, height = 2.5rem. index.html copies all three as
+     literals; change any of them and change those. */
+  .masthead--live:not(.masthead--pinned):not(.masthead--open) .masthead__brandtext {
+    display: none;
+  }
+
+  .masthead--live:not(.masthead--pinned):not(.masthead--open) .masthead__brand {
+    /* The optical pull is for lettering; with only the mark in the row it would
+       simply push the logo off centre. */
+    margin-top: 0;
+    padding-block: 0;
+    padding-right: 0;
+  }
+
+  .masthead--live:not(.masthead--pinned):not(.masthead--open) .masthead__brandmark {
+    height: 2.5rem;
+  }
+
+  /* Shut and pinned, it is the small bar mark with the word beside it. */
   .masthead--live.masthead--pinned:not(.masthead--open) .masthead__brand {
     --hero-wordmark-scaley: 1;
     font-size: 1.05rem;
     font-stretch: var(--wdth-monument);
     letter-spacing: -0.02em;
-    opacity: 1;
   }
 
   /* Open, the wordmark is SIZED TO FIT rather than copied from the hero. The
@@ -437,7 +456,6 @@ onUnmounted(() => {
      Whichever of the two is smaller wins, so the wordmark shrinks a little on
      the narrowest screens and is the hero's own size everywhere else. */
   .masthead--live.masthead--open .masthead__brand {
-    opacity: 1;
     font-size: min(
       var(--hero-wordmark),
       calc(
@@ -480,20 +498,14 @@ onUnmounted(() => {
        mirrors (the open brand's own mark is pinned to the same box below).
        Pinned, the bar is thin and it centres in the bar instead. */
     position: absolute;
-    /* THE CORNER GAP — one number, used on both axes, so the glyph sits
-       equidistant from the two drawn lines. Vertically its centre is half the
-       mark's height below the top line, which leaves (that − half the ink) of
-       air above it; the same figure then comes off the right, so the ink nests
-       INSIDE the corner instead of standing on the right line.
-
-       6.5px, not 8: the bracket's INK is 13px of the glyph's 16px box (the
-       paths run y 1.5–14.5 of a 16-unit viewBox). Measuring the box instead of
-       the ink left the two gaps 2px apart — 11.1 above against 9.1 right. */
-    --corner-gap: calc(0.275 * var(--hero-display) - 6.5px);
-    top: calc(var(--hero-inset) + 0.275 * var(--hero-display));
+    /* Centred in the bar, in every face — the mark opposite it is too, so the
+       two read as one row. The elaborate corner geometry that stood here was
+       for a control floating on the hero sheet with no bar under it; there is a
+       bar now and it is the thing to centre in. */
+    top: 50%;
     /* −1.5px is the bracket's own inset inside its viewBox: it puts the INK,
-       not the box, at the intended distance. */
-    right: calc(var(--hero-inset) - 1.5px + var(--corner-gap));
+       not the box, on the same inset the mark starts from. */
+    right: calc(var(--hero-inset) - 1.5px);
     transform: translateY(-50%);
     /* Ink, not box: the glyph is flush right and pulled out by the 1.5px its
        own viewBox holds inside, so its rule ends on exactly the inset the
@@ -523,17 +535,11 @@ onUnmounted(() => {
       padding 300ms var(--ease-out);
   }
 
-  /* Pinned, it becomes the labelled chip: one step darker than the page, with
-     a real line — at 1.09:1 against the paper the fill alone would not read
-     as a control. */
-  /* Pinned it gains its label and nothing else: no fill, no border — by the
-     owner's call it is just a button in the header, not a chip on it. The row
-     centres there, so the optical pull above is not wanted. */
-  .masthead--live.masthead--pinned:not(.masthead--open) .masthead__toggle {
-    top: 50%;
-  }
+  /* No fill and no border in any face — by the owner's call it is just a
+     button in the header, not a chip on it. Centring is the base's job now. */
 
-  /* The label rides with the bar; in the hero and open faces only the glyph. */
+  /* The label rides with the bar; only the open face drops it, where the glyph
+     has become a close control and the word would contradict it. */
   .masthead__toggle-label {
     display: inline-block;
     max-width: 0;
@@ -545,7 +551,7 @@ onUnmounted(() => {
       opacity 220ms var(--ease-out);
   }
 
-  .masthead--live.masthead--pinned:not(.masthead--open) .masthead__toggle-label {
+  .masthead--live:not(.masthead--open) .masthead__toggle-label {
     max-width: 5rem;
     opacity: 1;
   }

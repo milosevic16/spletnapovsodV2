@@ -138,10 +138,26 @@ const H264_CRF = 30
  * into a dimmer interior, which is what a window in a section drawing does.
  */
 const BANDS = {
-  'hero-povsod': {
+  /* THE HERO'S GROUND. The same source that used to be seen through the word
+   * »POVSOD« as a 720×140 strip; the hero is the whole film now, so the crop is
+   * the whole frame instead — everything above the watermark, 720×1204 (0.60:1).
+   *
+   * That shape is chosen for the two boxes it has to survive, not for the
+   * source: a phone hero is roughly 0.55:1, so it sees almost the entire frame,
+   * while a desktop hero is about 2.4:1 and `cover` takes a horizontal band out
+   * of the middle — near enough the strip this clip already shipped as. Cutting
+   * anything here would only take material away from the phone.
+   *
+   * NO GRADE, deliberately, and that is a change of mechanism rather than of
+   * taste. The strip was baked dark because it had to hold letters clear of the
+   * beige at the clip's lightest beat, and bytes were the only place to do it.
+   * The film is now the ground under real text, so the treatment belongs in CSS
+   * where it can be measured against the actual tokens and tuned without a
+   * re-encode — see .stmt__veil in StatementSection.vue.
+   */
+  'hero-fill': {
     source: 'hero-povsod.mp4',
-    crop: { w: 720, h: 140, x: 0, y: 600 },
-    grade: "lutyuv='y=val*0.47',eq=saturation=1.15",
+    crop: { w: 720, h: 1204, x: 0, y: 0 },
   },
 }
 

@@ -51,29 +51,22 @@ const titleRest = accentValid ? hero.title.slice(hero.titleAccent.length) : hero
 
 const WORD_1 = 'Spletna'
 const WORD_2 = 'Povsod'
-/** The clip path holds its own copy of the word. Uppercased here rather than
- *  by `text-transform`, which is not dependable on SVG text — and a clip that
- *  renders lowercase would cut the wrong shapes out of the video. */
-const WORD_2_CLIP = WORD_2.toUpperCase()
 
-/** PAIRED with BANDS['hero-povsod'] in scripts/build-pillar-videos.mjs.
+/** PAIRED with BANDS['hero-fill'] in scripts/build-pillar-videos.mjs.
  *  /video/* is immutable-cached, so a re-encode must bump both. */
 const CLIP_VERSION = 'v1'
-const clip = (ext: string) => `/video/hero-povsod-${CLIP_VERSION}.${ext}`
+const clip = (ext: string) => `/video/hero-fill-${CLIP_VERSION}.${ext}`
 
 const fx = createFx()
 const rootEl = ref<HTMLElement | null>(null)
-/** Gates the window: with JS off »POVSOD« is simply the screened ink word, and
- *  a clip that never resolved could not leave a video rectangle on the page. */
-const live = ref(false)
 
 onMounted(() => {
-  live.value = true
-  // Reduced motion keeps the window — a still frame seen through the letters
-  // is not movement — but it is never played.
+  // The film is NOT gated on hydration: it ships in the markup with its poster,
+  // so with JS off the hero is that still frame under the same treatment — a
+  // complete hero rather than an empty dark band. All JS does is start it.
   if (prefersReducedMotion() || !('IntersectionObserver' in window)) return
   nextTick(() => {
-    const v = rootEl.value?.querySelector<HTMLVideoElement>('.stmt__window-vid')
+    const v = rootEl.value?.querySelector<HTMLVideoElement>('.stmt__film')
     if (!v) return
     const io = fx.io(
       (entries) => {
@@ -95,6 +88,30 @@ onUnmounted(() => {
 
 <template>
   <section ref="rootEl" class="stmt">
+    <!-- THE HERO IS THE FILM. The same clip that used to be seen through the
+         word »POVSOD« now fills the whole band, edge to edge, and everything
+         else is drawn on top of it. It ships in the markup rather than behind a
+         hydration flag: a <video> with a poster and no autoplay IS a still
+         image, so the JS-off hero is the same composition with the film held on
+         one frame — which is also exactly what a reduced-motion visitor gets. -->
+    <video
+      class="stmt__film"
+      :poster="clip('jpg')"
+      muted
+      loop
+      playsinline
+      preload="metadata"
+      disablepictureinpicture
+      aria-hidden="true"
+      tabindex="-1"
+    >
+      <source :src="clip('webm')" type="video/webm" />
+      <source :src="clip('mp4')" type="video/mp4" />
+    </video>
+    <!-- The treatment, in CSS rather than baked into the bytes, so it can be
+         measured against the real tokens and tuned without a re-encode. -->
+    <span class="stmt__veil" aria-hidden="true"></span>
+
     <!-- The sheet. data-brand-sentinel is a contract with SiteMasthead: the
          phone bar appears exactly when this element leaves the screen, so the
          brand is never absent from the page. -->
@@ -129,7 +146,7 @@ onUnmounted(() => {
            the measure without measuring anything at runtime. -->
       <div class="stmt__elevation">
         <p class="stmt__course stmt__course--drawn">
-          <span class="stmt__wordmark press">{{ WORD_1 }}</span>
+          <span class="stmt__wordmark press press--light">{{ WORD_1 }}</span>
         </p>
 
         <!-- The cut plane: one red rule, square end ticks, exactly as wide as
@@ -137,56 +154,9 @@ onUnmounted(() => {
         <span class="stmt__cut" aria-hidden="true"></span>
 
         <p class="stmt__course stmt__course--solid">
-          <span class="stmt__wordmark press">
-            {{ WORD_2 }}
-            <!-- THE WINDOW: the same word cut out of a moving image. The box is
-                 the wordmark's own, so the clip path's user space and the
-                 glyphs share one origin; the letters are the only place the
-                 video is allowed to show. -->
-            <span v-if="live" class="stmt__window" aria-hidden="true">
-              <video
-                class="stmt__window-vid"
-                :poster="clip('jpg')"
-                muted
-                loop
-                playsinline
-                preload="none"
-                disablepictureinpicture
-                tabindex="-1"
-              >
-                <source :src="clip('webm')" type="video/webm" />
-                <source :src="clip('mp4')" type="video/mp4" />
-              </video>
-
-              <!-- THE KNOCKOUT. A plate of the sheet's own ground laid over the
-                   video with the word masked OUT of it, so the video survives
-                   only inside the letters. The mask is applied to an SVG shape,
-                   not to the HTML box — see the note on .stmt__knock. -->
-              <svg class="stmt__knock" aria-hidden="true" focusable="false">
-                <defs>
-                  <mask id="stmt-povsod-mask" maskUnits="userSpaceOnUse">
-                    <rect x="0" y="0" width="100%" height="100%" fill="#fff" />
-                    <text class="stmt__masktext" x="0" y="0">{{ WORD_2_CLIP }}</text>
-                  </mask>
-                </defs>
-                <rect
-                  x="0"
-                  y="0"
-                  width="100%"
-                  height="100%"
-                  fill="var(--list-2)"
-                  mask="url(#stmt-povsod-mask)"
-                />
-                <!-- NO CONTOUR. A hairline stood here to guarantee the word's
-                     silhouette whatever frame was passing, and it is gone on
-                     the owner's call: the letters are a HOLE into the film, and
-                     a hole has no drawn edge. What carries the word instead is
-                     the grade on the clip itself (build-pillar-videos.mjs),
-                     which is measured to hold the letters clear of the sheet at
-                     the clip's lightest beat. -->
-              </svg>
-            </span>
-          </span>
+          <!-- The film used to be seen only through these letterforms; it is
+               the whole band now, so the word is simply set in it. -->
+          <span class="stmt__wordmark press press--light">{{ WORD_2 }}</span>
         </p>
       </div>
 
@@ -209,15 +179,73 @@ onUnmounted(() => {
 .stmt {
   position: relative;
   overflow: clip;
-  /* The deeper beige (owner's call): the opening band takes the darker of the
-     two papers, which also sets the page's alternation — beige hero, paper
-     references, beige paketi. THREE THINGS ARE PAIRED TO THIS VALUE and must
-     move with it: the veil's ground and the theme-color meta (index.html —
-     the surface the intro and the status bar meet, where a mismatch shows as
-     the page darkening under the veil as it lifts), and the mark's cut-out
-     below, which is painted in this fill to read as a hole. */
-  background: var(--list-2);
+  /* THE SHEET IS DRAWN IN PAPER AT ALPHA, not in the dark bands own bronze
+     hairline: --crta-na-temnem measures 2.49:1 against the treated film, under
+     the 3:1 floor for a graphic. This is the engraving vocabulary the pillar
+     plates already use on their dark grounds - paper, thinned - and it lands at
+     4.03:1 against the worst frame the clip could hold. */
+  --sheet-line: color-mix(in srgb, var(--list) 55%, transparent);
+  /* THE GROUND UNDER THE FILM, and it has to be a real one: it is what a
+     visitor sees for the moment before the poster decodes, and what fills any
+     part of the band `cover` cannot reach. --zemlja is the page's own closing
+     ground, so the band at the top and the earth at the bottom are literally
+     the same colour — which is what the brand name used to say by carrying that
+     bronze inside its letterforms. */
+  background: var(--zemlja);
   padding: var(--hero-inset);
+}
+
+/* --- the film ---------------------------------------------------------------
+   Edge to edge under everything. `cover` has two very different jobs here: a
+   phone hero is roughly 0.55:1 against the clip's 0.60:1, so it shows very
+   nearly the whole frame, while a desktop hero is about 2.4:1 and takes a
+   horizontal band out of the middle. The encode is the full frame precisely so
+   both have material to take (scripts/build-pillar-videos.mjs, BANDS.hero-fill).
+
+   THE TREATMENT IS A FILTER, NOT A HEAVY WASH, and that is measured rather than
+   stylistic. This footage is bright — paper walls at Y≈200 — so light type over
+   it needs the whites brought a long way down. A flat wash does that by
+   collapsing everything toward one colour: at the ~93% needed to carry the red,
+   the film's whole range lands inside about 14 values and the picture stops
+   being a picture. `brightness()` scales instead of collapsing, so the image
+   keeps its own contrast and simply gets darker — the range stays open where a
+   wash would have closed it. The wash that follows is then only a tint, and it
+   is the page's own bronze.
+
+   THE TWO KNOBS ARE HERE: the brightness below and the veil's alpha. Raise
+   either and re-measure the four pairs recorded on .stmt__veil. */
+.stmt__film {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 50%;
+  filter: brightness(0.28) saturate(0.9);
+  pointer-events: none;
+}
+
+/* The tint, and the guarantee. Measured in-page against the worst frame the
+   clip could ever hold — a pure white one — composited through the filter and
+   then this:
+   the ground under everything comes out rgb(69 64 60), and against it:
+     --list paper, the two courses and the claim      9.18:1
+     --sheet-line, the frame and the crop marks       4.03:1  (3:1 floor)
+     --rez-na-temnem, the cut plane                   3.14:1  (3:1 floor)
+     --rez-na-temnem, the claim's accent              3.14:1  (3:1 floor — it
+                                       is 24px+ at every viewport, i.e. large
+                                       text, which is the only reason a red
+                                       this light passes at all)
+   Worth stating why it is measured against white rather than against these
+   frames: the clip can be replaced, and a treatment that only holds for one
+   piece of footage is not a treatment. */
+.stmt__veil {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: color-mix(in srgb, var(--zemlja) 30%, transparent);
+  pointer-events: none;
 }
 
 /* --- the sheet --------------------------------------------------------------
@@ -225,9 +253,13 @@ onUnmounted(() => {
    corner where the veil lands the mark. */
 .stmt__sheet {
   position: relative;
+  /* Above the film and its tint. */
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  border: var(--divider-width) solid var(--mreza-strong);
+  /* The dark world's own hairline: the frame is drawn ON the film now, so it
+     takes the line colour the rest of the page's dark bands use. */
+  border: var(--divider-width) solid var(--sheet-line);
   /* Clear the corner stamp; the rest of the sheet's own frame padding. */
   padding: calc(0.55 * var(--hero-display) + var(--space-4)) var(--space-4) var(--space-4);
   /* Short of the fold ON PURPOSE (phones): the work below has to show through,
@@ -248,22 +280,22 @@ onUnmounted(() => {
 .stmt__crop--tr {
   top: 0;
   right: 0;
-  border-top: var(--divider-width) solid var(--grafit);
-  border-right: var(--divider-width) solid var(--grafit);
+  border-top: var(--divider-width) solid var(--sheet-line);
+  border-right: var(--divider-width) solid var(--sheet-line);
   margin: -1px -1px 0 0;
 }
 .stmt__crop--bl {
   bottom: 0;
   left: 0;
-  border-bottom: var(--divider-width) solid var(--grafit);
-  border-left: var(--divider-width) solid var(--grafit);
+  border-bottom: var(--divider-width) solid var(--sheet-line);
+  border-left: var(--divider-width) solid var(--sheet-line);
   margin: 0 0 -1px -1px;
 }
 .stmt__crop--br {
   bottom: 0;
   right: 0;
-  border-bottom: var(--divider-width) solid var(--grafit);
-  border-right: var(--divider-width) solid var(--grafit);
+  border-bottom: var(--divider-width) solid var(--sheet-line);
+  border-right: var(--divider-width) solid var(--sheet-line);
   margin: 0 -1px -1px 0;
 }
 
@@ -282,9 +314,12 @@ onUnmounted(() => {
   top: calc(var(--divider-width) * -1);
   display: block;
   padding: 0 var(--space-3) var(--space-3) 0;
-  /* Painted in the band's OWN fill so it reads as a cut-out — it follows
-     every change of .stmt's background, or it becomes a visible patch. */
-  background: var(--list-2);
+  /* NO PATCH ON THE FILM. Punching the frame with a rectangle of the band's
+     own fill was right while the band was flat paper; over a moving image any
+     solid rectangle reads as exactly the patch that comment warned about. The
+     frame's two lines run under the mark instead — which is what a stamp on a
+     real sheet does anyway. */
+  background: transparent;
 }
 
 .stmt__mark {
@@ -343,7 +378,9 @@ onUnmounted(() => {
   letter-spacing: -0.02em;
   text-transform: uppercase;
   white-space: nowrap;
-  color: var(--grafit);
+  /* The fallback ink where background-clip:text is unavailable — paper, not
+     graphite, because what is behind the letters is the darkened film. */
+  color: var(--list);
   /* The 0.8 line-height crops the caps' own box; a hair of leading keeps the
      cut off the letterforms. */
   padding-block: 0.04em;
@@ -361,15 +398,17 @@ onUnmounted(() => {
 .stmt__course--solid {
   position: relative;
   font-size: min(calc(var(--mon-span) / 4.125), calc(var(--mon-cap) * 1.0788));
-  color: var(--grafit);
+  color: var(--list);
 }
 
-/* BOTH COURSES ARE CUT FROM MATERIAL, and it is the SAME material the contact
-   band »Povejte, kaj potrebujete« is printed on: the press screen (base.css
-   `.press`), carried on the ink and clipped to the letterforms. The glyphs
-   become the window and the pressed stock shows through them, so the pair
-   reads as two blocks milled out of one sheet rather than as type sitting on
-   one.
+/* BOTH COURSES ARE CUT FROM MATERIAL — the press screen (base.css `.press`),
+   carried on the ink and clipped to the letterforms, the same stock the contact
+   band is printed on. What has changed is which way round it runs. The band was
+   paper and the letters were the dark thing on it, filled with the closing
+   band's bronze and, below the cut, with a moving image showing through the
+   glyphs. The band IS the moving image now, so the letters are the light thing
+   on it: paper, with the press screen in its light tuning, and the pair reads
+   as two blocks of stock laid on the film rather than as two windows into it.
 
    A 45° section hatch stood here first and was wrong — it is the drawing
    convention for cut EARTH, borrowed from a section further down the page, and
@@ -378,28 +417,19 @@ onUnmounted(() => {
    contact band, so the hero states what the page is made of instead of quoting
    a drawing.
 
-   AND IT IS THE CONTACT BAND'S COLOUR TOO, not just its screen: --zemlja, the
-   bronze that band is grounded in. Graphite stood here and made the hero read
-   as neutral ink on warm paper — a different world from the one the page ends
-   in. The brand name now carries the closing band's own material AND its own
-   brown, so the sheet at the top and the earth at the bottom are made of the
-   same thing. Measured on the hero's beige (#ece8de): 10.2:1, so the word is
-   nowhere near a contrast question.
-
    ONE RULE FOR BOTH WORDS, deliberately: identical declarations split across
    two selectors is exactly the shape the CSS minifier merges and prunes
-   (rendering.md trap 8), and there is no reason for the two courses to be able
-   to drift apart. What still separates them is what is behind the glyphs —
-   above the cut the pressed stock IS the fill, below it a moving image sits
-   over the fill and shows through instead. Below the cut the fill is only ever
-   seen with JS off, and there the pair reading as one material is the point.
+   (rendering.md trap 8), and there is no longer anything that should be able to
+   make the two courses drift apart — the film runs behind both of them equally.
 
    Gated, and the gate is load-bearing: background-clip:text needs `color:
    transparent` to show anything, so an engine without it would render the
-   brand name invisible. Outside the guard the words stay solid ink. */
+   brand name invisible. Outside the guard the words fall back to solid ink,
+   which is why the courses' own `color` is the paper below and not the
+   graphite it used to be. */
 @supports ((-webkit-background-clip: text) or (background-clip: text)) {
   .stmt__wordmark {
-    background-color: var(--zemlja);
+    background-color: var(--list);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -415,7 +445,10 @@ onUnmounted(() => {
   width: var(--mon-w);
   max-width: 100%;
   height: 2px;
-  background: var(--rez);
+  /* The dark world's cut voice: --rez is a light-ground red and measures 1.02:1
+     against the treated film — invisible. --rez-na-temnem lands at 3.32:1,
+     which is the 1.4.11 floor for a graphic element. */
+  background: var(--rez-na-temnem);
   margin-block: clamp(0.4rem, 0.8vw, 0.7rem);
 }
 .stmt__cut::before,
@@ -425,7 +458,7 @@ onUnmounted(() => {
   top: -3px;
   width: 8px;
   height: 8px;
-  background: var(--rez);
+  background: var(--rez-na-temnem);
 }
 .stmt__cut::before {
   left: 0;
@@ -441,67 +474,6 @@ onUnmounted(() => {
   position: relative;
 }
 
-/* --- the window -------------------------------------------------------------
-   »POVSOD« is cut out of a moving image: the video fills the wordmark's box and
-   `clip-path` lets it through the letterforms only. The screened ink word sits
-   underneath it, which is what shows with JS off and what the video is laid
-   over when it plays.
-
-   THE BAND IS CHOSEN AT ENCODE TIME, not here. The word is ~4.7 times wider
-   than it is tall, so only a horizontal strip of any frame could ever appear
-   in it; scripts/build-pillar-videos.mjs cuts that strip out of the source and
-   the file arrives already the shape of the word. */
-.stmt__window {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.stmt__window-vid {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/* A KNOCKOUT, NOT A CLIP, and that is a measured decision. The obvious build
-   is `clip-path: url(#…)` on the video's box with a <clipPath> holding the
-   word — and it does not work: tested here with hit-testing, a clipPath whose
-   child is a <rect> clips an HTML element correctly, while the identical
-   clipPath holding <text> is IGNORED ENTIRELY, leaving the video as a full
-   rectangle over the wordmark. Both with and without a transform on the text.
-   So the cut-out is done where masking is dependable — INSIDE the SVG: a plate
-   of the sheet's own ground is painted over the video with the word masked out
-   of it, and the video survives only in the letters.
-   The plate's fill has to stay the hero's ground (--list-2) or it will read as
-   a rectangle sitting on the sheet. */
-.stmt__knock {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-/* The mask's own copy of the word. Every property that decides a glyph's shape
-   or its position must match the visible wordmark exactly — face, weight,
-   size, tracking — or the knockout lands off the letters. Black in a mask
-   means "hide", so the letters are what the plate does not cover.
-
-   THE BASELINE IS THE ONE DERIVED NUMBER. SVG text is positioned from its
-   baseline, and the HTML wordmark's baseline sits at
-   (lineHeight − (ascent + descent)) / 2 + ascent from the top of its box —
-   for Geist's metrics at line-height 0.8 that is 0.7389em, and the mask text's
-   own bbox confirms its baseline is at y = 0 before the translate.
-   Re-derive if the face, the weight or the line-height changes. */
-.stmt__masktext {
-  font-family: var(--font-sans);
-  font-weight: 700;
-  font-size: min(calc(var(--mon-span) / 4.125), calc(var(--mon-cap) * 1.0788));
-  letter-spacing: -0.02em;
-  fill: #000;
-  transform: translateY(0.7389em);
-}
-
 /* --- the title block --------------------------------------------------------
    The sheet's register strip: a ruled band along the bottom edge, spanning the
    frame's full inner width, carrying the claim. */
@@ -509,7 +481,7 @@ onUnmounted(() => {
   margin-top: auto;
   margin-inline: calc(var(--space-4) * -1);
   padding: var(--space-4) var(--space-4) 0;
-  border-top: var(--divider-width) solid var(--mreza-strong);
+  border-top: var(--divider-width) solid var(--sheet-line);
 }
 
 .stmt__title {
@@ -518,13 +490,15 @@ onUnmounted(() => {
   line-height: 1;
   letter-spacing: -0.02em;
   text-transform: uppercase;
-  color: var(--grafit);
+  color: var(--list);
   max-width: 26ch;
 }
 
 .stmt__hl {
-  /* Display-adjacent size, so the 3:1 floor applies — 5.37:1 on paper. */
-  color: var(--rez);
+  /* Display-adjacent size (24px+), so the 3:1 floor applies: 3.32:1 against the
+     treated film at its worst possible frame. The light-ground --rez would sit
+     at 1.28:1 here and simply vanish. */
+  color: var(--rez-na-temnem);
 }
 
 /* --- desktop ---------------------------------------------------------------
@@ -550,6 +524,28 @@ onUnmounted(() => {
     display: none;
   }
 
+  /* THE MARK MOVED INTO THE BAR. A phone now carries the same header as the
+     rest of the site (SiteMasthead), and that header's whole content is the pd
+     mark at bar height — so the sheet's corner stamp would be the same logo
+     twice, one above the other. The stamp stands down and the sheet's top
+     padding, which existed only to clear it, comes back to the frame's own
+     figure. The intro veil lands on the BAR's mark on phones; index.html
+     carries that geometry as literals and names this file. */
+  .stmt__stamp {
+    display: none;
+  }
+
+  .stmt__sheet {
+    padding-top: var(--space-4);
+  }
+
+  /* Clear of the fixed bar. 52px is the bar's own height — its mark (2.5rem)
+     plus its padding (2 × 0.375rem) — and it is stated in SiteMasthead as the
+     same arithmetic. Change one, change both. */
+  .stmt {
+    padding-top: calc(52px + var(--hero-inset));
+  }
+
   /* HALF THE AIR. The two `margin-top: auto`s split whatever the sheet has
      left over after its fixed costs equally above and below the drawing, so
      the free space IS the spacing and shrinking the sheet is what halves it.
@@ -564,8 +560,17 @@ onUnmounted(() => {
 }
 
 @media (min-width: 1200px) {
+  /* THE BAND STOPS SHORT OF THE FOLD. It used to end exactly on it — sheet +
+     the section's two insets + the masthead's 45px strip summed to 100svh — so
+     the band's own bottom edge was the last thing on the screen and the rule
+     that opens the next section sat just under it, invisible until you
+     scrolled. --hero-reveal is what it gives back: the height comes off the
+     sheet, so the section ends that much higher and the next section's top
+     shows as a band of what follows. It is the ONE number to turn if the hero
+     should breathe more or less; nothing else is derived from it. */
   .stmt__sheet {
-    min-height: calc(100svh - 45px - 2 * var(--hero-inset));
+    --hero-reveal: 5rem;
+    min-height: calc(100svh - 45px - 2 * var(--hero-inset) - var(--hero-reveal));
     padding: calc(0.55 * var(--hero-display) + var(--space-6)) var(--space-8) var(--space-8);
   }
 
