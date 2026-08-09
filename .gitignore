@@ -10,3 +10,6 @@ scripts/edge-tmp*/
 
 # raw generator clips for scripts/build-pillar-videos.mjs (outputs are committed, sources are not)
 video-src/
+
+# raw generator sources for scripts/build-band-textures.mjs (outputs are committed, sources are not)
+capture/tex-*-src*.png

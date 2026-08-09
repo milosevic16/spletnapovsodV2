@@ -988,26 +988,26 @@ button.asm__band {
   outline-offset: -4px;
 }
 
-/* THE SHEETS ARE THE SHIPPED ARTWORK, shown as themselves — the owner's call,
-   after two rounds of translating them (first into an SVG restatement, then
-   into ink masks) read as nothing. The files carry the generated marks with
-   their ground as transparency, so drawn over the band's own black they render
-   exactly what the generator produced; the crop removed only the watermark and
-   the one stray non-grey line, and one contrast curve in the pipeline steepens
-   the marks (owner's call — "brighten them up a bit and add some contrast").
+/* THE SHEETS ARE THE SHIPPED ARTWORK, SHOWN UNCHANGED — owner's call, and the
+   thing three earlier passes each got wrong in a different way. They were
+   restated as SVG patterns, then converted to greyscale alpha masks tinted with
+   the page's ink, then pushed through a contrast curve. Every one of those was a
+   translation. The files are now taken as they are: opaque, in their own
+   colours — two of the four are photographs, one cold steel blue and one
+   blackened plate with warm oxidation — and the only thing the pipeline does is
+   choose a window out of each source (scripts/build-band-textures.mjs).
 
-   0.7 at rest, full when probed — the drawing's way of saying "this is the
-   layer we are looking at". The rest was 0.5, raised with the same call; the
-   raise is the half of the brightening that reaches privacy-v3, whose
-   thresholded (binary) file has no mids for the pipeline's curve to lift. A
-   resting mark now reads 9.9:1 against the black, a probed one 21:1.
+   THE BAND CARRIES NO INK OF ITS OWN. No tint, no mask, no filter: the fill is
+   simply the picture, and --band-ground shows only until it decodes. The window
+   is cut at 2.30:1 against a band measured at 2.49:1 on desktop and 2.19:1 on a
+   phone, so `cover` trims a sliver at either end rather than distorting it.
 
-   `cover`, not `stretch`: each file is cut to 2.30:1 against a band measured at
-   2.49:1 on desktop and 2.19:1 on a phone, so cover trims a sliver at either
-   end rather than distorting the motif into ellipses. The light-to-heavy
-   descent down the stack is the textures' own — their ink coverage runs
-   4.7% / 11.1% / 5.9% / 16.3% of the frame (measured as alpha means 11.9,
-   28.2, 15.0, 41.6 of 255). */
+   0.85 at rest, full when probed. This is the ONE place the artwork is not at
+   100%, and it is an interaction device rather than a treatment: three sheets
+   stand back so the probed one comes forward, which is what position alone
+   cannot say once every sheet carries a picture. Raise it to 1 and the
+   distinction falls to the band's border and its label, which both already
+   change on probe. */
 .asm__fill {
   position: absolute;
   inset: 0;
@@ -1015,7 +1015,7 @@ button.asm__band {
   width: 100%;
   height: 100%;
   pointer-events: none;
-  opacity: 0.7;
+  opacity: 0.85;
   transition: opacity var(--dur-tween) var(--ease-hover);
   background-position: center;
   background-size: cover;
@@ -1025,24 +1025,25 @@ button.asm__band {
 /* VIDNOST — a node-and-link web. What finds you is a graph and crawlers walk
    links, so the texture states the claim rather than decorating it. */
 .asm__band--0 .asm__fill {
-  background-image: url('/img/tex/mesh-v4.webp');
+  background-image: url('/img/tex/layer-seo-v1.webp');
 }
 
-/* OBRAZCI — the field itself, ruled, with a caret in it. */
+/* OBRAZCI — a dense field of discrete entries, ruled across. */
 .asm__band--1 .asm__fill {
-  background-image: url('/img/tex/forms-v3.webp');
+  background-image: url('/img/tex/layer-forms-v1.webp');
 }
 
-/* PIŠKOTKI — a sampling lattice: discrete points taken off a continuous person,
-   which is what the law is about. */
+/* PIŠKOTKI — a woven screen: the thing that decides what passes and what is
+   stopped, which is what the law is about. The one sheet with a colour of its
+   own, and it keeps it. */
 .asm__band--2 .asm__fill {
-  background-image: url('/img/tex/privacy-v3.webp');
+  background-image: url('/img/tex/layer-compliance-v1.webp');
 }
 
-/* DOMENA — the near-solid plate the rest is published onto, and the densest of
-   the four by design: it is the ground the other three stand on. */
+/* DOMENA — the blackened plate the rest is published onto, striated and slowly
+   oxidising: the ground the other three stand on. */
 .asm__band--3 .asm__fill {
-  background-image: url('/img/tex/domain-v3.webp');
+  background-image: url('/img/tex/layer-hosting-v1.webp');
 }
 
 /* ONE ground, and it is the ARTWORK'S: the sources are white marks on pure
