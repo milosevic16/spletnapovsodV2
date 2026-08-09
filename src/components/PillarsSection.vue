@@ -1028,6 +1028,15 @@ button.pil__face {
    depth here is still drawn, never cast. Opening a plate takes the full
    measure back, which is the layout's own way of saying "this one now". */
 @media (max-width: 899.98px) {
+  /* THE SEAM WITH THE REFERENCE BAND — this is the other half of the step
+     WorkCarousel's phone block describes: each side gives 48px against the
+     boundary instead of the full 64, so the pause between the two bands is
+     96px rather than 128. This edge only; the section's bottom keeps the full
+     figure, and desktop is untouched. Change one side, change the other. */
+  .pil {
+    padding-top: var(--space-12);
+  }
+
   .pil__wall {
     position: relative;
     gap: 0;

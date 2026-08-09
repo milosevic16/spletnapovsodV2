@@ -155,14 +155,23 @@ function onPick(e: MouseEvent, n: number) {
  * synthesises those events too when the layout moves under a still cursor. What
  * separates the two cases is the CURSOR, so that is what is tested — a genuine
  * move arrives at new client coordinates, a layout-induced one arrives at
- * exactly the coordinates of the pick that caused it and is ignored. The
- * majority then belongs to the plate the reader actually pointed at, and stays
- * there until they move.
+ * exactly the coordinates of the pick that caused it and is ignored.
+ *
+ * AND ENTER ALONE IS NOT ENOUGH — measured, this was the "hover does not
+ * expand" report. When a growing plate slides the seam past a RESTING cursor,
+ * the synthesised enter into the neighbour is (rightly) ignored — but enter has
+ * now FIRED for that plate, so when the reader then genuinely moves the mouse
+ * inside it, no further enter ever comes and the plate they are pointing at
+ * stays a fifth until they leave the row and come back. Movement inside an
+ * element is pointermove, so the same handler listens to that too: a genuine
+ * move claims the majority for the plate it is inside, a synthesised event
+ * still carries the frozen cursor position and is still filtered. The majority
+ * then belongs, always, to the plate the reader actually pointed at.
  */
 let pickedX = -1
 let pickedY = -1
 
-function onPlateEnter(n: number, e: PointerEvent) {
+function onPlatePoint(n: number, e: PointerEvent) {
   if (!hoverCapable.value) return
   if (e.clientX === pickedX && e.clientY === pickedY) return
   pickedX = e.clientX
@@ -218,7 +227,8 @@ onUnmounted(() => {
           :id="n >= AT_REST ? `reference-${item.id}` : undefined"
           class="wkr__plate"
           :class="{ 'wkr__plate--front': active === n, 'wkr__plate--extra': n >= AT_REST }"
-          @pointerenter="onPlateEnter(n, $event)"
+          @pointerenter="onPlatePoint(n, $event)"
+          @pointermove="onPlatePoint(n, $event)"
         >
           <!-- THE PLATE'S GROUND. Not a picture hung inside a plate: the shot
                fills the plate absolutely, edge to edge, and the plate is
@@ -601,6 +611,16 @@ onUnmounted(() => {
    instead of paper on graphite. That flip is the whole reason this block is long:
    a colour left behind would be invisible rather than merely wrong. */
 @media (max-width: 899.98px) {
+  /* THE SEAM WITH THE PACKAGE WALL, drawn in a step (owner's call: the pause
+     between the two read as too long). Both bands hold --section-block = 64px
+     against this boundary, i.e. 128px of empty band; each side gives a step of
+     the spacing scale back — 48px here, 48px in PillarsSection's own phone
+     block — for a 96px seam. This edge only: the section's top keeps the full
+     figure, and desktop is untouched. Change one side, change the other. */
+  .wkr {
+    padding-bottom: var(--space-12);
+  }
+
   .wkr__wall {
     /* Out through the container's own gutters. The section keeps its measure
        for the heading; only the belts break it. */
@@ -840,6 +860,9 @@ onUnmounted(() => {
 
   .wkr__plate {
     flex: 1 1 0;
+    /* 280ms, the SAME figure as the package wall's plates (PillarsSection) —
+       the two rows are one gesture at two scales, and matching the timing is
+       what makes them read that way. Change one, change both. */
     transition: flex-grow 280ms var(--ease-spring);
   }
 
