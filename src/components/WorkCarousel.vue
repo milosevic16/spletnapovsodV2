@@ -256,15 +256,67 @@ onMounted(() => {
    is the whole depth cue on a page with no shadows. The heavy right edge is the
    title-block motif's own closing rule. */
 .wkr__block {
+  position: relative; /* the marks below hang off this */
   display: flex;
   align-items: center;
   gap: var(--space-4);
   height: var(--rung);
-  padding-inline: var(--space-4);
+  /* Asymmetric on purpose: the left inset clears the margin rule, the right one
+     clears the closing corner. The marks are drawn INTO the padding, never over
+     the words. */
+  padding-inline: var(--space-6) var(--space-8);
   background: var(--list);
   border: var(--divider-width) solid var(--grafit);
   border-right-width: 2px;
   transition: border-color var(--dur-tween) var(--ease-hover);
+}
+
+/* --- the architect's marks -----------------------------------------------------
+   Two of them, both hairline weight, and both INSIDE the block's own box —
+   anything drawn outside it would be covered by the sheet in front, because the
+   pile occludes. That constraint is why these are marks on the sheet rather
+   than lines running off it.
+
+   1. THE MARGIN RULE, drawn twice. Every drawing sheet carries a margin, and a
+      hand that draws it goes over the line a second time — so there is a firm
+      stroke and a lighter one beside it, and small nodes where it crosses the
+      block's own rules. It is what makes the ledger read as drawn ON something
+      rather than typeset.
+   2. THE CLOSING CORNER, bottom right, where the lines cross and OVERSHOOT each
+      other. The overshoot is the whole tell: a ruled corner stops, a drawn one
+      runs past. It bookends the block against the heavy right edge.
+
+   Both sit against the photographic plate above them, which is the point — the
+   words look like an annotation on the work, not a caption under it. */
+.wkr__block::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 8px;
+  width: 8px;
+  pointer-events: none;
+  background:
+    /* the nodes, where the margin meets the block's top and bottom rules */
+    linear-gradient(var(--grafit-2), var(--grafit-2)) 1px 0 / 3px 3px no-repeat,
+    linear-gradient(var(--grafit-2), var(--grafit-2)) 1px 100% / 3px 3px no-repeat,
+    /* the second pass, lighter — the hand going over it again */
+    linear-gradient(var(--mreza), var(--mreza)) 5px 0 / 1px 100% no-repeat,
+    /* the line itself */
+    linear-gradient(var(--mreza-strong), var(--mreza-strong)) 2px 0 / 1px 100% no-repeat;
+}
+
+.wkr__block::after {
+  content: '';
+  position: absolute;
+  right: 8px;
+  bottom: 6px;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--mreza-strong), var(--mreza-strong)) 0 9px / 14px 1px no-repeat,
+    linear-gradient(var(--mreza-strong), var(--mreza-strong)) 9px 0 / 1px 14px no-repeat;
 }
 
 .wkr__index {
@@ -378,7 +430,15 @@ onMounted(() => {
        anything in here. */
     row-gap: 2px;
     column-gap: var(--space-3);
-    padding-inline: var(--space-3);
+    padding-inline: var(--space-5) var(--space-3);
+  }
+
+  /* The closing corner goes: on the wrapped layout the name and sector run the
+     block's full width on the bottom row, straight through where it would sit.
+     The margin rule stays — it is the mark that matters, and it lives in the
+     inset nothing else uses. */
+  .wkr__block::after {
+    display: none;
   }
 
   .wkr__name {
