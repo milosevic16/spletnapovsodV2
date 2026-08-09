@@ -31,8 +31,11 @@
  * SSG contract: every plate, name, sector and address is in the prerendered
  * HTML and visible at rest; nothing here is disclosed by interaction.
  */
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { references } from '@/content/home'
+import { createFx } from '@/lib/fx'
+
+const fx = createFx()
 
 const items = references.items
 
@@ -79,8 +82,43 @@ const extraIds = computed(() =>
  * why nothing here reaches for focus: a disclosure that stays put should leave
  * the reader on it.
  */
+const moreEl = ref<HTMLElement | null>(null)
+
+/** Paired with the belts' 340ms collapse below — this is that plus a beat. */
+const HIDE_HOLD_MS = 440
+
+/**
+ * CLOSING MUST NOT MOVE THE READER. »Skrij« stands UNDER the belts it closes,
+ * so collapsing them removes two full-width belts from above the reader's own
+ * scroll offset while the offset stays where it was: the page rushes up past
+ * them and they land somewhere below the section entirely. The control itself
+ * survives the collapse — it is outside the list — which makes it the ideal
+ * anchor, and holding it still is the house rule for collapsing content.
+ *
+ * Only on the way IN. Opening pushes the button DOWN because the belts arrive
+ * above it, and that is the reveal doing its job: pinning the button there
+ * would scroll the new work past the reader instead of showing it to them.
+ */
 function toggle() {
+  const closing = revealed.value
+  const btn = moreEl.value
+  const anchor = btn?.getBoundingClientRect().top
   revealed.value = !revealed.value
+  // A plate that is being HIDDEN cannot keep the majority: pointerleave never
+  // fires for an element that vanished, so the flag would survive the collapse
+  // and pin every remaining plate at a fifth — measured, the row came back even
+  // with no majority at all. Closing hands the row back to its default.
+  if (closing && active.value >= AT_REST) active.value = -1
+  if (!closing || !btn || anchor === undefined) return
+  nextTick(() => {
+    const until = performance.now() + HIDE_HOLD_MS
+    const hold = () => {
+      const drift = btn.getBoundingClientRect().top - anchor
+      if (drift) window.scrollBy({ top: drift, behavior: 'instant' })
+      if (performance.now() < until) fx.raf(hold)
+    }
+    fx.raf(hold)
+  })
 }
 
 /** Variants are generated per project (scripts/build-reference-images.mjs);
@@ -95,7 +133,7 @@ const SIZES = '(min-width: 900px) 62vw, 92vw'
 
 /**
  * Touch only: the first tap gives the plate the majority, the second follows it.
- * On a pointer device hover has already done the giving, so the tap goes
+ * On a pointer device the pointer has already done the giving, so the tap goes
  * straight through.
  */
 function onPick(e: MouseEvent, n: number) {
@@ -104,9 +142,48 @@ function onPick(e: MouseEvent, n: number) {
   active.value = n
 }
 
+/**
+ * THE MAJORITY IS STATE, NOT :hover — and that is a bug fix, not a refactor.
+ * A CSS :hover rule that RESIZES the thing it matches is a feedback loop: the
+ * plate grows, the row re-lays-out under a cursor that never moved, the cursor
+ * is now inside a different plate, that one grows, and the row swaps back. With
+ * a 380ms transition on top it reads as the row flickering between two states
+ * for as long as the pointer rests near a seam — which is exactly the glitch
+ * reported.
+ *
+ * Driving it from pointerenter does not fix that by itself: the browser
+ * synthesises those events too when the layout moves under a still cursor. What
+ * separates the two cases is the CURSOR, so that is what is tested — a genuine
+ * move arrives at new client coordinates, a layout-induced one arrives at
+ * exactly the coordinates of the pick that caused it and is ignored. The
+ * majority then belongs to the plate the reader actually pointed at, and stays
+ * there until they move.
+ */
+let pickedX = -1
+let pickedY = -1
+
+function onPlateEnter(n: number, e: PointerEvent) {
+  if (!hoverCapable.value) return
+  if (e.clientX === pickedX && e.clientY === pickedY) return
+  pickedX = e.clientX
+  pickedY = e.clientY
+  active.value = n
+}
+
+function onWallLeave() {
+  if (!hoverCapable.value) return
+  pickedX = -1
+  pickedY = -1
+  active.value = -1
+}
+
 onMounted(() => {
   hoverCapable.value = window.matchMedia('(hover: hover)').matches
   live.value = true
+})
+
+onUnmounted(() => {
+  fx.dispose()
 })
 </script>
 
@@ -123,13 +200,18 @@ onMounted(() => {
         class="wkr__stage"
         :class="{ 'wkr__stage--collapsed': collapsed, 'wkr__stage--live': live }"
       >
-        <ol class="wkr__wall" :aria-label="references.feedback.regionLabel">
+        <ol
+          class="wkr__wall"
+          :aria-label="references.feedback.regionLabel"
+          @pointerleave="onWallLeave"
+        >
         <li
           v-for="(item, n) in items"
           :key="item.id"
           :id="n >= AT_REST ? `reference-${item.id}` : undefined"
           class="wkr__plate"
           :class="{ 'wkr__plate--front': active === n, 'wkr__plate--extra': n >= AT_REST }"
+          @pointerenter="onPlateEnter(n, $event)"
         >
           <!-- THE PLATE'S GROUND. Not a picture hung inside a plate: the shot
                fills the plate absolutely, edge to edge, and the plate is
@@ -201,7 +283,7 @@ onMounted(() => {
              standing at the right end of the row on desktop, which is the edge
              the held-back projects open out of. Same button, same handler,
              never two controls that can disagree. -->
-        <div v-if="live" class="wkr__more">
+        <div v-if="live" ref="moreEl" class="wkr__more">
           <button
             type="button"
             class="wkr__more-btn"
@@ -560,33 +642,76 @@ onMounted(() => {
 
   /* The set stops after the third belt. Five full-width belts is a long scroll
      before anything else on the page arrives, and the reader can have the rest
-     for one press. */
-  .wkr__stage--collapsed .wkr__plate--extra {
-    display: none;
+     for one press.
+
+     THEY FOLD RATHER THAN VANISH. `display: none` cannot animate, so the two
+     held-back belts collapse on max-height instead — with the wall's own gap
+     cancelled by a negative margin, or a hidden item would still leave its
+     32px behind. max-height is the one honest way to transition to a height
+     nobody can know in advance, and the ceiling here is MEASURED rather than
+     picked: a belt is a 2:1 shot at the full viewport width plus its name
+     block, and that block measures 112px at 390 and 100px at 320 — so 50vw +
+     10rem clears the tallest of them with room for a project name that wraps
+     to a second line, and overshoots the real height by 16% at 390 and 22% at
+     320. The overshoot spends the tail of an ease-out curve, where almost no
+     travel is left; 14rem was the first guess and wasted a third of it. The
+     opacity runs shorter and leads so the belts are gone before the last of
+     the height is.
+
+     visibility is what keeps a closed belt out of the tab order — it cannot be
+     animated, so it is DELAYED by the collapse's own duration on the way out
+     and immediate on the way in. */
+  .wkr__plate--extra {
+    overflow: hidden;
+    max-height: calc(50vw + 10rem);
+    opacity: 1;
+    visibility: visible;
+    transition:
+      max-height 340ms var(--ease-spring),
+      margin-top 340ms var(--ease-spring),
+      opacity 220ms var(--ease-spring) 60ms,
+      visibility 0s;
   }
 
-  /* A QUIET RULED STRIP, not a button pretending to be the point of the band.
-     It carries NO fill of its own, which is what makes it textured: the
-     section's press screen runs straight through it, so the control is a piece
-     of the paper with a line around it rather than a panel laid on top. The
-     hairline is the sheet's, the ink is the secondary graphite, and the label
-     sits at data size — every step down from the plates it sits under.
+  .wkr__stage--collapsed .wkr__plate--extra {
+    max-height: 0;
+    margin-top: calc(var(--space-8) * -1);
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      max-height 340ms var(--ease-spring),
+      margin-top 340ms var(--ease-spring),
+      opacity 160ms var(--ease-spring),
+      visibility 0s 340ms;
+  }
 
-     Full measure and 48px tall all the same: subtle is about weight, never
-     about being hard to hit. */
+  /* A MARK, NOT A BAR. It was a full-measure box with a hairline all the way
+     round, which made it the widest single element in the band and read as the
+     section's conclusion rather than as a way to see more of it. What is left
+     is a small centred label on a rule of its own — the same secondary
+     graphite, a step further down in size, with the section's press screen
+     running straight through it because it still carries no fill.
+
+     THE HIT TARGET DOES NOT SHRINK WITH IT. 44px of height and 3rem of width
+     stay, bought with padding rather than border, so the thing that got quieter
+     is the ink and not the target. Subtlety is about weight, never about being
+     hard to hit. */
   .wkr__more {
-    margin-top: var(--space-6);
+    margin-top: var(--space-5);
+    display: flex;
+    justify-content: center;
   }
 
   .wkr__more-btn {
-    width: 100%;
-    min-height: 48px;
-    padding: var(--space-3) var(--space-4);
+    min-height: 44px;
+    min-width: 3rem;
+    padding: var(--space-2) var(--space-4);
     background: none;
-    border: var(--divider-width) solid var(--mreza-strong);
+    border: 0;
+    border-bottom: var(--divider-width) solid var(--mreza-strong);
     color: var(--grafit-2); /* 8.2:1 on the band */
-    font-size: var(--type-data-size);
-    letter-spacing: var(--type-data-ls);
+    font-size: 0.6875rem;
+    letter-spacing: 0.1em;
   }
 
   .wkr__more-btn:focus-visible {
@@ -596,7 +721,7 @@ onMounted(() => {
 
   @media (hover: hover) {
     .wkr__more-btn:hover {
-      border-color: var(--grafit);
+      border-bottom-color: var(--grafit);
       color: var(--grafit);
     }
   }
@@ -613,11 +738,29 @@ onMounted(() => {
    majority plate about 1.9:1, which is very near the shots' native 2:1, so the
    plate being looked at crops almost nothing. */
 @media (min-width: 900px) {
+  /* HEIGHT, NOT MIN-HEIGHT, and it is the second half of the glitch. With a
+     minimum the row was free to grow to its tallest CONTENT — and the content
+     that grows is the name block, which wraps differently at every width a
+     plate can take. So pointing at a plate changed three widths, which changed
+     how many lines two name blocks wrapped to, which changed the height of
+     every strip in the row. A fixed height decouples the two: the strips are
+     22rem whatever the widths do, which is what was asked for and also one less
+     thing for a resize to feed back into. 22rem makes the majority plate about
+     1.9:1, very near the shots' native 2:1, so the plate being looked at crops
+     almost nothing. */
   .wkr__wall {
     flex-direction: row;
     gap: var(--space-3);
     align-items: stretch;
-    min-height: 22rem;
+    height: 22rem;
+  }
+
+  /* The row can no longer grow to fit a name block, so the plate takes
+     responsibility for its own overflow. Nothing is ever actually clipped at
+     the widths this row produces — measured — but a fixed height with no
+     containment is a promise waiting to be broken by a longer project name. */
+  .wkr__plate {
+    overflow: hidden;
   }
 
   /* THE PAINTED ORDER IS NOT THE CONTENT ORDER. The majority sits third from the
@@ -643,7 +786,7 @@ onMounted(() => {
 
   .wkr__plate {
     flex: 1 1 0;
-    transition: flex-grow 380ms var(--ease-spring);
+    transition: flex-grow 280ms var(--ease-spring);
   }
 
   .wkr__plate:first-of-type {
@@ -708,26 +851,36 @@ onMounted(() => {
     }
   }
 
-  /* Touch: a tapped plate takes the majority and the first plate gives it up.
-     Both rules tie with :first-of-type at 0,2,0 and win on order — the wall
-     below learned this the hard way, where a lone state class left the first
-     plate holding a third of the row it should have surrendered. */
+  /* THE MAJORITY, and it is now ONE mechanism for both input kinds: --front is
+     set by a tap on touch and by the pointer on everything else (see the script
+     — the :hover rules that used to do this on pointer devices were a resize
+     feedback loop and are gone).
+
+     THE SPECIFICITY HERE IS LOAD-BEARING and it was wrong. :has() takes the
+     specificity of its argument, so the first rule is 0,3,0 — which quietly
+     outranked the 0,2,0 that was supposed to hand the majority to the front
+     plate. Measured before the fix: tapping a plate on touch set the class and
+     changed nothing, because every plate including the tapped one was pinned at
+     flex-grow 1. The second rule now carries 0,3,0 of its own and wins on
+     order. */
   .wkr__wall:has(.wkr__plate--front) .wkr__plate {
     flex-grow: 1;
   }
 
-  .wkr__plate.wkr__plate--front {
+  .wkr__wall .wkr__plate.wkr__plate--front {
     flex-grow: 3;
   }
 
-  @media (hover: hover) {
-    .wkr__wall:hover .wkr__plate {
-      flex-grow: 1;
-    }
-
-    .wkr__wall .wkr__plate:hover {
-      flex-grow: 3;
-    }
+  /* AND THE HELD-BACK WORK STAYS HELD BACK. Same trap, other direction: the
+     collapsed rule above is 0,2,0, so the 0,3,0 rule that pins the row at
+     flex-grow 1 was opening the two extra plates the moment ANY plate took the
+     majority — the reported "hovering uncovers the other two projects". The
+     doubled class takes this to 0,3,0 and its place at the end of the block
+     wins the tie, so the only thing that can open them is the control. */
+  .wkr__stage--collapsed .wkr__plate--extra.wkr__plate--extra {
+    flex: 0 0 0;
+    margin-left: calc(var(--space-3) * -1);
+    overflow: hidden;
   }
 
   /* A fifth of the row is a narrow plate, so the name block loses its indent
