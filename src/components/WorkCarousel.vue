@@ -197,14 +197,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section id="reference" class="wkr">
-    <!-- THE WALLPAPER: the band's paper and its press screen on a layer of
-         its own, pinned to the VIEWPORT while the section scrolls over it —
-         see .wkr__ground for the mechanism and the fallbacks. No JavaScript
-         anywhere in the effect, so it survives JS off; under reduced motion or
-         without clip-path support this is simply the background the band
-         always had, standing still. aria-hidden: it is ground, not content. -->
-    <div class="wkr__ground press press--light" aria-hidden="true"></div>
+  <section id="reference" class="wkr press press--light">
     <div class="container">
       <header class="wkr__head">
         <p class="wkr__kicker">{{ references.kicker }}</p>
@@ -330,53 +323,6 @@ onUnmounted(() => {
 .wkr {
   background-color: var(--list-2);
   padding-block: var(--section-block);
-  position: relative;
-  /* THE WINDOW. The wallpaper below is pinned to the VIEWPORT, so the section
-     has to clip it to its own box — and it must be clip-path, not overflow:
-     a fixed-position child escapes any ancestor's overflow, but clip-path is
-     a group effect that clips the whole painted subtree, fixed descendants
-     included, WITHOUT becoming their containing block (a transform or filter
-     here would re-tether the child to the section and kill the effect).
-     clip-path also creates the stacking context that keeps the ground's
-     z-index 0 local to this band. */
-  clip-path: inset(0);
-}
-
-/* THE WALLPAPER, and the reason this version reads where the first one did
-   not. The first cut slid the layer ±120px from a scroll listener over the
-   band's whole transit — a 13% slip, and on a uniform 9px dot lattice a 13%
-   slip is invisible: there is no feature large enough to track (confirmed by
-   the owner — no motion seen). The rate is now the strongest one there is:
-   the layer is FIXED to the viewport and the section scrolls over it, the
-   classic wallpaper-behind-a-window. It is also the cheapest — no listener,
-   no rAF, no per-frame work; the compositor moves the clip window and the
-   layer itself never repaints.
-
-   Declared absolute and PROMOTED to fixed only where clip-path is supported,
-   because the guard is load-bearing: an UNCLIPPED fixed layer would sit over
-   the whole viewport, so an engine without clip-path must keep the static
-   ground the band always had. The same static ground serves reduced motion —
-   a parallax differential is motion, so there it is never pinned at all. */
-.wkr__ground {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background-color: var(--list-2);
-  pointer-events: none;
-}
-
-@supports (clip-path: inset(0)) {
-  @media (prefers-reduced-motion: no-preference) {
-    .wkr__ground {
-      position: fixed;
-    }
-  }
-}
-
-/* Everything else stands on the ground rather than under it. */
-.wkr > .container {
-  position: relative;
-  z-index: 1;
 }
 
 .wkr__head {
