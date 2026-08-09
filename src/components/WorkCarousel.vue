@@ -298,25 +298,63 @@ onMounted(() => {
   pointer-events: none;
   background:
     /* the nodes, where the margin meets the block's top and bottom rules */
-    linear-gradient(var(--grafit-2), var(--grafit-2)) 1px 0 / 3px 3px no-repeat,
-    linear-gradient(var(--grafit-2), var(--grafit-2)) 1px 100% / 3px 3px no-repeat,
-    /* the second pass, lighter — the hand going over it again */
-    linear-gradient(var(--mreza), var(--mreza)) 5px 0 / 1px 100% no-repeat,
+    linear-gradient(var(--grafit), var(--grafit)) 1px 0 / 3px 3px no-repeat,
+    linear-gradient(var(--grafit), var(--grafit)) 1px 100% / 3px 3px no-repeat,
+    /* the second pass — the hand going over it again, and still the lighter of
+       the two: it must read as the same line drawn twice, never as two lines */
+    linear-gradient(var(--mreza-strong), var(--mreza-strong)) 5px 0 / 1px 100% no-repeat,
     /* the line itself */
-    linear-gradient(var(--mreza-strong), var(--mreza-strong)) 2px 0 / 1px 100% no-repeat;
+    linear-gradient(var(--grafit-2), var(--grafit-2)) 2px 0 / 1px 100% no-repeat;
 }
 
+/* Both right-hand corners, drawn as one strip so the pair stays in register.
+   Each is two lines that cross and OVERSHOOT, with a node at the crossing —
+   a ruled corner stops, a drawn one runs past. They bracket the block against
+   the heavy right edge, which is what makes it read as a bounded sheet. */
 .wkr__block::after {
   content: '';
   position: absolute;
+  top: 0;
+  bottom: 0;
   right: 8px;
-  bottom: 6px;
   width: 14px;
-  height: 14px;
   pointer-events: none;
   background:
-    linear-gradient(var(--mreza-strong), var(--mreza-strong)) 0 9px / 14px 1px no-repeat,
-    linear-gradient(var(--mreza-strong), var(--mreza-strong)) 9px 0 / 1px 14px no-repeat;
+    /* nodes at the two crossings */
+    linear-gradient(var(--grafit-2), var(--grafit-2)) left 8px top 4px / 3px 3px no-repeat,
+    linear-gradient(var(--grafit-2), var(--grafit-2)) left 8px bottom 4px / 3px 3px no-repeat,
+    /* top corner: the horizontal runs past the vertical, the vertical past it */
+    linear-gradient(var(--mreza-strong), var(--mreza-strong)) left 0 top 5px / 14px 1px
+      no-repeat,
+    linear-gradient(var(--mreza-strong), var(--mreza-strong)) left 9px top 0 / 1px 14px
+      no-repeat,
+    /* bottom corner, mirrored */
+    linear-gradient(var(--mreza-strong), var(--mreza-strong)) left 0 bottom 5px / 14px 1px
+      no-repeat,
+    linear-gradient(var(--mreza-strong), var(--mreza-strong)) left 9px bottom 0 / 1px 14px
+      no-repeat;
+}
+
+/* The leader. The sheet number is a callout, so it arrives on a line that comes
+   out of the margin and overshoots it — the same gesture as the corners, at the
+   scale of one word. The node sits at the far end, where a hand would have
+   stopped and pressed. */
+.wkr__index {
+  position: relative;
+}
+
+.wkr__index::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 4px);
+  width: 12px;
+  height: 3px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  background:
+    linear-gradient(var(--grafit), var(--grafit)) left 0 top 0 / 3px 3px no-repeat,
+    linear-gradient(var(--grafit-2), var(--grafit-2)) left 0 top 1px / 12px 1px no-repeat;
 }
 
 .wkr__index {
@@ -433,12 +471,18 @@ onMounted(() => {
     padding-inline: var(--space-5) var(--space-3);
   }
 
-  /* The closing corner goes: on the wrapped layout the name and sector run the
+  /* The corner strip goes: on the wrapped layout the name and sector run the
      block's full width on the bottom row, straight through where it would sit.
-     The margin rule stays — it is the mark that matters, and it lives in the
-     inset nothing else uses. */
+     The margin rule and the leader stay — they live in the left inset, which
+     nothing else uses at any width. */
   .wkr__block::after {
     display: none;
+  }
+
+  /* Shorter, so it still emerges from the margin rather than overshooting it
+     by half the inset (the number sits closer to the edge here). */
+  .wkr__index::before {
+    width: 8px;
   }
 
   .wkr__name {
