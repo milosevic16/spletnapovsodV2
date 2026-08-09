@@ -50,6 +50,59 @@ import { createFx, prefersReducedMotion } from '@/lib/fx'
 const fx = createFx()
 const root = ref<HTMLElement | null>(null)
 const screen = ref<HTMLElement | null>(null)
+const chromeEl = ref<HTMLElement | null>(null)
+
+/**
+ * THE CODE COLUMN PARTS AROUND THE DIAL. The source lines flow from the
+ * section's top on their own rhythm, so whichever line happens to land in the
+ * dial's band used to run straight under the control (measured: three lines
+ * under it at 1440). The column now opens a gap exactly there — the line that
+ * would first intrude is pushed below the band, plus clearance both sides —
+ * so the slider rides on clean paper.
+ *
+ * MEASURED, NOT DERIVED, and re-measured on resize: the band's position
+ * depends on how the title wraps, and the lines' own heights are not uniform
+ * (overflow-wrap breaks the long ones on phones), so an arithmetic index over
+ * one line-height would drift. The routine resets the gap, lets the column
+ * relayout, reads the real boxes, and picks the first line whose BOTTOM would
+ * enter the clearance — bottom, not top, precisely because of those wrapped
+ * lines.
+ *
+ * Safe by construction: the source layer is absolute and aria-hidden, so the
+ * shift moves no document flow (zero CLS) and changes nothing assistive; the
+ * guards compare the fact nodes' text, which an inline margin does not touch.
+ * It runs under reduced motion too — this is layout, not motion.
+ */
+const gapIndex = ref(-1)
+const gapPx = ref(0)
+/** Clearance above and below the dial's band, px. */
+const GAP_CLEARANCE = 20
+
+function placeGap() {
+  const host = root.value
+  const dial = chromeEl.value
+  if (!host || !dial) return
+  gapIndex.value = -1
+  gapPx.value = 0
+  nextTick(() => {
+    const lines = host.querySelectorAll<HTMLElement>('.trad__line')
+    if (!lines.length) return
+    const band = dial.getBoundingClientRect()
+    let k = -1
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].getBoundingClientRect().bottom > band.top - GAP_CLEARANCE) {
+        k = i
+        break
+      }
+    }
+    // Band above the first line or past the last: nothing to part.
+    if (k <= 0) return
+    const gap = band.bottom + GAP_CLEARANCE - lines[k].getBoundingClientRect().top
+    if (gap <= 0) return
+    gapIndex.value = k
+    gapPx.value = Math.round(gap)
+  })
+}
 const gripEl = ref<HTMLInputElement | null>(null)
 const live = ref(false)
 
@@ -287,6 +340,15 @@ const pre = ref(false)
 onMounted(() => {
   live.value = true
 
+  // The code column's gap is layout, not motion: it is placed before the
+  // reduced-motion return, re-placed when the viewport changes, and once more
+  // when the mono face lands (the swap moves every line's box).
+  nextTick(placeGap)
+  fx.on(window, 'resize', () => {
+    fx.raf(() => placeGap())
+  })
+  if (document.fonts?.ready) void document.fonts.ready.then(() => placeGap())
+
   // Reduced motion: the settled dark band IS the finished state — no ground
   // fade, no entrance, no sweep; the dial and the strata stay fully operable.
   if (prefersReducedMotion()) return
@@ -380,6 +442,7 @@ onUnmounted(() => {
           :key="n"
           class="emisija trad__line"
           :data-fact="line.id || undefined"
+          :style="n === gapIndex ? { marginTop: gapPx + 'px' } : undefined"
           >{{ line.text }}</code
         >
       </div>
@@ -421,7 +484,7 @@ onUnmounted(() => {
          ground: a bare range floating over both layers, inked in the seam's
          own red — the one colour measured to clear the 3:1 UI floor on BOTH
          grounds it travels across. -->
-    <div class="container trad__chrome">
+    <div ref="chromeEl" class="container trad__chrome">
       <div class="trad__dial">
         <input
           v-if="live"
