@@ -123,12 +123,13 @@ onMounted(() => {
   fx.setTimeout(() => {
     armed.value = true
   }, 0)
-  // AFTER the live re-render, and that is the whole point: the plate's face is
-  // a <component :is="live ? 'button' : 'div'">, so flipping `live` REPLACES
-  // that element and every child with it — including these videos. Observing
-  // them at mount attached the observer to nodes Vue was about to throw away,
-  // and nothing ever played. nextTick waits for the swap and observes the
-  // elements that actually end up on the page.
+  // AFTER the live re-render. The original reason was that the clips lived
+  // INSIDE the face — a <component :is="live ? 'button' : 'div'"> — so flipping
+  // `live` replaced that element and every child with it, and an observer
+  // attached at mount held nodes Vue was about to throw away. The clips are the
+  // plate's ground now and sit outside the face, so they survive that swap; the
+  // tick stays because observing after the first full render is still the
+  // correct order and it costs one microtask.
   nextTick(() => {
     if (host.value) wireClips(host.value)
   })
@@ -154,10 +155,38 @@ onUnmounted(() => {
           :key="item.id"
           class="pil__plate"
           :class="{
+            'pil__plate--clip': hasClip(item.id),
             'pil__plate--open': live && open === n,
             'pil__plate--spine': live && open >= 0 && open !== n,
           }"
         >
+          <!-- THE PLATE'S GROUND, where a clip exists. It sits OUTSIDE the face
+               and fills the plate absolutely, which is the whole point: closed,
+               it IS the plate, edge to edge with no inset; open, the plate grows
+               to hold the panel and the clip grows with it, so the same footage
+               becomes the surface the text prints on. (It also means the clip
+               survives the face's div→button swap, which used to destroy it.)
+               No autoplay attribute — the markup ships paused on its poster,
+               which is what JS-off and reduced-motion readers get, and
+               wireClips() starts it when the plate is on screen. muted +
+               playsinline are what make an inline autostart legal on iOS at
+               all; preload="none" keeps three clips off the wire until one is
+               actually wanted. -->
+          <video
+            v-if="hasClip(item.id)"
+            class="pil__clip"
+            :poster="clip(item.id, 'jpg')"
+            muted
+            loop
+            playsinline
+            preload="none"
+            disablepictureinpicture
+            aria-hidden="true"
+            tabindex="-1"
+          >
+            <source :src="clip(item.id, 'webm')" type="video/webm" />
+            <source :src="clip(item.id, 'mp4')" type="video/mp4" />
+          </video>
           <!-- The plate's mark on the sheet. Phones only (see the datum block
                in the styles); decorative, so it stays out of the button. -->
           <span class="pil__plate-index" aria-hidden="true">00{{ n + 1 }}</span>
@@ -171,34 +200,16 @@ onUnmounted(() => {
             :aria-controls="live ? `paketi-panel-${item.id}` : undefined"
             @click="live && choose(n)"
           >
-            <!-- THE PLATE LOOP, where one exists: it takes the drawing's place
-                 entirely, and only the name block below it stays. No autoplay
-                 attribute — the markup ships paused on its poster (what JS-off
-                 and reduced-motion readers get) and wireClips() starts it when
-                 the plate is on screen. muted+playsinline are what make an
-                 inline autostart legal on iOS at all; preload="none" keeps
-                 three clips off the wire until one is actually wanted. -->
-            <video
-              v-if="hasClip(item.id)"
-              class="pl pil__clip"
-              :poster="clip(item.id, 'jpg')"
-              muted
-              loop
-              playsinline
-              preload="none"
-              disablepictureinpicture
-              aria-hidden="true"
-              tabindex="-1"
-            >
-              <source :src="clip(item.id, 'webm')" type="video/webm" />
-              <source :src="clip(item.id, 'mp4')" type="video/mp4" />
-            </video>
-
+            <!-- THE DRAWN PLATES, for any pillar without a clip. A clip takes
+                 the drawing's place entirely — and takes the whole plate with
+                 it, from behind (see the ground above), so nothing but the name
+                 block is left in the face here. -->
+            <template v-if="!hasClip(item.id)">
             <!-- dizajn — the browser window being drafted: chrome dots, an
                  asymmetric composition blocked out, guides and one dimension
                  line still on the sheet. -->
             <svg
-              v-else-if="item.id === 'design'"
+              v-if="item.id === 'design'"
               class="pl"
               viewBox="0 0 800 600"
               aria-hidden="true"
@@ -285,6 +296,7 @@ onUnmounted(() => {
               <line x1="344" y1="315" x2="640" y2="315" class="pl-red" />
               <circle cx="660" cy="315" r="6" class="pl-red-solid" />
             </svg>
+            </template>
 
             <span class="pil__plate-name">
               <span class="pil__plate-title">{{ item.title }}</span>
@@ -386,6 +398,10 @@ onUnmounted(() => {
 }
 
 .pil__face {
+  /* Positioned so it sits ABOVE the clip that fills the plate behind it — see
+     the z-index note in the clip block. */
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -418,42 +434,118 @@ button.pil__face {
   display: block;
 }
 
-/* The plate loop fills the drawing's slot. `cover` on purpose: the slot's shape
-   changes across breakpoints and again when a plate opens, so the frame is
-   cropped to the slot rather than the slot bent to the frame. The box carries
-   the plate's own ground so nothing flashes through before the first frame
-   decodes. */
+/* --- the clip as the plate's GROUND -------------------------------------------
+   Not a picture hung inside a plate: the clip fills the plate absolutely, edge
+   to edge, and the plate is whatever the state makes it — a fifth of the row, a
+   spine, three fifths, or the whole row with a panel of text printed on it. It
+   is the same element throughout, so opening a plate does not swap a picture
+   for a background; it grows the one that was already there.
+
+   `cover` is what absorbs that range, and the range is wide: the box runs from
+   about 0.40:1 as a minority plate to about 2:1 open, so the crop takes the
+   sides in one state and the top and bottom in another. 50% 50% is the only
+   position that stays honest through both. The box keeps the plate's own ground
+   so nothing flashes through before the first frame decodes.
+
+   z-index 0 rather than nothing: an absolutely positioned child paints ABOVE
+   its statically positioned siblings' content by default, and the entire point
+   here is that it paints below. The face and the fold claim 1 to sit on it. */
 .pil__clip {
-  /* A DECLARED plate shape, not whatever flex hands out: stacked on a phone the
-     clip took its height from `flex: 1` and came out 416px against the drawn
-     plates' 173, which is not a shape anyone chose. 4:3 is the encode's OWN
-     ratio (scripts/build-pillar-videos.mjs crops to it), so a stacked plate
-     shows the whole frame and crops nothing. Desktop drops the ratio — there
-     the wall sets the height and `cover` does the cropping as the plate
-     widens and narrows. */
-  aspect-ratio: 4 / 3;
-  height: auto;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  /* Centred — and the VERTICAL half of that is inert in every shape this box
-     actually takes, which is why the clip's band is chosen at encode time
-     instead (scripts/build-pillar-videos.mjs, `band` per clip). Measured on the
-     built page at a 1280 viewport: stacked on a phone the box is the declared
-     4:3, i.e. the encode's own ratio; as the desktop MAJORITY it comes out
-     632×474 — the encode's ratio again, so `cover` crops nothing at all; as a
-     MINORITY it is 189×474 (0.40:1) and `cover` crops the sides, leaving the
-     central ~30% of the frame's width. Every one of those overflows
-     horizontally or not at all, so only the 50% on the left is ever read. */
   object-position: 50% 50%;
   background: var(--grafit);
   /* A tap on the plate must reach the button, never the media element. */
   pointer-events: none;
+  /* Paired with the plate's own 380ms flex-grow below: the picture sinks to a
+     ground over exactly the time the plate takes to open. */
+  transition: filter 380ms var(--ease-spring);
 }
 
-@media (min-width: 900px) {
-  .pil__clip {
-    aspect-ratio: auto;
-    height: 100%;
-  }
+/* THE TEXT'S GROUND — the only thing between a plate's title and a moving
+   image, so it is measured rather than judged. Two layers, because they do
+   different jobs and only one of them animates:
+
+   ::before is the resting scrim — the plate's own ink rising into the bottom of
+   the frame. That is the poché move (solid graphite = the machine world), not a
+   photo-app gradient, and it is sized so the whole name block sits inside its
+   dense end.
+
+   ::after is the OPEN wash: a flat sheet of the same ink over the entire plate,
+   faded in with the fold. Two elements rather than one animated gradient
+   because gradients interpolate only when their stop lists match, and a
+   three-stop fade and a flat sheet do not — it would snap.
+
+   WORST CASE IS MEASURED AGAINST WHITE, not against these three clips: a scrim
+   that only holds because today's footage happens to be mid-toned is one that
+   breaks on the next clip. Composited over a pure white frame, in-page against
+   the real tokens:
+     closed, bottom stop      rgb(49 49 49)  --color-paper 11.61:1
+     closed, 24% stop         rgb(75 75 75)  --papir-dim    5.18:1
+     open (wash + brightness) rgb(77 77 77)  --color-paper  7.52:1
+                                             --papir-dim    5.02:1  (summary,
+                                                            point detail)
+   AA everywhere with the open state the tighter of the two, so the wash's 72%
+   and the filter's 0.72 are the pair to re-measure if either is ever lifted to
+   let more picture through. */
+.pil__plate--clip::before,
+.pil__plate--clip::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.pil__plate--clip::before {
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--grafit) 94%, transparent) 0%,
+    color-mix(in srgb, var(--grafit) 82%, transparent) 24%,
+    color-mix(in srgb, var(--grafit) 0%, transparent) 58%
+  );
+}
+
+.pil__plate--clip::after {
+  background: color-mix(in srgb, var(--grafit) 72%, transparent);
+  opacity: 0;
+  transition: opacity 380ms var(--ease-spring);
+}
+
+.pil__plate--clip.pil__plate--open::after {
+  opacity: 1;
+}
+
+/* Open: the picture becomes a ground. Grayscale is not only legibility — it is
+   what makes three clips shot on three different grounds (measured off their
+   posters: Y 178, 24 and 200) behave like one material, and it keeps the page's
+   single red where it belongs instead of leaving a ghost of it behind body
+   copy. */
+.pil__plate--clip.pil__plate--open .pil__clip {
+  filter: grayscale(1) brightness(0.72);
+}
+
+/* A clip plate carries NO FRAME. The face's padding is what used to read as
+   one — a graphite inset on all four sides — and the plate's 1px border was a
+   second, hairline one in the same colour. With the clip as the ground both go,
+   and the padding moves to the text, which is the only thing that still needs
+   it. */
+.pil__plate--clip {
+  border: 0;
+}
+
+.pil__plate--clip .pil__face {
+  padding: 0;
+  /* The name block drops to the bottom of the frame, into the scrim. */
+  justify-content: flex-end;
+}
+
+.pil__plate--clip .pil__plate-name {
+  padding: var(--space-4);
 }
 
 /* Engraving vocabulary: paper strokes on the dark plate, one red. */
@@ -654,6 +746,9 @@ button.pil__face {
    the panel appears and disappears with no travel — the same states, no
    animation. */
 .pil__fold {
+  /* Above the plate's clip, like the face. */
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-rows: 1fr;
 }
@@ -754,6 +849,15 @@ button.pil__face {
   .pil__plate.pil__plate--open {
     margin-left: 0;
     margin-right: 0;
+  }
+
+  /* The clip is out of flow now, so a closed plate has no height of its own —
+     the face has to declare the shape. 4:3 is the encode's own ratio
+     (scripts/build-pillar-videos.mjs crops to it), so a stacked plate shows the
+     whole frame and crops nothing. Desktop needs none of this: there the wall's
+     min-height sets the row and the plates stretch to it. */
+  .pil__plate--clip .pil__face {
+    aspect-ratio: 4 / 3;
   }
 
   .pil__plate-index {
@@ -868,7 +972,12 @@ button.pil__face {
     flex-grow: 0.16;
   }
 
+  /* A spine is ~30px of row. A vertical slice that narrow is noise rather than
+     picture, so the clip steps aside with the drawings — and because the IO
+     watches the element itself, display:none reports as "not intersecting" and
+     pauses the decode for free. */
   .pil__plate--spine .pl,
+  .pil__plate--spine .pil__clip,
   .pil__plate--spine .pil__plate-artifact {
     display: none;
   }
@@ -877,8 +986,21 @@ button.pil__face {
     align-items: flex-start;
   }
 
+  /* The spine's label reads from the top, so it keeps the face's own start
+     alignment rather than the clip plates' bottom drop. */
+  .pil__plate--clip.pil__plate--spine .pil__face {
+    justify-content: flex-start;
+  }
+
   .pil__plate--spine .pil__plate-name {
     padding-top: 0;
+  }
+
+  /* ...but a clip plate's padding lives on the name block, so zeroing the top
+     here would put the label against the plate's edge. Restore exactly what the
+     face's own padding used to give it. */
+  .pil__plate--clip.pil__plate--spine .pil__plate-name {
+    padding-top: var(--space-4);
   }
 
   .pil__plate--spine .pil__plate-title {
