@@ -215,30 +215,63 @@ const GRIP_THUMB = 20
  *  a finger is not a cursor. */
 const GRIP_GRAB = 10
 
-function onGripDown(e: PointerEvent) {
+/**
+ * THE REFUSAL IS A GESTURE-SCOPED FLAG, and it is the layer that actually
+ * holds. Preventing pointerdown stops a MOUSE from jumping the value, but on
+ * phones the native grab rides the TOUCH events — a prevented pointerdown
+ * does not cancel that path, so a tap on the bare track still threw the seam
+ * (reported). So the same geometry test also prevents touchstart, and — the
+ * belt under both braces — any `input` event that arrives while the gesture
+ * stands refused is treated as noise and the value is put back. Whatever
+ * low-level path an engine drives its slider from, the value cannot move
+ * without a gesture this code said yes to. Cleared on every gesture end, and
+ * by the keyboard handler, so a missed `up` can never wedge the control.
+ */
+let refused = false
+
+function gripGrabAllowed(clientX: number): boolean {
   const el = gripEl.value
-  if (!el) return
-  // Inert while the pass runs — see onGripKeys for the same guard.
-  if (sweeping.value) {
-    e.preventDefault()
-    return
-  }
+  if (!el) return false
   const r = el.getBoundingClientRect()
   const travel = Math.max(0, r.width - GRIP_THUMB)
   const centre = r.left + GRIP_THUMB / 2 + (Number(el.value) / 100) * travel
-  if (Math.abs(e.clientX - centre) > GRIP_THUMB / 2 + GRIP_GRAB) {
+  return Math.abs(clientX - centre) <= GRIP_THUMB / 2 + GRIP_GRAB
+}
+
+function onGripDown(e: PointerEvent) {
+  // Inert while the pass runs — see onGripKeys for the same guard.
+  if (sweeping.value || !gripGrabAllowed(e.clientX)) {
     e.preventDefault()
+    refused = true
     return
   }
+  refused = false
   takeOver()
+}
+
+/** iOS and Android drive the native grab from here, not from pointerdown. */
+function onGripTouch(e: TouchEvent) {
+  const t = e.touches[0]
+  if (!t) return
+  if (sweeping.value || !gripGrabAllowed(t.clientX)) {
+    e.preventDefault()
+    refused = true
+    return
+  }
+  refused = false
+}
+
+function onGripEnd() {
+  refused = false
 }
 
 function onGrip() {
   const el = gripEl.value
   if (!el) return
-  // The pass owns the value while it runs: put back what it set rather than
-  // letting a stray input event fight the animation mid-frame.
-  if (sweeping.value) {
+  // The pass owns the value while it runs, and a refused gesture never owns
+  // it at all: in both cases put back what the section holds rather than
+  // letting the stray event through.
+  if (sweeping.value || refused) {
     el.value = String(Math.round(scan.value))
     return
   }
@@ -269,6 +302,9 @@ function onGripKeys(e: KeyboardEvent) {
     e.preventDefault()
     return
   }
+  // The keyboard is always a legitimate hand, so it also clears a refusal a
+  // missed gesture-end might have left standing.
+  refused = false
   takeOver()
 }
 
@@ -565,6 +601,11 @@ onUnmounted(() => {
           :aria-label="invisible.feedback.scanLabel"
           @input="onGrip"
           @pointerdown="onGripDown"
+          @pointerup="onGripEnd"
+          @pointercancel="onGripEnd"
+          @touchstart="onGripTouch"
+          @touchend="onGripEnd"
+          @touchcancel="onGripEnd"
           @keydown="onGripKeys"
         />
         <span v-else class="trad__grip-ghost" aria-hidden="true"></span>
