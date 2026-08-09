@@ -70,7 +70,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <section id="reference" class="wkr">
+  <section id="reference" class="wkr press press--light">
     <div class="container">
       <header class="wkr__head">
         <p class="wkr__kicker">{{ references.kicker }}</p>
@@ -153,12 +153,16 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* The band keeps the page's paper alternation — the deeper beige above it and
-   below it, this one on the lighter sheet. No press screen: neither neighbour
-   carries one, and a texture that starts and stops at a section boundary is
-   exactly what made this band read as pasted in. */
+/* The band takes »Kje se ločimo« ground exactly (owner's call): the deeper
+   beige AND its press screen, rather than the lighter sheet this band used to
+   sit on.
+
+   background-COLOR, never the shorthand. The shorthand resets background-image,
+   and this scoped rule would silently win over the .press utility that supplies
+   the screen — the texture would simply not appear. The same line in the
+   differentiators section carries the same warning for the same reason. */
 .wkr {
-  background: var(--list);
+  background-color: var(--list-2);
   padding-block: var(--section-block);
 }
 
@@ -385,8 +389,12 @@ onMounted(() => {
     background: var(--mreza-strong);
   }
 
+  /* The keyline is painted in the BAND'S OWN fill so the overlap reads as
+     intentional rather than as a collision — which means it follows every
+     change of that fill, or it becomes a visibly wrong-coloured ring around
+     each plate. It moved to --list-2 with the ground above. */
   .wkr__plate {
-    outline: 4px solid var(--list);
+    outline: 4px solid var(--list-2);
     margin-top: -1rem;
   }
 
