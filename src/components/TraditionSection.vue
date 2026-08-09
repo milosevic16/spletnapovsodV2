@@ -1213,11 +1213,27 @@ button.asm__band {
    the page above and dissolve with it; the input's aria-label carries the
    full instruction).
 
-   THE INK IS THE SEAM'S, and that is arithmetic rather than styling: the
-   control travels across two grounds, paper #f5f2eb and bronze #4a3626, and
-   measured against both only --color-cut-seam clears the 3:1 UI floor on each
-   (3.20 / 3.18). The old track failed on paper at 2.40 and the old thumb at
-   2.93 — findable on the band, gone the moment the sheet passed under them. */
+   THE TRACK WEARS EACH GROUND'S OPPOSITE (owner's call): paper over the
+   bronze half, the seam's cut over the paper source half, split AT THE SEAM
+   and moving with it as the hand slides. One gradient with a hard stop does
+   it, and the stop is the seam's own x expressed in the track's coordinates:
+
+     seam in the page:   var(--scan) * 1vw
+     track's left edge:  max(var(--gutter), (100vw − var(--container)) / 2)
+                         — the container's inset formula, since the dial hugs
+                         the container's left edge (62ch, no centring)
+
+   Both derive from the same --scan the beam and the clips read, so the split
+   cannot disagree with the seam (the only drift is a classic desktop
+   scrollbar's width inside 100vw, ~8px at mid-scan; phones have none). Stops
+   past either end clamp, so fully-source is all cut and fully-rendered all
+   paper — each half always wearing its opposite.
+
+   Contrast is the same arithmetic as before, now per side instead of one ink
+   for both: paper on the bronze half 10.17:1, the cut on the paper half 3.20:1
+   — both clear the 3:1 UI floor with the split guaranteeing each colour only
+   ever sits on its own ground. The THUMB stays the seam's cut on both: it
+   rides the boundary itself, and 3.20 / 3.18 is measured against each. */
 .trad__chrome {
   position: relative;
   z-index: 4;
@@ -1282,12 +1298,18 @@ button.asm__band {
      if a handler kills the touch first. */
   touch-action: pan-y;
 }
+/* The split track — see THE TRACK WEARS EACH GROUND'S OPPOSITE above. The
+   identical gradient is stated once per engine because range pseudo-elements
+   cannot share a selector: a browser drops the whole rule when it meets the
+   other engine's pseudo. Change one, change all three (both tracks + ghost). */
 .trad__grip::-webkit-slider-runnable-track {
   height: 2px;
-  /* The seam's red — the one ink that clears 3:1 on both grounds (see the
-     block comment above). The track must be findable on its own, not lean on
-     the thumb. */
-  background: var(--color-cut-seam);
+  background: linear-gradient(
+    90deg,
+    var(--color-paper)
+      calc(var(--scan, 55) * 1vw - max(var(--gutter), (100vw - var(--container)) / 2)),
+    var(--color-cut-seam) 0
+  );
 }
 .trad__grip::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -1300,7 +1322,12 @@ button.asm__band {
 }
 .trad__grip::-moz-range-track {
   height: 2px;
-  background: var(--color-cut-seam);
+  background: linear-gradient(
+    90deg,
+    var(--color-paper)
+      calc(var(--scan, 55) * 1vw - max(var(--gutter), (100vw - var(--container)) / 2)),
+    var(--color-cut-seam) 0
+  );
 }
 .trad__grip::-moz-range-thumb {
   width: 20px;
@@ -1316,17 +1343,22 @@ button.asm__band {
 
 /* JS-OFF AND FIRST PAINT: the ghost DRAWS the resting control instead of just
    reserving its height, so the slider arrives with the rest of the page as
-   pure HTML — a seam-red track with the thumb standing at the stylesheet's
-   rest (55, the same value the no-JS drawing composes to). The live input
-   replaces it in place at hydration. */
+   pure HTML — the SAME split track as the live input (at the 55 rest the
+   fallback resolves to), thumb standing at the rest. The live input replaces
+   it in place at hydration, colours already agreeing. */
 .trad__grip-ghost {
   display: block;
   height: 44px;
   background:
     linear-gradient(var(--color-cut-seam), var(--color-cut-seam)) 55% 50% / 20px 20px
       no-repeat,
-    linear-gradient(var(--color-cut-seam), var(--color-cut-seam)) 0 50% / 100% 2px
-      no-repeat;
+    linear-gradient(
+        90deg,
+        var(--color-paper)
+          calc(var(--scan, 55) * 1vw - max(var(--gutter), (100vw - var(--container)) / 2)),
+        var(--color-cut-seam) 0
+      )
+      0 50% / 100% 2px no-repeat;
 }
 
 /* --- the statement band's own asymmetry --------------------------------------

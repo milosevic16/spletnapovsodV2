@@ -420,14 +420,16 @@ onUnmounted(() => {
     min-height: 56svh;
   }
 
-  /* THE DRAWING DROPS TO THE CLAIM (owner's call — phones first, and the base
-     rule has since followed with a wider step). This tightens the base's
-     space-6 to space-2: at phone scale the drawing and its claim are one
-     read, and the film keeps the void above, which is the right thing for a
-     band that IS the film. Measured before the drop: 75px of air above the
-     drawing and 71px between it and the claim at 375. */
+  /* THE DRAWING DROPS TO THE CLAIM (owner's call — phones first, the base
+     followed with a wider step, and the owner then asked the phone TIGHTER
+     still). The gap between the glyphs and the claim is three stacked
+     spacings, and all three shrink here: the flexible step goes to zero, and
+     the two paddings either side of the boundary drop to space-2 — measured
+     40px of visual gap at 375 before this pass, ~16px after. The film keeps
+     the void above, which is the right thing for a band that IS the film. */
   .stmt__block {
-    margin-top: var(--space-2);
+    margin-top: 0;
+    padding-top: var(--space-2);
   }
 
   /* SPLETNA STEPS BACK A SIZE, and in doing so gives up the flush (owner's
@@ -451,6 +453,10 @@ onUnmounted(() => {
      takes. 1 restores the flush exactly. */
   .stmt__elevation {
     --drawn-share: 0.85;
+    /* The second of the three spacings between the glyphs and the claim (the
+       other two live on .stmt__block above) — the base clamp resolves to 16px
+       here, and the owner asked the pair tighter. */
+    padding-block-end: var(--space-2);
   }
 
   .stmt__course--drawn {
