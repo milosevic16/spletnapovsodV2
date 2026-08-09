@@ -39,13 +39,59 @@ function faceAt(i: number): HTMLElement | undefined {
   return host.value?.querySelectorAll<HTMLElement>('.pil__face')[i]
 }
 
+function plateAt(i: number): HTMLElement | undefined {
+  return host.value?.querySelectorAll<HTMLElement>('.pil__plate')[i]
+}
+
 function choose(i: number) {
   open.value = open.value === i ? -1 : i
 }
 
+/**
+ * How long the collapse is HELD still. Paired with .fold-leave-active's 340ms
+ * below — this is that plus a beat, so the last frame of the transition is
+ * still corrected and a late relayout cannot leak through. Change one, change
+ * the other.
+ */
+const CLOSE_HOLD_MS = 460
+
+/**
+ * CLOSING MUST NOT MOVE THE READER, and on phones it did — badly. »Zapri« sits
+ * at the BOTTOM of a panel that can be several screens tall, so collapsing it
+ * removes that much document from ABOVE the viewport's own position while the
+ * scroll offset stays where it was: everything below rushes up past the reader
+ * and they land somewhere in the next section entirely.
+ *
+ * The fix is the house rule for collapsing content — hold the tapped thing
+ * still — applied to the nearest anchor that SURVIVES the collapse. The button
+ * itself does not (it lives inside the folding panel), so the plate's own
+ * bottom edge stands in for it: it is 44px below the button, and pinning it
+ * means the picture slides down into the space the text vacated and settles
+ * exactly where the reader was looking.
+ *
+ * Per frame rather than once at the end, because the fold animates: measure the
+ * anchor's drift, take exactly that out of the scroll position, repeat for the
+ * transition's length. `behavior: 'instant'` is required, not stylistic —
+ * base.css turns on `scroll-behavior: smooth` at ≥1200px and a corrective loop
+ * chasing an animated target would never settle. Under reduced motion the
+ * collapse lands on the first frame, so the first pass corrects everything and
+ * the rest find no drift.
+ */
 function closeFromPanel(i: number) {
+  const plate = plateAt(i)
+  const anchor = plate?.getBoundingClientRect().bottom
   open.value = -1
-  nextTick(() => faceAt(i)?.focus({ preventScroll: true }))
+  nextTick(() => {
+    faceAt(i)?.focus({ preventScroll: true })
+    if (!plate || anchor === undefined) return
+    const until = performance.now() + CLOSE_HOLD_MS
+    const hold = () => {
+      const drift = plate.getBoundingClientRect().bottom - anchor
+      if (drift) window.scrollBy({ top: drift, behavior: 'instant' })
+      if (performance.now() < until) fx.raf(hold)
+    }
+    fx.raf(hold)
+  })
 }
 
 function onSectionKeys(e: KeyboardEvent) {
@@ -516,8 +562,15 @@ button.pil__face {
   transition: opacity 380ms var(--ease-spring);
 }
 
-.pil__plate--clip.pil__plate--open::after {
-  opacity: 1;
+/* The flat sheet is the DESKTOP device only. There the open plate is a ROW —
+   text on the left, picture on the right — so there is no top and bottom to
+   fade between; the wash has to cover the whole plate or it covers nothing.
+   Phones open the plate as a COLUMN (picture above, text below), which is a
+   different shape and takes a different ground — see the phone block. */
+@media (min-width: 900px) {
+  .pil__plate--clip.pil__plate--open::after {
+    opacity: 1;
+  }
 }
 
 /* Open: the picture becomes a ground. Grayscale is not only legibility — it is
@@ -858,6 +911,70 @@ button.pil__face {
      min-height sets the row and the plates stretch to it. */
   .pil__plate--clip .pil__face {
     aspect-ratio: 4 / 3;
+  }
+
+  /* THE OPEN GROUND ON A PHONE, and it is built from the plate's own shape
+     rather than from a flat sheet over everything. An open plate here is a
+     column: a 4:3 picture, then the text under it. So the picture keeps a CLEAR
+     BAND at the top — the clip is the reason the plate is worth opening, and a
+     72% sheet over all of it left a dead grey rectangle — and the wash arrives
+     underneath it, ramped in, exactly where something has to be read on top.
+
+     THE RAMP IS ANCHORED TO THE FACE, NOT MEASURED IN PIXELS. The face carries
+     the aspect-ratio, so `top: 38%` of it is 38% of the picture at every phone
+     width — no magic number to re-tune when the plate changes size. The top
+     38% is untouched picture; the wash then climbs to full.
+
+     WHERE IT REACHES FULL IS THE MEASURED PART. The plate's name block starts
+     at 66.7% of the face (measured, open, at 390), and the resting ::before
+     scrim is no help to it here — on an open plate that gradient's dense end is
+     at the PLATE's bottom, a thousand pixels below, so at the face it has
+     already run out. The ramp is the title's whole ground. Reaching full at the
+     face's bottom edge leaves the title on 41% wash = 3.82:1 against white,
+     under the 4.5 floor (measured, and it is why this stop is not simply
+     100%). Full at 58% of the face puts the entire name block on the same 72%
+     the flat sheet gave it — 7.52:1 for the title, 5.02:1 for the artifact, the
+     pairs recorded above — with 8 points of margin for a title that wraps to
+     two lines on a narrow phone. In the ::after box, which starts at 38% and
+     runs 62% tall, that is (58 − 38) / 62 = 32%.
+
+     z-index −1 keeps it behind the face's own content while staying inside the
+     face's stacking context, i.e. still above the clip. A positive z-index
+     would paint the ramp OVER the plate title. */
+  .pil__plate--clip .pil__face::after {
+    content: '';
+    position: absolute;
+    inset: 38% 0 0;
+    z-index: -1;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--grafit) 0%, transparent) 0%,
+      color-mix(in srgb, var(--grafit) 72%, transparent) 32%,
+      color-mix(in srgb, var(--grafit) 72%, transparent) 100%
+    );
+    opacity: 0;
+    transition: opacity 380ms var(--ease-spring);
+  }
+
+  .pil__plate--clip.pil__plate--open .pil__face::after {
+    opacity: 1;
+  }
+
+  /* And the text's own ground is the fold's, so it covers the text and nothing
+     else. It needs no fade of its own: the fold grows out of the ramp's dense
+     end, so the two meet at the same value and read as one surface. */
+  .pil__plate--clip.pil__plate--open .pil__fold {
+    background: color-mix(in srgb, var(--grafit) 72%, transparent);
+  }
+
+  /* »Zapri« CLEARS THE OVERLAP. The stack is deliberately imbricated — each
+     plate rides 1rem over the one above it, with a 4px paper keyline — and the
+     button, being the panel's last element, sat under that keyline: its bottom
+     border was inside the next plate. This lifts it by the overlap plus a
+     breath. The overlap itself is untouched; only the button moves. */
+  .pil__close {
+    margin-bottom: 1.75rem;
   }
 
   .pil__plate-index {
