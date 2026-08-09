@@ -48,12 +48,12 @@ function choose(i: number) {
 }
 
 /**
- * How long the collapse is HELD still. Paired with .fold-leave-active's 340ms
+ * How long the collapse is HELD still. Paired with .fold-leave-active's 240ms
  * below — this is that plus a beat, so the last frame of the transition is
  * still corrected and a late relayout cannot leak through. Change one, change
  * the other.
  */
-const CLOSE_HOLD_MS = 460
+const CLOSE_HOLD_MS = 340
 
 /**
  * CLOSING MUST NOT MOVE THE READER, and on phones it did — badly. »Zapri« sits
@@ -522,9 +522,6 @@ button.pil__face {
   background: var(--grafit);
   /* A tap on the plate must reach the button, never the media element. */
   pointer-events: none;
-  /* Paired with the plate's own 380ms flex-grow below: the picture sinks to a
-     ground over exactly the time the plate takes to open. */
-  transition: filter 380ms var(--ease-spring);
 }
 
 /* THE TEXT'S GROUND — the only thing between a plate's title and a moving
@@ -547,12 +544,9 @@ button.pil__face {
    the real tokens:
      closed, bottom stop      rgb(49 49 49)  --color-paper 11.61:1
      closed, 24% stop         rgb(75 75 75)  --papir-dim    5.18:1
-     open (wash + brightness) rgb(77 77 77)  --color-paper  7.52:1
-                                             --papir-dim    5.02:1  (summary,
-                                                            point detail)
-   AA everywhere with the open state the tighter of the two, so the wash's 72%
-   and the filter's 0.72 are the pair to re-measure if either is ever lifted to
-   let more picture through. */
+   The OPEN ground is not measured here any more — it moved to the theme block
+   below, because it is no longer one number: each plate's wash is its own
+   clip's colour and each was measured against its own footage. */
 .pil__plate--clip::before,
 .pil__plate--clip::after {
   content: '';
@@ -572,9 +566,86 @@ button.pil__face {
 }
 
 .pil__plate--clip::after {
-  background: color-mix(in srgb, var(--grafit) 72%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--plate-wash, var(--grafit)) var(--plate-alpha, 80%),
+    transparent
+  );
   opacity: 0;
-  transition: opacity 380ms var(--ease-spring);
+  transition: opacity 280ms var(--ease-spring);
+}
+
+/* AN OPEN PLATE DROPS THE RESTING SCRIM. It is a full-plate gradient, so while
+   the plate's height animates the compositor re-rasterises it every frame — and
+   for nothing: open, its dense end is at the plate's BOTTOM, under the fold's
+   own wash, and where it would show (the face) it has already faded to zero.
+   Removing it takes one full-size gradient out of every frame of the fold. */
+.pil__plate--clip.pil__plate--open::before {
+  display: none;
+}
+
+/* --- each plate takes its own clip's colour -------------------------------
+   THE OPEN PANEL IS THE CLIP CONTINUED, and varnost is the proof: its wash
+   happens to be graphite and its footage is graphite, so the text looks like
+   it is printed on the same material the picture is made of. The other two
+   were wearing varnost's ground over their own footage — a beige studio and a
+   blue-grey server room, both behind a dark grey sheet — which is why only
+   one of the three read right.
+
+   EVERY VALUE HERE IS SAMPLED FROM THE FOOTAGE, not chosen. Method: decode
+   the clip, take the strip that is actually visible, and average the rows that
+   end up BEHIND the text. That gives design #af9b8d and seo #86939a. Each is
+   then lifted 14% toward white — the smallest lift that carries the ink clear
+   of AA against the darkest pixel the same region can produce — and the wash
+   goes to 92%, so the picture reads as a texture in the ground rather than as
+   a picture behind glass.
+
+   ONE PAIR OF VALUES SERVES BOTH BREAKPOINTS, and that is worth stating because
+   the two crops are not the same: a phone plate is ~0.27:1 against a 4:3 source
+   so `cover` shows its central ~16% of width, while a desktop plate is ~2.2:1
+   and shows the full width but only the central ~61% of the height. Both were
+   composited against their own region's 2nd/98th percentile and both clear AA
+   on the same wash, so a plate keeps ONE colour identity rather than two:
+     phone    design ground #ad9d90..#bcaca1  ink 6.22:1
+              seo    ground #8e999f..#9ea9af  ink 5.53:1
+     desktop  design ground #b1a195..#bcab9f  ink 6.23:1
+              seo    ground #919ca2..#9ca7ac  ink 5.53:1
+   RE-DERIVE ALL OF IT WHEN A CLIP CHANGES. They are paired to PLATE_VERSION as
+   surely as the file names are.
+
+   ONE INK, NOT TWO, on the light plates. A light ground has no room for a
+   dimmed secondary: the lightest text that still clears 4.5:1 against the
+   dark end of this footage is within a few per cent of the ink itself, so a
+   second colour would be a difference nobody can see that costs a contrast
+   failure to have. The hierarchy the dark plates get from paper-vs-dim comes
+   from WEIGHT here instead, which the markup already carries (labels 500,
+   details 400). The rule between them and the button's border drop to a
+   transparent ink instead of the dark world's bronze hairline.
+
+   CLOSED PLATES ARE UNTOUCHED — every rule above reads these through
+   var(…, <the old value>), and the variables are only ever set on an OPEN
+   plate. The titles on the wall keep the paper they have always had; only an
+   opened one goes to ink, because on a beige ground white type is not a style
+   question. */
+.pil__plate--open.pil__plate--design,
+.pil__plate--open.pil__plate--seo {
+  --plate-alpha: 92%;
+  --plate-ink: var(--grafit);
+  --plate-ink-dim: var(--grafit);
+  --plate-rule: color-mix(in srgb, var(--grafit) 32%, transparent);
+  /* The focus ring has to clear 3:1 against these grounds and the dark
+     world's --rez-na-temnem cannot (1.59:1 on the beige, measured). The
+     pressed cut red does: 3.23:1, and it keeps the ring the page's own red
+     rather than turning it into another piece of ink. */
+  --plate-focus: var(--rez-deep);
+}
+
+.pil__plate--open.pil__plate--design {
+  --plate-wash: #baa99d;
+}
+
+.pil__plate--open.pil__plate--seo {
+  --plate-wash: #97a2a8;
 }
 
 /* The flat sheet is the DESKTOP device only. There the open plate is a ROW —
@@ -588,26 +659,22 @@ button.pil__face {
   }
 }
 
-/* Open: the picture becomes a ground. Grayscale is not only legibility — it is
-   what makes three clips shot on three different grounds (measured off their
-   posters: Y 178, 24 and 200) behave like one material, and it keeps the page's
-   single red where it belongs instead of leaving a ghost of it behind body
-   copy.
+/* THE GRAYSCALE IS GONE, on both counts it was there for. It existed to make
+   three clips shot on three different grounds behave like one material and to
+   buy legibility — and now each plate wears its own clip's colour, so making
+   them behave alike is the opposite of the point, and the wash alone is
+   measured to carry the copy (see the theme block). It also cost: a filter on a
+   playing video forces it off the compositor's fast path, and this one was
+   TRANSITIONED over the same 380ms in which the plate's box was changing size,
+   i.e. re-filtering a re-scaled video every frame of the open. Dropping it is
+   the single largest saving in this section's animation.
 
-   DESKTOP ONLY, and the reason is the shape again. There the open plate is a
-   row: text beside picture, one ground under both, so the picture cannot be
-   left in colour without the copy sitting on it. A phone opens the plate as a
-   column and gives the picture a band of its own above the text — a band whose
-   whole point is that it still looks like the plate did before it was opened,
-   which a filter on the element would take away wholesale (a filter applies to
-   all of it or none of it; there is no gradient of one). The phone block pays
-   for the missing grayscale in wash instead, and the number there is measured
-   against a white frame with no filter at all. */
-@media (min-width: 900px) {
-  .pil__plate--clip.pil__plate--open .pil__clip {
-    filter: grayscale(1) brightness(0.72);
-  }
-}
+   Measured with no filter at all, against each clip's own 2nd/98th percentile
+   in the region the desktop plate actually shows (full width, central 61% of
+   the height):
+     design    ground #b1a195..#bcab9f   ink        6.23:1
+     security  ground #1f1f1f..#444547   paper 8.54 · dim 5.70:1
+     seo       ground #919ca2..#9ca7ac   ink        5.53:1 */
 
 /* A clip plate carries NO FRAME. The face's padding is what used to read as
    one — a graphite inset on all four sides — and the plate's 1px border was a
@@ -839,26 +906,33 @@ button.pil__face {
      below its content. */
   min-height: 0;
   overflow: hidden;
+  /* This box is the tallest thing on the page that changes size every frame of
+     the fold. Containment tells the engine what is already true of it — its
+     children's layout does not depend on its height, and nothing it paints
+     escapes it — so a frame of the fold cannot dirty the rest of the document.
+     Paired with the overflow above: without that, paint containment would be a
+     behaviour change rather than a promise. */
+  contain: layout paint;
 }
 
 .fold-enter-active,
 .fold-leave-active {
-  transition: grid-template-rows var(--fold-ms, 420ms) var(--fold-ease, var(--ease-spring));
+  transition: grid-template-rows var(--fold-ms, 300ms) var(--fold-ease, var(--ease-spring));
 }
 
 .fold-enter-active .pil__reveal,
 .fold-leave-active .pil__reveal {
   transition:
-    opacity var(--fold-content-ms, 260ms) var(--fold-ease, var(--ease-spring)) var(--fold-content-delay, 120ms),
-    transform var(--fold-content-ms, 260ms) var(--fold-ease, var(--ease-spring)) var(--fold-content-delay, 120ms);
+    opacity var(--fold-content-ms, 200ms) var(--fold-ease, var(--ease-spring)) var(--fold-content-delay, 90ms),
+    transform var(--fold-content-ms, 200ms) var(--fold-ease, var(--ease-spring)) var(--fold-content-delay, 90ms);
 }
 
 /* The leaving side takes the mirror: quicker, no delay on the content (it
    goes first, then the fold closes under it), and the reversed easing. */
 .fold-leave-active {
-  --fold-ms: 340ms;
+  --fold-ms: 240ms;
   --fold-ease: cubic-bezier(0.64, 0, 0.78, 0);
-  --fold-content-ms: 180ms;
+  --fold-content-ms: 140ms;
   --fold-content-delay: 0ms;
 }
 
@@ -1001,7 +1075,7 @@ button.pil__face {
       )
     );
     opacity: 0;
-    transition: opacity 380ms var(--ease-spring);
+    transition: opacity 280ms var(--ease-spring);
   }
 
   .pil__plate--clip.pil__plate--open .pil__plate-name::before {
@@ -1019,63 +1093,6 @@ button.pil__face {
     );
   }
 
-  /* --- each plate takes its own clip's colour -------------------------------
-     THE OPEN PANEL IS THE CLIP CONTINUED, and varnost is the proof: its wash
-     happens to be graphite and its footage is graphite, so the text looks like
-     it is printed on the same material the picture is made of. The other two
-     were wearing varnost's ground over their own footage — a beige studio and a
-     blue-grey server room, both behind a dark grey sheet — which is why only
-     one of the three read right.
-
-     EVERY VALUE HERE IS SAMPLED FROM THE FOOTAGE, not chosen. Method: decode
-     the clip, take the strip that is actually visible (the open plate is
-     ~0.27:1 and the source 4:3, so `cover` shows only its central ~16% of
-     width), and average the rows that end up BEHIND the text after the reframe
-     below. That gives design #af9b8d and seo #86939a. Each is then lifted 14%
-     toward white, which is the smallest lift that carries the ink clear of AA
-     against the darkest pixel the same region can produce, and the wash goes to
-     92% so the picture reads as a texture in the ground rather than as a
-     picture behind glass. Composited against those regions' 2nd/98th
-     percentiles:
-       design  wash #baa99d  ground #ad9d90..#bcaca1  ink 6.22:1
-       seo     wash #97a2a8  ground #8e999f..#9ea9af  ink 5.53:1
-     RE-DERIVE BOTH WHEN A CLIP CHANGES. They are paired to PLATE_VERSION as
-     surely as the file names are.
-
-     ONE INK, NOT TWO, on the light plates. A light ground has no room for a
-     dimmed secondary: the lightest text that still clears 4.5:1 against the
-     dark end of this footage is within a few per cent of the ink itself, so a
-     second colour would be a difference nobody can see that costs a contrast
-     failure to have. The hierarchy the dark plates get from paper-vs-dim comes
-     from WEIGHT here instead, which the markup already carries (labels 500,
-     details 400). The rule between them and the button's border drop to a
-     transparent ink instead of the dark world's bronze hairline.
-
-     CLOSED PLATES ARE UNTOUCHED — every rule above reads these through
-     var(…, <the old value>), and the variables are only ever set on an OPEN
-     plate on a phone. The titles on the wall keep the paper they have always
-     had; only an opened one goes to ink, because on a beige ground white type
-     is not a style question. */
-  .pil__plate--open.pil__plate--design,
-  .pil__plate--open.pil__plate--seo {
-    --plate-alpha: 92%;
-    --plate-ink: var(--grafit);
-    --plate-ink-dim: var(--grafit);
-    --plate-rule: color-mix(in srgb, var(--grafit) 32%, transparent);
-    /* The focus ring has to clear 3:1 against these grounds and the dark
-       world's --rez-na-temnem cannot (1.59:1 on the beige, measured). The
-       pressed cut red does: 3.23:1, and it keeps the ring the page's own red
-       rather than turning it into another piece of ink. */
-    --plate-focus: var(--rez-deep);
-  }
-
-  .pil__plate--open.pil__plate--design {
-    --plate-wash: #baa99d;
-  }
-
-  .pil__plate--open.pil__plate--seo {
-    --plate-wash: #97a2a8;
-  }
 
   /* --- the reframe ----------------------------------------------------------
      THE CLEAR BAND HAS TO HAVE SOMETHING IN IT. An open plate is so tall and
@@ -1162,7 +1179,7 @@ button.pil__face {
      TARGET_RATIO changes with them. */
   .pil__plate {
     flex: 1 1 0;
-    transition: flex-grow 380ms var(--ease-spring);
+    transition: flex-grow 280ms var(--ease-spring);
   }
 
   .pil__plate:first-of-type {
