@@ -116,7 +116,23 @@
         align-items: center;
         height: 1.5em;
         margin: 0;
-        font-size: clamp(1.05rem, 8.8vw, 2.9rem);
+        /* LOAD-BEARING, and it is what fixed the phone intro. An absolutely
+           positioned box at left:50% has only the RIGHT HALF of the viewport
+           as its available width. On desktop the word is far narrower than
+           that half, so nothing happened; on a phone the natural row (332px at
+           375) does not fit in 187px, and the letter slots — flex items with
+           the default flex-shrink:1 — were squeezed from 0.62em to 0.35em
+           while the two disc SVGs (flex:0 0 auto) kept their size. The glyphs
+           then overflowed their own slots by up to 8px and `overflow: hidden`
+           cut them: measured, n rendered as r and o as c, exactly as reported.
+           max-content takes the row out of that squeeze; slots measure the
+           full 0.62em again and every glyph fits with a pixel to spare. */
+        width: max-content;
+        /* 7.6vw, not 8.8: once the letters stopped being clipped the word
+           spanned 88% of a 375 screen, edge to edge. 7.6 lands it at 76% —
+           real margins — and changes nothing at 611px and up, where the 2.9rem
+           cap has already taken over. */
+        font-size: clamp(1.05rem, 7.6vw, 2.9rem);
         /* The brand's own grotesque, safely: the bundled CSS is render-blocking
            (family + fontaine metric fallback exist before ANY first paint) and
            the woff2 is preloaded above — so a late swap changes glyphs, not
