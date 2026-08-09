@@ -814,31 +814,31 @@ button.asm__band {
    carries any ink at all. */
 .asm__band--0 .asm__fill {
   background-color: rgba(245, 242, 235, 0.85);
-  -webkit-mask-image: url('/img/tex/mesh-v2.webp');
-  mask-image: url('/img/tex/mesh-v2.webp');
+  -webkit-mask-image: url('/img/tex/mesh-v3.webp');
+  mask-image: url('/img/tex/mesh-v3.webp');
 }
 
 /* OBRAZCI — the field itself, ruled, with a caret in it. */
 .asm__band--1 .asm__fill {
   background-color: rgba(245, 242, 235, 0.45);
-  -webkit-mask-image: url('/img/tex/forms-v1.webp');
-  mask-image: url('/img/tex/forms-v1.webp');
+  -webkit-mask-image: url('/img/tex/forms-v2.webp');
+  mask-image: url('/img/tex/forms-v2.webp');
 }
 
 /* PIŠKOTKI — a sampling lattice: discrete points taken off a continuous person,
    which is what the law is about. */
 .asm__band--2 .asm__fill {
   background-color: rgba(245, 242, 235, 0.85);
-  -webkit-mask-image: url('/img/tex/privacy-v1.webp');
-  mask-image: url('/img/tex/privacy-v1.webp');
+  -webkit-mask-image: url('/img/tex/privacy-v2.webp');
+  mask-image: url('/img/tex/privacy-v2.webp');
 }
 
 /* DOMENA — the near-solid plate the rest is published onto, and the densest of
    the four by design: it is the ground the other three stand on. */
 .asm__band--3 .asm__fill {
   background-color: rgba(245, 242, 235, 0.9);
-  -webkit-mask-image: url('/img/tex/domain-v1.webp');
-  mask-image: url('/img/tex/domain-v1.webp');
+  -webkit-mask-image: url('/img/tex/domain-v2.webp');
+  mask-image: url('/img/tex/domain-v2.webp');
 }
 
 /* The four grounds. `--band-ground` rather than `background` directly: the

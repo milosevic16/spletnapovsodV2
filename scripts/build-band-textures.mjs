@@ -7,11 +7,22 @@
  * means: a web that finds you, a field waiting for an answer, a sampling
  * lattice, and the near-solid plate everything is published onto.
  *
- * THE OUTPUT IS A MASK, NOT A PICTURE. Each ships grayscale and the component
- * paints the page's own paper ink through it, which is what keeps the bands'
- * colour in the tokens — the ground under them has been re-picked twice, and
- * baked-in images would have had to be regenerated both times. Same reason the
- * sources are generated white-on-black.
+ * THE OUTPUT IS A MASK, NOT A PICTURE. The component paints the page's own
+ * paper ink through it, which is what keeps the bands' colour in the tokens —
+ * the ground under them has been re-picked twice, and baked-in images would
+ * have had to be regenerated both times. Same reason the sources are generated
+ * white-on-black.
+ *
+ * THE TEXTURE MUST LIVE IN THE ALPHA CHANNEL, and this is the second lesson
+ * this script has had to learn the hard way. CSS `mask-image` with a raster
+ * file reads ALPHA by default (`mask-mode: match-source`) — luminance is only
+ * consulted if you opt in, and the prefixed -webkit-mask path never consults it
+ * at all. The first wiring shipped opaque grayscale files: alpha 1 everywhere,
+ * so every mask revealed its entire fill and all four bands rendered as flat
+ * washes of paper — "textured" only in the source file nobody was reading. Each
+ * emit below therefore converts the source's luminance INTO the alpha channel:
+ * white marks opaque, black ground transparent, RGB flat white (the mask never
+ * reads it; flat compresses best).
  *
  * THE CROP IS A SCALE DECISION, and it is the one that actually decides whether
  * a texture is visible. The mask is stretched over the band with `cover`, so
@@ -24,7 +35,8 @@
  *
  * VERSION THE FILENAME on every refresh: /img/* ships an immutable year-long
  * cache header, so a regenerated texture under the same name never reaches a
- * repeat visitor. mesh is at v2 because v1 already shipped at the wrong scale.
+ * repeat visitor. mesh is at v3: v1 shipped at the wrong scale, v2 (with the
+ * other three at v1) shipped without the alpha channel.
  *
  * Deliberately NOT part of the host build — the outputs are committed.
  */
@@ -47,7 +59,7 @@ const TEXTURES = [
     // VIDNOST NA GOOGLU — a node-and-link web. What finds you is a graph, and
     // crawlers walk links, so the texture states the claim rather than
     // decorating it. Zoomed hard: at full source width its lines were invisible.
-    id: 'mesh-v2',
+    id: 'mesh-v3',
     file: 'capture/tex-mesh-src.png',
     crop: { left: 860, top: 550, width: 1000 },
     repeat: 90, // node spacing in the source, px
@@ -55,7 +67,7 @@ const TEXTURES = [
   },
   {
     // DELUJOČI OBRAZCI — the field itself, ruled, with a caret in it.
-    id: 'forms-v1',
+    id: 'forms-v2',
     file: 'capture/tex-forms-src.png',
     crop: { left: 0, top: 150, width: 2720 },
     repeat: 250, // one field
@@ -71,7 +83,7 @@ const TEXTURES = [
     // below the crosses in luminance, so a cut at 230 drops it and keeps them.
     // It cannot be cropped away instead: it spans y 61-1000 of a 1536 source,
     // and a 2.3:1 crop at full width needs 1183 of those rows.
-    id: 'privacy-v1',
+    id: 'privacy-v2',
     file: 'capture/tex-privacy-src.png',
     crop: { left: 0, top: 150, width: 2720 },
     repeat: 113,
@@ -82,7 +94,7 @@ const TEXTURES = [
     // OBJAVA NA VAŠI DOMENI — the near-solid plate the rest is published onto.
     // Its screen is so fine that at full source width it would land at 0.65px
     // and moiré rather than read; this is the deepest zoom of the four.
-    id: 'domain-v1',
+    id: 'domain-v2',
     file: 'capture/tex-domain-src.png',
     crop: { left: 400, top: 400, width: 400 },
     repeat: 4,
@@ -92,23 +104,36 @@ const TEXTURES = [
 
 for (const t of TEXTURES) {
   const height = Math.round(t.crop.width / BAND_RATIO)
-  let img = sharp(join(root, t.file))
+  // Single-channel luminance ('b-w'), because it is about to BECOME the alpha.
+  let gray = sharp(join(root, t.file))
     .extract({ ...t.crop, height })
-    .grayscale()
+    .toColourspace('b-w')
 
-  if (t.threshold) img = img.threshold(t.threshold)
+  if (t.threshold) gray = gray.threshold(t.threshold)
 
-  const out = join(outDir, `${t.id}.webp`)
-  await img
+  const { data, info } = await gray
     .resize({ width: t.width, withoutEnlargement: true })
-    .webp({ quality: 82 })
+    .raw()
+    .toBuffer({ resolveWithObject: true })
+
+  // Flat white RGB + the luminance as alpha: what an alpha mask actually reads.
+  const out = join(outDir, `${t.id}.webp`)
+  await sharp(Buffer.alloc(info.width * info.height * 3, 255), {
+    raw: { width: info.width, height: info.height, channels: 3 },
+  })
+    .joinChannel(data, { raw: { width: info.width, height: info.height, channels: 1 } })
+    .webp({ quality: 82, alphaQuality: 90 })
     .toFile(out)
 
-  // A mask is luminance: its mean is how much ink the band will actually carry,
-  // which is what the density ladder down the stack is set from.
+  // The mask is its alpha now: the alpha mean is how much ink the band will
+  // actually carry, which is what the density ladder down the stack is set
+  // from. Assert the channel exists rather than trusting the encode.
+  const meta = await sharp(out).metadata()
+  if (!meta.hasAlpha) throw new Error(`${t.id}: emitted without an alpha channel`)
   const { channels } = await sharp(out).stats()
+  const a = channels[3]
   const onScreen = (t.repeat * (BAND_W / t.crop.width)).toFixed(1)
   console.log(
-    `tex: ${t.id.padEnd(11)} mean ${channels[0].mean.toFixed(1).padStart(5)}/255   motif ~${onScreen}px on a 443px band`,
+    `tex: ${t.id.padEnd(11)} alpha mean ${a.mean.toFixed(1).padStart(5)}/255 (min ${a.min} max ${a.max})   motif ~${onScreen}px on a 443px band`,
   )
 }
