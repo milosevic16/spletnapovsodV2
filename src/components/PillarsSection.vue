@@ -43,8 +43,70 @@ function plateAt(i: number): HTMLElement | undefined {
   return host.value?.querySelectorAll<HTMLElement>('.pil__plate')[i]
 }
 
+function clipAt(i: number): HTMLVideoElement | null {
+  return plateAt(i)?.querySelector<HTMLVideoElement>('.pil__clip') ?? null
+}
+
+/**
+ * THE PLATE WHOSE PANEL IS STILL LEAVING. Vue's transition classes live on the
+ * fold, so the plate itself loses --open the instant the state flips — and
+ * everything hung off that class went with it while the panel was still on
+ * screen: the beige wash snapped back to graphite under text that was still
+ * beige-on-ink, and the reframed picture jumped back to its closed framing at
+ * the START of the collapse rather than the end. This ref keeps that plate
+ * marked for exactly as long as the collapse lasts, and the styles read
+ * :is(--open, --settling) so a leaving panel finishes in the state it was in.
+ */
+const settling = ref(-1)
+
+/** Clips that are on screen right now, maintained by the observer, so the hold
+ *  below can hand playback back to exactly the ones that should be running —
+ *  never to one that scrolled away while the fold was moving. */
+const visibleClips = new Set<HTMLVideoElement>()
+
+/** The window the fold is allowed to be moving in: the longest transition here
+ *  (the 300ms open) plus a beat. Shares its budget with CLOSE_HOLD_MS below. */
+const FOLD_HOLD_MS = 340
+let foldTimer = 0
+
+/**
+ * A FOLD IS THE MOST EXPENSIVE THING THIS SECTION DOES, and on a phone it is
+ * the clip that makes it so: the plate's box changes on every frame of the
+ * animation and the clip fills it absolutely, so a playing video is decoded,
+ * scaled and repainted into a different rectangle for the whole 240–300ms.
+ * Holding the two clips involved still for that long costs nothing anyone can
+ * see — they are ambient loops, not content — and takes the decode out of the
+ * frame budget at exactly the moment the frame budget is under pressure.
+ *
+ * Playback comes back through the observer's own set, so this can never leave
+ * a clip paused that the observer would not itself have paused; and the observer keeps
+ * running throughout, so scrolling the plate away and back restarts it anyway.
+ * Under reduced motion there is nothing to hold: the fold lands on one frame,
+ * so the window is zero and the framing must not linger either.
+ */
+function holdFold(prev: number, next: number) {
+  const ms = prefersReducedMotion() ? 0 : FOLD_HOLD_MS
+  settling.value = prev >= 0 && prev !== next && ms > 0 ? prev : -1
+  const held: HTMLVideoElement[] = []
+  for (const i of [prev, next]) {
+    if (i < 0) continue
+    const v = clipAt(i)
+    if (v && ms > 0) {
+      v.pause()
+      held.push(v)
+    }
+  }
+  clearTimeout(foldTimer)
+  foldTimer = fx.setTimeout(() => {
+    settling.value = -1
+    for (const v of held) if (visibleClips.has(v)) void v.play().catch(() => {})
+  }, ms)
+}
+
 function choose(i: number) {
-  open.value = open.value === i ? -1 : i
+  const prev = open.value
+  open.value = prev === i ? -1 : i
+  nextTick(() => holdFold(prev, open.value))
 }
 
 /**
@@ -82,6 +144,7 @@ function closeFromPanel(i: number) {
   const anchor = plate?.getBoundingClientRect().bottom
   open.value = -1
   nextTick(() => {
+    holdFold(i, -1)
     faceAt(i)?.focus({ preventScroll: true })
     if (!plate || anchor === undefined) return
     const until = performance.now() + CLOSE_HOLD_MS
@@ -148,10 +211,12 @@ function wireClips(host: HTMLElement) {
       for (const e of entries) {
         const v = e.target as HTMLVideoElement
         if (e.isIntersecting) {
+          visibleClips.add(v)
           // play() rejects when the tab is backgrounded or the decode is
           // refused; the poster stays, which is a fine resting state.
           void v.play().catch(() => {})
         } else {
+          visibleClips.delete(v)
           v.pause()
         }
       }
@@ -205,6 +270,7 @@ onUnmounted(() => {
             {
               'pil__plate--clip': hasClip(item.id),
               'pil__plate--open': live && open === n,
+              'pil__plate--settling': live && settling === n,
               'pil__plate--spine': live && open >= 0 && open !== n,
             },
           ]"
@@ -580,7 +646,7 @@ button.pil__face {
    for nothing: open, its dense end is at the plate's BOTTOM, under the fold's
    own wash, and where it would show (the face) it has already faded to zero.
    Removing it takes one full-size gradient out of every frame of the fold. */
-.pil__plate--clip.pil__plate--open::before {
+.pil__plate--clip:is(.pil__plate--open, .pil__plate--settling)::before {
   display: none;
 }
 
@@ -627,8 +693,8 @@ button.pil__face {
    plate. The titles on the wall keep the paper they have always had; only an
    opened one goes to ink, because on a beige ground white type is not a style
    question. */
-.pil__plate--open.pil__plate--design,
-.pil__plate--open.pil__plate--seo {
+:is(.pil__plate--open, .pil__plate--settling).pil__plate--design,
+:is(.pil__plate--open, .pil__plate--settling).pil__plate--seo {
   --plate-alpha: 92%;
   --plate-ink: var(--grafit);
   --plate-ink-dim: var(--grafit);
@@ -640,11 +706,11 @@ button.pil__face {
   --plate-focus: var(--rez-deep);
 }
 
-.pil__plate--open.pil__plate--design {
+:is(.pil__plate--open, .pil__plate--settling).pil__plate--design {
   --plate-wash: #baa99d;
 }
 
-.pil__plate--open.pil__plate--seo {
+:is(.pil__plate--open, .pil__plate--settling).pil__plate--seo {
   --plate-wash: #97a2a8;
 }
 
@@ -1078,7 +1144,7 @@ button.pil__face {
     transition: opacity 280ms var(--ease-spring);
   }
 
-  .pil__plate--clip.pil__plate--open .pil__plate-name::before {
+  .pil__plate--clip:is(.pil__plate--open, .pil__plate--settling) .pil__plate-name::before {
     opacity: 1;
   }
 
@@ -1119,14 +1185,14 @@ button.pil__face {
      T/H off the top, (H − 100 − T)/H off the bottom. The plate does not clip its
      own overflow — the phone stack's index marks live outside it — so the
      clipping has to be the element's own. */
-  .pil__plate--open.pil__plate--design .pil__clip {
+  :is(.pil__plate--open, .pil__plate--settling).pil__plate--design .pil__clip {
     top: -23%;
     bottom: auto;
     height: 126%;
     clip-path: inset(18.25% 0 2.38% 0);
   }
 
-  .pil__plate--open.pil__plate--seo .pil__clip {
+  :is(.pil__plate--open, .pil__plate--settling).pil__plate--seo .pil__clip {
     top: -49%;
     bottom: auto;
     height: 152%;
