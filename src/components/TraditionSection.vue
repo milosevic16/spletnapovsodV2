@@ -766,31 +766,20 @@ button.asm__band {
   outline-offset: -4px;
 }
 
-/* The hatch: half strength at rest, full when probed. Opacity only — the
-   band's ground is constant, so the label's worst-case composite is the
-   hatch LINE over that ground, and every alpha below is chosen against the
-   4.5:1 floor for the 14px label (computed per band; on dark the hatch
-   LIGHTENS the ground, so the brightest hatches take the lowest alphas).
-   SCALE contrast, not just pitch: a 3px lamination against a 22px poché is
-   what makes two fills read as different MATERIALS rather than the same
-   material drawn twice. */
-/* THE FOUR HATCHES. Each stratum paints ONE flat sheet of the page's paper ink
-   and lets its own texture mask it — the textures ship grayscale and carry no
-   colour of their own, which is what keeps these bands' colour in the tokens.
-   The ground under them has been re-picked twice; baked-in images would have
-   had to be regenerated both times.
+/* THE SHEETS ARE THE SHIPPED ARTWORK, shown as themselves — the owner's call,
+   after two rounds of translating them (first into an SVG restatement, then
+   into ink masks) read as nothing. The files carry the generated marks with
+   their ground as transparency, so drawn over the band's own black they render
+   exactly what the generator produced; the crop removed only the watermark and
+   the one stray non-grey line. Half strength at rest, full when probed — the
+   drawing's way of saying "this is the layer we are looking at".
 
    `cover`, not `stretch`: each file is cut to 2.30:1 against a band measured at
    2.49:1 on desktop and 2.19:1 on a phone, so cover trims a sliver at either
-   end rather than distorting the motif into ellipses.
-
-   THE ALPHAS ARE A LADDER, and they are set from measurement rather than taste.
-   A mask's mean luminance is how much ink its band actually carries, and the
-   four means are 10.8, 25.5, 15.1 and 37.4 of 255 — not a sequence. Multiplied
-   by the alphas below the effective coverage runs 3.6%, 4.5%, 5.0%, 13.2%,
-   which is the light-to-heavy descent the drawing needs: surface, field,
-   lattice, plate. Change a texture and re-read its mean before picking an alpha,
-   or the stack stops reading as strata and becomes four unrelated swatches. */
+   end rather than distorting the motif into ellipses. The light-to-heavy
+   descent down the stack is the textures' own — their ink coverage runs
+   4.2% / 10% / 5.9% / 14.4% of the frame (measured as alpha means 10.6, 25.4,
+   15.0, 36.7 of 255). */
 .asm__fill {
   position: absolute;
   inset: 0;
@@ -800,69 +789,49 @@ button.asm__band {
   pointer-events: none;
   opacity: 0.5;
   transition: opacity var(--dur-tween) var(--ease-hover);
-  -webkit-mask-position: center;
-  mask-position: center;
-  -webkit-mask-size: cover;
-  mask-size: cover;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
 }
 
 /* VIDNOST — a node-and-link web. What finds you is a graph and crawlers walk
-   links, so the texture states the claim rather than decorating it. Held at the
-   owner's call at full saturation, which it needs: only a ninth of its frame
-   carries any ink at all. */
+   links, so the texture states the claim rather than decorating it. */
 .asm__band--0 .asm__fill {
-  background-color: rgba(245, 242, 235, 0.85);
-  -webkit-mask-image: url('/img/tex/mesh-v3.webp');
-  mask-image: url('/img/tex/mesh-v3.webp');
+  background-image: url('/img/tex/mesh-v3.webp');
 }
 
 /* OBRAZCI — the field itself, ruled, with a caret in it. */
 .asm__band--1 .asm__fill {
-  background-color: rgba(245, 242, 235, 0.45);
-  -webkit-mask-image: url('/img/tex/forms-v2.webp');
-  mask-image: url('/img/tex/forms-v2.webp');
+  background-image: url('/img/tex/forms-v2.webp');
 }
 
 /* PIŠKOTKI — a sampling lattice: discrete points taken off a continuous person,
    which is what the law is about. */
 .asm__band--2 .asm__fill {
-  background-color: rgba(245, 242, 235, 0.85);
-  -webkit-mask-image: url('/img/tex/privacy-v2.webp');
-  mask-image: url('/img/tex/privacy-v2.webp');
+  background-image: url('/img/tex/privacy-v2.webp');
 }
 
 /* DOMENA — the near-solid plate the rest is published onto, and the densest of
    the four by design: it is the ground the other three stand on. */
 .asm__band--3 .asm__fill {
-  background-color: rgba(245, 242, 235, 0.9);
-  -webkit-mask-image: url('/img/tex/domain-v2.webp');
-  mask-image: url('/img/tex/domain-v2.webp');
+  background-image: url('/img/tex/domain-v2.webp');
 }
 
-/* The four grounds. `--band-ground` rather than `background` directly: the
-   label's tab reads the same value, so a name can never end up on a ground
-   the sheet does not actually have. */
-.asm__band--0 {
-  --band-ground: #5f4a33; /* the surface layer — the lightest step of the ramp */
-}
+/* ONE ground, and it is the ARTWORK'S: the sources are white marks on pure
+   black, their ground ships as transparency, and whatever paints behind them
+   becomes their paper. Black is the only value that shows the files as
+   generated — the bronze ramp that stood here tinted every sheet, which is
+   the "translated" look the owner rejected. The ladder the ramp used to carry
+   now lives in the textures' own densities (see the fill block above).
 
-.asm__band--1 {
-  --band-ground: #55402b;
-}
-
-.asm__band--2 {
-  --band-ground: #4b3724;
-}
-
-/* Substrate — the mass everything else is published onto, and the deepest
-   ground of the four. THE RAMP DESCENDS THROUGH THE BAND: measured, 0 → 3,
-   95,74,51 → 85,64,43 → 75,55,36 → 64,46,32. Each sheet is opaque, so it
-   covers the press screen and is measured flat — secondary text runs 4.99:1
-   on the lightest and 7.70:1 on this one. */
+   `--band-ground` rather than `background` directly: the label's tab reads the
+   same value, so a name can never end up on a ground the sheet does not
+   actually have. */
+.asm__band--0,
+.asm__band--1,
+.asm__band--2,
 .asm__band--3 {
-  --band-ground: var(--color-bronze-deep);
+  --band-ground: #000;
 }
 
 .asm__band--on .asm__fill {
@@ -881,14 +850,13 @@ button.asm__band {
    The band names its layer and the callout expands it; that shared word is the
    link between the drawing and the text. The terminal is the affordance —
    hollow means available, filled means probed. */
-/* THE NAME SITS ON A TAB OF THE SHEET'S OWN GROUND, never on the hatch. The
-   hatches run at the densities the drawing wants (a 0.6-alpha halftone dot,
-   a 0.55 caret), and a 13px glyph stroke landing on one of those measures
-   1.3:1 against the resting label — a quarter of the floor. Backing the name
-   with the sheet's own ground is what a real section drawing does with a
-   label over hatching, and it puts the contrast back on the ground itself:
-   4.99:1 on the lightest sheet, 7.70:1 on the deepest, paper higher still.
-   The inline-block box also keeps the tab off the terminal at the right. */
+/* THE NAME SITS ON A TAB OF THE SHEET'S OWN GROUND, never on the artwork. A
+   13px glyph stroke landing on a white mark would measure a fraction of the
+   floor; backing the name with the sheet's own ground is what a real section
+   drawing does with a label over hatching, and it puts the contrast back on
+   the ground itself — on the artwork's black, the resting ink reads 12.5:1
+   and the probed paper ~18.7:1 (re-measured below in the verification). The
+   inline-block box also keeps the tab off the terminal at the right. */
 .asm__band-label {
   position: relative;
   z-index: 1;

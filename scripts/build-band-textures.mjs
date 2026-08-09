@@ -7,11 +7,13 @@
  * means: a web that finds you, a field waiting for an answer, a sampling
  * lattice, and the near-solid plate everything is published onto.
  *
- * THE OUTPUT IS A MASK, NOT A PICTURE. The component paints the page's own
- * paper ink through it, which is what keeps the bands' colour in the tokens —
- * the ground under them has been re-picked twice, and baked-in images would
- * have had to be regenerated both times. Same reason the sources are generated
- * white-on-black.
+ * THE OUTPUT IS THE ARTWORK ITSELF, carried as white marks over a TRANSPARENT
+ * ground. The component shows the files as plain background images on a black
+ * band, which renders exactly what the generator produced (the owner's call,
+ * after two rounds of translating the textures — an SVG restatement, then ink
+ * masks — read as nothing). The transparency means the same files still work
+ * as alpha masks should a future band want to tint them; nothing about the
+ * emit would change.
  *
  * THE TEXTURE MUST LIVE IN THE ALPHA CHANNEL, and this is the second lesson
  * this script has had to learn the hard way. CSS `mask-image` with a raster
