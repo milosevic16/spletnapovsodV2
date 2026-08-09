@@ -31,7 +31,7 @@
  * SSG contract: every plate, name, sector and address is in the prerendered
  * HTML and visible at rest; nothing here is disclosed by interaction.
  */
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { references } from '@/content/home'
 
 const items = references.items
@@ -61,17 +61,26 @@ const live = ref(false)
 const revealed = ref(false)
 const collapsed = computed(() => live.value && !revealed.value)
 
-const root = ref<HTMLElement | null>(null)
+/**
+ * The ids the control owns, so `aria-controls` names exactly the two projects
+ * it opens and closes rather than gesturing at the section.
+ */
+const extraIds = computed(() =>
+  items
+    .slice(AT_REST)
+    .map((item) => `reference-${item.id}`)
+    .join(' '),
+)
 
-/** Reveal, then put the reader at the first project that just arrived — the
- *  control they pressed is gone, so focus has to land somewhere deliberate. */
-function reveal() {
-  revealed.value = true
-  nextTick(() => {
-    root.value?.querySelectorAll<HTMLElement>('.wkr__plate')[AT_REST]?.querySelector('a')?.focus({
-      preventScroll: true,
-    })
-  })
+/**
+ * ONE CONTROL THAT TOGGLES, not a control that disappears when it has worked.
+ * It keeps its place in both layouts, so pressing it never moves the focus it
+ * is holding and the way back is exactly where the way in was — which is also
+ * why nothing here reaches for focus: a disclosure that stays put should leave
+ * the reader on it.
+ */
+function toggle() {
+  revealed.value = !revealed.value
 }
 
 /** Variants are generated per project (scripts/build-reference-images.mjs);
@@ -102,7 +111,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <section id="reference" ref="root" class="wkr press press--light">
+  <section id="reference" class="wkr press press--light">
     <div class="container">
       <header class="wkr__head">
         <p class="wkr__kicker">{{ references.kicker }}</p>
@@ -110,11 +119,15 @@ onMounted(() => {
         <p class="wkr__intro">{{ references.intro }}</p>
       </header>
 
-      <div class="wkr__stage" :class="{ 'wkr__stage--collapsed': collapsed }">
+      <div
+        class="wkr__stage"
+        :class="{ 'wkr__stage--collapsed': collapsed, 'wkr__stage--live': live }"
+      >
         <ol class="wkr__wall" :aria-label="references.feedback.regionLabel">
         <li
           v-for="(item, n) in items"
           :key="item.id"
+          :id="n >= AT_REST ? `reference-${item.id}` : undefined"
           class="wkr__plate"
           :class="{ 'wkr__plate--front': active === n, 'wkr__plate--extra': n >= AT_REST }"
         >
@@ -182,13 +195,23 @@ onMounted(() => {
         </li>
         </ol>
 
-        <!-- ONE CONTROL, TWO FACES. A paper button under the belts on phones; a
-             dark sliver standing at the right end of the row on desktop, which
-             is the edge the hidden projects arrive from. Same button, same
-             string, same handler — never two controls that can disagree. -->
-        <div v-if="collapsed" class="wkr__more">
-          <button type="button" class="wkr__more-btn" @click="reveal">
-            <span class="wkr__more-label">{{ references.feedback.moreLabel }}</span>
+        <!-- ONE CONTROL, TWO FACES — and it TOGGLES rather than disappearing
+             once it has worked, so the way back is exactly where the way in
+             was. A quiet ruled strip under the belts on phones; a thin sliver
+             standing at the right end of the row on desktop, which is the edge
+             the held-back projects open out of. Same button, same handler,
+             never two controls that can disagree. -->
+        <div v-if="live" class="wkr__more">
+          <button
+            type="button"
+            class="wkr__more-btn"
+            :aria-expanded="revealed"
+            :aria-controls="extraIds"
+            @click="toggle"
+          >
+            <span class="wkr__more-label">{{
+              revealed ? references.feedback.lessLabel : references.feedback.moreLabel
+            }}</span>
           </button>
         </div>
       </div>
@@ -542,23 +565,28 @@ onMounted(() => {
     display: none;
   }
 
-  /* THE PAPER BUTTON. The section's own sheet, a graphite hairline and narrow
-     caps — the page's furniture rather than a UI widget dropped onto it. Full
-     measure, because a small centred pill under two full-bleed belts would read
-     as an afterthought. */
+  /* A QUIET RULED STRIP, not a button pretending to be the point of the band.
+     It carries NO fill of its own, which is what makes it textured: the
+     section's press screen runs straight through it, so the control is a piece
+     of the paper with a line around it rather than a panel laid on top. The
+     hairline is the sheet's, the ink is the secondary graphite, and the label
+     sits at data size — every step down from the plates it sits under.
+
+     Full measure and 48px tall all the same: subtle is about weight, never
+     about being hard to hit. */
   .wkr__more {
-    margin-top: var(--space-8);
+    margin-top: var(--space-6);
   }
 
   .wkr__more-btn {
     width: 100%;
-    min-height: 52px;
+    min-height: 48px;
     padding: var(--space-3) var(--space-4);
-    background: var(--list);
-    border: var(--divider-width) solid var(--grafit);
-    /* The title block's heavy closing edge, on the one control in the band. */
-    border-right-width: 2px;
-    color: var(--grafit); /* 13.9:1 on the sheet */
+    background: none;
+    border: var(--divider-width) solid var(--mreza-strong);
+    color: var(--grafit-2); /* 8.2:1 on the band */
+    font-size: var(--type-data-size);
+    letter-spacing: var(--type-data-ls);
   }
 
   .wkr__more-btn:focus-visible {
@@ -568,8 +596,8 @@ onMounted(() => {
 
   @media (hover: hover) {
     .wkr__more-btn:hover {
-      border-color: var(--rez);
-      color: var(--rez); /* 5.37:1 on the sheet */
+      border-color: var(--grafit);
+      color: var(--grafit);
     }
   }
 }
@@ -633,14 +661,17 @@ onMounted(() => {
     overflow: hidden;
   }
 
-  /* Room for the sliver, only while it is standing there. */
-  .wkr__stage--collapsed .wkr__wall {
+  /* Room for the sliver. Reserved whenever the control exists — not only while
+     the row is short — so opening and closing the set never shifts the row's
+     right edge by the sliver's own width. */
+  .wkr__stage--live .wkr__wall {
     padding-right: calc(var(--more-w) + var(--space-3));
   }
 
-  /* THE SLIVER. A dark edge at the right of the row, in the plates' own
-     graphite, reading bottom-to-top the way the wall's spines do. It is where
-     the held-back work is, and pressing it opens exactly that. */
+  /* THE SLIVER. A thin dark edge at the right of the row, in the plates' own
+     graphite, reading bottom-to-top the way the wall's spines do. It stands at
+     the edge the held-back work opens out of, and it stays there to close it
+     again. */
   .wkr__more {
     position: absolute;
     top: 0;

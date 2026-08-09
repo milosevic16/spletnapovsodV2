@@ -161,12 +161,14 @@ export const references = {
   feedback: {
     regionLabel: 'Reference',
     /**
-     * The control that reveals the projects past the third. It exists ONLY once
-     * the section hydrates — with JS off every project is in flow and there is
-     * nothing to reveal — which is why it lives here with the other interaction
-     * strings the content guard skips by contract. Still DRAFT copy.
+     * The two faces of the control that opens and closes the projects past the
+     * third. It exists ONLY once the section hydrates — with JS off every
+     * project is in flow and there is nothing to open — which is why both live
+     * here with the other interaction strings the content guard skips by
+     * contract. Still DRAFT copy.
      */
     moreLabel: 'Prikaži več',
+    lessLabel: 'Skrij',
   },
   items: [
     {
