@@ -373,9 +373,10 @@
 @media (max-width: 809px) {
   :root {
     --type-display-xl-size: 5rem; /* 80px */
-    /* THE PHONE CUT IS 36px (owner's call: the role's 48px read too large on
-       phones — "reduce by 25%"), and the clamp is the earlier overflow fix
-       scaled by exactly 0.75 so its geometry survives the resize:
+    /* THE PHONE CUT IS 27px (owner's call, in two steps: 48 read too large →
+       36, then "scale them down even more" → 27, i.e. 0.75² of the role), and
+       the clamp is the earlier overflow fix scaled by exactly that factor so
+       its geometry survives the resize:
 
        Slovenian has words longer than a narrow phone, and a word cannot wrap.
        The titles at this role carry »ponudnikov?« (DifferentiatorsSection) and
@@ -386,12 +387,12 @@
        at the 360 an Android reports). Multiplying all three clamp terms by the
        same factor keeps every breakpoint of that fix where it was: the middle
        still crosses the cap at ~370px, so phones from 375 up all get the flat
-       36, and the floor still cannot bind above a 260px viewport.
+       27, and the floor still cannot bind above a 260px viewport.
 
        Shrink the type, never break the word: `overflow-wrap` would hyphen-less
        split a display heading mid-word, which is a design change needing the
        owner, not an overflow fix. */
-    --type-display-l-size: clamp(1.5rem, 10.95vw - 4.5px, 2.25rem); /* 36px ≥370px wide */
+    --type-display-l-size: clamp(1.125rem, 8.21vw - 3.375px, 1.6875rem); /* 27px ≥370px wide */
     --type-statement-size: 1.5rem; /* 24px */
     --type-nav-size: 1.125rem; /* 18px */
     --type-label-size: 0.8125rem; /* 13px */
