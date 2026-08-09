@@ -114,10 +114,6 @@ onMounted(() => {
             />
           </picture>
 
-          <!-- The sheet number in the margin, on its leader. Phones only, like
-               the wall's own index: on desktop the row already carries order. -->
-          <span class="wkr__index" aria-hidden="true">00{{ n + 1 }}</span>
-
           <a
             class="wkr__face"
             :href="item.url"
@@ -129,6 +125,10 @@ onMounted(() => {
               <span class="wkr__project">{{ item.name }}</span>
               <span class="wkr__sector">{{ item.sector }}</span>
               <span class="wkr__meta">
+                <!-- The sheet number rides the meta row on phones, where the
+                     belts run edge to edge and there is no margin to hang it
+                     in; the desktop row carries its order in the widths. -->
+                <span class="wkr__index" aria-hidden="true">00{{ n + 1 }}</span>
                 <span class="wkr__url emisija">{{ item.urlLabel }}</span>
                 <!-- The site's own palette. Butted into ONE hairline frame —
                      separated chips read as confetti, a framed strip reads as
@@ -365,75 +365,105 @@ onMounted(() => {
   display: none;
 }
 
-/* --- phones: plates pinned along a datum ---------------------------------------
-   The wall's phone layout, to the pixel: a drafting datum down the left margin,
-   the plates hanging off it at three different indents, each overlapping the one
-   above by a sliver. The paper keyline is an outline, so it costs no layout, and
-   it is what makes the overlap read as intentional rather than as a collision —
-   depth here is drawn, never cast. The chosen plate takes the full measure back,
-   which is the layout's own way of saying "this one now". */
+/* --- phones: three belts ---------------------------------------------------------
+   THE BOLDEST THING AVAILABLE IS THE FULL MEASURE. Three bands of work running
+   edge to edge, one under the other, with the words on the paper beneath each —
+   no datum, no indents, no overlap, no keyline, and no dark band under the
+   picture. Everything that made the phone stack read as drawings laid on a table
+   is gone on purpose: at this width the belt IS the statement, and any inset
+   around it is the layout apologising for itself.
+
+   The words move to the paper, so every ink flips with them — graphite on beige
+   instead of paper on graphite. That flip is the whole reason this block is long:
+   a colour left behind would be invisible rather than merely wrong. */
 @media (max-width: 899.98px) {
   .wkr__wall {
-    position: relative;
-    gap: 0;
-    padding-left: 2.8rem;
+    /* Out through the container's own gutters. The section keeps its measure
+       for the heading; only the belts break it. */
+    gap: var(--space-8);
+    margin-inline: calc(var(--gutter) * -1);
   }
 
-  .wkr__wall::before {
-    content: '';
-    position: absolute;
-    left: 0.5rem;
-    top: 0.4rem;
-    bottom: 0.4rem;
-    width: 1px;
-    background: var(--mreza-strong);
-  }
-
-  /* The keyline is painted in the BAND'S OWN fill so the overlap reads as
-     intentional rather than as a collision — which means it follows every
-     change of that fill, or it becomes a visibly wrong-coloured ring around
-     each plate. It moved to --list-2 with the ground above. */
+  /* The plate is no longer a dark frame with words printed into it, so it stops
+     carrying a fill at all — the belt brings its own. */
   .wkr__plate {
-    outline: 4px solid var(--list-2);
-    margin-top: -1rem;
+    background: none;
   }
 
-  .wkr__plate:first-of-type {
-    margin-top: 0;
+  /* The shot returns to the FLOW: it is the belt itself now, not a ground behind
+     a face. 2:1 is the shots' own ratio — all three sources are exactly that —
+     so a full-width belt crops nothing whatsoever. The graphite behind it is
+     what shows while the image decodes. */
+  .wkr__shot,
+  .wkr__shot img {
+    position: static;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 2 / 1;
+    background: var(--grafit);
   }
 
-  .wkr__plate:nth-of-type(2) {
-    margin-left: 1.6rem;
-  }
-
-  .wkr__plate:nth-of-type(3) {
-    margin-right: 2.2rem;
-  }
-
-  /* Doubled class on purpose: the indent rules above are :nth-of-type
-     (specificity 0,2,0) and would otherwise outrank a single state class. */
-  .wkr__plate.wkr__plate--front {
-    margin-left: 0;
-    margin-right: 0;
-  }
-
-  /* The shot is out of flow, so the face has to declare the shape. 4/3 is the
-     wall's own ratio; the floor beside it is this section's addition, because
-     the name block does not shrink with the plate — without it the narrowest
-     plate measured 151px of text in a 157px frame, which is a caption with a
-     rumour of a picture behind it. 18rem keeps roughly half the plate for the
-     work at every width down to 320. */
   .wkr__face {
-    aspect-ratio: 4 / 3;
-    min-height: 18rem;
+    display: block;
+  }
+
+  /* The ring rides the BELT, not the whole link. The link now spans two grounds
+     and no single accent clears 3:1 on both — measured, against the real tokens:
+     --rez-na-temnem is 4.74:1 on the belt but 2.67:1 on paper, and --rez is the
+     exact reverse at 2.58:1 and 5.37:1. A ring drawn across both would fail on
+     one half of its own length, so it stays where it passes. */
+  .wkr__face:focus-visible {
+    outline: none;
+  }
+
+  .wkr__face:focus-visible .wkr__shot img {
+    outline: 2px solid var(--rez-na-temnem);
+    outline-offset: -4px;
+  }
+
+  /* The words, on paper. The measure comes back here — the belt is full bleed,
+     the reading is not. */
+  .wkr__name {
+    background: none;
+    padding: var(--space-3) var(--gutter) 0;
+  }
+
+  /* No band left to dissolve into the picture. */
+  .wkr__name::after {
+    display: none;
+  }
+
+  /* The corner mark flips to a drawn stroke on paper. Same gesture, same
+     overshoot, the other ink. */
+  .wkr__name::before {
+    top: 0;
+    left: var(--gutter);
+    background:
+      linear-gradient(var(--mreza-strong), var(--mreza-strong)) left 0 top 5px / 16px 1px
+        no-repeat,
+      linear-gradient(var(--mreza-strong), var(--mreza-strong)) left 5px top 0 / 1px 16px
+        no-repeat;
+  }
+
+  .wkr__project {
+    color: var(--grafit); /* 13.9:1 on the beige */
+    font-size: 1.375rem;
+  }
+
+  .wkr__sector {
+    color: var(--grafit-2); /* 8.5:1 on the beige */
+  }
+
+  .wkr__url {
+    color: var(--grafit-2);
+  }
+
+  .wkr__inks {
+    border-color: var(--mreza-strong);
   }
 
   .wkr__index {
     display: block;
-    position: absolute;
-    top: var(--space-2);
-    left: -1.75rem;
-    writing-mode: vertical-rl;
     font-family: var(--font-mono);
     font-size: var(--type-data-size);
     letter-spacing: var(--type-data-ls);
@@ -453,7 +483,11 @@ onMounted(() => {
    plate being looked at crops almost nothing. */
 @media (min-width: 900px) {
   .wkr__wall {
-    flex-direction: row;
+    /* REVERSED, so the majority sits on the RIGHT. Reversing the row rather
+       than moving the majority to the last plate keeps the featured project the
+       one the content module puts first — and keeps the tab order in content
+       order, since row-reverse is a paint-order change, not a DOM one. */
+    flex-direction: row-reverse;
     gap: var(--space-3);
     align-items: stretch;
     min-height: 22rem;
