@@ -26,12 +26,12 @@
  * coordinate is an inset from a viewport edge. index.html copies them as
  * literals — change either, change both.
  *
- * THE DRAWING. Two courses of monumental type divided by the site's cut plane,
- * set in one flat ink. They carried the page's press screen clipped into the
- * letterforms, and below the cut »Povsod« was a window onto this same clip seen
- * through its glyphs; both devices are cancelled — uniform colour, no texture,
- * no knockout. One red rule with square end ticks, exactly as wide as the
- * courses.
+ * THE DRAWING. Two courses of monumental type in one flat ink, and nothing
+ * else. They carried the page's press screen clipped into the letterforms, and
+ * »Povsod« was a window onto this same clip seen through its glyphs; a red cut
+ * plane with square end ticks divided them. All three devices are cancelled on
+ * the owner's call — uniform colour, no texture, no knockout, no rule. The
+ * band is the film, the mark, the two words and the claim.
  *
  * THE COURSES ARE FLUSH BY ARITHMETIC, not by eye. Measured at 100px in the
  * real face (Geist 400, uppercase, ls −0.02em): »SPLETNA« sets 4.218em wide,
@@ -150,10 +150,6 @@ onUnmounted(() => {
         <p class="stmt__course stmt__course--drawn">
           <span class="stmt__wordmark">{{ WORD_1 }}</span>
         </p>
-
-        <!-- The cut plane: one red rule, square end ticks, exactly as wide as
-             the courses it divides. -->
-        <span class="stmt__cut" aria-hidden="true"></span>
 
         <p class="stmt__course stmt__course--solid">
           <!-- The film used to be seen only through these letterforms; it is
@@ -296,10 +292,6 @@ onUnmounted(() => {
   container-type: inline-size;
   --mon-span: 100cqw;
   --mon-cap: min(16rem, 22svh);
-  /* The courses' shared width, for anything that must align to where the type
-     ends. Declared here but RESOLVED in the children that use it, which is the
-     only context where cqw can see this container. */
-  --mon-w: calc(min(calc(var(--mon-span) / 4.4502), var(--mon-cap)) * 4.4502);
   /* auto ABOVE and auto on the title block below: the free space divides
      equally, so the drawing floats centred on the sheet instead of the void
      pooling in one place. */
@@ -352,34 +344,6 @@ onUnmounted(() => {
    graphite block passes behind a letter the two are near enough the same value
    that the letter stops reading — measured on the built page below. That is the
    cost of running the film untreated and it is stated rather than hidden. */
-
-/* The cut plane, exactly as wide as the courses, with its square end ticks —
-   and extension lines dropping the full height of the sheet from both ends,
-   the dimension convention that ties the drawing to its frame. */
-.stmt__cut {
-  position: relative;
-  display: block;
-  width: var(--mon-w);
-  max-width: 100%;
-  height: 2px;
-  background: var(--rez);
-  margin-block: clamp(0.4rem, 0.8vw, 0.7rem);
-}
-.stmt__cut::before,
-.stmt__cut::after {
-  content: '';
-  position: absolute;
-  top: -3px;
-  width: 8px;
-  height: 8px;
-  background: var(--rez);
-}
-.stmt__cut::before {
-  left: 0;
-}
-.stmt__cut::after {
-  right: 0;
-}
 
 .stmt__wordmark {
   display: inline-block;

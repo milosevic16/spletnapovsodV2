@@ -60,10 +60,20 @@ const chromeEl = ref<HTMLElement | null>(null)
  * would first intrude is pushed below the band, plus clearance both sides —
  * so the slider rides on clean paper.
  *
+ * TWO MOVES, NOT ONE, and the second is what makes the void CONSTANT. Pushing
+ * the intruding line below the band leaves whatever space happened to remain
+ * above it — up to a whole wrapped line of it, measured at 115px on a phone,
+ * which read as a hole rather than as a parting. So the column is first
+ * SHIFTED DOWN by the slack, landing the previous line's bottom exactly one
+ * clearance above the band; the pushed line then needs a margin of exactly
+ * band + 2 × clearance. Same number at every width, both sides equal, and the
+ * shift only ever adds space at the column's top, where there is padding to
+ * absorb it — never at the bottom, which is clipped anyway.
+ *
  * MEASURED, NOT DERIVED, and re-measured on resize: the band's position
  * depends on how the title wraps, and the lines' own heights are not uniform
  * (overflow-wrap breaks the long ones on phones), so an arithmetic index over
- * one line-height would drift. The routine resets the gap, lets the column
+ * one line-height would drift. The routine resets both moves, lets the column
  * relayout, reads the real boxes, and picks the first line whose BOTTOM would
  * enter the clearance — bottom, not top, precisely because of those wrapped
  * lines.
@@ -75,8 +85,10 @@ const chromeEl = ref<HTMLElement | null>(null)
  */
 const gapIndex = ref(-1)
 const gapPx = ref(0)
-/** Clearance above and below the dial's band, px. */
-const GAP_CLEARANCE = 20
+/** How far the whole column drops so the parting lands square on the band. */
+const gapShift = ref(0)
+/** Clearance above and below the dial's band, px — the void is band + 2×this. */
+const GAP_CLEARANCE = 16
 
 function placeGap() {
   const host = root.value
@@ -84,23 +96,25 @@ function placeGap() {
   if (!host || !dial) return
   gapIndex.value = -1
   gapPx.value = 0
+  gapShift.value = 0
   nextTick(() => {
     const lines = host.querySelectorAll<HTMLElement>('.trad__line')
     if (!lines.length) return
     const band = dial.getBoundingClientRect()
+    const ceiling = band.top - GAP_CLEARANCE
     let k = -1
     for (let i = 0; i < lines.length; i++) {
-      if (lines[i].getBoundingClientRect().bottom > band.top - GAP_CLEARANCE) {
+      if (lines[i].getBoundingClientRect().bottom > ceiling) {
         k = i
         break
       }
     }
     // Band above the first line or past the last: nothing to part.
     if (k <= 0) return
-    const gap = band.bottom + GAP_CLEARANCE - lines[k].getBoundingClientRect().top
-    if (gap <= 0) return
+    // Take up the slack first, then the void is the same everywhere.
+    gapShift.value = Math.max(0, Math.round(ceiling - lines[k - 1].getBoundingClientRect().bottom))
     gapIndex.value = k
-    gapPx.value = Math.round(gap)
+    gapPx.value = Math.round(band.height + 2 * GAP_CLEARANCE)
   })
 }
 const gripEl = ref<HTMLInputElement | null>(null)
@@ -141,7 +155,7 @@ const scan = ref(REST)
 /** The beam only exists while a split exists. */
 const edge = computed(() => scan.value <= 0.5 || scan.value >= 99.5)
 
-let sweeping = false
+const sweeping = ref(false)
 /** Sweep spent, or the hand took over — either way the pass never (re)fires. */
 let done = false
 /** The reading beat's pending timer, cleared when the screen leaves. */
@@ -154,15 +168,15 @@ function easeOutCubic(t: number): number {
 
 function sweep() {
   if (done) return
-  sweeping = true
+  sweeping.value = true
   const t0 = performance.now()
   const step = (now: number) => {
-    if (!sweeping) return
+    if (!sweeping.value) return
     const t = Math.min(1, (now - t0) / SWEEP_MS)
     scan.value = easeOutCubic(t) * 100
     if (t < 1) fx.raf(step)
     else {
-      sweeping = false
+      sweeping.value = false
       done = true
     }
   }
@@ -173,7 +187,7 @@ function sweep() {
  *  sweep and simply keeps the dragged position; there is no mapping waiting to
  *  snatch it back. */
 function takeOver() {
-  sweeping = false
+  sweeping.value = false
   done = true
   if (holdTimer) {
     clearTimeout(holdTimer)
@@ -181,9 +195,55 @@ function takeOver() {
   }
 }
 
-function onGrip() {
+/**
+ * THE THUMB IS THE ONLY HANDLE. A native range JUMPS to wherever the track is
+ * clicked, which on this control is not a shortcut but a mis-click: the whole
+ * band is a scene the reader is looking at, and brushing it should not throw
+ * the seam across the section. A press away from the thumb has its default
+ * prevented, so the browser neither jumps nor starts a drag; a press ON the
+ * thumb passes through untouched and drags exactly as it always did. The
+ * keyboard is unaffected — arrows, Home/End and PageUp/Down still step it,
+ * which is what keeps the control operable without a pointer at all.
+ *
+ * The geometry is the browser's own: the thumb's centre travels the track
+ * inset by half its width at each end, so at value v its centre sits at
+ * left + T/2 + (v/100)(width − T). T is paired with the 20px thumb in the
+ * styles below — change one, change the other.
+ */
+const GRIP_THUMB = 20
+/** How far off the thumb still counts as grabbing it, px. Generous on purpose:
+ *  a finger is not a cursor. */
+const GRIP_GRAB = 10
+
+function onGripDown(e: PointerEvent) {
+  const el = gripEl.value
+  if (!el) return
+  // Inert while the pass runs — see onGripKeys for the same guard.
+  if (sweeping.value) {
+    e.preventDefault()
+    return
+  }
+  const r = el.getBoundingClientRect()
+  const travel = Math.max(0, r.width - GRIP_THUMB)
+  const centre = r.left + GRIP_THUMB / 2 + (Number(el.value) / 100) * travel
+  if (Math.abs(e.clientX - centre) > GRIP_THUMB / 2 + GRIP_GRAB) {
+    e.preventDefault()
+    return
+  }
   takeOver()
-  if (gripEl.value) scan.value = Number(gripEl.value.value)
+}
+
+function onGrip() {
+  const el = gripEl.value
+  if (!el) return
+  // The pass owns the value while it runs: put back what it set rather than
+  // letting a stray input event fight the animation mid-frame.
+  if (sweeping.value) {
+    el.value = String(Math.round(scan.value))
+    return
+  }
+  takeOver()
+  scan.value = Number(el.value)
 }
 
 /** Only keys that OPERATE a range are a hand on the control. A keyboard user
@@ -202,7 +262,14 @@ const GRIP_KEYS = new Set([
 ])
 
 function onGripKeys(e: KeyboardEvent) {
-  if (GRIP_KEYS.has(e.key)) takeOver()
+  if (!GRIP_KEYS.has(e.key)) return
+  // The first pass is a one-shot statement; let it finish, then the control is
+  // the reader's. Preventing the default keeps the value from moving under it.
+  if (sweeping.value) {
+    e.preventDefault()
+    return
+  }
+  takeOver()
 }
 
 /**
@@ -414,7 +481,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  sweeping = false
+  sweeping.value = false
   fx.dispose()
 })
 </script>
@@ -436,7 +503,7 @@ onUnmounted(() => {
          Decorative for assistive tech; the rendered layer carries every
          string. -->
     <div ref="screen" class="trad__source" aria-hidden="true">
-      <div class="container trad__source-in">
+      <div class="container trad__source-in" :style="{ marginTop: gapShift + 'px' }">
         <code
           v-for="(line, n) in sourceLines"
           :key="n"
@@ -497,7 +564,7 @@ onUnmounted(() => {
           :value="Math.round(scan)"
           :aria-label="invisible.feedback.scanLabel"
           @input="onGrip"
-          @pointerdown="takeOver"
+          @pointerdown="onGripDown"
           @keydown="onGripKeys"
         />
         <span v-else class="trad__grip-ghost" aria-hidden="true"></span>
@@ -1228,6 +1295,17 @@ button.asm__band {
    fires after the reading beat. The dial needs nothing here: the ends row and
    the bare control already stack at every width. */
 @media (max-width: 809px) {
+  /* Tighter above the control here (owner's call): on a phone the instruction
+     and the dial are a single gesture and the desktop's air read as a gap. */
+  .trad__ends {
+    margin-top: var(--space-4);
+  }
+
+  .trad__chrome {
+    margin-top: var(--space-2);
+    margin-bottom: var(--space-8);
+  }
+
   /* Phones lose the leader, so the link between a stratum and its callout is
      proximity plus this rule, in the same red. */
   .asm__panels {
