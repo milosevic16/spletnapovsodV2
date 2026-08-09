@@ -413,6 +413,19 @@ onUnmounted(() => {
     min-height: 56svh;
   }
 
+  /* THE DRAWING DROPS TO THE CLAIM (owner's call). The sheet has two
+     `margin-top: auto`s — one above the drawing, one on the title block — and
+     between them they used to divide the free space evenly, floating the
+     drawing in the middle of the band: measured at 375, 75px of air above it
+     and 71px between it and the claim. Taking the auto off the block leaves
+     ONE flexible margin, so all of that space collects at the top and the two
+     texts stand together at the foot with only a deliberate step between them.
+     The film keeps the void, which is the right thing for a band that IS the
+     film. Desktop is untouched and still floats the drawing. */
+  .stmt__block {
+    margin-top: var(--space-2);
+  }
+
   /* SPLETNA STEPS BACK A SIZE, and in doing so gives up the flush (owner's
      call). Both courses were sized to land on exactly --mon-span — that is what
      the two measured em-widths in the base rules are for, and it is why the
