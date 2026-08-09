@@ -192,6 +192,35 @@ export const references = {
       alt: 'Posnetek naslovnice spletne strani Bloctopus Intelligence',
       image: { width: 1792, height: 896, widths: [560, 840, 1184, 1792] },
     },
+    /**
+     * The two projects built with Gašper Azinovič. Both sectors are the sites'
+     * OWN words rather than descriptions written here: Pravna Panda states
+     * »Društvo študentov prava Ljubljana« under its wordmark, and SILE's own
+     * page, contact address (Jamova cesta 2) and mail account place it at the
+     * Faculty of Civil Engineering and Geodesy. Inks are the dominant colours
+     * of each plate crop, extracted by scripts/build-reference-images.mjs —
+     * measured, not chosen. DRAFT like the rest of the copy: needs sign-off.
+     */
+    {
+      id: 'sile',
+      name: 'SILE',
+      sector: 'Študentska skupina Fakultete za gradbeništvo in geodezijo',
+      url: 'https://sile.si',
+      urlLabel: 'sile.si',
+      inks: ['#3078FF', '#48C0FF', '#78F0FF', '#D8F0F0'],
+      alt: 'Posnetek naslovnice spletne strani študentske skupine SILE',
+      image: { width: 1700, height: 850, widths: [560, 840, 1184, 1700] },
+    },
+    {
+      id: 'pravnapanda',
+      name: 'Pravna Panda',
+      sector: 'Društvo študentov prava Ljubljana',
+      url: 'https://pravnapanda.si',
+      urlLabel: 'pravnapanda.si',
+      inks: ['#78C0F0', '#C0D8F0', '#90A8A8', '#FFFFFF'],
+      alt: 'Posnetek naslovnice spletne strani Pravne Pande',
+      image: { width: 1792, height: 896, widths: [560, 840, 1184, 1792] },
+    },
   ] satisfies Reference[],
 }
 

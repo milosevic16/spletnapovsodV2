@@ -29,7 +29,7 @@
  * live third-party sites being up.
  */
 import puppeteer from 'puppeteer-core'
-import { mkdirSync, writeFileSync, existsSync } from 'node:fs'
+import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 
 const root = process.cwd()
@@ -124,7 +124,26 @@ const SITES = [
       return { hero: r('.hero.is-desktop') ?? r('.hero'), h1: r('.hero__title'), inner: r('.hero__inner') }
     },
   },
+  // The two added with Gašper Azinovič's projects. They carry NO live preview —
+  // the reference plates are static screenshots now — so there is nothing to
+  // hide and nothing to measure; they are here so the portfolio has one
+  // pipeline rather than two.
+  { id: 'sile', url: 'https://sile.si', hideCss: '', measure: () => ({}) },
+  { id: 'pravnapanda', url: 'https://pravnapanda.si', hideCss: '', measure: () => ({}) },
 ]
+
+/**
+ * Optional id filter: `node scripts/capture-references.mjs sile pravnapanda`.
+ * Without it every site is re-captured, which also re-measures the geometry the
+ * live previews are derived from — fine when that is what you want, and exactly
+ * what you do NOT want when adding one project to the set.
+ */
+const only = process.argv.slice(2)
+const TARGETS = only.length ? SITES.filter((s) => only.includes(s.id)) : SITES
+if (only.length && TARGETS.length !== only.length) {
+  const missing = only.filter((id) => !SITES.some((s) => s.id === id))
+  throw new Error(`unknown site id(s): ${missing.join(', ')}`)
+}
 
 const browser = await puppeteer.launch({
   executablePath: EDGE,
@@ -135,7 +154,7 @@ const browser = await puppeteer.launch({
 
 const geometry = {}
 try {
-  for (const site of SITES) {
+  for (const site of TARGETS) {
     const page = await browser.newPage()
     await page.goto(site.url, { waitUntil: 'networkidle2', timeout: 60000 })
     // Let entrance one-shots finish and fonts land; loops are hidden by CSS.
@@ -152,9 +171,16 @@ try {
   await browser.close()
 }
 
-geometry._meta = {
+// MERGE, never overwrite. A filtered run measures only the sites it captured,
+// and writing that object straight out would silently delete the geometry the
+// live previews of the OTHER sites are derived from.
+const geomPath = join(root, 'capture', 'geometry.json')
+const previous = existsSync(geomPath) ? JSON.parse(readFileSync(geomPath, 'utf8')) : {}
+const merged = { ...previous, ...geometry }
+merged._meta = {
   viewport: '1440x900 @2x — rects in CSS px; capture device px = 2x these',
   capturedAt: new Date().toISOString().slice(0, 10),
+  lastRunCaptured: TARGETS.map((s) => s.id),
 }
-writeFileSync(join(root, 'capture', 'geometry.json'), JSON.stringify(geometry, null, 2))
-console.log('geometry.json written')
+writeFileSync(geomPath, JSON.stringify(merged, null, 2))
+console.log(`geometry.json written (captured: ${TARGETS.map((s) => s.id).join(', ')})`)

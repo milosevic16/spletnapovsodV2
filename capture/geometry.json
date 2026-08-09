@@ -143,6 +143,12 @@
   },
   "_meta": {
     "viewport": "1440x900 @2x — rects in CSS px; capture device px = 2x these",
-    "capturedAt": "2026-08-07"
-  }
+    "capturedAt": "2026-08-09",
+    "lastRunCaptured": [
+      "sile",
+      "pravnapanda"
+    ]
+  },
+  "sile": {},
+  "pravnapanda": {}
 }
