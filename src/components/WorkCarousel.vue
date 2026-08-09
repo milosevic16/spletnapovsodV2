@@ -131,6 +131,18 @@ onMounted(() => {
                 <span class="wkr__name">{{ item.name }}</span>
                 <span class="wkr__sector">{{ item.sector }}</span>
               </span>
+              <!-- The site's own palette, sampled. Butted into one framed strip
+                   the way a materials legend is drawn — decorative, so hidden
+                   from the accessibility tree; the colours say nothing a reader
+                   needs in words. -->
+              <span class="wkr__inks" aria-hidden="true">
+                <span
+                  v-for="ink in item.inks"
+                  :key="ink"
+                  class="wkr__ink"
+                  :style="{ background: ink }"
+                ></span>
+              </span>
               <span class="wkr__url emisija">{{ item.urlLabel }}</span>
             </div>
 
@@ -234,7 +246,6 @@ onMounted(() => {
 .wkr__plate {
   border: var(--divider-width) solid var(--grafit);
   border-bottom: 0;
-  transition: border-color var(--dur-tween) var(--ease-hover);
 }
 
 .wkr__plate img {
@@ -261,14 +272,13 @@ onMounted(() => {
   align-items: center;
   gap: var(--space-4);
   height: var(--rung);
-  /* Asymmetric on purpose: the left inset clears the margin rule, the right one
-     clears the closing corner. The marks are drawn INTO the padding, never over
-     the words. */
-  padding-inline: var(--space-6) var(--space-8);
+  /* The left inset carries the hatched edge AND the margin rule, the right one
+     the corner strip. The marks are drawn INTO the padding, never over the
+     words — every clearance below is measured. */
+  padding-inline: var(--space-8) var(--space-8);
   background: var(--list);
   border: var(--divider-width) solid var(--grafit);
   border-right-width: 2px;
-  transition: border-color var(--dur-tween) var(--ease-hover);
 }
 
 /* --- the architect's marks -----------------------------------------------------
@@ -293,18 +303,26 @@ onMounted(() => {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 8px;
-  width: 8px;
+  left: 0;
+  width: 24px;
   pointer-events: none;
   background:
     /* the nodes, where the margin meets the block's top and bottom rules */
-    linear-gradient(var(--grafit), var(--grafit)) 1px 0 / 3px 3px no-repeat,
-    linear-gradient(var(--grafit), var(--grafit)) 1px 100% / 3px 3px no-repeat,
+    linear-gradient(var(--grafit), var(--grafit)) left 16px top 0 / 3px 3px no-repeat,
+    linear-gradient(var(--grafit), var(--grafit)) left 16px bottom 0 / 3px 3px no-repeat,
     /* the second pass — the hand going over it again, and still the lighter of
        the two: it must read as the same line drawn twice, never as two lines */
-    linear-gradient(var(--mreza-strong), var(--mreza-strong)) 5px 0 / 1px 100% no-repeat,
+    linear-gradient(var(--mreza-strong), var(--mreza-strong)) left 20px top 0 / 1px 100%
+      no-repeat,
     /* the line itself */
-    linear-gradient(var(--grafit-2), var(--grafit-2)) 2px 0 / 1px 100% no-repeat;
+    linear-gradient(var(--grafit-2), var(--grafit-2)) left 17px top 0 / 1px 100% no-repeat,
+    /* THE CUT EDGE. Hatch means cut material — it is the page's own poché motif,
+       and it is what the block is standing on: the ledger is a section through
+       the sheet, so its left edge is hatched. Fine and even, never a texture
+       fill: the moment it reads as pattern rather than as section it has become
+       decoration. */
+    repeating-linear-gradient(45deg, transparent 0 3px, var(--mreza-strong) 3px 4px) left 0
+      top 0 / 12px 100% no-repeat;
 }
 
 /* Both right-hand corners, drawn as one strip so the pair stays in register.
@@ -387,13 +405,26 @@ onMounted(() => {
   line-height: 1.3;
 }
 
-.wkr__url {
+/* The samples strip. Butted into ONE hairline frame, not spaced apart: a row of
+   separated colour chips reads as confetti, a framed strip reads as the
+   materials legend it is. That single decision is what keeps it drafting. */
+.wkr__inks {
   flex: 0 0 auto;
   margin-left: auto;
+  display: flex;
+  border: var(--divider-width) solid var(--grafit-2);
+}
+
+.wkr__ink {
+  width: 12px;
+  height: 12px;
+}
+
+.wkr__url {
+  flex: 0 0 auto;
   color: var(--grafit-2);
   border-bottom: var(--divider-width) solid currentColor;
   padding-bottom: 2px;
-  transition: color var(--dur-tween) var(--ease-hover);
 }
 
 /* --- coming to the front -------------------------------------------------------
@@ -411,16 +442,19 @@ onMounted(() => {
   transform: translate(calc(var(--lift) * -1), calc(var(--lift) * -1));
 }
 
+/* The edge takes the weight, and takes it in the page's OWN ink — no second
+   colour enters to say "selected". An OUTLINE rather than a fatter border, and
+   deliberately so: outlines are outside layout, so the sheet cannot change size
+   when it comes forward. Offset by exactly one divider inwards, the outline
+   lands against the inside of the border and the two read as one 2px edge —
+   the weight the title block's own right-hand rule already carries, so nothing
+   new was invented to draw it. */
 .wkr__sheet:focus-within .wkr__plate,
 .wkr__sheet:focus-within .wkr__block,
 .wkr__sheet--front .wkr__plate,
 .wkr__sheet--front .wkr__block {
-  border-color: var(--rez);
-}
-
-.wkr__sheet:focus-within .wkr__url,
-.wkr__sheet--front .wkr__url {
-  color: var(--rez);
+  outline: var(--divider-width) solid var(--grafit);
+  outline-offset: calc(var(--divider-width) * -1);
 }
 
 @media (hover: hover) {
@@ -434,11 +468,8 @@ onMounted(() => {
 
   .wkr__sheet:hover .wkr__plate,
   .wkr__sheet:hover .wkr__block {
-    border-color: var(--rez);
-  }
-
-  .wkr__sheet:hover .wkr__url {
-    color: var(--rez);
+    outline: var(--divider-width) solid var(--grafit);
+    outline-offset: calc(var(--divider-width) * -1);
   }
 }
 
@@ -448,7 +479,7 @@ onMounted(() => {
    and --rung grows to hold them: the step follows the block, always. */
 @media (max-width: 899.98px) {
   .wkr__stage {
-    --rung: 6rem;
+    --rung: 7.5rem;
     --stride: 0.875rem;
     --lift: 4px;
   }
@@ -462,13 +493,29 @@ onMounted(() => {
     align-content: center;
     /* Tight on purpose. The block's height IS the diagonal step, so content
        that outgrows it would not merely look cramped — the ledger rows would
-       overlap and the composition would break. Measured at the 320px floor,
-       where the sector takes two lines: content 86px in a 96px rung, 10px of
-       headroom for font-metric drift. Re-measure this slack before enlarging
-       anything in here. */
+       overlap and the composition would break. Measured at the 320px floor on
+       the worst of the three (two-line sector, longest address): 21px first row
+       + 62px name-and-sector + 22px address + two 2px gaps = 109px in a 120px
+       rung, 11px of headroom for font-metric drift. Re-measure this slack
+       before enlarging anything in here. */
     row-gap: 2px;
     column-gap: var(--space-3);
-    padding-inline: var(--space-5) var(--space-3);
+    padding-inline: var(--space-6) var(--space-3);
+  }
+
+  /* The hatched edge and the margin rule pull in with the inset; the gesture is
+     the same, only narrower. */
+  .wkr__block::before {
+    width: 20px;
+    background:
+      linear-gradient(var(--grafit), var(--grafit)) left 11px top 0 / 3px 3px no-repeat,
+      linear-gradient(var(--grafit), var(--grafit)) left 11px bottom 0 / 3px 3px no-repeat,
+      linear-gradient(var(--mreza-strong), var(--mreza-strong)) left 15px top 0 / 1px 100%
+        no-repeat,
+      linear-gradient(var(--grafit-2), var(--grafit-2)) left 12px top 0 / 1px 100%
+        no-repeat,
+      repeating-linear-gradient(45deg, transparent 0 3px, var(--mreza-strong) 3px 4px)
+        left 0 top 0 / 8px 100% no-repeat;
   }
 
   /* The corner strip goes: on the wrapped layout the name and sector run the
@@ -482,7 +529,19 @@ onMounted(() => {
   /* Shorter, so it still emerges from the margin rather than overshooting it
      by half the inset (the number sits closer to the edge here). */
   .wkr__index::before {
-    width: 8px;
+    width: 9px;
+  }
+
+  /* Row one carries the number, the samples and the address; the name and its
+     sector take the full width beneath. The samples shrink with the row. */
+  .wkr__inks {
+    order: 1;
+    margin-left: auto;
+  }
+
+  .wkr__ink {
+    width: 9px;
+    height: 9px;
   }
 
   .wkr__name {
@@ -496,13 +555,30 @@ onMounted(() => {
     order: 2;
   }
 
+  /* THREE DECLARED ROWS, not three hoped-for ones. Number and samples share the
+     first (both are small and fixed, so they cannot not fit), the name takes
+     the second, the address the third on its own full-width basis.
+     Measured why: with the address sharing row one, the longest of the three
+     (mercpeter.netlify.app) collided with the samples by 19px at the 320 floor,
+     wrapped, and pushed its content 13px past the rung — and since the rung IS
+     the diagonal step, that is not a cramped block, that is the ledger rows
+     overlapping. A layout that depends on a string being short enough is the
+     bug; this one cannot wrap differently at any width. */
+  .wkr__url {
+    flex: 1 1 100%;
+  }
+
   .wkr__index {
     order: 1;
   }
 
   .wkr__url {
+    order: 3;
+    margin-left: 0;
+  }
+
+  .wkr__index {
     order: 1;
-    margin-left: auto;
   }
 }
 </style>
