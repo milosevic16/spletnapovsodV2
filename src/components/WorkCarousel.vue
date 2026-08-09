@@ -364,10 +364,19 @@ onMounted(() => {
    and a crawler still reads every name, sector and address. */
 @media (max-width: 899.98px) {
   .wkr__wall {
+    /* ONE number sets the whole rhythm. The gap between tiles and the inset
+       from the screen edge are the same value, so every square carries an even
+       band of paper on all four sides instead of the block having a seam down
+       its middle and none at its edges. Dial --tile-gap and the grid stays
+       even by construction. */
+    --tile-gap: var(--space-2);
+
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0;
-    margin-inline: calc(var(--gutter) * -1);
+    gap: var(--tile-gap);
+    /* Still breaking the container's gutters, just landing --tile-gap short of
+       the screen edge rather than on it. */
+    margin-inline: calc(var(--tile-gap) - var(--gutter));
   }
 
   .wkr__face {
