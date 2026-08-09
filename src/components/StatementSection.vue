@@ -412,6 +412,36 @@ onUnmounted(() => {
   .stmt__sheet {
     min-height: 56svh;
   }
+
+  /* SPLETNA STEPS BACK A SIZE, and in doing so gives up the flush (owner's
+     call). Both courses were sized to land on exactly --mon-span — that is what
+     the two measured em-widths in the base rules are for, and it is why the
+     drawing reads as one monument block rather than two words. Taking a share
+     of the span off the upper course breaks that on purpose: the word now stops
+     short and the void opens on its right, which is the composition the desktop
+     band already uses (its courses are left-aligned and stop short of the frame
+     — see the stamp note below, which depends on that void existing).
+
+     LEFT IS WHERE IT STOPS SHORT FROM. The courses inherit `text-align: start`,
+     so the shortened word stays hard against the same left edge POVSOD starts
+     at; the two share an origin and only their right ends differ. Nothing here
+     centres it — with 0.85 of the span it is still 258px of a 303px measure, so
+     there is no room to centre it INSIDE the left half, and floating it in the
+     middle of the leftover would break the shared left edge that makes the two
+     courses read as one block.
+
+     One number: --drawn-share is the fraction of the measure the upper course
+     takes. 1 restores the flush exactly. */
+  .stmt__elevation {
+    --drawn-share: 0.85;
+  }
+
+  .stmt__course--drawn {
+    font-size: min(
+      calc(var(--mon-span) * var(--drawn-share) / 4.4502),
+      calc(var(--mon-cap) * var(--drawn-share))
+    );
+  }
 }
 
 /* THE MARK STANDS AT THE SHEET'S TOP-RIGHT on desktop, not its top-left. The
