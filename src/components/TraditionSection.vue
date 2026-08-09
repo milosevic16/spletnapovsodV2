@@ -141,15 +141,21 @@ function bandAt(i: number): HTMLElement | undefined {
 }
 
 /**
- * The four sheets' hatches, by stratum. `mask` is the reach gradient, which
- * only the first one takes — it is the one whose meaning is "this falls off
- * with distance". Ids are prefixed because SVG defs are document-global.
+ * The four sheets' hatches, by stratum. Ids are prefixed because SVG defs are
+ * document-global.
+ *
+ * The FIRST is null: Vidnost carries a raster mesh rather than a drawn pattern,
+ * masked in CSS on .asm__band--0 (see the styles). It used to be an even dot
+ * field under a left-to-right gradient, because a uniform field of dots has no
+ * way of its own to mean "this reaches, and the reach runs out" — the gradient
+ * had to say it. A node-and-link web says the thing outright, so the gradient it
+ * was propping up is gone with it, and the texture runs at full strength.
  */
 const HATCH = [
-  { id: 'asm-k1', mask: true },
-  { id: 'asm-k2', mask: false },
-  { id: 'asm-k3', mask: false },
-  { id: 'asm-k4', mask: false },
+  { id: null },
+  { id: 'asm-k2' },
+  { id: 'asm-k3' },
+  { id: 'asm-k4' },
 ] as const
 
 /* NOTHING HERE IS MEASURED. The slide, the rest ladder and the stagger are all
@@ -397,20 +403,9 @@ onUnmounted(() => {
                    rather than one drawn twice. -->
               <svg width="0" height="0" class="asm__defs" aria-hidden="true">
                 <defs>
-                  <!-- VIDNOST: an even dot field under ONE gradient mask, so
-                       the reach is a gradient of ink rather than a graduated
-                       tile stamped over and over. -->
-                  <pattern id="asm-k1" width="12" height="12" patternUnits="userSpaceOnUse">
-                    <circle cx="6" cy="6" r="3.1" fill="rgba(245, 242, 235, 0.6)" />
-                  </pattern>
-                  <linearGradient id="asm-kgrad" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0" stop-color="#fff" />
-                    <stop offset="0.55" stop-color="#777" />
-                    <stop offset="1" stop-color="#000" />
-                  </linearGradient>
-                  <mask id="asm-kmask" maskContentUnits="objectBoundingBox">
-                    <rect width="1" height="1" fill="url(#asm-kgrad)" />
-                  </mask>
+                  <!-- VIDNOST is not here: it carries a raster mesh, masked in
+                       CSS on .asm__band--0. The dot pattern and the reach
+                       gradient it needed left with it. -->
                   <!-- OBRAZCI: the field itself, a caret in it, ruled for an
                        answer. -->
                   <pattern id="asm-k2" width="34" height="18" patternUnits="userSpaceOnUse">
@@ -462,11 +457,14 @@ onUnmounted(() => {
                        when probed — the drawing's way of saying "this is the
                        layer we are looking at". -->
                   <svg class="asm__fill" preserveAspectRatio="none" aria-hidden="true">
+                    <!-- No rect on the first stratum: its texture is a raster
+                         mask on this element's own background, not a drawn
+                         pattern painted into it. -->
                     <rect
+                      v-if="HATCH[n]!.id"
                       width="100%"
                       height="100%"
                       :fill="`url(#${HATCH[n]!.id})`"
-                      :mask="HATCH[n]!.mask ? 'url(#asm-kmask)' : undefined"
                     />
                   </svg>
                   <!-- The name sits on a tab of the sheet's OWN ground, not on
@@ -842,6 +840,29 @@ button.asm__band {
   pointer-events: none;
   opacity: 0.5;
   transition: opacity var(--dur-tween) var(--ease-hover);
+}
+
+/* VIDNOST'S MESH. The one raster texture in the drawing, and it arrives as a
+   MASK rather than a picture: the file is grayscale, and what paints through it
+   is the page's own paper ink. That is what keeps the band's colour in the
+   tokens — the ground under it has been re-picked twice, and a baked-in image
+   would have had to be regenerated both times.
+
+   The alpha is high on purpose. The mask measures a mean of 14/255, so only
+   about a twentieth of the band carries any ink at all; at the alpha the drawn
+   patterns use it would read as dirt rather than as a web. It still inherits
+   .asm__fill's half-strength rest and full-strength probe, so it sits in the
+   same ladder as the other three.
+
+   `cover`, not `stretch`: the file is cut to 2.30:1 against a band measured at
+   2.49:1 on desktop and 2.19:1 on a phone, so cover trims a sliver at either
+   end rather than distorting the mesh into ellipses. Re-measure the band before
+   re-cutting the file — the first cut was made to a guessed ratio and threw a
+   quarter of the mesh away. */
+.asm__band--0 .asm__fill {
+  background-color: rgba(245, 242, 235, 0.85);
+  -webkit-mask: url('/img/tex/mesh-v1.webp') center / cover no-repeat;
+  mask: url('/img/tex/mesh-v1.webp') center / cover no-repeat;
 }
 
 /* The four grounds. `--band-ground` rather than `background` directly: the
