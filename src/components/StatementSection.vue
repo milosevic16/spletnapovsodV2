@@ -408,16 +408,18 @@ onUnmounted(() => {
    the stamp on it. Desktop keeps its top-left mark and gives only the right
    corner away, because there the stamp has crossed the sheet. */
 @media (max-width: 899.98px) {
-  /* HALF THE AIR. The two `margin-top: auto`s split whatever the sheet has
-     left over after its fixed costs equally above and below the drawing, so
-     the free space IS the spacing and shrinking the sheet is what halves it.
-     Measured at 375×812: the sheet stood at 585 (72svh) against 326px of fixed
-     content — stamp clearance 51, drawing 170, title block 89, bottom padding
-     16 — leaving 259 of free space, 129 above and 129 below. 56svh puts the
-     sheet at 455, which is that same 326 plus 129: half the air, still split
-     evenly. Desktop keeps its own min-height below and is untouched. */
+  /* THE HERO TAKES THE REFERENCE'S RATIO (owner's call, from a screenshot):
+     the hero there measures 72.1% of the viewport — 1765 of 2447 device px
+     under the browser chrome. The ratio belongs to the SECTION, and the
+     section is the sheet plus --hero-inset of padding either side (the veil
+     lands on that inset — it cannot move), so the sheet compensates: 72svh
+     minus both insets makes the whole band 72svh on the nose. Measured before
+     the compensation: 76.9% — the bare base 72svh plus 40px of inset.
+     (A 56svh "half the air" override lived here one round; with the drawing
+     and claim standing at the foot, the reclaimed space is the film's void
+     above, which is the reference's composition.) */
   .stmt__sheet {
-    min-height: 56svh;
+    min-height: calc(72svh - 2 * var(--hero-inset));
   }
 
   /* THE DRAWING DROPS TO THE CLAIM (owner's call — phones first, the base
@@ -432,38 +434,24 @@ onUnmounted(() => {
     padding-top: var(--space-2);
   }
 
-  /* SPLETNA STEPS BACK A SIZE, and in doing so gives up the flush (owner's
-     call). Both courses were sized to land on exactly --mon-span — that is what
-     the two measured em-widths in the base rules are for, and it is why the
-     drawing reads as one monument block rather than two words. Taking a share
-     of the span off the upper course breaks that on purpose: the word now stops
-     short and the void opens on its right, which is the composition the desktop
-     band already uses (its courses are left-aligned and stop short of the frame
-     — see the stamp note below, which depends on that void existing).
-
-     LEFT IS WHERE IT STOPS SHORT FROM. The courses inherit `text-align: start`,
-     so the shortened word stays hard against the same left edge POVSOD starts
-     at; the two share an origin and only their right ends differ. Nothing here
-     centres it — with 0.85 of the span it is still 258px of a 303px measure, so
-     there is no room to centre it INSIDE the left half, and floating it in the
-     middle of the leftover would break the shared left edge that makes the two
-     courses read as one block.
-
-     One number: --drawn-share is the fraction of the measure the upper course
-     takes. 1 restores the flush exactly. */
+  /* THE FLUSH IS BACK (owner's call, from the same reference screenshot as
+     the sheet height above): both words span the full measure again, one
+     monument block, exactly as the base rules size them. A --drawn-share
+     override lived here for two rounds, stepping SPLETNA back to 0.85 of the
+     span; the reference shows the pre-shrink drawing, so the override is gone
+     rather than set to 1 — the base needs no help to be itself. */
   .stmt__elevation {
-    --drawn-share: 0.85;
     /* The second of the three spacings between the glyphs and the claim (the
        other two live on .stmt__block above) — the base clamp resolves to 16px
        here, and the owner asked the pair tighter. */
     padding-block-end: var(--space-2);
   }
 
-  .stmt__course--drawn {
-    font-size: min(
-      calc(var(--mon-span) * var(--drawn-share) / 4.4502),
-      calc(var(--mon-cap) * var(--drawn-share))
-    );
+  /* Between the sizes (owner's call): the previous phone claim ran 21.6px and
+     the reference screenshot's measures ~14px at the same width — this is the
+     asked-for middle, 18px. Desktop keeps the base clamp. */
+  .stmt__title {
+    font-size: 1.125rem;
   }
 }
 
