@@ -373,7 +373,26 @@
 @media (max-width: 809px) {
   :root {
     --type-display-xl-size: 5rem; /* 80px */
-    --type-display-l-size: 3rem; /* 48px */
+    /* 48px is the role's size and stays the role's size — but Slovenian has
+       words longer than a narrow phone. The section titles set at this role
+       carry »ponudnikov?« (DifferentiatorsSection) and »potrebujete.«
+       (ContactSection), and a word cannot wrap: measured in the built page,
+       »ponudnikov?« runs 322.9px at 48px, i.e. 6.73px of width per px of
+       font-size. The line box is the gutter's, 100vw - 2 * 20px, so the word
+       only fits from ~363px up — it overflowed the document at 320 AND at the
+       360 an Android reports (measured: documentElement.scrollWidth 343 against
+       clientWidth 320).
+
+       The fluid middle is that ratio with a few px of slack (6.73 → 6.85):
+       (100vw - 40px) / 6.85 ≈ 14.6vw - 6px. It crosses 48px at ~370, so every
+       phone from 375 up is untouched and the approved cut is exactly as it
+       was; below that the titles give up size rather than the page giving up
+       its left edge. The floor cannot bind above a 260px viewport.
+
+       Shrink the type, never break the word: `overflow-wrap` would hyphen-less
+       split a display heading mid-word, which is a design change needing the
+       owner, not an overflow fix. */
+    --type-display-l-size: clamp(2rem, 14.6vw - 6px, 3rem); /* 48px ≥370px wide */
     --type-statement-size: 1.5rem; /* 24px */
     --type-nav-size: 1.125rem; /* 18px */
     --type-label-size: 0.8125rem; /* 13px */

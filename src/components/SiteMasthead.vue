@@ -389,7 +389,23 @@ onUnmounted(() => {
     font-family: var(--font-display);
     font-stretch: var(--hero-wordmark-wdth);
     font-weight: 300;
-    font-size: var(--hero-wordmark);
+    /* SIZED TO FIT, like the open face below — same reasoning, this face's own
+       geometry. Here the mark is em-sized (0.78em tall, so 0.78 × 244/144 =
+       1.3217em wide), so the whole row scales with the font and the fit is one
+       division: mark 1.3217em + gap 0.5em + lettering 6.45em = 8.2717em, plus
+       the fixed reserve. 8.4 is that with a little slack.
+
+       At hero size this box ran 339.9px inside a 280px line at 320 (measured).
+       It is invisible here — opacity 0, the hero's own wordmark showing
+       through — so nothing about it READ as wrong, which is exactly why it
+       survived: an overflow nobody can see is still an overflow, and the only
+       reason it never reached the document is that this masthead is fixed and
+       fixed boxes are left out of scrollable overflow. Take the `position`
+       away and it becomes a sideways-panning page in one step. */
+    font-size: min(
+      var(--hero-wordmark),
+      calc((100vw - 2 * var(--hero-inset) - var(--brand-reserve)) / 8.4)
+    );
     line-height: 1;
     letter-spacing: -0.025em;
     margin-top: -0.11em;
@@ -435,13 +451,23 @@ onUnmounted(() => {
      the term while the mark was em-sized; leaving it there after the mark went
      fixed cost the lettering its clearance — measured 11.9px to the glyph.)
      Whichever of the two is smaller wins, so the wordmark shrinks a little on
-     the narrowest screens and is the hero's own size everywhere else. */
+     the narrowest screens and is the hero's own size everywhere else.
+
+     THE MARK COSTS ITS WIDTH, NOT ITS HEIGHT. It is an SVG sized by height
+     alone, and its viewBox is 244 × 144 — so a mark 0.55 × --hero-display tall
+     stands 0.55 × 244/144 = 0.932 × --hero-display WIDE. Subtracting the
+     height reserved 30.36px for a mark that occupies 51.44px at 320 (measured),
+     and the lettering took the missing 21.08px straight off the right edge:
+     the open menu's wordmark ran 301px into a 280px line — visibly, past the
+     control it is supposed to clear — and did so across the whole phone/tablet
+     band, 40px over at 800. 7.02 is 6.95 (gap + lettering) with a little
+     slack. */
   .masthead--live.masthead--open .masthead__brand {
     opacity: 1;
     font-size: min(
       var(--hero-wordmark),
       calc(
-        (100vw - 2 * var(--hero-inset) - var(--brand-reserve) - 0.55 * var(--hero-display)) / 6.95
+        (100vw - 2 * var(--hero-inset) - var(--brand-reserve) - 0.932 * var(--hero-display)) / 7.02
       )
     );
   }
