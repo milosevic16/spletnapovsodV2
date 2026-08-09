@@ -365,13 +365,35 @@ onUnmounted(() => {
     :class="{ 'trad--live': live, 'trad--edge': edge, 'trad--pre': pre }"
     :style="live ? { '--scan': String(scan) } : undefined"
   >
-    <!-- THE BRIEF — what the section is, and the control that acts on it.
-         NOT scanned: the comparison happens on the stage below, so this block
-         and the dial under it stand on the band from first paint to last.
-         That is what lets the control carry no plate of its own — see
-         .trad__chrome, where the alternative cost a full-width bronze strip
-         cutting the source sheet in half. -->
-    <div class="container trad__brief">
+    <!-- THE SOURCE — the whole section as a crawler receives it, absolute
+         over the entire band, clipped to the RIGHT of the beam and
+         complementary to the rendered layer by construction: the two read the
+         same --scan, so the seam cannot disagree with itself. EVERYTHING the
+         page renders dissolves into this as the beam passes it (owner's call —
+         the earlier cut staged only the strata and kept the brief on the band).
+         Decorative for assistive tech; the rendered layer carries every
+         string. -->
+    <div ref="screen" class="trad__source" aria-hidden="true">
+      <div class="container trad__source-in">
+        <code
+          v-for="(line, n) in sourceLines"
+          :key="n"
+          class="emisija trad__line"
+          :data-fact="line.id || undefined"
+          >{{ line.text }}</code
+        >
+      </div>
+    </div>
+
+    <!-- THE BEAM — the seam itself, spanning the section's full height. -->
+    <span class="trad__beam" aria-hidden="true"></span>
+
+    <!-- THE RENDERED PAGE, PART ONE — the argument, the instruction, and the
+         dial's end labels. All of it page content, all of it clipped by the
+         scan: the labels dissolve with the rest, which is the device made
+         visible — at rest the right one already stands half in code, exactly
+         as the title does. -->
+    <div class="container trad__world trad__world--lead">
       <header class="trad__head">
         <p class="kicker kicker--on-dark">{{ invisible.kicker }}</p>
         <h2 class="trad__title">{{ invisible.title }}</h2>
@@ -383,14 +405,24 @@ onUnmounted(() => {
         </blockquote>
         <p class="trad__lead">{{ invisible.lead }}</p>
       </div>
+
+      <!-- The range's end labels, in the PAGE rather than in the chrome: they
+           name the ends of the scale, and they dissolve like every other line
+           (the input itself carries the full aria-label, so nothing assistive
+           depends on them staying legible). -->
+      <div class="trad__ends">
+        <span class="trad__end">{{ invisible.machineLabel }}</span>
+        <span class="trad__end">{{ invisible.humanLabel }}</span>
+      </div>
     </div>
 
-    <!-- THE DIAL, and nothing else. It stands directly under the sentence that
-         tells the reader to use it, on the band, above the stage it drives —
-         no legend, no rules, no ground of its own. -->
+    <!-- THE DIAL — the one thing that never dissolves, because it is the hand
+         on the instrument rather than the specimen. No labels, no rules, no
+         ground: a bare range floating over both layers, inked in the seam's
+         own red — the one colour measured to clear the 3:1 UI floor on BOTH
+         grounds it travels across. -->
     <div class="container trad__chrome">
       <div class="trad__dial">
-        <span class="trad__end">{{ invisible.machineLabel }}</span>
         <input
           v-if="live"
           ref="gripEl"
@@ -406,37 +438,14 @@ onUnmounted(() => {
           @keydown="onGripKeys"
         />
         <span v-else class="trad__grip-ghost" aria-hidden="true"></span>
-        <span class="trad__end">{{ invisible.humanLabel }}</span>
       </div>
     </div>
 
-    <!-- THE STAGE — where the two readings of the page are compared, and the
-         ONLY place the split exists. The source sheet and the beam are
-         absolute within THIS box rather than over the whole section, which is
-         the whole reason the dial above needs no plate: nothing paper ever
-         reaches it. -->
-    <div class="trad__stage">
-      <!-- THE SOURCE — the page as a crawler receives it. Clipped to the RIGHT
-           of the beam, complementary to the rendered layer by construction: the
-           two read the same --scan, so the seam cannot disagree with itself.
-           Decorative for assistive tech; the rendered layer carries every
-           string. -->
-      <div ref="screen" class="trad__source" aria-hidden="true">
-        <div class="container trad__source-in">
-          <code
-            v-for="(line, n) in sourceLines"
-            :key="n"
-            class="emisija trad__line"
-            :data-fact="line.id || undefined"
-            >{{ line.text }}</code
-          >
-        </div>
-      </div>
-
-      <!-- THE BEAM — the seam itself, spanning the stage's full height. -->
-      <span class="trad__beam" aria-hidden="true"></span>
-
-      <div class="container trad__world">
+    <!-- THE RENDERED PAGE, PART TWO — the rest. Two boxes rather than one
+         because the dial stands between them; the scan's clip is horizontal
+         only, so two stacked boxes of the same width clip exactly as one box
+         would and the seam is continuous through both. -->
+    <div class="container trad__world trad__world--rest">
       <div class="trad__made">
         <div class="trad__argument">
           <p class="trad__intro">{{ invisible.intro }}</p>
@@ -512,7 +521,6 @@ onUnmounted(() => {
 
         <p class="trad__outro">{{ invisible.outro }}</p>
       </div>
-      </div>
     </div>
   </section>
 </template>
@@ -554,15 +562,17 @@ onUnmounted(() => {
    The delay is what keeps it honest: by the time any of this is visible the
    ground is already most of the way to black, so paper-coloured type is never
    shown on a paper-coloured ground. */
-.trad__brief,
-.trad__stage,
+.trad__world,
+.trad__source,
+.trad__beam,
 .trad__chrome {
   opacity: 1;
   transition: opacity 520ms var(--ease-spring) 380ms;
 }
 
-.trad--pre .trad__brief,
-.trad--pre .trad__stage,
+.trad--pre .trad__world,
+.trad--pre .trad__source,
+.trad--pre .trad__beam,
 .trad--pre .trad__chrome {
   opacity: 0;
   transition: none;
@@ -601,19 +611,6 @@ onUnmounted(() => {
    the source is absolute over the WHOLE band, padding included. Their clips are
    complementary reads of one --scan, so the seam can never disagree with
    itself. `var(--scan, 55)` PAIRS with REST in the script block. */
-/* THE STAGE. Everything the scan acts on lives in here, and nothing else
-   does: giving the source sheet and the beam this box as their containing
-   block is what stops the paper half reaching the dial above. */
-.trad__stage {
-  position: relative;
-}
-
-/* The brief sits on the band with no layer under it at all. */
-.trad__brief {
-  position: relative;
-  z-index: 2;
-}
-
 .trad__world {
   position: relative;
   z-index: 2;
@@ -1025,20 +1022,22 @@ button.asm__band {
 }
 
 /* --- the dial ----------------------------------------------------------------
-   NO GROUND, NO RULES, NOTHING BUT THE CONTROL. It carried a legend, a rule
-   above it and a rule below it, and then — to survive the source sheet passing
-   under it — a full-width bronze strip that cut that sheet in half and stayed
-   bronze even in the all-source state. All of it is gone on the owner's call.
+   THE ONE THING THAT NEVER DISSOLVES. Everything else in the section is
+   specimen — clipped by the scan, replaced by its own source as the beam
+   passes. The bare range is the hand on the instrument, so it floats above
+   both layers with NO ground, no rules, no labels of its own (they live in
+   the page above and dissolve with it; the input's aria-label carries the
+   full instruction).
 
-   What replaced the strip is STRUCTURAL rather than painted: the source sheet
-   now lives in .trad__stage, BELOW this row, so there is no paper up here to
-   read against and the labels keep the band's own 12.5:1. A flat colour could
-   never have solved it — no single ink clears 4.5:1 against both the paper
-   (#f5f2eb) and the band (#4a3626); the arithmetic leaves an empty interval. */
+   THE INK IS THE SEAM'S, and that is arithmetic rather than styling: the
+   control travels across two grounds, paper #f5f2eb and bronze #4a3626, and
+   measured against both only --color-cut-seam clears the 3:1 UI floor on each
+   (3.20 / 3.18). The old track failed on paper at 2.40 and the old thumb at
+   2.93 — findable on the band, gone the moment the sheet passed under them. */
 .trad__chrome {
   position: relative;
   z-index: 4;
-  margin-top: var(--space-6);
+  margin-top: var(--space-4);
   margin-bottom: var(--space-10);
 }
 
@@ -1049,19 +1048,22 @@ button.asm__band {
   max-width: 62ch;
 }
 
+/* The scale's end labels: page content, in the page's own ink, clipped by the
+   scan like every other line. Same measure as the dial under them. */
+.trad__ends {
+  display: flex;
+  justify-content: space-between;
+  max-width: 62ch;
+  margin-top: var(--space-6);
+}
+
 /* The dial takes the MEASURE of the paragraph above it rather than the
    container's full width (owner's call): a control that runs wider than the
    sentence explaining it reads as belonging to the section rather than to the
    sentence. 62ch is .trad__lead's own max-width — change one, change the
-   other. On a phone the measure is wider than the screen, so this is inert
-   there and the layout at the end of the file governs. */
+   other. */
 .trad__dial {
   max-width: 62ch;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  column-gap: var(--space-4);
-  row-gap: var(--space-2);
 }
 
 .trad__end {
@@ -1079,17 +1081,19 @@ button.asm__band {
 .trad__grip {
   -webkit-appearance: none;
   appearance: none;
+  display: block;
+  width: 100%;
   height: 44px;
-  min-width: 8rem;
   margin: 0;
   background: transparent;
   cursor: ew-resize;
 }
 .trad__grip::-webkit-slider-runnable-track {
   height: 2px;
-  /* The constant divider grey: 7.8:1 on the band's ground, so the track itself
-     clears the 3:1 UI floor rather than leaning on the thumb to be findable. */
-  background: var(--divider);
+  /* The seam's red — the one ink that clears 3:1 on both grounds (see the
+     block comment above). The track must be findable on its own, not lean on
+     the thumb. */
+  background: var(--color-cut-seam);
 }
 .trad__grip::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -1098,29 +1102,37 @@ button.asm__band {
   margin-top: -9px;
   border: 0;
   border-radius: 0;
-  background: var(--color-cut-dark); /* 6.42:1 on the band's ground */
+  background: var(--color-cut-seam);
 }
 .trad__grip::-moz-range-track {
   height: 2px;
-  /* The constant divider grey: 7.8:1 on the band's ground, so the track itself
-     clears the 3:1 UI floor rather than leaning on the thumb to be findable. */
-  background: var(--divider);
+  background: var(--color-cut-seam);
 }
 .trad__grip::-moz-range-thumb {
   width: 20px;
   height: 20px;
   border: 0;
   border-radius: 0;
-  background: var(--color-cut-dark);
+  background: var(--color-cut-seam);
 }
 .trad__grip:focus-visible {
-  outline: 2px solid var(--color-cut-dark);
+  outline: 2px solid var(--color-cut-seam);
   outline-offset: 4px;
 }
 
-/* JS-off: the dial keeps its geometry, no dead control appears. */
+/* JS-OFF AND FIRST PAINT: the ghost DRAWS the resting control instead of just
+   reserving its height, so the slider arrives with the rest of the page as
+   pure HTML — a seam-red track with the thumb standing at the stylesheet's
+   rest (55, the same value the no-JS drawing composes to). The live input
+   replaces it in place at hydration. */
 .trad__grip-ghost {
+  display: block;
   height: 44px;
+  background:
+    linear-gradient(var(--color-cut-seam), var(--color-cut-seam)) 55% 50% / 20px 20px
+      no-repeat,
+    linear-gradient(var(--color-cut-seam), var(--color-cut-seam)) 0 50% / 100% 2px
+      no-repeat;
 }
 
 /* --- the statement band's own asymmetry --------------------------------------
@@ -1150,21 +1162,9 @@ button.asm__band {
 /* --- phone / narrow (system breakpoint) -------------------------------------
    One column, the drawing full width above its callout. The section exceeds
    the viewport here by design: normal flow, no settle, and the sweep still
-   fires after the reading beat. The dial re-stacks deterministically: labels
-   row, then the full-width control. */
+   fires after the reading beat. The dial needs nothing here: the ends row and
+   the bare control already stack at every width. */
 @media (max-width: 809px) {
-
-  .trad__dial {
-    grid-template-columns: 1fr auto;
-  }
-  .trad__grip {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    min-width: 0;
-  }
-  .trad__end:last-of-type {
-    justify-self: end;
-  }
   /* Phones lose the leader, so the link between a stratum and its callout is
      proximity plus this rule, in the same red. */
   .asm__panels {
