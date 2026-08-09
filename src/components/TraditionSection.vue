@@ -272,7 +272,6 @@ const sourceLines = computed(() => [
     { id: '', text: `</article>` },
   ]),
   { id: '', text: `<p>${invisible.outro}</p>` },
-  { id: '', text: `<p>${invisible.machineGloss}</p>` },
 ])
 
 /**
@@ -366,29 +365,13 @@ onUnmounted(() => {
     :class="{ 'trad--live': live, 'trad--edge': edge, 'trad--pre': pre }"
     :style="live ? { '--scan': String(scan) } : undefined"
   >
-    <!-- THE SOURCE — the whole section as a crawler receives it. Absolute over
-         the entire band (padding included), clipped to the RIGHT of the beam,
-         complementary to the rendered layer by construction: the two read the
-         same --scan, so the seam cannot disagree with itself. Decorative for
-         assistive tech; the rendered layer carries every string. -->
-    <div ref="screen" class="trad__source" aria-hidden="true">
-      <div class="container trad__source-in">
-        <code
-          v-for="(line, n) in sourceLines"
-          :key="n"
-          class="emisija trad__line"
-          :data-fact="line.id || undefined"
-          >{{ line.text }}</code
-        >
-      </div>
-    </div>
-
-    <!-- THE BEAM — the seam itself, spanning the section's full height. -->
-    <span class="trad__beam" aria-hidden="true"></span>
-
-    <!-- THE RENDERED PAGE, PART ONE — the argument that sets the control up.
-         In flow, clipped by the scan like everything else the page renders. -->
-    <div class="container trad__world trad__world--lead">
+    <!-- THE BRIEF — what the section is, and the control that acts on it.
+         NOT scanned: the comparison happens on the stage below, so this block
+         and the dial under it stand on the band from first paint to last.
+         That is what lets the control carry no plate of its own — see
+         .trad__chrome, where the alternative cost a full-width bronze strip
+         cutting the source sheet in half. -->
+    <div class="container trad__brief">
       <header class="trad__head">
         <p class="kicker kicker--on-dark">{{ invisible.kicker }}</p>
         <h2 class="trad__title">{{ invisible.title }}</h2>
@@ -402,16 +385,10 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- THE CHROME — the legend and the dial, and it stands HERE, directly
-         under the paragraph that tells the reader to use it (owner's call; it
-         used to close the section, a screen and a half below the instruction).
-         It is a sibling of the rendered page rather than a child, and that is
-         load-bearing: .trad__world carries the scan's clip-path, so a control
-         inside it would be clipped away as the reader dragged the very handle
-         doing the clipping. Outside it, above both layers, it is operable
-         whichever side of the beam it is standing over. -->
+    <!-- THE DIAL, and nothing else. It stands directly under the sentence that
+         tells the reader to use it, on the band, above the stage it drives —
+         no legend, no rules, no ground of its own. -->
     <div class="container trad__chrome">
-      <p class="trad__legend">{{ invisible.machineGloss }}</p>
       <div class="trad__dial">
         <span class="trad__end">{{ invisible.machineLabel }}</span>
         <input
@@ -433,11 +410,33 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- THE RENDERED PAGE, PART TWO — the rest of it. Two boxes rather than
-         one because the control had to come between them; the scan's clip is
-         horizontal only (inset from the right), so two stacked boxes of the
-         same width clip exactly as one box would and the seam is invisible. -->
-    <div class="container trad__world trad__world--rest">
+    <!-- THE STAGE — where the two readings of the page are compared, and the
+         ONLY place the split exists. The source sheet and the beam are
+         absolute within THIS box rather than over the whole section, which is
+         the whole reason the dial above needs no plate: nothing paper ever
+         reaches it. -->
+    <div class="trad__stage">
+      <!-- THE SOURCE — the page as a crawler receives it. Clipped to the RIGHT
+           of the beam, complementary to the rendered layer by construction: the
+           two read the same --scan, so the seam cannot disagree with itself.
+           Decorative for assistive tech; the rendered layer carries every
+           string. -->
+      <div ref="screen" class="trad__source" aria-hidden="true">
+        <div class="container trad__source-in">
+          <code
+            v-for="(line, n) in sourceLines"
+            :key="n"
+            class="emisija trad__line"
+            :data-fact="line.id || undefined"
+            >{{ line.text }}</code
+          >
+        </div>
+      </div>
+
+      <!-- THE BEAM — the seam itself, spanning the stage's full height. -->
+      <span class="trad__beam" aria-hidden="true"></span>
+
+      <div class="container trad__world">
       <div class="trad__made">
         <div class="trad__argument">
           <p class="trad__intro">{{ invisible.intro }}</p>
@@ -513,8 +512,8 @@ onUnmounted(() => {
 
         <p class="trad__outro">{{ invisible.outro }}</p>
       </div>
+      </div>
     </div>
-
   </section>
 </template>
 
@@ -555,17 +554,15 @@ onUnmounted(() => {
    The delay is what keeps it honest: by the time any of this is visible the
    ground is already most of the way to black, so paper-coloured type is never
    shown on a paper-coloured ground. */
-.trad__world,
-.trad__source,
-.trad__beam,
+.trad__brief,
+.trad__stage,
 .trad__chrome {
   opacity: 1;
   transition: opacity 520ms var(--ease-spring) 380ms;
 }
 
-.trad--pre .trad__world,
-.trad--pre .trad__source,
-.trad--pre .trad__beam,
+.trad--pre .trad__brief,
+.trad--pre .trad__stage,
 .trad--pre .trad__chrome {
   opacity: 0;
   transition: none;
@@ -604,6 +601,19 @@ onUnmounted(() => {
    the source is absolute over the WHOLE band, padding included. Their clips are
    complementary reads of one --scan, so the seam can never disagree with
    itself. `var(--scan, 55)` PAIRS with REST in the script block. */
+/* THE STAGE. Everything the scan acts on lives in here, and nothing else
+   does: giving the source sheet and the beam this box as their containing
+   block is what stops the paper half reaching the dial above. */
+.trad__stage {
+  position: relative;
+}
+
+/* The brief sits on the band with no layer under it at all. */
+.trad__brief {
+  position: relative;
+  z-index: 2;
+}
+
 .trad__world {
   position: relative;
   z-index: 2;
@@ -1014,46 +1024,22 @@ button.asm__band {
   max-width: 38ch;
 }
 
-/* --- the chrome: legend, then the dial ---------------------------------------
-   Above BOTH layers and never clipped — the control has to work whichever side
-   of the beam it is standing over, so it reads on the section's own ground
-   rather than on a plate of its own. */
+/* --- the dial ----------------------------------------------------------------
+   NO GROUND, NO RULES, NOTHING BUT THE CONTROL. It carried a legend, a rule
+   above it and a rule below it, and then — to survive the source sheet passing
+   under it — a full-width bronze strip that cut that sheet in half and stayed
+   bronze even in the all-source state. All of it is gone on the owner's call.
+
+   What replaced the strip is STRUCTURAL rather than painted: the source sheet
+   now lives in .trad__stage, BELOW this row, so there is no paper up here to
+   read against and the labels keep the band's own 12.5:1. A flat colour could
+   never have solved it — no single ink clears 4.5:1 against both the paper
+   (#f5f2eb) and the band (#4a3626); the arithmetic leaves an empty interval. */
 .trad__chrome {
   position: relative;
   z-index: 4;
-  margin-top: var(--space-8);
+  margin-top: var(--space-6);
   margin-bottom: var(--space-10);
-  /* THE INSTRUMENT STANDS ON ITS OWN GROUND, and that is a contrast fix, not a
-     decoration. The source layer is an OPAQUE PAPER sheet spanning the whole
-     band, revealed from the scan position rightwards — so any chrome sitting
-     over it has paper under its right-hand part and bronze under its left. The
-     legend and the dial's end labels are --papir-dim: 12.5:1 on the band and
-     1.5:1 on the paper, i.e. invisible on whichever side the source has
-     reached (measured). It was true at the foot of the section too and simply
-     went unnoticed there; moving the control up to the instruction it belongs
-     to put it where the split actually happens.
-     Giving the strip the band's own ground says the true thing anyway: the
-     control is the instrument's furniture, not part of the page being
-     rendered, so the page passes UNDER it. Full bleed, because the source it
-     covers is full bleed. */
-  padding-block: var(--space-4);
-}
-
-/* The ground itself, painted by a pseudo-element rather than by the strip's own
-   box. The strip has to stay a plain .container so its text sits on the same
-   left edge as every other line in the band — a bleed built from margin-inline
-   and vw arithmetic put it 7px out, because vw counts the scrollbar and the
-   container does not (measured: legend at 57 against the page's 64). So the
-   box keeps the container's measure and this paints past it. The reach is
-   deliberately far more than any viewport: .trad clips it, and over-reaching
-   costs nothing while under-reaching would show a seam. */
-.trad__chrome::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  inset: 0 -100vw;
-  background-color: var(--color-bronze);
-  pointer-events: none;
 }
 
 /* The instruction, set as the intro is: the paragraph the dial belongs to. */
@@ -1063,23 +1049,19 @@ button.asm__band {
   max-width: 62ch;
 }
 
-.trad__legend {
-  margin: 0;
-  padding-bottom: var(--space-3);
-  border-bottom: var(--divider-width) solid var(--crta-na-temnem);
-  color: var(--papir-dim); /* 12.5:1 */
-  font-size: 0.875rem;
-  max-width: 62ch;
-}
-
-/* The dial, at the bottom of the section. */
+/* The dial takes the MEASURE of the paragraph above it rather than the
+   container's full width (owner's call): a control that runs wider than the
+   sentence explaining it reads as belonging to the section rather than to the
+   sentence. 62ch is .trad__lead's own max-width — change one, change the
+   other. On a phone the measure is wider than the screen, so this is inert
+   there and the layout at the end of the file governs. */
 .trad__dial {
+  max-width: 62ch;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
   column-gap: var(--space-4);
   row-gap: var(--space-2);
-  padding-top: var(--space-2);
 }
 
 .trad__end {
@@ -1148,9 +1130,6 @@ button.asm__band {
 @media (min-width: 810px) {
   .trad__argument {
     max-width: var(--measure-statement);
-    padding-bottom: var(--space-8);
-    border-bottom: var(--divider-width) solid var(--crta-na-temnem);
-    margin-bottom: var(--space-8);
   }
 
   /* An even split now, not 5/7: the exploded stack needs the room the sliding
@@ -1174,11 +1153,7 @@ button.asm__band {
    fires after the reading beat. The dial re-stacks deterministically: labels
    row, then the full-width control. */
 @media (max-width: 809px) {
-  .trad__argument {
-    padding-bottom: var(--space-6);
-    border-bottom: var(--divider-width) solid var(--crta-na-temnem);
-    margin-bottom: var(--space-6);
-  }
+
   .trad__dial {
     grid-template-columns: 1fr auto;
   }

@@ -104,7 +104,6 @@ export const invisible = {
     'V ozadju mora biti urejeno vse: tisto, kar vas naredi vidne na Googlu, tisto, kar varno sprejema oddane obrazce, ter piškotki in politika zasebnosti, da stran ustreza zakonodaji.',
   humanLabel: 'Kar vidite',
   machineLabel: 'Kar vidi Google',
-  machineGloss: 'Te nevidne vrstice odločajo, ali vas Google in ChatGPT sploh najdeta.',
   /**
    * Interaction-only: names a control that exists ONLY once the section
    * hydrates. Skipped by the content guard, like the form's strings.
