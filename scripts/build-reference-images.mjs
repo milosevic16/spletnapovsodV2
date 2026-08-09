@@ -27,18 +27,14 @@ const root = process.cwd()
 const outDir = join(root, 'public', 'img', 'refs')
 mkdirSync(outDir, { recursive: true })
 
-/** Art-directed crops — coordinates in DEVICE px on the 2880×1800 captures
- *  (double the CSS-px framing of the original 1× crops).
+/** Art-directed 2:1 crops — coordinates in DEVICE px on the 2880×1800 captures
+ *  (double the CSS-px framing of the original 1× crops). One crop per project:
+ *  the desktop row and the phone belts both frame the work at 2:1.
  *
- *  TWO CROPS PER PROJECT, because the section frames the work two ways:
- *   · `crop`   the 2:1 plate the desktop row is built from;
- *   · `square` the 1:1 tile the phone grid is built from.
- *
- *  The square is a real crop rather than object-fit on the 2:1, and that is a
- *  byte argument, not a taste one: a 2:1 image shown in a square box has to be
- *  downloaded at DOUBLE the box's width just to have enough height, so a phone
- *  would pull a 1128px-wide file to fill a 188px tile. Each square is centred on
- *  its 2:1 crop, so the framing is what object-fit would have chosen anyway. */
+ *  A square variant existed briefly, for a phone grid of tiles that was tried
+ *  and dropped. The `square` coordinates are kept below because they are the
+ *  expensive part to re-derive, and emitting them is one loop away — but nothing
+ *  references those files, so they are not generated. */
 const SOURCES = [
   // lemur: the full landing composition — glitch intro line (blanked at
   // capture, re-typed live), headline, CTAs, status dots AND the terminal
@@ -55,9 +51,6 @@ const SOURCES = [
   { id: 'pravnapanda', file: 'capture/pravnapanda-desktop.png', crop: { left: 374, top: 0, width: 2132, height: 1066 }, square: { left: 907, top: 0, width: 1066, height: 1066 }, widths: [560, 840, 1184, 1792] },
 ]
 
-/** Phone tiles. A square is half the screen, so 720 covers a 240px tile at 3×. */
-const SQUARE_WIDTHS = [240, 480, 720]
-
 for (const s of SOURCES) {
   const src = sharp(join(root, s.file)).extract(s.crop)
   for (const w of s.widths) {
@@ -66,14 +59,7 @@ for (const s of SOURCES) {
     await resized.webp({ quality: 78 }).toFile(join(outDir, `${s.id}-${w}.webp`))
     await resized.jpeg({ quality: 80, mozjpeg: true }).toFile(join(outDir, `${s.id}-${w}.jpg`))
   }
-  const sq = sharp(join(root, s.file)).extract(s.square)
-  for (const w of SQUARE_WIDTHS) {
-    const resized = sq.clone().resize({ width: w, withoutEnlargement: true })
-    await resized.avif({ quality: 55 }).toFile(join(outDir, `${s.id}-sq-${w}.avif`))
-    await resized.webp({ quality: 78 }).toFile(join(outDir, `${s.id}-sq-${w}.webp`))
-    await resized.jpeg({ quality: 80, mozjpeg: true }).toFile(join(outDir, `${s.id}-sq-${w}.jpg`))
-  }
-  console.log(`refs: ${s.id} done (plate + square)`)
+  console.log(`refs: ${s.id} done`)
 }
 
 // Bloctopus ships no CSS custom properties (Webflow) — sample its brand colors
