@@ -200,11 +200,14 @@ onUnmounted(() => {
           v-for="(item, n) in pillars.items"
           :key="item.id"
           class="pil__plate"
-          :class="{
-            'pil__plate--clip': hasClip(item.id),
-            'pil__plate--open': live && open === n,
-            'pil__plate--spine': live && open >= 0 && open !== n,
-          }"
+          :class="[
+            `pil__plate--${item.id}`,
+            {
+              'pil__plate--clip': hasClip(item.id),
+              'pil__plate--open': live && open === n,
+              'pil__plate--spine': live && open >= 0 && open !== n,
+            },
+          ]"
         >
           <!-- THE PLATE'S GROUND, where a clip exists. It sits OUTSIDE the face
                and fills the plate absolutely, which is the whole point: closed,
@@ -480,7 +483,7 @@ button.pil__face {
 }
 
 .pil__face:focus-visible {
-  outline: 2px solid var(--rez-na-temnem);
+  outline: 2px solid var(--plate-focus, var(--rez-na-temnem));
   outline-offset: -6px;
 }
 
@@ -705,21 +708,21 @@ button.pil__face {
   font-weight: 500;
   line-height: 1.15;
   letter-spacing: -0.01em;
-  color: var(--color-paper);
+  color: var(--plate-ink, var(--color-paper));
 }
 
 .pil__plate-artifact {
-  color: var(--papir-dim);
+  color: var(--plate-ink-dim, var(--papir-dim));
 }
 
 /* --- the reading surface ----------------------------------------------------- */
 .pil__reveal {
   padding: 0 var(--space-4) var(--space-4);
-  color: var(--papir-dim);
+  color: var(--plate-ink-dim, var(--papir-dim));
 }
 
 .pil__summary {
-  color: var(--papir-dim);
+  color: var(--plate-ink-dim, var(--papir-dim));
   max-width: 58ch;
 }
 
@@ -729,7 +732,7 @@ button.pil__face {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
   gap: var(--space-3) var(--space-6);
-  border-top: var(--divider-width) solid var(--crta-na-temnem);
+  border-top: var(--divider-width) solid var(--plate-rule, var(--crta-na-temnem));
   padding-top: var(--space-3);
 }
 
@@ -743,11 +746,11 @@ button.pil__face {
   font-weight: 500;
   font-size: 0.9375rem;
   line-height: 1.3;
-  color: var(--color-paper);
+  color: var(--plate-ink, var(--color-paper));
 }
 
 .pil__point-detail {
-  color: var(--papir-dim);
+  color: var(--plate-ink-dim, var(--papir-dim));
   font-size: 0.9375rem;
   line-height: 1.45;
 }
@@ -761,11 +764,11 @@ button.pil__face {
 }
 
 .pil__prerez .annot {
-  color: var(--color-paper);
+  color: var(--plate-ink, var(--color-paper));
 }
 
 .pil__prerez-gloss {
-  color: var(--papir-dim);
+  color: var(--plate-ink-dim, var(--papir-dim));
   font-size: 0.9375rem;
 }
 
@@ -774,8 +777,8 @@ button.pil__face {
   padding: 0.55rem 1rem;
   min-height: 44px;
   background: none;
-  border: 1px solid var(--crta-na-temnem);
-  color: var(--color-paper);
+  border: 1px solid var(--plate-rule, var(--crta-na-temnem));
+  color: var(--plate-ink, var(--color-paper));
   text-transform: uppercase;
   letter-spacing: 0.09em;
   cursor: pointer;
@@ -786,13 +789,13 @@ button.pil__face {
 
 @media (hover: hover) {
   .pil__close:hover {
-    border-color: var(--rez-na-temnem);
-    color: var(--rez-na-temnem);
+    border-color: var(--plate-focus, var(--rez-na-temnem));
+    color: var(--plate-focus, var(--rez-na-temnem));
   }
 }
 
 .pil__close:focus-visible {
-  outline: 2px solid var(--rez-na-temnem);
+  outline: 2px solid var(--plate-focus, var(--rez-na-temnem));
   outline-offset: 2px;
 }
 
@@ -984,9 +987,18 @@ button.pil__face {
     pointer-events: none;
     background: linear-gradient(
       to bottom,
-      color-mix(in srgb, var(--grafit) 0%, transparent) 0,
-      color-mix(in srgb, var(--grafit) 80%, transparent) 3rem,
-      color-mix(in srgb, var(--grafit) 80%, transparent) 100%
+      color-mix(in srgb, var(--plate-wash, var(--grafit)) 0%, transparent) 0,
+      color-mix(
+          in srgb,
+          var(--plate-wash, var(--grafit)) var(--plate-alpha, 80%),
+          transparent
+        )
+        3rem,
+      color-mix(
+        in srgb,
+        var(--plate-wash, var(--grafit)) var(--plate-alpha, 80%),
+        transparent
+      )
     );
     opacity: 0;
     transition: opacity 380ms var(--ease-spring);
@@ -1000,7 +1012,108 @@ button.pil__face {
      else. It needs no fade of its own: the fold grows out of the ramp's dense
      end, so the two meet at the same value and read as one surface. */
   .pil__plate--clip.pil__plate--open .pil__fold {
-    background: color-mix(in srgb, var(--grafit) 80%, transparent);
+    background: color-mix(
+      in srgb,
+      var(--plate-wash, var(--grafit)) var(--plate-alpha, 80%),
+      transparent
+    );
+  }
+
+  /* --- each plate takes its own clip's colour -------------------------------
+     THE OPEN PANEL IS THE CLIP CONTINUED, and varnost is the proof: its wash
+     happens to be graphite and its footage is graphite, so the text looks like
+     it is printed on the same material the picture is made of. The other two
+     were wearing varnost's ground over their own footage — a beige studio and a
+     blue-grey server room, both behind a dark grey sheet — which is why only
+     one of the three read right.
+
+     EVERY VALUE HERE IS SAMPLED FROM THE FOOTAGE, not chosen. Method: decode
+     the clip, take the strip that is actually visible (the open plate is
+     ~0.27:1 and the source 4:3, so `cover` shows only its central ~16% of
+     width), and average the rows that end up BEHIND the text after the reframe
+     below. That gives design #af9b8d and seo #86939a. Each is then lifted 14%
+     toward white, which is the smallest lift that carries the ink clear of AA
+     against the darkest pixel the same region can produce, and the wash goes to
+     92% so the picture reads as a texture in the ground rather than as a
+     picture behind glass. Composited against those regions' 2nd/98th
+     percentiles:
+       design  wash #baa99d  ground #ad9d90..#bcaca1  ink 6.22:1
+       seo     wash #97a2a8  ground #8e999f..#9ea9af  ink 5.53:1
+     RE-DERIVE BOTH WHEN A CLIP CHANGES. They are paired to PLATE_VERSION as
+     surely as the file names are.
+
+     ONE INK, NOT TWO, on the light plates. A light ground has no room for a
+     dimmed secondary: the lightest text that still clears 4.5:1 against the
+     dark end of this footage is within a few per cent of the ink itself, so a
+     second colour would be a difference nobody can see that costs a contrast
+     failure to have. The hierarchy the dark plates get from paper-vs-dim comes
+     from WEIGHT here instead, which the markup already carries (labels 500,
+     details 400). The rule between them and the button's border drop to a
+     transparent ink instead of the dark world's bronze hairline.
+
+     CLOSED PLATES ARE UNTOUCHED — every rule above reads these through
+     var(…, <the old value>), and the variables are only ever set on an OPEN
+     plate on a phone. The titles on the wall keep the paper they have always
+     had; only an opened one goes to ink, because on a beige ground white type
+     is not a style question. */
+  .pil__plate--open.pil__plate--design,
+  .pil__plate--open.pil__plate--seo {
+    --plate-alpha: 92%;
+    --plate-ink: var(--grafit);
+    --plate-ink-dim: var(--grafit);
+    --plate-rule: color-mix(in srgb, var(--grafit) 32%, transparent);
+    /* The focus ring has to clear 3:1 against these grounds and the dark
+       world's --rez-na-temnem cannot (1.59:1 on the beige, measured). The
+       pressed cut red does: 3.23:1, and it keeps the ring the page's own red
+       rather than turning it into another piece of ink. */
+    --plate-focus: var(--rez-deep);
+  }
+
+  .pil__plate--open.pil__plate--design {
+    --plate-wash: #baa99d;
+  }
+
+  .pil__plate--open.pil__plate--seo {
+    --plate-wash: #97a2a8;
+  }
+
+  /* --- the reframe ----------------------------------------------------------
+     THE CLEAR BAND HAS TO HAVE SOMETHING IN IT. An open plate is so tall and
+     narrow that `cover` maps the clip's FULL height onto it, so the band at the
+     top always showed the first ~10% of the frame — and measuring the motion
+     row by row (frame-to-frame delta, averaged over the clip, inside the strip
+     that is actually visible) says that is the deadest place to be:
+       band at    0%     18%     32%    of the frame
+       design    65%     95%     67%    of that clip's own peak motion
+       seo        1%     45%     83%
+       varnost   74%     47%     40%
+     varnost is why the report says varnost is fine: its picture is already busy
+     where the band sits. The other two are re-aimed onto their own peaks —
+     design to 18%, seo to 32% — by making the element taller than the plate and
+     hanging it above the top edge, then clipping it back to the plate's bounds.
+
+     `object-position` cannot do this: `cover` here overflows horizontally only,
+     so there is no vertical overflow for it to move. Hence the box.
+
+     THE THREE NUMBERS ARE ONE CALCULATION. For height H and offset −T (both %
+     of the plate), the plate's top edge samples the source at T / H and the
+     bottom at (T + 100) / H, so H must be at least T + 100 or the picture runs
+     out before the plate does. clip-path then trims exactly what hangs outside:
+     T/H off the top, (H − 100 − T)/H off the bottom. The plate does not clip its
+     own overflow — the phone stack's index marks live outside it — so the
+     clipping has to be the element's own. */
+  .pil__plate--open.pil__plate--design .pil__clip {
+    top: -23%;
+    bottom: auto;
+    height: 126%;
+    clip-path: inset(18.25% 0 2.38% 0);
+  }
+
+  .pil__plate--open.pil__plate--seo .pil__clip {
+    top: -49%;
+    bottom: auto;
+    height: 152%;
+    clip-path: inset(32.24% 0 1.97% 0);
   }
 
   /* »Zapri« CLEARS THE OVERLAP. The stack is deliberately imbricated — each
