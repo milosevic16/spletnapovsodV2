@@ -812,8 +812,17 @@ button.pil__face {
     }
   }
 
-  /* Open: the plate takes the row; text prints beside its drawing. */
-  .pil__plate--open {
+  /* Open: the plate takes the row; text prints beside its drawing.
+
+     DOUBLED CLASS, for the same reason the phone indents carry one: the default
+     majority above is `.pil__plate:first-of-type`, which is 0,2,0 and outranks
+     a lone state class at 0,1,0. Measured before the fix, at a 1280 viewport
+     with the MIDDLE plate open: the first plate held flex-grow 3 and sat 409px
+     wide beside the open one instead of collapsing to a 22px spine — a vertical
+     label stranded on a third of the row. Opening the first plate hid it,
+     because there 3-vs-5 only changes how much of an already-dominant row it
+     takes (1006px against the 1053px it should have had). */
+  .pil__plate.pil__plate--open {
     flex-grow: 5;
   }
 
@@ -855,7 +864,7 @@ button.pil__face {
 
   /* The spines: slim, label rotated, still buttons — switching is one
      click. Their drawings and artifacts step aside. */
-  .pil__plate--spine {
+  .pil__plate.pil__plate--spine {
     flex-grow: 0.16;
   }
 
