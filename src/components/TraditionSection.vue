@@ -730,13 +730,20 @@ onUnmounted(() => {
   padding-block: var(--space-16);
   /* THE SAND (owner: brighten the dark-brown wallpaper, "beige or something
      in between"). The bronze this replaces was capped by its own paper inks;
-     the sand is capped by the dark ones it flips to — the derivation, the
-     losing candidates and the full measured table live with --color-sand in
-     tokens.css. The page canvas flips to this same value so the two never
-     show a seam. */
+     the sand is capped by the dark ones it flips to — the derivation and the
+     full measured table live with --color-sand in tokens.css. The page canvas
+     flips to this same value so the two never show a seam. */
   background-color: var(--color-sand);
   transition: background-color var(--dur-ground) var(--ease-ground);
-  color: var(--grafit); /* 8.84:1 flat, 7.42:1 under the worst press dot */
+  /* THE INK IS THE BROWN THE BAND USED TO BE (owner: "switch black font to
+     dark brown") — re-pointing the two ink roles here flips every consumer in
+     the band at once: titles, leads, labels, the strata's rings and marks,
+     the callout, the phone leader. 8.27:1 / 5.79:1 flat, 6.92 / 4.84 under
+     the worst press dot. The source half's code is NOT this ink on purpose:
+     --color-code stays the machine's black, on paper, not on the wallpaper. */
+  --grafit: var(--color-bronze-deep);
+  --grafit-2: var(--color-bronze-2);
+  color: var(--grafit);
 }
 
 .trad--pre {
@@ -837,9 +844,9 @@ onUnmounted(() => {
 
 /* The beam: 2px, standing on the seam and running the band's full height.
    THE SEAM CUT DIED WITH THE BRONZE: --color-cut-seam was solved for a paper
-   half against a dark band (3.19:1 both sides) and reads 1.71:1 on the sand.
-   With two LIGHT halves the one cut that clears both is the deep step —
-   --rez-deep, 4.46:1 on the sand and 7.01:1 on the paper source (3:1 UI
+   half against a dark band (3.19:1 both sides) and reads under 2:1 on the
+   sand. With two LIGHT halves the one cut that clears both is the deep step —
+   --rez-deep, 5.03:1 on the sand and 7.01:1 on the paper source (3:1 UI
    floor). The dial below wears the same ink for the same reason. No glow:
    depth is drawn. */
 .trad__beam {
@@ -880,13 +887,13 @@ onUnmounted(() => {
   /* The system's statement runs lh 0.9; caps with carons need a shade more
      air to keep ascenders clear of the line above. */
   line-height: 1.02;
-  color: var(--grafit); /* 8.84:1 on the sand */
+  color: var(--grafit); /* the band's brown ink — 8.27:1 on the sand */
   max-width: 26ch;
 }
 
 .trad__intro {
   margin-top: var(--space-6);
-  color: var(--grafit-2); /* 5.72:1 flat, 4.81:1 under the worst press dot */
+  color: var(--grafit-2); /* 5.79:1 flat, 4.84:1 under the worst press dot */
   max-width: 54ch;
 }
 

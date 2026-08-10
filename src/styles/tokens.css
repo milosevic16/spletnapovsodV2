@@ -145,21 +145,27 @@
   --color-bronze-line: #96784f; /* the dark world's hairline — line duty */
 
   /* THE SAND — the band ground that replaced the two browns (owner: brighten
-     the dark-brown wallpaper, "beige or something in between"). The value is
-     the ONLY candidate that survived the arithmetic, not a taste pick: a band
-     light enough to read beige cannot carry the paper ink family (the bronze
-     comment below this one measured that cap years... rounds ago), so the
-     bands flip to the dark inks — and the binding constraint becomes
-     secondary text under a press--light SHADOW dot. Measured across three
-     candidates: #bfb6aa and #c4b8a6 both drop --grafit-2 under 4.5 there
-     (4.24 / 4.34); this one holds it.
-       on sand flat / under the worst press--light dot:
-       --grafit 8.84 / 7.42 · --grafit-2 5.72 / 4.81 · --rez-deep 4.46 / 3.75
-       --rez-na-pesku 5.61 / 4.71 · --err-na-pesku 5.97 / 5.01
-       --ok-na-pesku (measured in-page) · --crta-na-temnem 1.29→2.02 line
+     the dark-brown wallpaper, "beige or something in between"; then a second
+     step, "the dots have too much contrast — brighten the base a bit"). A
+     band light enough to read beige cannot carry the paper ink family (the
+     old bronze comment measured that cap), so the bands run the DARK inks —
+     re-pointed to the bronze browns inside the band components ("switch black
+     font to dark brown"), which closes a circle: the bands' ink is the brown
+     they used to be.
+
+     The value is picked by two numbers, not taste. DOT-POP — the highlight
+     dot of the press--light screen against the base — read 1.39:1 on the
+     first sand #cdc2b2 (the reported "too much contrast"); this value brings
+     it to 1.29 while the page's own light bands sit at 1.12, so the band
+     still reads as a band. And every ink stays AA under the worst dot:
+       flat / worst-dot on this sand:
+       bronze-deep ink 8.27 / 6.92 · bronze-2 secondary 5.79 / 4.84
+       --rez-deep (beam+dial) 5.03 / 4.21 UI · --rez-na-pesku 6.33 / 5.30
+       --err-na-pesku 6.73 / 5.63 · --ok-na-pesku 6.48 / 5.42
+       --crta-na-temnem 2.64 line duty · paper on the ink chip 11.53
      Both sand bands (Tradicija, contact+footer) share this one value — they
      are not adjacent, so no seam needs a step between them. */
-  --color-sand: #cdc2b2;
+  --color-sand: #d7cec0;
 
   /* THE CODE INK. The source half of Tradicija speaks in a different voice
      from the rendered half beside it, and that difference is the point: one
@@ -484,7 +490,7 @@
   --zemlja: var(--color-sand); /* contact + footer ground — the closing band
      wears the sand now (owner's brightening); the name stays because five
      files speak it */
-  --zemlja-2: #dcd3c6; /* insets on it go lighter — one step toward paper */
+  --zemlja-2: #e5ded3; /* insets on it go lighter — one step toward paper */
 
   /* THE SAND BANDS' OWN VOICES — the on-dark trio above cannot follow the
      ground down: on sand, --rez-na-temnem reads 1.9:1 and the old status

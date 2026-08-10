@@ -392,7 +392,13 @@ onUnmounted(() => fx.dispose())
   /* The closing band wears the sand now (owner's brightening — the measured
      table lives with --color-sand in tokens.css), so every paper-family ink
      below flipped to the dark family, and the on-dark accent/status voices to
-     their sand-tuned twins (--*-na-pesku). */
+     their sand-tuned twins (--*-na-pesku). And the dark family is BROWN here
+     (owner: "switch black font to dark brown") — one re-pointing flips every
+     consumer in the band, the form frame and the ink chip included: 8.27:1 /
+     5.79:1 flat, 6.92 / 4.84 under the worst press dot; paper text on the
+     brown chip 11.53:1. */
+  --grafit: var(--color-bronze-deep);
+  --grafit-2: var(--color-bronze-2);
   color: var(--grafit);
   padding-block: var(--section-block) clamp(3rem, 2.5rem + 3vw, 5rem);
 }
@@ -713,13 +719,13 @@ onUnmounted(() => fx.dispose())
 
 .form__status--success {
   /* The sand-tuned status pair — measured against the band AND its press
-     dots (the sand table in tokens.css): success 4.94:1 worst case, error
-     5.01:1. The on-dark pair they replace read 1.4–2.1:1 here. */
+     dots (the sand table in tokens.css): success 5.42:1 worst case, error
+     5.63:1. The on-dark pair they replace read 1.4–2.1:1 here. */
   color: var(--ok-na-pesku);
 }
 
 .form__status--error {
-  color: var(--err-na-pesku); /* 5.01:1 worst case — see the success rule */
+  color: var(--err-na-pesku); /* 5.63:1 worst case — see the success rule */
 }
 
 .form__glyph {
