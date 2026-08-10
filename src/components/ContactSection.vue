@@ -194,10 +194,14 @@ onUnmounted(() => fx.dispose())
 </script>
 
 <template>
-  <section id="kontakt" class="contact press">
+  <!-- press--light: the dark screen's 34% black dots would print as polka
+       dots on the sand (the press utility's own note). -->
+  <section id="kontakt" class="contact press press--light">
     <div class="container">
       <header class="contact__head">
-        <p class="kicker kicker--on-dark">{{ contact.kicker }}</p>
+        <!-- Plain kicker: the band is sand now, the on-dark variant read
+           1.55:1 on it (caught by the ink sweep). -->
+      <p class="kicker">{{ contact.kicker }}</p>
         <h2 class="contact__title">{{ contact.title }}</h2>
         <p class="contact__lead">{{ contact.intro }}</p>
         <p class="contact__mail">
@@ -355,13 +359,14 @@ onUnmounted(() => fx.dispose())
             <!-- The tick collar: one dashed stroke between the rings does the
                  work of two dozen marks. -->
             <circle cx="100" cy="100" r="81" class="seal-ticks" />
-            <!-- The pd mark, same geometry as the hero's. -->
+            <!-- The pd mark, same geometry as the hero's (bowls on the
+                 rotation axis — see StatementSection). -->
             <g transform="translate(50 71) scale(0.41)">
-              <circle cx="72" cy="72" r="72" fill="var(--rez-na-temnem)" />
-              <circle cx="172" cy="72" r="72" fill="var(--rez-na-temnem)" />
+              <circle cx="72" cy="72" r="72" fill="var(--rez-deep)" />
+              <circle cx="172" cy="72" r="72" fill="var(--rez-deep)" />
               <g fill="none" stroke="var(--zemlja)" stroke-width="18" stroke-linecap="round">
-                <circle cx="79" cy="79" r="33" />
-                <line x1="46" y1="55" x2="46" y2="118" />
+                <circle cx="79" cy="72" r="33" />
+                <line x1="46" y1="48" x2="46" y2="111" />
               </g>
               <g
                 fill="none"
@@ -370,8 +375,8 @@ onUnmounted(() => fx.dispose())
                 stroke-linecap="round"
                 transform="rotate(180 122 72)"
               >
-                <circle cx="79" cy="79" r="33" />
-                <line x1="46" y1="55" x2="46" y2="118" />
+                <circle cx="79" cy="72" r="33" />
+                <line x1="46" y1="48" x2="46" y2="111" />
               </g>
             </g>
           </svg>
@@ -384,7 +389,11 @@ onUnmounted(() => fx.dispose())
 <style scoped>
 .contact {
   background-color: var(--zemlja);
-  color: var(--list);
+  /* The closing band wears the sand now (owner's brightening — the measured
+     table lives with --color-sand in tokens.css), so every paper-family ink
+     below flipped to the dark family, and the on-dark accent/status voices to
+     their sand-tuned twins (--*-na-pesku). */
+  color: var(--grafit);
   padding-block: var(--section-block) clamp(3rem, 2.5rem + 3vw, 5rem);
 }
 
@@ -399,13 +408,13 @@ onUnmounted(() => fx.dispose())
   line-height: var(--type-display-l-lh);
   letter-spacing: var(--type-display-l-ls);
   text-transform: uppercase;
-  color: var(--list);
+  color: var(--grafit);
   max-width: 14ch;
 }
 
 .contact__lead {
   margin-top: var(--space-6);
-  color: var(--papir-dim);
+  color: var(--grafit-2);
   max-width: 52ch;
 }
 
@@ -416,7 +425,7 @@ onUnmounted(() => fx.dispose())
 .contact__mail-link {
   display: inline-block;
   padding-block: 0.7rem; /* 44px+ tap target */
-  color: var(--rez-na-temnem);
+  color: var(--rez-na-pesku);
   font-size: 1rem;
   text-decoration: underline;
   text-underline-offset: 0.3em;
@@ -430,7 +439,7 @@ onUnmounted(() => fx.dispose())
 }
 
 .contact__steps-title {
-  color: var(--papir-dim);
+  color: var(--grafit-2);
   text-transform: uppercase;
   letter-spacing: 0.11em;
 }
@@ -452,16 +461,16 @@ onUnmounted(() => fx.dispose())
   font-family: var(--font-mono);
   font-size: var(--type-data-size);
   letter-spacing: var(--type-data-ls);
-  color: var(--rez-na-temnem);
+  color: var(--rez-na-pesku);
 }
 
 .contact__step-label {
   font-weight: 500;
-  color: var(--list);
+  color: var(--grafit);
 }
 
 .contact__step-detail {
-  color: var(--papir-dim);
+  color: var(--grafit-2);
   font-size: 0.9375rem;
   line-height: 1.5;
 }
@@ -473,8 +482,8 @@ onUnmounted(() => fx.dispose())
   width: min(100%, 37.5rem); /* 600px — the extracted system's measure */
   margin: var(--space-20) auto 0;
   padding: var(--space-8) var(--space-8) var(--space-8) 0;
-  border-top: 2px solid var(--list);
-  border-right: 2px solid var(--list);
+  border-top: 2px solid var(--grafit);
+  border-right: 2px solid var(--grafit);
   padding-right: var(--space-8);
   display: grid;
   gap: var(--space-10);
@@ -495,7 +504,7 @@ onUnmounted(() => fx.dispose())
   font-weight: 500;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  color: var(--papir-dim);
+  color: var(--grafit-2);
   padding: 0;
 }
 
@@ -513,7 +522,7 @@ onUnmounted(() => fx.dispose())
   font-size: var(--type-data-size);
   letter-spacing: var(--type-data-ls);
   text-transform: uppercase;
-  color: var(--list);
+  color: var(--grafit);
   /* The reference transitions background and box-shadow only — the rule
      snaps. Kept: a rule that fades reads as a hover effect, not a state. */
   transition: none;
@@ -533,19 +542,19 @@ onUnmounted(() => fx.dispose())
 
 .form__input:focus,
 .form__input:not(:placeholder-shown) {
-  border-bottom-color: var(--list);
+  border-bottom-color: var(--grafit);
   outline: none;
 }
 
 /* Keyboard focus still has to be unmistakable — the inked rule alone is the
    same thing a filled field shows. */
 .form__input:focus-visible {
-  outline: 2px solid var(--rez-na-temnem);
+  outline: 2px solid var(--rez-na-pesku);
   outline-offset: 3px;
 }
 
 .form__input[aria-invalid='true'] {
-  border-bottom-color: var(--err-na-temnem);
+  border-bottom-color: var(--err-na-pesku);
 }
 
 /* --- the chips ---------------------------------------------------------------- */
@@ -603,25 +612,28 @@ onUnmounted(() => fx.dispose())
    before believing a state-style measurement here. */
 .form__chip--on .form__chip-face,
 .form__chip-input:checked + .form__chip-face {
-  color: var(--zemlja);
-  background: var(--list);
-  border-color: var(--list);
+  /* Selected = INK on the sand band: the old paper chip carried the band's
+     own dark as text, which on sand-on-paper would read 1.5:1. Paper text on
+     the ink chip is 13.88:1. */
+  color: var(--list);
+  background: var(--grafit);
+  border-color: var(--grafit);
 }
 
 .form__chip-input:focus-visible + .form__chip-face {
-  outline: 2px solid var(--rez-na-temnem);
+  outline: 2px solid var(--rez-na-pesku);
   outline-offset: 3px;
 }
 
 @media (hover: hover) {
   .form__chip:not(.form__chip--on):hover .form__chip-face {
-    color: var(--list);
-    border-color: var(--papir-dim);
+    color: var(--grafit);
+    border-color: var(--grafit-2);
   }
 }
 
 .form__chip-input[aria-invalid='true'] + .form__chip-face {
-  border-color: var(--err-na-temnem);
+  border-color: var(--err-na-pesku);
 }
 
 /* --- issue ---------------------------------------------------------------------
@@ -638,8 +650,8 @@ onUnmounted(() => fx.dispose())
   padding: 0 0 var(--space-2);
   background: none;
   border: 0;
-  border-bottom: 2px solid var(--list);
-  color: var(--list);
+  border-bottom: 2px solid var(--grafit);
+  color: var(--grafit);
   font-family: var(--font-sans);
   font-size: var(--type-cta-size);
   font-weight: var(--type-cta-weight);
@@ -651,13 +663,13 @@ onUnmounted(() => fx.dispose())
 
 @media (hover: hover) {
   .form__submit:hover:not(:disabled) {
-    color: var(--rez-na-temnem);
-    border-bottom-color: var(--rez-na-temnem);
+    color: var(--rez-na-pesku);
+    border-bottom-color: var(--rez-na-pesku);
   }
 }
 
 .form__submit:focus-visible {
-  outline: 2px solid var(--rez-na-temnem);
+  outline: 2px solid var(--rez-na-pesku);
   outline-offset: 4px;
 }
 
@@ -665,7 +677,7 @@ onUnmounted(() => fx.dispose())
    there, including while sending. */
 .form__submit:disabled {
   cursor: progress;
-  color: var(--papir-dim);
+  color: var(--grafit-2);
   border-bottom-color: var(--crta-na-temnem);
 }
 
@@ -681,7 +693,7 @@ onUnmounted(() => fx.dispose())
   right: 0;
   bottom: -2px;
   height: 2px;
-  background: var(--rez-na-temnem);
+  background: var(--rez-deep);
   transform: scaleX(0);
   transform-origin: left center;
 }
@@ -700,14 +712,14 @@ onUnmounted(() => fx.dispose())
 }
 
 .form__status--success {
-  /* 4.85:1 worst case — on the bronze ground UNDER a press-screen highlight
-     dot. These two inks are why the closing band is the darkest bronze step:
-     they break before any other ink does. */
-  color: var(--ok-na-temnem);
+  /* The sand-tuned status pair — measured against the band AND its press
+     dots (the sand table in tokens.css): success 4.94:1 worst case, error
+     5.01:1. The on-dark pair they replace read 1.4–2.1:1 here. */
+  color: var(--ok-na-pesku);
 }
 
 .form__status--error {
-  color: var(--err-na-temnem); /* 4.62:1 worst case — see the success rule above */
+  color: var(--err-na-pesku); /* 5.01:1 worst case — see the success rule */
 }
 
 .form__glyph {
@@ -720,7 +732,7 @@ onUnmounted(() => fx.dispose())
   margin: 0;
   font-size: 0.8125rem;
   line-height: 1.5;
-  color: var(--papir-dim);
+  color: var(--grafit-2);
   max-width: 46ch;
 }
 
@@ -745,7 +757,7 @@ onUnmounted(() => fx.dispose())
 
 .seal-ring {
   fill: none;
-  stroke: var(--rez-na-temnem);
+  stroke: var(--rez-deep);
   stroke-width: 3;
 }
 
@@ -756,7 +768,7 @@ onUnmounted(() => fx.dispose())
 /* One dashed stroke between the rings = the tick collar. */
 .seal-ticks {
   fill: none;
-  stroke: var(--rez-na-temnem);
+  stroke: var(--rez-deep);
   stroke-width: 11;
   stroke-dasharray: 3 18;
 }

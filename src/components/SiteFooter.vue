@@ -8,12 +8,16 @@ const year = new Date().getFullYear()
 </script>
 
 <template>
-  <footer class="footer press">
+  <!-- press--light with the sand (see the press utility's own note on dark
+       dots over light grounds). -->
+  <footer class="footer press press--light">
     <div class="container">
       <!-- Colophon contract: every annotation here must stay mechanically
            verifiable against the shipped artifact (SSG output, no analytics,
-           no tracking cookies). If that ever changes, change the content FIRST. -->
-      <PrerezLine on-dark :annotation="footer.colophon.annotation" :gloss="footer.colophon.gloss" />
+           no tracking cookies). If that ever changes, change the content FIRST.
+           The LIGHT Prerez variant now — the on-dark one spoke on-dark inks
+           that read 1.9:1 on the sand; its line is re-aimed below. -->
+      <PrerezLine :annotation="footer.colophon.annotation" :gloss="footer.colophon.gloss" />
 
       <div class="footer__cols">
         <div class="footer__brand">
@@ -42,10 +46,19 @@ const year = new Date().getFullYear()
 
 <style scoped>
 .footer {
+  /* --zemlja IS the sand now (tokens.css) — the closing band brightened with
+     the rest of the owner's call, and its inks flipped to the dark family. */
   background-color: var(--zemlja);
-  color: var(--papir-dim);
+  color: var(--grafit-2);
   padding-block: 3rem 2.5rem;
   border-top: 1px solid var(--crta-na-temnem);
+}
+
+/* The colophon's hairline, re-aimed for the sand: the light variant's
+   --mreza-strong reads 1.29:1 there where the bronze-line reads 2.02 — line
+   duty, same warm family as every other rule on the band. */
+.footer :deep(.prerez) {
+  --prerez-line: var(--crta-na-temnem);
 }
 
 .footer__cols {
@@ -58,7 +71,7 @@ const year = new Date().getFullYear()
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 1.05rem;
-  color: var(--list);
+  color: var(--grafit);
 }
 
 .footer__tagline {
@@ -80,13 +93,13 @@ const year = new Date().getFullYear()
   font-size: var(--fs-kicker);
   text-transform: uppercase;
   letter-spacing: 0.11em;
-  color: var(--papir-dim);
+  color: var(--grafit-2);
   text-decoration: none;
   padding: 0.85rem 0; /* 44px+ tap target — the only nav phones get */
 }
 
 .footer__link:hover {
-  color: var(--rez-na-temnem);
+  color: var(--rez-na-pesku);
 }
 
 .footer__mail {
@@ -101,7 +114,7 @@ const year = new Date().getFullYear()
 .footer__mail-link {
   display: inline-block;
   padding-block: 0.75rem; /* 44px+ tap target */
-  color: var(--rez-na-temnem);
+  color: var(--rez-na-pesku);
   text-decoration: underline;
   text-underline-offset: 0.3em;
 }

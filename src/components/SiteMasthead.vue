@@ -135,13 +135,13 @@ onUnmounted(() => {
           <circle cx="72" cy="72" r="72" fill="var(--rez)" />
           <circle cx="172" cy="72" r="72" fill="var(--rez)" />
           <g fill="none" stroke="var(--list)" stroke-width="18" stroke-linecap="round">
-            <circle cx="79" cy="79" r="33" />
-            <line x1="46" y1="55" x2="46" y2="118" />
+            <circle cx="79" cy="72" r="33" />
+            <line x1="46" y1="48" x2="46" y2="111" />
           </g>
           <g fill="none" stroke="var(--list)" stroke-width="18" stroke-linecap="round"
             transform="rotate(180 122 72)">
-            <circle cx="79" cy="79" r="33" />
-            <line x1="46" y1="55" x2="46" y2="118" />
+            <circle cx="79" cy="72" r="33" />
+            <line x1="46" y1="48" x2="46" y2="111" />
           </g>
         </svg>
         <span class="masthead__brandtext">SpletnaPovsod</span>

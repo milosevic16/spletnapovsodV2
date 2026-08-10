@@ -128,17 +128,22 @@ onUnmounted(() => {
            the p rotated 180° (the mark's point symmetry). THE VEIL LANDS HERE
            — see the header comment before touching its size or position. -->
       <span class="stmt__stamp">
+        <!-- Bowls ON the rotation axis (cy 72): the d is the p turned 180°
+             about (122,72), so a bowl 7 below centre landed its twin 7 above
+             it and the letters read at different heights (owner, against the
+             original mark). On the axis both bowls share y=72 exactly, and the
+             point symmetry keeps meaning itself. -->
         <svg class="stmt__mark" viewBox="0 0 244 144" aria-hidden="true">
           <circle cx="72" cy="72" r="72" fill="var(--rez)" />
           <circle cx="172" cy="72" r="72" fill="var(--rez)" />
           <g fill="none" stroke="var(--list)" stroke-width="18" stroke-linecap="round">
-            <circle cx="79" cy="79" r="33" />
-            <line x1="46" y1="55" x2="46" y2="118" />
+            <circle cx="79" cy="72" r="33" />
+            <line x1="46" y1="48" x2="46" y2="111" />
           </g>
           <g fill="none" stroke="var(--list)" stroke-width="18" stroke-linecap="round"
             transform="rotate(180 122 72)">
-            <circle cx="79" cy="79" r="33" />
-            <line x1="46" y1="55" x2="46" y2="118" />
+            <circle cx="79" cy="72" r="33" />
+            <line x1="46" y1="48" x2="46" y2="111" />
           </g>
         </svg>
       </span>
