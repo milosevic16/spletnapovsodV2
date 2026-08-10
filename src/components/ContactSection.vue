@@ -392,13 +392,10 @@ onUnmounted(() => fx.dispose())
   /* The closing band wears the sand now (owner's brightening — the measured
      table lives with --color-sand in tokens.css), so every paper-family ink
      below flipped to the dark family, and the on-dark accent/status voices to
-     their sand-tuned twins (--*-na-pesku). And the dark family is BROWN here
-     (owner: "switch black font to dark brown") — one re-pointing flips every
-     consumer in the band, the form frame and the ink chip included: 8.27:1 /
-     5.79:1 flat, 6.92 / 4.84 under the worst press dot; paper text on the
-     brown chip 11.53:1. */
-  --grafit: var(--color-bronze-deep);
-  --grafit-2: var(--color-bronze-2);
+     their sand-tuned twins (--*-na-pesku). The dark family is the palette's
+     BLACK: a brown pass ran for one round and was reversed, so this band adds
+     no ink re-pointing of its own — 9.96:1 / 6.45:1 flat, 8.34 / 5.40 under
+     the worst press dot, paper on the ink chip 13.88:1. */
   color: var(--grafit);
   padding-block: var(--section-block) clamp(3rem, 2.5rem + 3vw, 5rem);
 }

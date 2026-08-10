@@ -48,11 +48,8 @@ const year = new Date().getFullYear()
 .footer {
   /* --zemlja IS the sand now (tokens.css) — the closing band brightened with
      the rest of the owner's call, and its inks flipped to the dark family,
-     which is BROWN on the sand bands (owner: "switch black font to dark
-     brown"): the same re-pointing the contact block above carries, so the
-     two halves of the closing band cannot disagree. */
-  --grafit: var(--color-bronze-deep);
-  --grafit-2: var(--color-bronze-2);
+     which is the palette's black (a brown pass ran one round and was
+     reversed; the contact block above carries the same history). */
   background-color: var(--zemlja);
   color: var(--grafit-2);
   padding-block: 3rem 2.5rem;

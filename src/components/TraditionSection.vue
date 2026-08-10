@@ -735,14 +735,11 @@ onUnmounted(() => {
      flips to this same value so the two never show a seam. */
   background-color: var(--color-sand);
   transition: background-color var(--dur-ground) var(--ease-ground);
-  /* THE INK IS THE BROWN THE BAND USED TO BE (owner: "switch black font to
-     dark brown") — re-pointing the two ink roles here flips every consumer in
-     the band at once: titles, leads, labels, the strata's rings and marks,
-     the callout, the phone leader. 8.27:1 / 5.79:1 flat, 6.92 / 4.84 under
-     the worst press dot. The source half's code is NOT this ink on purpose:
-     --color-code stays the machine's black, on paper, not on the wallpaper. */
-  --grafit: var(--color-bronze-deep);
-  --grafit-2: var(--color-bronze-2);
+  /* THE INK IS THE PALETTE'S BLACK, and it stays that way: a brown pass ran
+     for one round (owner's call, then reversed). The band therefore adds NO
+     ink re-pointing of its own — --grafit/--grafit-2 arrive from tokens.css
+     and read 9.96:1 / 6.45:1 on this sand, 8.34 / 5.40 under the worst press
+     dot, which is more headroom than the brown had. */
   color: var(--grafit);
 }
 
@@ -887,13 +884,13 @@ onUnmounted(() => {
   /* The system's statement runs lh 0.9; caps with carons need a shade more
      air to keep ascenders clear of the line above. */
   line-height: 1.02;
-  color: var(--grafit); /* the band's brown ink — 8.27:1 on the sand */
+  color: var(--grafit); /* 9.96:1 on the sand */
   max-width: 26ch;
 }
 
 .trad__intro {
   margin-top: var(--space-6);
-  color: var(--grafit-2); /* 5.79:1 flat, 4.84:1 under the worst press dot */
+  color: var(--grafit-2); /* 6.45:1 flat, 5.40:1 under the worst press dot */
   max-width: 54ch;
 }
 
