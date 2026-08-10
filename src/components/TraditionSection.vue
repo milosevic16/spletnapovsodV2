@@ -891,11 +891,13 @@ onUnmounted(() => {
 }
 
 /* --- the strata (the interactive layer) -------------------------------------
-   A section through the build-up, drawn in the DARK world now that the band
-   is dark throughout: grounds step darker with depth, hatches are drawn in
-   paper, the cut is the accent's on-dark voice. Unequal thicknesses are the
-   point — a membrane is thin, a substrate is thick; equal slabs would read as
-   a bar chart.
+   A section through the build-up: four BRIGHT sheets lying on the band's dark
+   ground (owner's call — the artwork was inverted, see the pipeline header).
+   Everything ON a sheet is therefore ink and everything on the BAND stays
+   paper, which is the one rule to apply when touching this block; the two got
+   swapped once already, in the other direction, when the sheets were black.
+   Unequal thicknesses are the point — a membrane is thin, a substrate is
+   thick; equal slabs would read as a bar chart.
 
    Probing is signalled the way a section drawing signals it — and never by
    tone alone: the CUT PLANES appear at the layer's two interfaces with square
@@ -945,7 +947,11 @@ onUnmounted(() => {
   align-items: center;
   padding: 0;
   margin: 0;
-  border: var(--divider-width) solid var(--crta-na-temnem);
+  /* A paper hairline, because the sheet it edges is paper-bright now: the
+     dark-world line this replaced was drawn for black artwork. It is also the
+     quiet half of the probe signal — see .asm__band--on, which takes the same
+     edge to full ink. */
+  border: var(--divider-width) solid var(--mreza-strong);
   background: var(--band-ground);
   font: inherit;
   color: inherit;
@@ -981,14 +987,16 @@ onUnmounted(() => {
   z-index: 4;
 }
 
-/* Probed: clear of the stack and in front of it. Paper, not the accent — the
-   owner pulled the orange from every line in this drawing: over the artwork's
-   own blacks and steels the red read as a foreign ink, and paper is what the
-   sheets' marks are already made of (18.8:1 on the artwork ground). */
+/* Probed: clear of the stack and in front of it. INK, flipped with the sheets
+   — the paper ring that stood here was drawn for black artwork and would now
+   be a bright line on a bright sheet. Against the resting edge (a paper
+   hairline, see .asm__band) this is a weight change as well as a tone one, so
+   the probed sheet is ringed rather than merely lit. The owner's no-orange
+   rule for this drawing holds: graphite, never the accent. */
 .asm__band--on {
   transform: translateX(17.073%) skewY(-7deg);
   z-index: 9;
-  border-color: var(--color-paper);
+  border-color: var(--grafit);
 }
 
 button.asm__band {
@@ -996,7 +1004,7 @@ button.asm__band {
 }
 
 .asm__band:focus-visible {
-  outline: 2px solid var(--color-paper);
+  outline: 2px solid var(--grafit);
   outline-offset: -4px;
 }
 
@@ -1037,33 +1045,32 @@ button.asm__band {
 /* VIDNOST — a node-and-link web. What finds you is a graph and crawlers walk
    links, so the texture states the claim rather than decorating it. */
 .asm__band--0 .asm__fill {
-  background-image: url('/img/tex/layer-seo-v1.webp');
+  background-image: url('/img/tex/layer-seo-v2.webp');
 }
 
 /* OBRAZCI — a dense field of discrete entries, ruled across. */
 .asm__band--1 .asm__fill {
-  background-image: url('/img/tex/layer-forms-v1.webp');
+  background-image: url('/img/tex/layer-forms-v2.webp');
 }
 
 /* PIŠKOTKI — a woven screen: the thing that decides what passes and what is
    stopped, which is what the law is about. The one sheet with a colour of its
    own, and it keeps it. */
 .asm__band--2 .asm__fill {
-  background-image: url('/img/tex/layer-compliance-v1.webp');
+  background-image: url('/img/tex/layer-compliance-v2.webp');
 }
 
 /* DOMENA — the blackened plate the rest is published onto, striated and slowly
    oxidising: the ground the other three stand on. */
 .asm__band--3 .asm__fill {
-  background-image: url('/img/tex/layer-hosting-v1.webp');
+  background-image: url('/img/tex/layer-hosting-v2.webp');
 }
 
-/* ONE ground, and it is the ARTWORK'S: the sources are white marks on pure
-   black, their ground ships as transparency, and whatever paints behind them
-   becomes their paper. Black is the only value that shows the files as
-   generated — the bronze ramp that stood here tinted every sheet, which is
-   the "translated" look the owner rejected. The ladder the ramp used to carry
-   now lives in the textures' own densities (see the fill block above).
+/* ONE ground, and it is the ARTWORK'S — which is now PAPER, because the sheets
+   are bright (owner's call; the inversion is argued in the pipeline's header).
+   Black stood here while the files were white marks on black and it was the
+   only value that showed them as generated; against the -v2 set it would ring
+   every bright sheet in a dark edge the artwork does not have.
 
    `--band-ground` rather than `background` directly: the label's tab reads the
    same value, so a name can never end up on a ground the sheet does not
@@ -1072,7 +1079,7 @@ button.asm__band {
 .asm__band--1,
 .asm__band--2,
 .asm__band--3 {
-  --band-ground: #000;
+  --band-ground: var(--color-paper);
 }
 
 .asm__band--on .asm__fill {
@@ -1092,11 +1099,12 @@ button.asm__band {
    link between the drawing and the text. The terminal is the affordance —
    hollow means available, filled means probed. */
 /* THE NAME SITS ON A TAB OF THE SHEET'S OWN GROUND, never on the artwork. A
-   13px glyph stroke landing on a white mark would measure a fraction of the
-   floor; backing the name with the sheet's own ground is what a real section
-   drawing does with a label over hatching, and it puts the contrast back on
-   the ground itself — on the artwork's black, the resting ink reads 12.5:1
-   and the probed paper ~18.7:1 (re-measured below in the verification). The
+   13px glyph stroke landing on a mark would measure a fraction of the floor;
+   backing the name with the sheet's own ground is what a real section drawing
+   does with a label over hatching, and it puts the contrast back on the ground
+   itself. THE INK FLIPPED WITH THE SHEETS: on paper the dark-world pair read
+   1.3:1 and 1.06:1 — invisible — so the resting ink is the secondary graphite
+   and the probed one full ink, measured 8.99:1 and 13.88:1 on the tab. The
    inline-block box also keeps the tab off the terminal at the right. */
 .asm__band-label {
   position: relative;
@@ -1110,16 +1118,16 @@ button.asm__band {
   font-weight: 500;
   letter-spacing: var(--type-label-ls);
   text-transform: uppercase;
-  color: var(--papir-dim);
+  color: var(--grafit-2);
   transition: color var(--dur-tween) var(--ease-hover);
 }
 
 .asm__band--on .asm__band-label {
-  color: var(--color-paper);
+  color: var(--grafit);
 }
 @media (hover: hover) {
   button.asm__band:hover .asm__band-label {
-    color: var(--color-paper);
+    color: var(--grafit);
   }
 }
 
@@ -1131,7 +1139,7 @@ button.asm__band {
   width: 9px;
   height: 9px;
   margin-top: -4.5px;
-  border: 1px solid var(--papir-dim);
+  border: 1px solid var(--grafit-2);
   transition:
     background-color var(--dur-tween) var(--ease-hover),
     border-color var(--dur-tween) var(--ease-hover);
@@ -1139,16 +1147,17 @@ button.asm__band {
 
 @media (hover: hover) {
   button.asm__band:hover .asm__node {
-    border-color: var(--color-paper);
+    border-color: var(--grafit);
   }
 }
 
-/* Filled: paper, with the rest of the drawing's lines (owner's call — no
-   orange in the four layers). 18.8:1 on the artwork ground, so the 3:1 UI
-   floor is cleared many times over; hollow-vs-filled stays the state signal. */
+/* Filled: ink, flipped with the sheets — a paper terminal on a bright sheet is
+   an invisible one (owner's no-orange rule for this drawing still holds, so it
+   is graphite rather than the accent). 13.88:1 on the sheets' own ground, and
+   hollow-vs-filled stays the state signal. */
 .asm__band--on .asm__node {
-  background: var(--color-paper);
-  border-color: var(--color-paper);
+  background: var(--grafit);
+  border-color: var(--grafit);
 }
 
 /* --- the callouts ----------------------------------------------------------- */

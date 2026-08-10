@@ -373,10 +373,10 @@
 @media (max-width: 809px) {
   :root {
     --type-display-xl-size: 5rem; /* 80px */
-    /* THE PHONE CUT IS 27px (owner's call, in two steps: 48 read too large →
-       36, then "scale them down even more" → 27, i.e. 0.75² of the role), and
-       the clamp is the earlier overflow fix scaled by exactly that factor so
-       its geometry survives the resize:
+    /* THE PHONE CUT HAS MOVED FOUR TIMES (48 → 36 → 27 → ×1.25 = 33.75px), so
+       the factor is now a KNOB and the next resize is one number rather than
+       three re-derived literals. Every clamp term is the original overflow-fix
+       geometry times --display-l-phone:
 
        Slovenian has words longer than a narrow phone, and a word cannot wrap.
        The titles at this role carry »ponudnikov?« (DifferentiatorsSection) and
@@ -387,12 +387,30 @@
        at the 360 an Android reports). Multiplying all three clamp terms by the
        same factor keeps every breakpoint of that fix where it was: the middle
        still crosses the cap at ~370px, so phones from 375 up all get the flat
-       27, and the floor still cannot bind above a 260px viewport.
+       cut, and the floor still cannot bind above a 260px viewport.
 
        Shrink the type, never break the word: `overflow-wrap` would hyphen-less
        split a display heading mid-word, which is a design change needing the
        owner, not an overflow fix. */
-    --type-display-l-size: clamp(1.125rem, 8.21vw - 3.375px, 1.6875rem); /* 27px ≥370px wide */
+    --display-l-phone: 0.703125; /* 33.75 / 48 — the one knob */
+    --type-display-l-size: clamp(
+      calc(2rem * var(--display-l-phone)),
+      calc((14.6vw - 6px) * var(--display-l-phone)),
+      calc(3rem * var(--display-l-phone))
+    ); /* 33.75px at ≥370px wide */
+
+    /* THE CARON NEEDS THE ROOM, and this is arithmetic, not taste. Measured on
+       the real face with canvas TextMetrics: Š's accent reaches 0.91em above
+       the baseline where a plain cap reaches 0.71, and the lowest ink of the
+       line above sits 0.02em under ITS baseline — so any line-height below
+       0.93 puts the accent inside the previous line's letterforms. The role
+       ships 0.8, which is exactly the reported »strešica covered by the upper
+       line« on every wrapped Slovenian title (»uspešnih«, »ločimo«).
+       1.05 clears it by 0.12em and reads as deliberate leading rather than as
+       a near-miss. Phone only, where the titles wrap most and the report came
+       from; the same ratio collides at every width, so the desktop role is a
+       one-line change if the owner wants it there too. */
+    --type-display-l-lh: 1.05;
     --type-statement-size: 1.5rem; /* 24px */
     --type-nav-size: 1.125rem; /* 18px */
     --type-label-size: 0.8125rem; /* 13px */

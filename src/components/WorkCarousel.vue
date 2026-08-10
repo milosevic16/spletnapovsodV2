@@ -40,8 +40,8 @@ const fx = createFx()
 const items = references.items
 
 /**
- * How many projects stand at rest. Five is more work than either layout wants
- * to show at once — a phone would scroll through five full-width belts before
+ * How many projects stand at rest. Six is more work than either layout wants
+ * to show at once — a phone would scroll through six full-width belts before
  * reaching anything else — so the set stops after the third and the rest are
  * one control away.
  */
@@ -66,8 +66,9 @@ const revealed = ref(false)
 const collapsed = computed(() => live.value && !revealed.value)
 
 /**
- * The ids the control owns, so `aria-controls` names exactly the two projects
- * it opens and closes rather than gesturing at the section.
+ * The ids the control owns, so `aria-controls` names exactly the projects it
+ * opens and closes rather than gesturing at the section. Derived from the list,
+ * so adding work never leaves the control describing a smaller set than it has.
  */
 const extraIds = computed(() =>
   items
@@ -820,6 +821,13 @@ onUnmounted(() => {
   .wkr__plate:nth-child(5) {
     order: 5;
   }
+  /* EVERY PLATE NEEDS A SLOT. `order` defaults to 0, which sorts BEFORE the
+     three named 1–3 — so a project added past the last rule here does not
+     appear at the end of the row, it jumps to the front of it. (Adding the
+     sixth is exactly how that was found.) */
+  .wkr__plate:nth-child(6) {
+    order: 6;
+  }
 
   .wkr__plate {
     flex: 1 1 0;
@@ -833,7 +841,7 @@ onUnmounted(() => {
     flex-grow: 3;
   }
 
-  /* HELD BACK, NOT REMOVED. The two sit in the row at zero width, so revealing
+  /* HELD BACK, NOT REMOVED. They sit in the row at zero width, so revealing
      them is a flex-grow transition from 0 to 1 — they open out of the right-hand
      edge rather than appearing. The rule itself lives at the END of this block
      with a doubled class (see THE SPECIFICITY note there); an identical copy
@@ -908,7 +916,7 @@ onUnmounted(() => {
 
   /* AND THE HELD-BACK WORK STAYS HELD BACK. Same trap, other direction: the
      collapsed rule above is 0,2,0, so the 0,3,0 rule that pins the row at
-     flex-grow 1 was opening the two extra plates the moment ANY plate took the
+     flex-grow 1 was opening the extra plates the moment ANY plate took the
      majority — the reported "hovering uncovers the other two projects". The
      doubled class takes this to 0,3,0 and its place at the end of the block
      wins the tie, so the only thing that can open them is the control. */
@@ -916,7 +924,7 @@ onUnmounted(() => {
     flex: 0 0 0;
     margin-left: calc(var(--space-3) * -1);
     overflow: hidden;
-    /* Zero width is not out of the TAB ORDER: the two hidden links were still
+    /* Zero width is not out of the TAB ORDER: the hidden links were still
        focus stops — invisible focus, WCAG 2.4.11's exact failure — while the
        control declared the set closed. visibility removes them from it, delayed
        by the collapse's own 280ms so the plates are seen folding shut, instant

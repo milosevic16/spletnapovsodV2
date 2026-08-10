@@ -7,13 +7,30 @@
  * finds you, a dense field of entries, a woven screen that filters, and the
  * blackened plate everything is published onto.
  *
- * THE TEXTURES ARE SHIPPED UNCHANGED — owner's call, and the whole point of
- * this revision. Earlier passes converted them to greyscale, thresholded them,
- * pushed a contrast curve through them and moved their luminance into an alpha
- * channel; every one of those was a translation, and two of these four are
- * COLOUR photographs (cold blue steel, warm oxidation) that any of it would
- * destroy. This script now does exactly two things: it takes a window out of
- * the source, and it encodes. No greyscale, no threshold, no curve, no alpha.
+ * THE SHEETS ARE BRIGHT NOW — owner's call, and it reverses the "ship them
+ * unchanged" doctrine this script used to carry, so here is why the change is
+ * an inversion rather than a brightening.
+ *
+ * MEASURED FIRST: the four sources run at mean luminance 7.5 / 20.9 / 67.6 /
+ * 34.4 out of 255, with 94% and 96% of two of them below 51. They are bright
+ * marks on black — the STRUCTURE is the marks, the black is only ground. A
+ * gamma lift on that is grey mud and nothing else (tried, and it measured mean
+ * luminance 24–67: still dark, now also flat). Inverting is the transform that
+ * makes them bright while keeping every mark: the node-and-link web becomes
+ * black lines on white, the field of entries becomes a ledger sheet, the woven
+ * screen and the striated plate become light materials. It is also what the
+ * page already is — a section drawing on drafting paper.
+ *
+ * AND THEN DESATURATED, deliberately. Inversion rotates hue: the cold steel
+ * blue comes back as a warm orange-brown, which on this page would be a second
+ * red arguing with --rez, the one accent. Pulling saturation to 0.3 leaves the
+ * four as near-neutral materials that still differ from each other in weave and
+ * density, which is what made the set read as a set. The final linear() lands
+ * the ground on paper rather than clipping it to pure white, so the marks keep
+ * their weight and the sheets sit in the page's own tonal family.
+ *
+ * What is still NOT done: no greyscale (they keep a trace of their own colour),
+ * no threshold, no alpha channel. The window is unchanged.
  *
  * THE WINDOW IS THE ONLY DECISION, and it is a SCALE decision before it is a
  * framing one. The file is stretched over the band with `cover`, so a source
@@ -30,8 +47,9 @@
  * of every source — the reason each `top` sits well above the frame's bottom.
  *
  * VERSION THE FILENAME on every refresh: /img/* ships an immutable year-long
- * cache header. These carry fresh names (layer-*) rather than a bump, because
- * the artwork changed completely and the old names described the old set.
+ * cache header. The bright set is -v2 for exactly that reason — the -v1 files
+ * are already on the preview deploys, and a same-name refresh would never reach
+ * a repeat visitor.
  *
  * Deliberately NOT part of the host build — the outputs are committed.
  */
@@ -50,34 +68,40 @@ const BAND_RATIO = 2.3
 const WINDOW_W = 1150
 /** Desktop band width, measured — used only to report the on-screen scale. */
 const BAND_W = 443
+/** How much of the inverted hue survives. 1 keeps the full rotation (warm
+ *  orange weave), 0 is greyscale; 0.3 is the one knob for the whole set. */
+const SATURATION = 0.3
 
 const TEXTURES = [
   {
     // VIDNOST NA GOOGLU — a node-and-link web. What finds you is a graph, and
     // crawlers walk links, so the texture states the claim rather than
-    // decorating it.
-    id: 'layer-seo-v1',
+    // decorating it. Inverted, it is a line drawing of that graph.
+    id: 'layer-seo-v2',
     file: 'capture/tex-seo-src.png',
     source: '2720x1536',
   },
   {
     // DELUJOČI OBRAZCI — a dense field of discrete entries, ruled across.
-    id: 'layer-forms-v1',
+    // Inverted, it is a ledger sheet.
+    id: 'layer-forms-v2',
     file: 'capture/tex-forms-src2.png',
     source: '2720x1536',
   },
   {
     // PIŠKOTKI IN ZASEBNOST — a woven screen: the thing that decides what
-    // passes and what is stopped, which is what the law is about. The one
-    // texture with a colour of its own (cold steel blue) and it keeps it.
-    id: 'layer-compliance-v1',
+    // passes and what is stopped, which is what the law is about. Its cold
+    // steel blue is the colour the desaturation is protecting the page from
+    // (inverted it would come back warm orange — see the header).
+    id: 'layer-compliance-v2',
     file: 'capture/tex-compliance-src.png',
     source: '3136x1344',
   },
   {
-    // OBJAVA NA VAŠI DOMENI — the blackened plate the rest is published onto,
-    // striated and slowly oxidising. The densest and darkest of the four.
-    id: 'layer-hosting-v1',
+    // OBJAVA NA VAŠI DOMENI — the plate the rest is published onto, striated
+    // and slowly oxidising. The densest of the four, and the one that keeps
+    // most of its tonal range through the inversion.
+    id: 'layer-hosting-v2',
     file: 'capture/tex-hosting-src.png',
     source: '3136x1344',
   },
@@ -101,6 +125,11 @@ for (const t of TEXTURES) {
   const out = join(outDir, `${t.id}.webp`)
   await sharp(join(root, t.file))
     .extract(crop)
+    // The brightening, in the order the header argues for: invert, pull the
+    // rotated hue back towards neutral, land the ground on paper.
+    .negate({ alpha: false })
+    .modulate({ saturation: SATURATION, brightness: 1.04 })
+    .linear(0.92, 14)
     .webp({ quality: 90 })
     .toFile(out)
 
@@ -111,10 +140,17 @@ for (const t of TEXTURES) {
   if (om.hasAlpha) throw new Error(`${t.id}: emitted with alpha — this set ships opaque`)
   const s = await sharp(out).stats()
   const [R, G, B] = s.channels
+  const lum = 0.2126 * R.mean + 0.7152 * G.mean + 0.0722 * B.mean
+  // The whole point of this revision is that these are BRIGHT. Assert it rather
+  // than trusting the eye: anything under mid-grey means the pipeline silently
+  // stopped inverting, which is exactly the class of failure the earlier mask
+  // and greyscale passes shipped unnoticed.
+  if (lum < 140) throw new Error(`${t.id}: mean luminance ${lum.toFixed(0)} — this set ships bright`)
   const cast = R.mean - B.mean
   console.log(
     `tex: ${t.id.padEnd(22)} ${om.width}x${om.height}  ` +
       `RGB ${R.mean.toFixed(0).padStart(3)}/${G.mean.toFixed(0).padStart(3)}/${B.mean.toFixed(0).padStart(3)}  ` +
+      `lum ${lum.toFixed(0).padStart(3)}  ` +
       `cast ${cast > 4 ? 'warm' : cast < -4 ? 'cool' : 'neutral'}  ` +
       `shown at ${((BAND_W / w) * 100).toFixed(0)}% of source scale`,
   )

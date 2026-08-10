@@ -49,6 +49,12 @@ const SOURCES = [
   // pravnapanda: nav, the wordmark in its oval, the CTA and the four counts —
   // the whole hero band, stopping where the white section starts.
   { id: 'pravnapanda', file: 'capture/pravnapanda-desktop.png', crop: { left: 374, top: 0, width: 2132, height: 1066 }, square: { left: 907, top: 0, width: 1066, height: 1066 }, widths: [560, 840, 1184, 1792] },
+  // razprava: the whole hero — logo, headline, date, CTA — plus the strip of
+  // dark band under it. The height is MEASURED, not chosen: the next section's
+  // first ink sits at CSS y 582, so 578 (device 1156) is the tallest seam-free
+  // window there is, and 2:1 makes the width 2312. Left 140 keeps the logo in
+  // and lets the nav clip at the right, as sile's does.
+  { id: 'razprava', file: 'capture/razprava-desktop.png', crop: { left: 140, top: 0, width: 2312, height: 1156 }, widths: [560, 840, 1184, 1792] },
 ]
 
 for (const s of SOURCES) {
@@ -123,7 +129,7 @@ async function chips(file, crop, count = 4, minDistance = 60) {
 }
 
 for (const s of SOURCES) {
-  if (s.id === 'sile' || s.id === 'pravnapanda') {
+  if (s.id === 'sile' || s.id === 'pravnapanda' || s.id === 'razprava') {
     console.log(`${s.id} ink chips:`, await chips(s.file, s.crop))
   }
 }

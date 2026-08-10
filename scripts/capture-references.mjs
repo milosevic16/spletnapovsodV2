@@ -124,12 +124,21 @@ const SITES = [
       return { hero: r('.hero.is-desktop') ?? r('.hero'), h1: r('.hero__title'), inner: r('.hero__inner') }
     },
   },
-  // The two added with Gašper Azinovič's projects. They carry NO live preview —
-  // the reference plates are static screenshots now — so there is nothing to
-  // hide and nothing to measure; they are here so the portfolio has one
-  // pipeline rather than two.
+  // The three that carry NO live preview — the reference plates are static
+  // screenshots now — so there is nothing to hide and nothing to measure; they
+  // are here so the portfolio has one pipeline rather than two.
   { id: 'sile', url: 'https://sile.si', hideCss: '', measure: () => ({}) },
   { id: 'pravnapanda', url: 'https://pravnapanda.si', hideCss: '', measure: () => ({}) },
+  // Razprava mladih o JEK2. Its hero holds a <video> that is a MODAL's source,
+  // not a background: measured 0×0 and paused at t=0 on a live load, so there
+  // is no frame to freeze and nothing to hide. Checked rather than assumed —
+  // a playing hero video is exactly the thing that makes a capture unrepeatable.
+  {
+    id: 'razprava',
+    url: 'https://delicate-pika-fa7401.netlify.app',
+    hideCss: '',
+    measure: () => ({}),
+  },
 ]
 
 /**

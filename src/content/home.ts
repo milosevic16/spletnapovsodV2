@@ -194,14 +194,21 @@ export const references = {
       alt: 'Posnetek naslovnice spletne strani Lemur Legal',
       image: { width: 1552, height: 776, widths: [560, 776, 1104, 1552] },
     },
+    /**
+     * An EVENT rather than an organisation, and the only one in the set: the
+     * name is the site's own h1 and the sector its own words for what the
+     * evening was (»okrogle mize«, »razpravo o jedrski energiji«) — the same
+     * rule the two below follow. Third in the list, so it stands in the resting
+     * row; Bloctopus moved down to make room (owner's call).
+     */
     {
-      id: 'bloctopus',
-      name: 'Bloctopus Intelligence',
-      sector: 'Forenzika kriptovalut',
-      url: 'https://bloctopus.net',
-      urlLabel: 'bloctopus.net',
-      inks: ['#1A2B38', '#1FC49A', '#F2F6F4'],
-      alt: 'Posnetek naslovnice spletne strani Bloctopus Intelligence',
+      id: 'razprava',
+      name: 'Razprava mladih o JEK2',
+      sector: 'Okrogla miza o jedrski energiji',
+      url: 'https://delicate-pika-fa7401.netlify.app',
+      urlLabel: 'delicate-pika-fa7401.netlify.app',
+      inks: ['#184890', '#181830', '#F09018', '#606060'],
+      alt: 'Posnetek naslovnice spletne strani Razprave mladih o JEK2',
       image: { width: 1792, height: 896, widths: [560, 840, 1184, 1792] },
     },
     /**
@@ -222,6 +229,16 @@ export const references = {
       inks: ['#3078FF', '#48C0FF', '#78F0FF', '#D8F0F0'],
       alt: 'Posnetek naslovnice spletne strani študentske skupine SILE',
       image: { width: 1700, height: 850, widths: [560, 840, 1184, 1700] },
+    },
+    {
+      id: 'bloctopus',
+      name: 'Bloctopus Intelligence',
+      sector: 'Forenzika kriptovalut',
+      url: 'https://bloctopus.net',
+      urlLabel: 'bloctopus.net',
+      inks: ['#1A2B38', '#1FC49A', '#F2F6F4'],
+      alt: 'Posnetek naslovnice spletne strani Bloctopus Intelligence',
+      image: { width: 1792, height: 896, widths: [560, 840, 1184, 1792] },
     },
     {
       id: 'pravnapanda',
