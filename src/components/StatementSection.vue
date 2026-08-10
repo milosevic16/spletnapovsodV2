@@ -408,18 +408,13 @@ onUnmounted(() => {
    the stamp on it. Desktop keeps its top-left mark and gives only the right
    corner away, because there the stamp has crossed the sheet. */
 @media (max-width: 899.98px) {
-  /* THE HERO TAKES THE REFERENCE'S RATIO (owner's call, from a screenshot):
-     the hero there measures 72.1% of the viewport — 1765 of 2447 device px
-     under the browser chrome. The ratio belongs to the SECTION, and the
-     section is the sheet plus --hero-inset of padding either side (the veil
-     lands on that inset — it cannot move), so the sheet compensates: 72svh
-     minus both insets makes the whole band 72svh on the nose. Measured before
-     the compensation: 76.9% — the bare base 72svh plus 40px of inset.
-     (A 56svh "half the air" override lived here one round; with the drawing
-     and claim standing at the foot, the reclaimed space is the film's void
-     above, which is the reference's composition.) */
+  /* HALF THE AIR, restored (owner's call, second reversal — seen on a phone,
+     the 72% band read too tall and the previous proportions came back). The
+     sheet's fixed costs plus half the free space land it at 56svh; the 72svh
+     reference-ratio experiment lived here for one round and is in the history
+     if it is ever wanted again. */
   .stmt__sheet {
-    min-height: calc(72svh - 2 * var(--hero-inset));
+    min-height: 56svh;
   }
 
   /* THE DRAWING DROPS TO THE CLAIM (owner's call — phones first, the base
@@ -434,25 +429,29 @@ onUnmounted(() => {
     padding-top: var(--space-2);
   }
 
-  /* THE FLUSH IS BACK (owner's call, from the same reference screenshot as
-     the sheet height above): both words span the full measure again, one
-     monument block, exactly as the base rules size them. A --drawn-share
-     override lived here for two rounds, stepping SPLETNA back to 0.85 of the
-     span; the reference shows the pre-shrink drawing, so the override is gone
-     rather than set to 1 — the base needs no help to be itself. */
+  /* SPLETNA STEPS BACK A SIZE, restored with the rest of the previous
+     proportions (the flush full-measure pair lived one round and was reversed
+     with the 72% hero). The upper course takes 0.85 of the span and stops
+     short from the shared left edge, the void opening on its right — the
+     composition the desktop band also uses. 1 restores the flush exactly. */
   .stmt__elevation {
+    --drawn-share: 0.85;
     /* The second of the three spacings between the glyphs and the claim (the
        other two live on .stmt__block above) — the base clamp resolves to 16px
        here, and the owner asked the pair tighter. */
     padding-block-end: var(--space-2);
   }
 
-  /* Between the sizes (owner's call): the previous phone claim ran 21.6px and
-     the reference screenshot's measures ~14px at the same width — this is the
-     asked-for middle, 18px. Desktop keeps the base clamp. */
-  .stmt__title {
-    font-size: 1.125rem;
+  .stmt__course--drawn {
+    font-size: min(
+      calc(var(--mon-span) * var(--drawn-share) / 4.4502),
+      calc(var(--mon-cap) * var(--drawn-share))
+    );
   }
+
+  /* No phone size of its own any more: the 18px "between" step was reversed
+     with the rest — the base clamp's floor (21.6px at phone widths) is the
+     previous proportion the owner asked back. */
 }
 
 /* THE MARK STANDS AT THE SHEET'S TOP-RIGHT on desktop, not its top-left. The
