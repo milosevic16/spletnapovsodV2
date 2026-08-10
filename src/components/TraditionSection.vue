@@ -534,12 +534,13 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <!-- press--light: the band is sand now, and the dark screen's 34% black
-       dots would print as polka dots on it (the press utility's own note). -->
+  <!-- NO `press`: the band is flat (owner's call — the dot screen read too
+       contrasty on the sand, and the answer was to drop it rather than tune
+       it again). The grain layer is global and unaffected. -->
   <section
     id="nevidno"
     ref="root"
-    class="trad press press--light"
+    class="trad"
     :class="{ 'trad--live': live, 'trad--edge': edge, 'trad--pre': pre }"
     :style="live ? { '--scan': String(scan) } : undefined"
   >
@@ -738,8 +739,8 @@ onUnmounted(() => {
   /* THE INK IS THE PALETTE'S BLACK, and it stays that way: a brown pass ran
      for one round (owner's call, then reversed). The band therefore adds NO
      ink re-pointing of its own — --grafit/--grafit-2 arrive from tokens.css
-     and read 9.96:1 / 6.45:1 on this sand, 8.34 / 5.40 under the worst press
-     dot, which is more headroom than the brown had. */
+     and read 11.56:1 / 7.48:1 flat on this sand (no dots to compose against
+     any more). */
   color: var(--grafit);
 }
 
@@ -813,11 +814,13 @@ onUnmounted(() => {
   inset: 0;
   z-index: 1;
   /* PAPER, because the owner asked for BLACK code letters and black needs a
-     light ground (on the old bronze it measured 1.37:1). The halves still
-     read as two SURFACES — paper source against the sand band — a quieter
-     step than the bronze era's 10.17:1, which is the owner's brightening
-     doing exactly what it asked for ("not so contrasty"). Being an opaque
-     child it covers the press screen, so it is measured flat. */
+     light ground (on the old bronze it measured 1.37:1).
+     THE TWO HALVES BARELY DIFFER AS SURFACES NOW — 1.19:1, where the bronze
+     era ran 10.17:1 — because the band walked to a hair under the page's own
+     paper across four brightening calls. That is the instruction followed,
+     not a defect, but it moves the whole burden of "two worlds" onto the BEAM
+     and the mono voice: if the split ever stops reading, this ratio is why,
+     and the source half's own value is the knob. */
   background: var(--color-paper);
   clip-path: inset(0 0 0 calc(var(--scan, 55) * 1%));
   overflow: hidden;
@@ -843,7 +846,7 @@ onUnmounted(() => {
    THE SEAM CUT DIED WITH THE BRONZE: --color-cut-seam was solved for a paper
    half against a dark band (3.19:1 both sides) and reads under 2:1 on the
    sand. With two LIGHT halves the one cut that clears both is the deep step —
-   --rez-deep, 5.03:1 on the sand and 7.01:1 on the paper source (3:1 UI
+   --rez-deep, 5.84:1 on the sand and 7.01:1 on the paper source (3:1 UI
    floor). The dial below wears the same ink for the same reason. No glow:
    depth is drawn. */
 .trad__beam {
@@ -884,13 +887,13 @@ onUnmounted(() => {
   /* The system's statement runs lh 0.9; caps with carons need a shade more
      air to keep ascenders clear of the line above. */
   line-height: 1.02;
-  color: var(--grafit); /* 9.96:1 on the sand */
+  color: var(--grafit); /* 11.56:1 on the sand */
   max-width: 26ch;
 }
 
 .trad__intro {
   margin-top: var(--space-6);
-  color: var(--grafit-2); /* 6.45:1 flat, 5.40:1 under the worst press dot */
+  color: var(--grafit-2); /* 7.48:1 on the sand */
   max-width: 54ch;
 }
 

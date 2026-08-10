@@ -144,28 +144,27 @@
   --color-bronze-2: #5a4530; /* insets on dark go LIGHTER, never darker */
   --color-bronze-line: #96784f; /* the dark world's hairline — line duty */
 
-  /* THE SAND — the band ground that replaced the two browns (owner: brighten
-     the dark-brown wallpaper, "beige or something in between"; then a second
-     step, "the dots have too much contrast — brighten the base a bit"). A
-     band light enough to read beige cannot carry the paper ink family (the
-     old bronze comment measured that cap), so the bands run the DARK inks —
-     re-pointed to the bronze browns inside the band components ("switch black
-     font to dark brown"), which closes a circle: the bands' ink is the brown
-     they used to be.
+  /* THE SAND — the band ground that replaced the two browns, walked to its
+     value over four owner calls: brighten the dark brown → "beige or
+     something in between" → the press dots read too contrasty, brighten the
+     base → and finally NO DOTS AT ALL, "same background as vsi paketi but
+     slightly darker". So the bands are flat now (the .press class is off
+     those three section elements) and this is a pure surface value.
 
-     The value is picked by two numbers, not taste. DOT-POP — the highlight
-     dot of the press--light screen against the base — read 1.39:1 on the
-     first sand #cdc2b2 (the reported "too much contrast"); this value brings
-     it to 1.29 while the page's own light bands sit at 1.12, so the band
-     still reads as a band. And every ink stays AA under the worst dot:
-       flat / worst-dot on this sand:
-       bronze-deep ink 8.27 / 6.92 · bronze-2 secondary 5.79 / 4.84
-       --rez-deep (beam+dial) 5.03 / 4.21 UI · --rez-na-pesku 6.33 / 5.30
-       --err-na-pesku 6.73 / 5.63 · --ok-na-pesku 6.48 / 5.42
-       --crta-na-temnem 2.64 line duty · paper on the ink chip 11.53
+     SLIGHTLY DARKER IS A MEASURED AMOUNT, because "slightly" is the whole
+     instruction: against the packages band (--color-paper-2 #ece8de) this
+     sits at 1.10:1, ~9.5% less luminance — a step you can see without the
+     band becoming a different surface. The sand it replaces stood at 1.27:1,
+     which is what read as a separate dark band. With the screen gone every
+     ink is measured FLAT, no dot composite, and the headroom is large:
+       ink 11.56 · ink-2 7.48 · --rez-deep (beam+dial) 5.84
+       --rez-na-pesku 7.34 · --err-na-pesku 7.81 · --ok-na-pesku 7.52
+       --crta-na-temnem 3.07 line duty · paper on the ink chip 13.88
+     Hairlines keep --crta-na-temnem rather than the light world's own rule:
+     --mreza-strong reads 1.68 here and would be no rule at all.
      Both sand bands (Tradicija, contact+footer) share this one value — they
      are not adjacent, so no seam needs a step between them. */
-  --color-sand: #d7cec0;
+  --color-sand: #e3ded1;
 
   /* THE CODE INK. The source half of Tradicija speaks in a different voice
      from the rendered half beside it, and that difference is the point: one

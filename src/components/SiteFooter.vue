@@ -8,9 +8,8 @@ const year = new Date().getFullYear()
 </script>
 
 <template>
-  <!-- press--light with the sand (see the press utility's own note on dark
-       dots over light grounds). -->
-  <footer class="footer press press--light">
+  <!-- NO `press`: flat band, with the contact block above it. -->
+  <footer class="footer">
     <div class="container">
       <!-- Colophon contract: every annotation here must stay mechanically
            verifiable against the shipped artifact (SSG output, no analytics,
@@ -57,7 +56,7 @@ const year = new Date().getFullYear()
 }
 
 /* The colophon's hairline, re-aimed for the sand: the light variant's
-   --mreza-strong reads 1.29:1 there where the bronze-line reads 2.02 — line
+   --mreza-strong reads 1.68:1 there where the bronze-line reads 3.07 — line
    duty, same warm family as every other rule on the band. */
 .footer :deep(.prerez) {
   --prerez-line: var(--crta-na-temnem);

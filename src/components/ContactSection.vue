@@ -194,14 +194,14 @@ onUnmounted(() => fx.dispose())
 </script>
 
 <template>
-  <!-- press--light: the dark screen's 34% black dots would print as polka
-       dots on the sand (the press utility's own note). -->
-  <section id="kontakt" class="contact press press--light">
+  <!-- NO `press`: the band is flat (owner's call — the dot screen read too
+       contrasty on the sand). The global grain layer is unaffected. -->
+  <section id="kontakt" class="contact">
     <div class="container">
       <header class="contact__head">
         <!-- Plain kicker: the band is sand now, the on-dark variant read
-           1.55:1 on it (caught by the ink sweep). -->
-      <p class="kicker">{{ contact.kicker }}</p>
+             1.55:1 on it (caught by the ink sweep). -->
+        <p class="kicker">{{ contact.kicker }}</p>
         <h2 class="contact__title">{{ contact.title }}</h2>
         <p class="contact__lead">{{ contact.intro }}</p>
         <p class="contact__mail">
@@ -394,8 +394,8 @@ onUnmounted(() => fx.dispose())
      below flipped to the dark family, and the on-dark accent/status voices to
      their sand-tuned twins (--*-na-pesku). The dark family is the palette's
      BLACK: a brown pass ran for one round and was reversed, so this band adds
-     no ink re-pointing of its own — 9.96:1 / 6.45:1 flat, 8.34 / 5.40 under
-     the worst press dot, paper on the ink chip 13.88:1. */
+     no ink re-pointing of its own — 11.56:1 / 7.48:1 on the flat band (no
+     screen to compose against any more), paper on the ink chip 13.88:1. */
   color: var(--grafit);
   padding-block: var(--section-block) clamp(3rem, 2.5rem + 3vw, 5rem);
 }
@@ -715,14 +715,14 @@ onUnmounted(() => fx.dispose())
 }
 
 .form__status--success {
-  /* The sand-tuned status pair — measured against the band AND its press
-     dots (the sand table in tokens.css): success 5.42:1 worst case, error
-     5.63:1. The on-dark pair they replace read 1.4–2.1:1 here. */
+  /* The sand-tuned status pair (the sand table in tokens.css): success
+     7.52:1, error 7.81:1 on the flat band. The on-dark pair they replace
+     read 1.4–2.1:1 here. */
   color: var(--ok-na-pesku);
 }
 
 .form__status--error {
-  color: var(--err-na-pesku); /* 5.63:1 worst case — see the success rule */
+  color: var(--err-na-pesku); /* 7.81:1 — see the success rule */
 }
 
 .form__glyph {
