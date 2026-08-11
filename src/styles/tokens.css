@@ -100,12 +100,8 @@
   --color-ink-2: #424242; /* secondary ink on light; statement ghost on dark */
   --color-grey: #9e9e9e; /* dividers both themes — does NOT flip; never text on paper */
   --color-grey-light: #e0e0e0; /* neutral light grey (chips, on-dark text where warmth is wrong) */
-  --color-chip-idle: var(--color-ink-2); /* chip idle text — on the sand form
-     ground now: the old #999999 read 1.39:1 there, the secondary ink 4.81
-     under the worst press dot */
-  --color-input-line: #767676; /* form input rule (2px) — the DIM state by
-     design (focus/filled snap to full ink); 2.22:1 on sand vs the 2.84 it
-     read on the old dark ground, same designed sub-threshold idleness */
+  --color-chip-idle: #999999; /* budget chip idle text on dark form */
+  --color-input-line: #767676; /* form input rule (2px) */
 
   /* ------------------------------------------------------------------------
      THE BRONZE GROUNDS (avgust 2026, owner's call). The dark half is no
@@ -113,58 +109,58 @@
      Only the GROUNDS moved — every ink is untouched, and --grafit stays the
      paper world's text ink rather than becoming a ground with it.
 
-     HOW LIGHT THEY COULD GO WAS MEASURED, NOT CHOSEN. The binding surface is
-     not the flat colour: the press screen lays an 11% paper highlight on
-     every dot, so the worst case for any text is the ground UNDER A HIGHLIGHT
-     DOT (the same discipline the screen's own tuning used). Composited that
-     way, and against the inks that actually sit on each band:
+     HOW LIGHT THEY COULD GO WAS MEASURED, NOT CHOSEN, and that method is the
+     durable part of this note: the binding surface is not the flat colour,
+     because the press screen lays an 11% paper highlight on every dot, so the
+     worst case for any text is the ground UNDER A HIGHLIGHT DOT (the same
+     discipline the screen's own tuning used). Every figure below and in the
+     paler block that follows is composited that way.
 
-       bronze-deep #402e20 → #544436 under a dot
-         paper 8.36  secondary 5.58  bone 7.13  ok 4.85  err 4.62
-         The closing band and the page canvas. It is the DARKEST step because
-         it is the only ground carrying the form's status inks, and those
-         break first: one step lighter (#463322) drops err to 4.30.
-       bronze #4a3626 → #5d4b3c under a dot
-         paper 7.44  secondary 4.97  bone 6.34
-         The band ground for Kje se ločimo. No status ink lives here, so it
-         can run lighter; secondary text is what caps it (#52402c → 4.37).
-       bronze-2 #5a4530  paper 8.07  secondary 5.39
-         Insets. Measured FLAT on purpose: the screen is a background-image on
-         the section, so any child painting its own fill covers it and never
-         sees the highlight.
-       bronze-line #96784f  2.76:1 against --bronze — line duty, never text.
+     The two bands are capped by DIFFERENT inks, which is why they are two
+     values and not one: the closing band carries the form's status inks and
+     they break before anything else, while Tradicija carries the beam, which
+     has to clear the paper source half as well. Both caps are still true at
+     the paler step — see the block immediately below for the current values;
+     the roles are:
+       bronze-deep  closing band + page canvas — capped by err/ok
+       bronze       Tradicija's band — capped by the beam
+       bronze-2     insets. Measured FLAT on purpose: the screen is a
+                    background-image on the section, so any child painting its
+                    own fill covers it and never sees the highlight.
+       bronze-line  line duty, never text.
 
      The whole ladder is compressed compared with a free hand, and that is the
      screen's price: it costs roughly a third of the available headroom. If
      the bands ever need to be lighter than this, --press-hi is the knob to
      move first, not these values.
      ---------------------------------------------------------------------- */
-  --color-bronze-deep: #402e20; /* closing band, dark canvas, the machine band */
-  --color-bronze: #4a3626; /* the dark band ground */
-  --color-bronze-2: #5a4530; /* insets on dark go LIGHTER, never darker */
+  /* THE BANDS, A STEP PALER (owner: "return to the original brown textured
+     background, but just slightly paler" — the sand experiment is over and
+     the browns are back, screen and all). HOW MUCH paler is not a taste
+     pick: each band is capped by a different ink, and both caps were already
+     written down here before this change.
+
+     TRADICIJA +11%. Its cap is THE BEAM, which straddles the bronze band and
+     the paper source half and must clear 3:1 against both. --color-cut-seam
+     was solved as "the centre of the only window that passes" (see it below)
+     and paling the band closes that window: at +11% it still reads 3.03 on
+     the band and 3.20 on the paper, at +18% it falls to 2.94, and past +23%
+     NO warm red clears both — the search returns a teal, which the one-red
+     rule forbids. So the beam decides, and the seam colour never moves.
+
+     CLOSING +6%. Its cap is the status pair, exactly as the note below this
+     one predicted ("they break before any other ink does"): error 4.525:1
+     under a press highlight dot at this step, 4.488 one step further. Both
+     bands therefore keep EVERY ink at its original value — nothing was
+     re-tuned to buy the paleness. Measured after the change, worst-dot:
+       paper 7.11 / 8.19 · --papir-dim 4.75 / 5.47 (AA)
+       --ok-na-temnem 4.75 · --err-na-temnem 4.53 (AA, closing)
+       beam 3.03 band / 3.20 paper (UI floor) */
+  --color-bronze-deep: #432f21; /* closing band, dark canvas, the machine band */
+  --color-bronze: #4e3928; /* the dark band ground */
+  --color-bronze-2: #5e4934; /* insets on dark go LIGHTER, never darker */
   --color-bronze-line: #96784f; /* the dark world's hairline — line duty */
 
-  /* THE SAND — the band ground that replaced the two browns, walked to its
-     value over four owner calls: brighten the dark brown → "beige or
-     something in between" → the press dots read too contrasty, brighten the
-     base → and finally NO DOTS AT ALL, "same background as vsi paketi but
-     slightly darker". So the bands are flat now (the .press class is off
-     those three section elements) and this is a pure surface value.
-
-     SLIGHTLY DARKER IS A MEASURED AMOUNT, because "slightly" is the whole
-     instruction: against the packages band (--color-paper-2 #ece8de) this
-     sits at 1.10:1, ~9.5% less luminance — a step you can see without the
-     band becoming a different surface. The sand it replaces stood at 1.27:1,
-     which is what read as a separate dark band. With the screen gone every
-     ink is measured FLAT, no dot composite, and the headroom is large:
-       ink 11.56 · ink-2 7.48 · --rez-deep (beam+dial) 5.84
-       --rez-na-pesku 7.34 · --err-na-pesku 7.81 · --ok-na-pesku 7.52
-       --crta-na-temnem 3.07 line duty · paper on the ink chip 13.88
-     Hairlines keep --crta-na-temnem rather than the light world's own rule:
-     --mreza-strong reads 1.68 here and would be no rule at all.
-     Both sand bands (Tradicija, contact+footer) share this one value — they
-     are not adjacent, so no seam needs a step between them. */
-  --color-sand: #e3ded1;
 
   /* THE CODE INK. The source half of Tradicija speaks in a different voice
      from the rendered half beside it, and that difference is the point: one
@@ -372,15 +368,13 @@
 /* THE CANVAS TAKES THE BAND'S OWN COLOUR, and only the colour. It is what
    shows in overscroll, behind the sections, and on the prerendered page
    before anything paints over it, so it matches the band the flip belongs to
-   (Tradicija) — which is SAND now, not bronze: the flip survives the bands'
-   brightening because its job was never "go dark", it was "match the band
-   behind you", and both sand bands share one value. The press screen
-   deliberately does NOT come with it: the screen is a per-section
-   background-image, and a screened canvas would tile dots through overscroll
-   and behind every gap. */
+   (Tradicija) rather than the closing band — otherwise the seam between the
+   two is visible wherever the canvas shows. The press screen deliberately
+   does NOT come with it: the screen is a per-section background-image, and a
+   screened canvas would tile dots through overscroll and behind every gap. */
 :root[data-ground='dark'] {
-  --surface: var(--color-sand);
-  --surface-soft: var(--color-sand);
+  --surface: var(--color-bronze);
+  --surface-soft: var(--color-bronze);
 }
 
 /* Reference breakpoints as measured in the served CSS: base ≥1200,
@@ -486,21 +480,8 @@
   --rez-deep: var(--color-cut-deep); /* pressed/hover step */
   --rez-na-temnem: var(--color-cut-dark); /* accent + focus voice on dark */
   --rez-vodni: #f4eae6; /* quiet wash ground; ink on it 13.5:1 */
-  --zemlja: var(--color-sand); /* contact + footer ground — the closing band
-     wears the sand now (owner's brightening); the name stays because five
-     files speak it */
-  --zemlja-2: #e5ded3; /* insets on it go lighter — one step toward paper */
-
-  /* THE SAND BANDS' OWN VOICES — the on-dark trio above cannot follow the
-     ground down: on sand, --rez-na-temnem reads 1.9:1 and the old status
-     pair 1.4–2.1:1. Same jobs, re-measured (values in the --color-sand
-     table): accent text + focus 4.71:1 worst-dot, both statuses ≥4.5 there.
-     Darkened relatives of the existing hues, never new ones — the accent is
-     the cut's own family, the statuses keep rust-and-green. */
-  --rez-na-pesku: #7a2717; /* accent text + focus voice on the sand bands */
-  --err-na-pesku: #6e2a12; /* form error on sand — separate from the accent,
-     the "rez is never a status colour" rule */
-  --ok-na-pesku: #1f4a30; /* form success on sand */
+  --zemlja: var(--color-bronze-deep); /* contact + footer ground */
+  --zemlja-2: var(--color-bronze); /* insets on it go lighter */
   --ok-na-temnem: #8fc7a6; /* form success on dark — functional, kept until the
      contact redesign authors the new form states (the reference has none) */
   --err-na-temnem: #f0a48a; /* form error on dark — same */

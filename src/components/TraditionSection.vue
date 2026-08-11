@@ -1,26 +1,24 @@
 <script setup lang="ts">
 /**
  * Spletna pod površino — the section that shows its own source. THE WHOLE
- * SECTION is the screen: no frame, no inset panel, one sand field running the
+ * SECTION is the screen: no frame, no inset panel, one dark field running the
  * full bleed, split by a vertical red beam. LEFT of the beam the rendered
  * page, RIGHT of it the source a crawler receives (mono). One number drives
  * both clips, the beam and the dial: --scan (0 = all source, 100 = rendered).
  *
- * THIS SECTION IS WHERE THE PAGE STEPS OFF THE PAPER — onto the sand, since
- * the owner brightened the two brown bands (--color-sand in tokens.css holds
- * the arithmetic). The band still ARRIVES BY FADING: its ground tweens
- * transparent → sand over --dur-ground with the measured ease, and its content
- * fades in behind that (the reference's own mechanism — the ground
- * interpolates, the text arrives on an opacity ramp). The page canvas steps
- * with it (src/lib/ground.ts flips [data-ground] at the same moment, and the
- * flipped canvas value is this same sand), so there is never a seam around or
- * under the band.
+ * THIS SECTION IS WHERE THE PAGE TURNS DARK, and it turns dark by FADING: the
+ * section's own ground tweens transparent → black over --dur-ground with the
+ * measured ease, and its content fades in behind that (the reference's own
+ * mechanism — the ground interpolates, the text arrives on an opacity ramp).
+ * The page canvas darkens with it (src/lib/ground.ts flips [data-ground] at the
+ * same moment), so there is never a paper seam around or under the band.
  *
- * The earlier versions each taught this section something: the white inset
- * panel died because its inks rode the page tween through mid-grey; the
- * bronze era carried paper inks the sand cannot (every ink here is now the
- * dark family, measured in the sand table); the fade stays one-shot and the
- * content is simply absent until the ground is there.
+ * The earlier version framed a white panel inside the section, so the flip
+ * darkened only the margins AROUND a box that stayed paper — and its inks
+ * rode the page tween, which crosses mid-grey and needed a colour snap to stay
+ * legible. Both are gone: the section carries dark-world inks throughout, the
+ * ground fade is one-shot (it never reverses under settled dark-on-dark type),
+ * and the content is simply absent until the ground is dark.
  *
  * THE SWEEP. The section arrives as raw source and stays there for
  * SWEEP_HOLD_MS of continuous visibility — leaving disarms it — then ONE
@@ -37,7 +35,7 @@
  * Real tablist semantics; with JS off the sheets are an inert drawing at rest
  * and all four callouts stand open in flow, so nobody meets a dead control.
  *
- * REST STATE (stylesheet, no JS, reduced motion): the ground is the sand, the
+ * REST STATE (stylesheet, no JS, reduced motion): the ground is dark, the
  * content is present, --scan falls back to 55 — the composed split where both
  * worlds are legible and the dial is fully operable. A crawler reads the
  * rendered layer as ordinary HTML; the source layer is its aria-hidden mono
@@ -534,13 +532,10 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <!-- NO `press`: the band is flat (owner's call — the dot screen read too
-       contrasty on the sand, and the answer was to drop it rather than tune
-       it again). The grain layer is global and unaffected. -->
   <section
     id="nevidno"
     ref="root"
-    class="trad"
+    class="trad press"
     :class="{ 'trad--live': live, 'trad--edge': edge, 'trad--pre': pre }"
     :style="live ? { '--scan': String(scan) } : undefined"
   >
@@ -575,9 +570,7 @@ onUnmounted(() => {
          as the title does. -->
     <div class="container trad__world trad__world--lead">
       <header class="trad__head">
-        <!-- Plain kicker: the band is sand now, the on-dark variant left with
-             the bronze. -->
-        <p class="kicker">{{ invisible.kicker }}</p>
+        <p class="kicker kicker--on-dark">{{ invisible.kicker }}</p>
         <h2 class="trad__title">{{ invisible.title }}</h2>
       </header>
 
@@ -729,19 +722,14 @@ onUnmounted(() => {
      the beam runs the full height. */
   overflow: hidden;
   padding-block: var(--space-16);
-  /* THE SAND (owner: brighten the dark-brown wallpaper, "beige or something
-     in between"). The bronze this replaces was capped by its own paper inks;
-     the sand is capped by the dark ones it flips to — the derivation and the
-     full measured table live with --color-sand in tokens.css. The page canvas
-     flips to this same value so the two never show a seam. */
-  background-color: var(--color-sand);
+  /* The band runs one step brighter than the closing band, and the page
+     canvas is set to this same value (tokens.css) so the two never show a
+     seam. Under a press-screen highlight dot — the worst case on a screened
+     ground — paper 7.40:1, secondary 4.94:1, bone 6.31:1. That secondary
+     figure is what caps it: the next step up (#52402c) falls to 4.37. */
+  background-color: var(--color-bronze);
   transition: background-color var(--dur-ground) var(--ease-ground);
-  /* THE INK IS THE PALETTE'S BLACK, and it stays that way: a brown pass ran
-     for one round (owner's call, then reversed). The band therefore adds NO
-     ink re-pointing of its own — --grafit/--grafit-2 arrive from tokens.css
-     and read 11.56:1 / 7.48:1 flat on this sand (no dots to compose against
-     any more). */
-  color: var(--grafit);
+  color: var(--color-paper); /* 18.8:1 on the settled ground */
 }
 
 .trad--pre {
@@ -785,8 +773,8 @@ onUnmounted(() => {
   margin-bottom: var(--space-10);
 }
 
-/* No colour snap, no flip: the section carries one ground throughout, so the
-   title is ink throughout and simply is not there until the ground is. */
+/* No colour snap, no flip: the section carries its own dark world, so the
+   title is paper throughout and simply is not there until the ground is. */
 .trad__title {
   margin-top: var(--space-4);
   font-size: var(--type-display-l-size);
@@ -794,7 +782,7 @@ onUnmounted(() => {
   line-height: var(--type-display-l-lh);
   letter-spacing: var(--type-display-l-ls);
   text-transform: uppercase;
-  color: var(--grafit);
+  color: var(--color-paper);
   overflow-wrap: anywhere;
 }
 
@@ -814,13 +802,11 @@ onUnmounted(() => {
   inset: 0;
   z-index: 1;
   /* PAPER, because the owner asked for BLACK code letters and black needs a
-     light ground (on the old bronze it measured 1.37:1).
-     THE TWO HALVES BARELY DIFFER AS SURFACES NOW — 1.19:1, where the bronze
-     era ran 10.17:1 — because the band walked to a hair under the page's own
-     paper across four brightening calls. That is the instruction followed,
-     not a defect, but it moves the whole burden of "two worlds" onto the BEAM
-     and the mono voice: if the split ever stops reading, this ratio is why,
-     and the source half's own value is the knob. */
+     light ground (on the old bronze it measured 1.37:1). The halves no longer
+     differ by two brightnesses of one surface — the failing the previous
+     values were tuned against — but by being two SURFACES: paper source
+     against bronze band, 10.17:1 apart. Being an opaque child it covers the
+     press screen, so it is measured flat. */
   background: var(--color-paper);
   clip-path: inset(0 0 0 calc(var(--scan, 55) * 1%));
   overflow: hidden;
@@ -842,13 +828,11 @@ onUnmounted(() => {
   overflow-wrap: anywhere;
 }
 
-/* The beam: 2px, standing on the seam and running the band's full height.
-   THE SEAM CUT DIED WITH THE BRONZE: --color-cut-seam was solved for a paper
-   half against a dark band (3.19:1 both sides) and reads under 2:1 on the
-   sand. With two LIGHT halves the one cut that clears both is the deep step —
-   --rez-deep, 5.84:1 on the sand and 7.01:1 on the paper source (3:1 UI
-   floor). The dial below wears the same ink for the same reason. No glow:
-   depth is drawn. */
+/* The beam: 2px, standing on the seam and running the band's full height. Its
+   own cut (--color-cut-seam) because the halves it divides are now a PAPER
+   source and a bronze band, and it must clear the 3:1 UI floor against both —
+   3.19:1 either side, where the on-dark cut managed only 2.93 on paper. No
+   glow: depth is drawn. */
 .trad__beam {
   position: absolute;
   z-index: 3;
@@ -857,7 +841,7 @@ onUnmounted(() => {
   left: calc(var(--scan, 55) * 1%);
   width: 2px;
   margin-left: -1px;
-  background: var(--rez-deep);
+  background: var(--color-cut-seam);
 }
 
 /* No split, no beam (fully source / fully rendered). Its own transition, so
@@ -887,36 +871,33 @@ onUnmounted(() => {
   /* The system's statement runs lh 0.9; caps with carons need a shade more
      air to keep ascenders clear of the line above. */
   line-height: 1.02;
-  color: var(--grafit); /* 11.56:1 on the sand */
+  color: var(--color-paper); /* 18.8:1 */
   max-width: 26ch;
 }
 
 .trad__intro {
   margin-top: var(--space-6);
-  color: var(--grafit-2); /* 7.48:1 on the sand */
+  color: var(--papir-dim); /* 12.5:1 on the band's ground */
   max-width: 54ch;
 }
 
 .trad__outro {
   margin-top: var(--space-6);
   padding-top: var(--space-6);
-  /* The bronze-line hairline STAYS on the sand: line duty (2.02:1 there),
-     same warm family, where the light world's --mreza-strong fades to 1.29. */
   border-top: var(--divider-width) solid var(--crta-na-temnem);
-  color: var(--grafit);
+  color: var(--color-paper);
   font-weight: 500;
   max-width: 54ch;
 }
 
 /* --- the strata (the interactive layer) -------------------------------------
-   A section through the build-up: four BRIGHT sheets lying on the band's sand
-   ground (the artwork inverted one round, the band brightened the next —
-   both owner calls, and they agree: light sheets on a light band, parted by
-   their paper tabs and ink marks). Everything ON a sheet is ink; the band's
-   own text is ink too now, so the old sheet/band ink split is gone and the
-   one rule is simply the measured table in tokens.css. Unequal thicknesses
-   are the point — a membrane is thin, a substrate is thick; equal slabs would
-   read as a bar chart.
+   A section through the build-up: four BRIGHT sheets lying on the band's dark
+   ground (owner's call — the artwork was inverted, see the pipeline header).
+   Everything ON a sheet is therefore ink and everything on the BAND stays
+   paper, which is the one rule to apply when touching this block; the two got
+   swapped once already, in the other direction, when the sheets were black.
+   Unequal thicknesses are the point — a membrane is thin, a substrate is
+   thick; equal slabs would read as a bar chart.
 
    Probing is signalled the way a section drawing signals it — and never by
    tone alone: the CUT PLANES appear at the layer's two interfaces with square
@@ -1220,14 +1201,14 @@ button.asm__band {
   line-height: var(--type-display-l-lh);
   letter-spacing: var(--type-display-l-ls);
   text-transform: uppercase;
-  color: var(--grafit);
+  color: var(--color-paper);
   padding-bottom: var(--space-3);
   border-bottom: var(--divider-width) solid var(--crta-na-temnem);
 }
 
 .asm__detail {
   margin-top: var(--space-4);
-  color: var(--grafit-2);
+  color: var(--papir-dim);
   font-size: 1.0625rem;
   line-height: 1.5;
   max-width: 38ch;
@@ -1241,15 +1222,27 @@ button.asm__band {
    the page above and dissolve with it; the input's aria-label carries the
    full instruction).
 
-   ONE INK AGAIN, AND IT IS THE BEAM'S. The track ran a two-colour split for
-   two rounds — paper over the bronze half, the seam's cut over the paper half,
-   split at the seam — and that device DIED WITH ITS GROUNDS when the band
-   brightened to sand: paper-on-sand is invisible along half the track's
-   length, and the seam cut reads 1.71:1 there. With two LIGHT halves the one
-   ink that clears both is --rez-deep (4.46:1 sand / 7.01:1 paper — same
-   arithmetic, one colour), which is also the beam's ink now, so the control
-   and the line it drives speak one voice. The seam-coordinate gradient went
-   with the split; the beam alone marks where the seam stands. */
+   THE TRACK WEARS EACH GROUND'S OPPOSITE (owner's call): paper over the
+   bronze half, the seam's cut over the paper source half, split AT THE SEAM
+   and moving with it as the hand slides. One gradient with a hard stop does
+   it, and the stop is the seam's own x expressed in the track's coordinates:
+
+     seam in the page:   var(--scan) * 1vw
+     track's left edge:  max(var(--gutter), (100vw − var(--container)) / 2)
+                         — the container's inset formula, since the dial hugs
+                         the container's left edge (62ch, no centring)
+
+   Both derive from the same --scan the beam and the clips read, so the split
+   cannot disagree with the seam (the only drift is a classic desktop
+   scrollbar's width inside 100vw, ~8px at mid-scan; phones have none). Stops
+   past either end clamp, so fully-source is all cut and fully-rendered all
+   paper — each half always wearing its opposite.
+
+   Contrast is the same arithmetic as before, now per side instead of one ink
+   for both: paper on the bronze half 10.17:1, the cut on the paper half 3.20:1
+   — both clear the 3:1 UI floor with the split guaranteeing each colour only
+   ever sits on its own ground. The THUMB stays the seam's cut on both: it
+   rides the boundary itself, and 3.20 / 3.18 is measured against each. */
 .trad__chrome {
   position: relative;
   z-index: 4;
@@ -1260,7 +1253,7 @@ button.asm__band {
 /* The instruction, set as the intro is: the paragraph the dial belongs to. */
 .trad__lead {
   margin-top: var(--space-6);
-  color: var(--grafit-2);
+  color: var(--papir-dim);
   max-width: 62ch;
 }
 
@@ -1287,7 +1280,7 @@ button.asm__band {
   font-size: var(--type-data-size);
   letter-spacing: var(--type-data-ls);
   text-transform: uppercase;
-  color: var(--grafit-2);
+  color: var(--papir-dim);
   white-space: nowrap;
 }
 
@@ -1314,12 +1307,18 @@ button.asm__band {
      if a handler kills the touch first. */
   touch-action: pan-y;
 }
-/* One ink again — see ONE INK AGAIN, AND IT IS THE BEAM'S above. Stated once
-   per engine because range pseudo-elements cannot share a selector: a browser
-   drops the whole rule when it meets the other engine's pseudo. */
+/* The split track — see THE TRACK WEARS EACH GROUND'S OPPOSITE above. The
+   identical gradient is stated once per engine because range pseudo-elements
+   cannot share a selector: a browser drops the whole rule when it meets the
+   other engine's pseudo. Change one, change all three (both tracks + ghost). */
 .trad__grip::-webkit-slider-runnable-track {
   height: 2px;
-  background: var(--rez-deep);
+  background: linear-gradient(
+    90deg,
+    var(--color-paper)
+      calc(var(--scan, 55) * 1vw - max(var(--gutter), (100vw - var(--container)) / 2)),
+    var(--color-cut-seam) 0
+  );
 }
 .trad__grip::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -1328,34 +1327,47 @@ button.asm__band {
   margin-top: -9px;
   border: 0;
   border-radius: 0;
-  background: var(--rez-deep);
+  background: var(--color-cut-seam);
 }
 .trad__grip::-moz-range-track {
   height: 2px;
-  background: var(--rez-deep);
+  background: linear-gradient(
+    90deg,
+    var(--color-paper)
+      calc(var(--scan, 55) * 1vw - max(var(--gutter), (100vw - var(--container)) / 2)),
+    var(--color-cut-seam) 0
+  );
 }
 .trad__grip::-moz-range-thumb {
   width: 20px;
   height: 20px;
   border: 0;
   border-radius: 0;
-  background: var(--rez-deep);
+  background: var(--color-cut-seam);
 }
 .trad__grip:focus-visible {
-  outline: 2px solid var(--rez-deep);
+  outline: 2px solid var(--color-cut-seam);
   outline-offset: 4px;
 }
 
 /* JS-OFF AND FIRST PAINT: the ghost DRAWS the resting control instead of just
    reserving its height, so the slider arrives with the rest of the page as
-   pure HTML — the deep-cut track with the thumb standing at the stylesheet's
-   rest (55). The live input replaces it in place at hydration. */
+   pure HTML — the SAME split track as the live input (at the 55 rest the
+   fallback resolves to), thumb standing at the rest. The live input replaces
+   it in place at hydration, colours already agreeing. */
 .trad__grip-ghost {
   display: block;
   height: 44px;
   background:
-    linear-gradient(var(--rez-deep), var(--rez-deep)) 55% 50% / 20px 20px no-repeat,
-    linear-gradient(var(--rez-deep), var(--rez-deep)) 0 50% / 100% 2px no-repeat;
+    linear-gradient(var(--color-cut-seam), var(--color-cut-seam)) 55% 50% / 20px 20px
+      no-repeat,
+    linear-gradient(
+        90deg,
+        var(--color-paper)
+          calc(var(--scan, 55) * 1vw - max(var(--gutter), (100vw - var(--container)) / 2)),
+        var(--color-cut-seam) 0
+      )
+      0 50% / 100% 2px no-repeat;
 }
 
 /* --- the statement band's own asymmetry --------------------------------------
@@ -1400,10 +1412,10 @@ button.asm__band {
   }
 
   /* Phones lose the leader, so the link between a stratum and its callout is
-     proximity plus this rule — ink now: a paper rule on the sand band is an
-     invisible one (the no-orange rule for this drawing still holds). */
+     proximity plus this rule — paper, like every other line in the drawing
+     (the orange left with the rest of them). */
   .asm__panels {
-    border-top: 2px solid var(--grafit);
+    border-top: 2px solid var(--color-paper);
     padding-top: var(--space-4);
   }
 }
