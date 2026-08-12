@@ -215,7 +215,10 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section id="reference" class="wkr press press--light">
+  <!-- NO `press`: the screen belongs to the FIRST of the two paper-2 slots,
+       and this section moved to the second one (owner: swap the sections,
+       leave the backgrounds where they are). PillarsSection carries it now. -->
+  <section id="reference" class="wkr">
     <div class="container">
       <header class="wkr__head">
         <p class="wkr__kicker">{{ references.kicker }}</p>

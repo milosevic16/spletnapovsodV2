@@ -283,7 +283,16 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section id="paketi" ref="host" class="pil" :class="{ 'pil--live': live }" @keydown="onSectionKeys">
+  <!-- `press press--light`: this section took the first of the two paper-2
+       slots, and the screen stays with the slot (owner: swap the sections,
+       leave the backgrounds where they are). It came from WorkCarousel. -->
+  <section
+    id="paketi"
+    ref="host"
+    class="pil press press--light"
+    :class="{ 'pil--live': live }"
+    @keydown="onSectionKeys"
+  >
     <div class="container">
       <header class="pil__head">
         <p class="pil__kicker">{{ pillars.kicker }}</p>
@@ -493,7 +502,12 @@ onUnmounted(() => {
 
 <style scoped>
 .pil {
-  background: var(--list-2);
+  /* background-COLOR, never the shorthand. The shorthand resets
+     background-image, and this scoped rule outranks the .press utility that
+     supplies the screen — the texture would simply not appear. This section
+     took the screen over from WorkCarousel, whose own rule carries the same
+     warning for the same reason. */
+  background-color: var(--list-2);
   padding-block: var(--section-block);
 }
 
