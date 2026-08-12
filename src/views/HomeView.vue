@@ -73,18 +73,13 @@ useHead({
   <SiteMasthead />
   <main id="main">
     <StatementSection />
-    <!-- Owner's order: what a package contains, then the proof (work), then
-         the invisible-work band that argues for it.
-
-         THE GROUNDS DID NOT COME WITH THE SWAP (owner's call: "leave
-         backgrounds as they are now"). Both bands are --list-2, so the only
-         thing that actually distinguished the two slots was the press screen,
-         and it STAYED in the first slot — it moved from WorkCarousel's section
-         element to PillarsSection's. Read the two components together before
-         moving either again: the screen belongs to the position, not to the
-         section. -->
-    <PillarsSection />
+    <!-- Owner's order: the proof (work), then what a package contains, then
+         the invisible-work band that argues for it. Each section keeps its OWN
+         ground through the Paketi/Kaj-dobite swap — Paketi stays paper-2, Kaj
+         dobite stays graphite — so the bands read
+         pigment → paper-2 → graphite → paper → earth. -->
     <WorkCarousel />
+    <PillarsSection />
     <TraditionSection />
     <DifferentiatorsSection />
     <ContactSection />

@@ -76,14 +76,11 @@ export interface ContactTopic {
 }
 
 export const nav: NavItem[] = [
-  // ORDER FOLLOWS THE PAGE. These two swapped when the sections did — a jump
-  // menu that lists its targets out of order sends people backwards. No label
-  // or anchor changed, only the order.
+  { target: 'reference', label: 'Reference' },
   // »Paketi« for the narrow four-button strip — matches the section's own
   // »Kaj vsebujejo vsi paketi?« and the anchor id. (Was »Kaj vključuje
   // storitev«, which cannot fit a one-row strip on a 320px phone.)
   { target: 'paketi', label: 'Paketi' },
-  { target: 'reference', label: 'Reference' },
   { target: 'razlike', label: 'Zakaj mi' },
   { target: 'kontakt', label: 'Kontakt' },
 ]
