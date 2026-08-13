@@ -37,14 +37,35 @@ function onDocumentClick(e: MouseEvent) {
   router.push(url.pathname + url.search + url.hash)
 }
 
-/** The veil (index.html) is a pure-CSS timed sequence that finishes on its
- *  own; this only removes the spent node and clears the `data-intro` flag that
- *  scopes the page's arrival settle. Timing = the CSS timeline's end (veil
- *  hidden at 3.45s) + the longest settle delay (2.8s + 0.55s) + slack — never
- *  load-bearing, and clearing the flag is what keeps the settle from
- *  replaying on SPA navigation back to the home route. */
-const VEIL_CLEANUP_MS = 4100
+/** THE VEIL AND THE SETTLES RUN ON THE DOCUMENT'S ANIMATION TIMELINE; this
+ *  cleanup must too, and running it on the wall clock instead was a live
+ *  production bug. The animation timeline pauses whenever the page is not
+ *  rendering (a load in a background tab, a paused renderer) and restarts for
+ *  any node hydration re-creates — while a setTimeout keeps counting real
+ *  time. Any skew between the two clocks let the old timer clear things
+ *  mid-choreography, and on the real domain the observed shape was: veil
+ *  finished and gone, the settle-gated text still held transparent by its
+ *  own `both` fill for up to ~3s of visible, text-less page.
+ *
+ *  So the flag now dies WITH the veil, on the veil's own clock: the
+ *  `veil-done` animationend is the one moment that, by construction, means
+ *  "the veil has just finished covering the page" — clearing `data-intro`
+ *  there cancels any settle animation still waiting, whose resting state is
+ *  visible. The gate fails OPEN. The wall-clock timer remains only as a
+ *  safety net for paths where the event can never fire (reduced motion sets
+ *  `display: none` on the veil, so nothing animates — and nothing settles
+ *  either, the settle block being gated on no-preference), sized far past
+ *  any honest timeline. */
+const VEIL_NET_MS = 12000
 let veilTimer = 0
+let veilCleaned = false
+
+function cleanupVeil() {
+  if (veilCleaned) return
+  veilCleaned = true
+  document.getElementById('veil')?.remove()
+  delete document.documentElement.dataset.intro
+}
 
 /** The page-wide light→dark ground switch (src/lib/ground.ts). Lives here for
  *  the app's lifetime; refreshed on route commit because a navigation does
@@ -56,10 +77,12 @@ onMounted(() => {
   document.addEventListener('click', onDocumentClick)
   ground = wireGround()
   removeGroundHook = router.afterEach(() => ground?.refresh())
-  veilTimer = window.setTimeout(() => {
-    document.getElementById('veil')?.remove()
-    delete document.documentElement.dataset.intro
-  }, VEIL_CLEANUP_MS)
+  const veil = document.getElementById('veil')
+  // The end of `veil-done` IS the veil's end — same element, same timeline.
+  veil?.addEventListener('animationend', (e) => {
+    if (e.animationName === 'veil-done') cleanupVeil()
+  })
+  veilTimer = window.setTimeout(cleanupVeil, VEIL_NET_MS)
 })
 onUnmounted(() => {
   document.removeEventListener('click', onDocumentClick)
