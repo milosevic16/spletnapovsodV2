@@ -4,7 +4,8 @@
 created when a task first needs them, in the shape described — not preemptively.
 
 One-page marketing site for the SpletnaPovsod web agency. Slovenian only (locale union
-widens additively if EN ever lands). No prices shown. Structure source: owner's document
+widens additively if EN ever lands). Prices appear on /apartmaji only, and nowhere on the
+home page. Structure source: owner's document
 "spletna struktura" (avgust 2026). **Redesigned August 2026 to the REZ 1:1 system** —
 selection process, losing concepts and scores in `docs/redesign-rationale.md`.
 
@@ -144,7 +145,8 @@ enter — sourced and dated.
 
 ## Content
 
-ALL copy lives in `src/content/home.ts` (typed). Components render; content owns strings.
+ALL copy lives in typed content modules: `src/content/home.ts` for the one-pager and
+`src/content/apartmaji.ts` for the /apartmaji subpage. Components render; content owns strings.
 Machine identifiers (form topic values, DOM ids, subject keys, chamber/fact ids) stay
 English. Interaction-only strings live under `feedback` — the content guard skips those
 by contract. **Copy status: DRAFT — needs owner sign-off before launch**, including the
@@ -217,6 +219,38 @@ Netlify free plan + private repo: **no Co-Authored-By trailers in commits**.
 - Form changes: submit for real once the Web3Forms key exists; verify honeypot + <2s reject.
 - Console free of new errors; no horizontal overflow at 1440/375/320.
 
+## The /apartmaji subpage (avgust 2026)
+
+A page for apartment owners and sobodajalci, built from the owner's document
+"Spletna povsod VSEBNA". Route `/apartmaji`, prerendered flat to `dist/apartmaji.html`,
+self-canonical with no trailing slash, in the sitemap by construction.
+
+- **Copy**: `src/content/apartmaji.ts`, checked against `dist/apartmaji.html` by the
+  content guard (postbuild) exactly as home is. **Written to the source document's OWN
+  style rules** (its part two, "Navodila za človeški slog pisanja"): no em dashes in
+  visible copy, no rhetorical-question hook, no exclamation marks, no banned marketing
+  phrases, lists as long as the content wants rather than reflexively three. Those rules
+  are mechanically checkable and were checked; keep them when editing this copy.
+- **Sections**: hero (breadcrumb + the page's single h1 + CTA) → Zakaj → Paketi → Videz →
+  the reused `ContactSection` → footer. Anchors `zakaj/paketi/videz/kontakt` are machine
+  identifiers.
+- **Shared chrome, per-page stops**: `SiteMasthead` and `SiteFooter` take their nav items
+  (and the masthead its CTA) as props defaulting to home's. A subpage MUST pass its own,
+  or the phone footer, which is the complete in-flow nav there, is four dead anchors.
+- **Prices**: the site is NOT VAT-registered (owner-confirmed), so prices are final and
+  `packages.taxAnnotation`/`taxNote` say so. The Offer in the JSON-LD DERIVES its numeral
+  from the rendered price string, so structured data cannot drift from the page, and a
+  tier whose price is a sentence yields no digits and is deliberately published as no
+  offer at all. The no-fabricated-numbers rule applies here more than anywhere: the
+  Advanced tier's 525 € from the source document is the owner thinking aloud ("js bi dou
+  525?"), NOT a decision, so the page carries a placeholder line instead.
+- **Not linked from the home nav**, by decision: adding it would change home copy that has
+  no sign-off. The visible breadcrumb is its route back, and it is indexable and in the
+  sitemap. If the owner wants it in the nav, that is a home content change of its own.
+- **The Videz section ships an honest empty state.** The three example designs named in
+  the source document do not exist as assets; fabricated preview cards are not an option
+  here. Drop-in instructions are in `ApartmajiExamples.vue`'s header comment.
+
 ## Open with the owner (asked, not yet answered)
 
 - **Two commas** in the owner-supplied references intro were corrected rather than copied
@@ -247,6 +281,14 @@ Netlify free plan + private repo: **no Co-Authored-By trailers in commits**.
 5. **Domain purchase + Netlify project** — canonical origin is one constant (`SITE_ORIGIN`).
 6. If analytics are ever added: the footer colophon "brez sledilnih piškotkov" changes
    FIRST (colophon contract: only mechanically verifiable claims).
+7. **/apartmaji copy sign-off**, all of `src/content/apartmaji.ts`, and specifically:
+   the **Advanced tier's price** (shipped as a placeholder on purpose), the **scope of one
+   round of popravki** (the source document says "definirat" and it is still undefined, so
+   the page only promises to agree it before starting), and the **three example designs**,
+   which the Videz section is waiting on.
+8. **A contact-form topic for apartments.** The form reuses home's topic list, so an
+   enquiry from /apartmaji arrives as "Nova spletna stran". Adding an apartment option
+   changes home content, so it needs sign-off first.
 
 ## Not built yet (create in this shape when needed)
 
@@ -256,7 +298,6 @@ Netlify free plan + private repo: **no Co-Authored-By trailers in commits**.
 - **EN locale**: widen a `Locale` union, `Localized<T>` content modules, hreflang pairs,
   locale-root flat files — the registry pattern from the house rules. (The postbuild
   hreflang assertion currently hardcodes the single-locale sl+x-default pair.)
-- **Apartment-owner subpage**: only with approved content; the plate/sheet system extends
-  naturally (LIST 5 …).
+- **Apartment-owner subpage**: BUILT, see the section above.
 - **Pricing table**: only with owner-confirmed tiers and prices (VAT flags in any
   structured data).
