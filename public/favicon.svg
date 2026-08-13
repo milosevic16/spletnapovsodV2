@@ -1,20 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <!-- The pd mark: two discs a radius apart, each carrying half the wordmark's
-       first and last letter. Same construction as every other copy on the site
-       (StatementSection, SiteMasthead, ContactSection, the intro veil) — a
-       307 x 200 drawing, here scaled to 26 wide and centred on the paper. -->
+  <!-- The pd mark, measured off the owner's artwork — the same 312.4 x 200
+       drawing every copy on the site uses (see StatementSection for the
+       construction), scaled to 26 wide and centred on the paper. -->
   <rect width="32" height="32" fill="#F5F2EB"/>
-  <g transform="translate(3 7.55) scale(0.0847)">
+  <g transform="translate(3 7.68) scale(0.08323)">
     <circle cx="100" cy="100" r="100" fill="#B03B22" />
-    <circle cx="207" cy="100" r="100" fill="#B03B22" />
-    <g fill="none" stroke="#F5F2EB" stroke-width="26" stroke-linecap="round">
-      <circle cx="96" cy="100" r="50" />
-      <line x1="46" y1="74" x2="46" y2="150" />
-    </g>
-    <g fill="none" stroke="#F5F2EB" stroke-width="26" stroke-linecap="round"
-      transform="rotate(180 153.5 100)">
-      <circle cx="96" cy="100" r="50" />
-      <line x1="46" y1="74" x2="46" y2="150" />
+    <circle cx="212.4" cy="100" r="100" fill="#B03B22" />
+    <circle cx="110.8" cy="100" r="53.3" fill="none" stroke="#F5F2EB" stroke-width="24.5" />
+    <rect x="36.6" y="70" width="24.5" height="95.5" rx="12.25" fill="#F5F2EB" />
+    <g transform="rotate(180 156.2 100)">
+      <circle cx="110.8" cy="100" r="53.3" fill="none" stroke="#F5F2EB" stroke-width="24.5" />
+      <rect x="36.6" y="70" width="24.5" height="95.5" rx="12.25" fill="#F5F2EB" />
     </g>
   </g>
 </svg>

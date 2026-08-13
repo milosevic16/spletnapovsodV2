@@ -129,28 +129,30 @@ onUnmounted(() => {
            — see the header comment before touching its size or position. -->
       <span class="stmt__stamp">
         <!-- THE CONSTRUCTION, redrawn against the owner's reference artwork:
-             two discs whose centres sit 1.07 radii apart (307 × 200, the
-             reference's own 1.535 : 1), each bowl 0.5R on its centre line with
-             a 0.26R stroke — outer 0.63R, counter 0.37R — and each stem
-             tangent to its bowl on the outside, dropping flush with its foot.
-             THE BOWLS SIT WIDER APART THAN THE DISCS, by 0.04R each, and that
-             is the part a first pass got wrong: it is what makes the two
-             strokes BRIDGE a gap at the centre and cross with a pinch instead
-             of merging into one blob, which is what concentric bowls gave. The d is the
+             MEASURED OFF THE OWNER'S OWN ARTWORK (povsod.si/static/img/
+             logo.png, 8× upscaled, subpixel edge scans, a least-squares circle
+             fit on 66 arc points) — no more proportional guessing, which is
+             what two earlier passes did and both were wrong. The numbers, with
+             R the disc radius: box 312.4 × 200 (1.562 : 1); disc centres
+             1.124 R apart; each bowl 0.108 R INSIDE its disc — toward the
+             centre, not outward — mid radius 0.533 R under a 0.245 R stroke
+             (outer 0.655, counter 0.410), so the two rings INTERLOCK, their
+             arcs crossing at mid-height. Each bar stands left of its bowl at
+             −0.634 R, one stroke wide, its foot FLUSH with the bowl's bottom —
+             the real letters have no descender. The d is the p rotated 180°
+             about the mark's centre (156.2, 100), so the pair shares a height
+             by construction. The d is the
              p turned 180° about the mark's centre, so the two share a height
              by construction. Copied verbatim in SiteMasthead, ContactSection's
              seal, the intro veil and both icons — change one, change all. -->
-        <svg class="stmt__mark" viewBox="0 0 307 200" aria-hidden="true">
+        <svg class="stmt__mark" viewBox="0 0 312.4 200" aria-hidden="true">
           <circle cx="100" cy="100" r="100" fill="var(--rez)" />
-          <circle cx="207" cy="100" r="100" fill="var(--rez)" />
-          <g fill="none" stroke="var(--list)" stroke-width="26" stroke-linecap="round">
-            <circle cx="96" cy="100" r="50" />
-            <line x1="46" y1="74" x2="46" y2="150" />
-          </g>
-          <g fill="none" stroke="var(--list)" stroke-width="26" stroke-linecap="round"
-            transform="rotate(180 153.5 100)">
-            <circle cx="96" cy="100" r="50" />
-            <line x1="46" y1="74" x2="46" y2="150" />
+          <circle cx="212.4" cy="100" r="100" fill="var(--rez)" />
+          <circle cx="110.8" cy="100" r="53.3" fill="none" stroke="var(--list)" stroke-width="24.5" />
+          <rect x="36.6" y="70" width="24.5" height="95.5" rx="12.25" fill="var(--list)" />
+          <g transform="rotate(180 156.2 100)">
+            <circle cx="110.8" cy="100" r="53.3" fill="none" stroke="var(--list)" stroke-width="24.5" />
+            <rect x="36.6" y="70" width="24.5" height="95.5" rx="12.25" fill="var(--list)" />
           </g>
         </svg>
       </span>
@@ -475,7 +477,7 @@ onUnmounted(() => {
    IT IS STILL A CORNER, and that is what keeps the intro veil expressible: both
    of its coordinates are insets from a viewport edge, so index.html can copy
    them as a formula (left = 100% − inset − the mark's own width, which is
-   307/200 of its height). A position hung off the drawing's own centre would
+   312.4/200 of its height). A position hung off the drawing's own centre would
    not be — change this and the veil's desktop landing changes with it. */
 @media (min-width: 900px) {
   .stmt__stamp {

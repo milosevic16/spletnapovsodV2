@@ -40,10 +40,10 @@ function onDocumentClick(e: MouseEvent) {
 /** The veil (index.html) is a pure-CSS timed sequence that finishes on its
  *  own; this only removes the spent node and clears the `data-intro` flag that
  *  scopes the page's arrival settle. Timing = the CSS timeline's end (veil
- *  hidden at 3.2s) + the longest settle delay (2.8s + 0.55s) + slack — never
+ *  hidden at 3.45s) + the longest settle delay (2.8s + 0.55s) + slack — never
  *  load-bearing, and clearing the flag is what keeps the settle from
  *  replaying on SPA navigation back to the home route. */
-const VEIL_CLEANUP_MS = 3800
+const VEIL_CLEANUP_MS = 4100
 let veilTimer = 0
 
 /** The page-wide light→dark ground switch (src/lib/ground.ts). Lives here for

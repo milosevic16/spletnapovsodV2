@@ -131,17 +131,14 @@ onUnmounted(() => {
       <p v-if="live" class="masthead__brand" aria-hidden="true">
         <!-- The pd mark — geometry pairs with StatementSection's, which pairs
              with the intro veil's. One mark, three renderings. -->
-        <svg class="masthead__brandmark" viewBox="0 0 307 200">
+        <svg class="masthead__brandmark" viewBox="0 0 312.4 200">
           <circle cx="100" cy="100" r="100" fill="var(--rez)" />
-          <circle cx="207" cy="100" r="100" fill="var(--rez)" />
-          <g fill="none" stroke="var(--list)" stroke-width="26" stroke-linecap="round">
-            <circle cx="96" cy="100" r="50" />
-            <line x1="46" y1="74" x2="46" y2="150" />
-          </g>
-          <g fill="none" stroke="var(--list)" stroke-width="26" stroke-linecap="round"
-            transform="rotate(180 153.5 100)">
-            <circle cx="96" cy="100" r="50" />
-            <line x1="46" y1="74" x2="46" y2="150" />
+          <circle cx="212.4" cy="100" r="100" fill="var(--rez)" />
+          <circle cx="110.8" cy="100" r="53.3" fill="none" stroke="var(--list)" stroke-width="24.5" />
+          <rect x="36.6" y="70" width="24.5" height="95.5" rx="12.25" fill="var(--list)" />
+          <g transform="rotate(180 156.2 100)">
+            <circle cx="110.8" cy="100" r="53.3" fill="none" stroke="var(--list)" stroke-width="24.5" />
+            <rect x="36.6" y="70" width="24.5" height="95.5" rx="12.25" fill="var(--list)" />
           </g>
         </svg>
         <span class="masthead__brandtext">SpletnaPovsod</span>
@@ -390,10 +387,10 @@ onUnmounted(() => {
     font-stretch: var(--hero-wordmark-wdth);
     font-weight: 300;
     /* SIZED TO FIT, like the open face below — same reasoning, this face's own
-       geometry. Here the mark is em-sized (0.78em tall, so 0.78 × 307/200 =
-       1.197em wide), so the whole row scales with the font and the fit is one
-       division: mark 1.197em + gap 0.5em + lettering 6.45em = 8.147em, plus the
-       fixed reserve. 8.27 is that with a little slack.
+       geometry. Here the mark is em-sized (0.78em tall, so 0.78 × 312.4/200 =
+       1.218em wide), so the whole row scales with the font and the fit is one
+       division: mark 1.218em + gap 0.5em + lettering 6.45em = 8.168em, plus the
+       fixed reserve. 8.29 is that with a little slack.
 
        At hero size this box ran 339.9px inside a 280px line at 320 (measured).
        It is invisible here — opacity 0, the hero's own wordmark showing
@@ -404,7 +401,7 @@ onUnmounted(() => {
        away and it becomes a sideways-panning page in one step. */
     font-size: min(
       var(--hero-wordmark),
-      calc((100vw - 2 * var(--hero-inset) - var(--brand-reserve)) / 8.27)
+      calc((100vw - 2 * var(--hero-inset) - var(--brand-reserve)) / 8.29)
     );
     line-height: 1;
     letter-spacing: -0.025em;
@@ -454,8 +451,8 @@ onUnmounted(() => {
      the narrowest screens and is the hero's own size everywhere else.
 
      THE MARK COSTS ITS WIDTH, NOT ITS HEIGHT. It is an SVG sized by height
-     alone, and its viewBox is 307 × 200 — so a mark 0.55 × --hero-display tall
-     stands 0.55 × 307/200 = 0.844 × --hero-display WIDE. Subtracting the
+     alone, and its viewBox is 312.4 × 200 — so a mark 0.55 × --hero-display tall
+     stands 0.55 × 312.4/200 = 0.859 × --hero-display WIDE. Subtracting the
      height reserved 30.36px for a mark that occupies 51.44px at 320 (measured),
      and the lettering took the missing 21.08px straight off the right edge:
      the open menu's wordmark ran 301px into a 280px line — visibly, past the
@@ -467,7 +464,7 @@ onUnmounted(() => {
     font-size: min(
       var(--hero-wordmark),
       calc(
-        (100vw - 2 * var(--hero-inset) - var(--brand-reserve) - 0.844 * var(--hero-display)) / 7.02
+        (100vw - 2 * var(--hero-inset) - var(--brand-reserve) - 0.859 * var(--hero-display)) / 7.02
       )
     );
   }

@@ -356,19 +356,16 @@ onUnmounted(() => fx.dispose())
                  work of two dozen marks. -->
             <circle cx="100" cy="100" r="81" class="seal-ticks" />
             <!-- The pd mark, same geometry as the hero's — see
-                 StatementSection for the construction. 307 × 200 scaled to 100
+                 StatementSection for the construction. 312.4 × 200 scaled to 100
                  wide, centred on the seal's own axis. -->
-            <g transform="translate(50 67.4) scale(0.3257)">
+            <g transform="translate(50 68) scale(0.32)">
               <circle cx="100" cy="100" r="100" fill="var(--rez-na-temnem)" />
-              <circle cx="207" cy="100" r="100" fill="var(--rez-na-temnem)" />
-              <g fill="none" stroke="var(--zemlja)" stroke-width="26" stroke-linecap="round">
-                <circle cx="96" cy="100" r="50" />
-                <line x1="46" y1="74" x2="46" y2="150" />
-              </g>
-              <g fill="none" stroke="var(--zemlja)" stroke-width="26" stroke-linecap="round"
-                transform="rotate(180 153.5 100)">
-                <circle cx="96" cy="100" r="50" />
-                <line x1="46" y1="74" x2="46" y2="150" />
+              <circle cx="212.4" cy="100" r="100" fill="var(--rez-na-temnem)" />
+              <circle cx="110.8" cy="100" r="53.3" fill="none" stroke="var(--zemlja)" stroke-width="24.5" />
+              <rect x="36.6" y="70" width="24.5" height="95.5" rx="12.25" fill="var(--zemlja)" />
+              <g transform="rotate(180 156.2 100)">
+                <circle cx="110.8" cy="100" r="53.3" fill="none" stroke="var(--zemlja)" stroke-width="24.5" />
+                <rect x="36.6" y="70" width="24.5" height="95.5" rx="12.25" fill="var(--zemlja)" />
               </g>
             </g>
           </svg>

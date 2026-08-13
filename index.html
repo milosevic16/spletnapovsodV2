@@ -42,9 +42,10 @@
 
          TIMELINE (base.css settle delays and App.vue's cleanup are keyed to
          it — change one, change all): type 0.12+i*0.065s (done ~0.9s), hold,
-         vanish 1.35s, contract+retract 1.45-1.95s, fly 2.35-2.95s, ground
-         ROLLS UP 2.4-2.95s, mark crossfades out 2.95-3.2s, veil hidden 3.2s,
-         node removed 3.8s.
+         vanish 1.35-1.8s, HAND-OFF to the composite 1.85s (the join must wait
+         for the leading slots to finish collapsing — see .v-mark),
+         contract+retract 1.85-2.3s, fly 2.6-3.2s, ground ROLLS UP 2.65-3.2s,
+         mark crossfades out 3.2-3.45s, veil hidden 3.45s, node removed 4.1s.
 
          The roll and the flight are deliberately concurrent: the mark travels
          to the header's corner while the ground it was printed on climbs to
@@ -59,7 +60,7 @@
         pointer-events: none;
         /* No ground of its own any more — the ground is its own layer below,
            so rolling it up cannot clip the mark that is still flying over it. */
-        animation: veil-done 0.01s linear 3.2s forwards;
+        animation: veil-done 0.01s linear 3.45s forwards;
         /* Where the mark lands = the hero brand mark, by shared formula:
            left/top: --hero-inset (+ the desktop masthead's 45px in-flow
            strip); height: 0.55em of --hero-display — the mark stands alone
@@ -96,7 +97,7 @@
         right: 0;
         height: 100%;
         background-color: #f5f2eb;
-        animation: v-roll 0.55s cubic-bezier(0.22, 1, 0.36, 1) 2.4s forwards;
+        animation: v-roll 0.55s cubic-bezier(0.22, 1, 0.36, 1) 2.65s forwards;
       }
       @media (min-width: 900px) {
         /* 45px = the masthead's in-flow strip, measured. Paired with the
@@ -110,11 +111,11 @@
              flies across rather than straight down. Its left edge is what this
              has to name: the viewport's own width, less the same inset the
              frame is drawn on, less the mark's width — and the mark's width is
-             a property of its artwork, 307/200 = 1.535 of its height. The
+             a property of its artwork, 312.4/200 = 1.562 of its height. The
              percentage resolves against #veil, which is fixed to inset:0, i.e.
              the layout viewport with the scrollbar already excluded — the same
              box the sheet's own right inset is measured from. */
-          --land-left: calc(100% - clamp(1.25rem, 4.9vw, 4.5rem) - 1.535 * var(--land-h));
+          --land-left: calc(100% - clamp(1.25rem, 4.9vw, 4.5rem) - 1.562 * var(--land-h));
           --land-top: calc(45px + clamp(1.25rem, 4.9vw, 4.5rem));
           --land-h: calc(0.55 * clamp(8.25rem, 4.9rem + 5.93vw, 10.25rem));
         }
@@ -160,11 +161,11 @@
         color: #242424;
         white-space: nowrap;
         /* fly to the brand corner (translate stays; left/top/font-size land
-           it): +1.1513em / +0.75em are half the logo's width and height, so
+           it): +1.1714em / +0.75em are half the logo's width and height, so
            the untouched -50% translate centres it ON the target box. */
         animation:
-          v-fly 0.6s cubic-bezier(0.22, 1, 0.36, 1) 2.35s forwards,
-          v-word-out 0.25s ease-out 2.95s forwards;
+          v-fly 0.6s cubic-bezier(0.22, 1, 0.36, 1) 2.6s forwards,
+          v-word-out 0.25s ease-out 3.2s forwards;
       }
       /* A typed slot: fixed width so the contraction is animatable. */
       #veil .v-ch {
@@ -189,22 +190,54 @@
         animation: v-type 1ms steps(1, end) calc(0.12s + var(--i) * 0.065s) forwards;
       }
       /* The contraction: the d slides onto the p until the discs overlap at
-         the logo's own spacing: centres 1.07 radii apart, so the second disc
-         overlaps by 93/200 of its own width — 0.6975em of a disc rendered
-         1.5em tall. */
+         the logo's own spacing: centres 1.124 radii apart, so the second disc
+         overlaps by 0.657em of a disc rendered 1.5em tall. The VISIBLE join
+         happens in .v-mark below — see the hand-off note there. */
       #veil .v-d {
         animation:
           v-type 1ms steps(1, end) calc(0.12s + var(--i) * 0.065s) forwards,
-          v-join 0.45s cubic-bezier(0.22, 1, 0.36, 1) 1.5s forwards;
+          v-join 0.45s cubic-bezier(0.22, 1, 0.36, 1) 1.85s forwards,
+          v-handoff 1ms steps(1, end) 1.85s forwards;
       }
-      /* The exaggerated tails retract to logo length (102/145 = 0.7034) as the
+      #veil .v-p {
+        animation:
+          v-type 1ms steps(1, end) calc(0.12s + var(--i) * 0.065s) forwards,
+          v-handoff 1ms steps(1, end) 1.85s forwards;
+      }
+      /* The composite: absolute over the p's own slot. Anchorable only
+         BECAUSE the hand-off waits for 1.85s — the seven slots before the p
+         finish collapsing at 1.8s, and from then on the p's offset in the row
+         is exactly its own 0.06em margin. */
+      #veil .v-mark {
+        position: absolute;
+        left: 0.06em;
+        top: 0;
+        height: 1.5em;
+        width: 3.12em; /* 416/200 × 1.5em */
+        /* base.css clamps every svg to max-width:100%, and this one sits in a
+           row that NARROWS under it as the invisible join pulls — clamped, it
+           letterboxed and shrank mid-flight (measured: 147.9px for a 187.4px
+           box, content at 0.3555 scale). The composite keeps its own measure. */
+        max-width: none;
+        overflow: visible;
+        opacity: 0;
+        animation: v-handoff-in 1ms steps(1, end) 1.85s forwards;
+      }
+      /* The d's disc and letter travel as groups, the same eased distance the
+         invisible flex d's margin covers (103.6 units = 0.777em), same curve,
+         same clock — so the visible mark and the row's geometry agree to the
+         frame. */
+      #veil .vm-move {
+        animation: vm-join 0.45s cubic-bezier(0.22, 1, 0.36, 1) 1.85s forwards;
+      }
+      /* The exaggerated tails retract to logo length (95.5/150 = 0.6367) as the
          discs meet. transform-box makes the origin each stem's own top IN
          LOCAL COORDS — the d's group is rotated, so the same local animation
          mirrors itself. */
       #veil .v-stem {
         transform-box: fill-box;
         transform-origin: 50% 0;
-        animation: v-tail 0.4s cubic-bezier(0.22, 1, 0.36, 1) 1.55s forwards;
+        animation: v-tail 0.4s cubic-bezier(0.22, 1, 0.36, 1) 1.9s forwards;
       }
       @keyframes v-type {
         to { opacity: 1; }
@@ -213,18 +246,27 @@
         to { opacity: 0; width: 0; }
       }
       @keyframes v-join {
-        /* The logo overlap is 0.6975em — but the p's own 0.06em
-           margin-inline still stands between the two, so the pull must absorb
-           it too or the contraction stops 0.06em short of the mark it
+        /* The logo overlap is (2 − 1.124) × 0.75em = 0.657em — but the p's own
+           0.06em margin-inline still stands between the two, so the pull must
+           absorb it too or the contraction stops 0.06em short of the mark it
            crossfades onto. */
-        to { margin-left: -0.7575em; }
+        to { margin-left: -0.717em; }
+      }
+      @keyframes vm-join {
+        to { transform: translateX(-103.6px); }
+      }
+      @keyframes v-handoff {
+        to { opacity: 0; }
+      }
+      @keyframes v-handoff-in {
+        to { opacity: 1; }
       }
       @keyframes v-tail {
-        to { transform: scaleY(0.7034); }
+        to { transform: scaleY(0.6367); }
       }
       @keyframes v-fly {
         to {
-          left: calc(var(--land-left) + 1.1513em);
+          left: calc(var(--land-left) + 1.1714em);
           top: calc(var(--land-top) + 0.75em);
           font-size: calc(var(--land-h) / 1.5);
         }
@@ -271,7 +313,7 @@
            logo's own halves; the d is the p rotated 180° (the mark's point
            symmetry). Geometry pairs with the BrandMark SVG in
            StatementSection/SiteMasthead — same discs, same letterforms,
-           longer tails here (145 vs the logo's 102, retracted by v-tail). -->
+           longer tails here (150 vs the logo's 95.5, retracted by v-tail). -->
       <p class="v-word">
         <span class="v-ch" style="--i:0">s</span>
         <span class="v-ch" style="--i:1">p</span>
@@ -287,8 +329,8 @@
              lands at the same y, and the point symmetry keeps meaning itself. -->
         <svg class="v-pd v-p" style="--i:7" viewBox="0 0 200 200">
           <circle cx="100" cy="100" r="100" fill="#b03b22" />
-          <circle cx="96" cy="100" r="50" fill="none" stroke="#f5f2eb" stroke-width="26" />
-          <rect class="v-stem" x="33" y="61" width="26" height="145" rx="13" fill="#f5f2eb" />
+          <circle cx="110.8" cy="100" r="53.3" fill="none" stroke="#f5f2eb" stroke-width="24.5" />
+          <rect class="v-stem" x="36.6" y="70" width="24.5" height="150" rx="12.25" fill="#f5f2eb" />
         </svg>
         <span class="v-ch" style="--i:8">o</span>
         <span class="v-ch" style="--i:9">v</span>
@@ -297,9 +339,27 @@
         <svg class="v-pd v-d" style="--i:12" viewBox="0 0 200 200">
           <g transform="rotate(180 100 100)">
             <circle cx="100" cy="100" r="100" fill="#b03b22" />
-            <circle cx="96" cy="100" r="50" fill="none" stroke="#f5f2eb" stroke-width="26" />
-            <rect class="v-stem" x="33" y="61" width="26" height="145" rx="13" fill="#f5f2eb" />
+            <circle cx="110.8" cy="100" r="53.3" fill="none" stroke="#f5f2eb" stroke-width="24.5" />
+            <rect class="v-stem" x="36.6" y="70" width="24.5" height="150" rx="12.25" fill="#f5f2eb" />
           </g>
+        </svg>
+
+        <!-- THE JOINED MARK, which is what actually contracts and flies. The
+             two flex halves above hand off to this at the join's first frame
+             (they keep animating INVISIBLY so the row's width — and with it
+             the centring — behaves identically; their margins are the same
+             eased distance the group below travels, so the two can never
+             drift). Inside one svg both discs paint under both letters, which
+             two stacked SVGs cannot do once the discs overlap. -->
+        <svg class="v-mark" viewBox="0 0 416 200" aria-hidden="true">
+          <circle cx="100" cy="100" r="100" fill="#b03b22" />
+          <g class="vm-move"><circle cx="316" cy="100" r="100" fill="#b03b22" /></g>
+          <circle cx="110.8" cy="100" r="53.3" fill="none" stroke="#f5f2eb" stroke-width="24.5" />
+          <rect class="v-stem" x="36.6" y="70" width="24.5" height="150" rx="12.25" fill="#f5f2eb" />
+          <g class="vm-move"><g transform="translate(216 0) rotate(180 100 100)">
+            <circle cx="110.8" cy="100" r="53.3" fill="none" stroke="#f5f2eb" stroke-width="24.5" />
+            <rect class="v-stem" x="36.6" y="70" width="24.5" height="150" rx="12.25" fill="#f5f2eb" />
+          </g></g>
         </svg>
       </p>
     </div>

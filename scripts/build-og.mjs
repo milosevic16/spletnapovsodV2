@@ -39,21 +39,18 @@ await png.clone().jpeg({ quality: 88, mozjpeg: true }).toFile(join(root, 'public
 await png.clone().png().toFile(join(root, 'public/og.png'))
 rmSync(tmpPng)
 
-// Apple touch icon: the pd mark on paper (180×180), the same 307 × 200
+// Apple touch icon: the pd mark on paper (180×180), the same 312.4 × 200
 // drawing every other copy uses, scaled to 140 wide and centred.
 const icon = `<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180">
   <rect width="180" height="180" fill="#F5F2EB"/>
-  <g transform="translate(20 44.4) scale(0.456)">
+  <g transform="translate(20 45.2) scale(0.4481)">
     <circle cx="100" cy="100" r="100" fill="#B03B22" />
-    <circle cx="207" cy="100" r="100" fill="#B03B22" />
-    <g fill="none" stroke="#F5F2EB" stroke-width="26" stroke-linecap="round">
-      <circle cx="96" cy="100" r="50" />
-      <line x1="46" y1="74" x2="46" y2="150" />
-    </g>
-    <g fill="none" stroke="#F5F2EB" stroke-width="26" stroke-linecap="round"
-      transform="rotate(180 153.5 100)">
-      <circle cx="96" cy="100" r="50" />
-      <line x1="46" y1="74" x2="46" y2="150" />
+    <circle cx="212.4" cy="100" r="100" fill="#B03B22" />
+    <circle cx="110.8" cy="100" r="53.3" fill="none" stroke="#F5F2EB" stroke-width="24.5" />
+    <rect x="36.6" y="70" width="24.5" height="95.5" rx="12.25" fill="#F5F2EB" />
+    <g transform="rotate(180 156.2 100)">
+      <circle cx="110.8" cy="100" r="53.3" fill="none" stroke="#F5F2EB" stroke-width="24.5" />
+      <rect x="36.6" y="70" width="24.5" height="95.5" rx="12.25" fill="#F5F2EB" />
     </g>
   </g>
 </svg>`
