@@ -429,7 +429,6 @@ const sourceLines = computed(() => [
   { id: '', text: `<h2>${invisible.title}</h2>` },
   { id: '', text: `<blockquote>${invisible.quote}</blockquote>` },
   { id: '', text: `<p>${invisible.lead}</p>` },
-  { id: '', text: `<p>${invisible.intro}</p>` },
   ...invisible.items.flatMap((item) => [
     { id: '', text: `<article id="${item.id}">` },
     { id: '', text: `  <h3>${item.label}</h3>` },
@@ -628,7 +627,6 @@ onUnmounted(() => {
     <div class="container trad__world trad__world--rest">
       <div class="trad__made">
         <div class="trad__argument">
-          <p class="trad__intro">{{ invisible.intro }}</p>
         </div>
 
             <!-- THE INTERACTIVE LAYER: a section through the site's own
@@ -873,12 +871,6 @@ onUnmounted(() => {
   line-height: 1.02;
   color: var(--color-paper); /* 18.8:1 */
   max-width: 26ch;
-}
-
-.trad__intro {
-  margin-top: var(--space-6);
-  color: var(--papir-dim); /* 12.5:1 on the band's ground */
-  max-width: 54ch;
 }
 
 .trad__outro {

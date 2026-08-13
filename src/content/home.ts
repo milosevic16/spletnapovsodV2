@@ -86,8 +86,8 @@ export const nav: NavItem[] = [
 ]
 
 export const hero: Hero = {
-  title: 'Hitre, dostopne in profesionalne spletne strani.',
-  titleAccent: 'Hitre',
+  title: 'Profesionalne, hitre in dostopne spletne rešitve.',
+  titleAccent: 'Profesionalne',
   ctaPrimary: { label: 'Naročite izdelek', target: 'kontakt' },
 }
 
@@ -95,13 +95,11 @@ export const invisible = {
   kicker: 'Kaj dobite',
   title: 'Spletna pod površino.',
   quote:
-    'Spletna stran ni zgolj tisto, kar vidite, temveč se pomemben del skriva tudi v tistem, česar ne.',
+    'Spletna stran ni zgolj tisto, kar vidite. Redno posodabljanje, Robots.txt, https povezave, gostovanje, vezanje domene in vzdrževanje so le nekatere izmed stvari, ki so vidne le v ozadju.',
   /** Owner-supplied, VERBATIM — including »npr. Niste« and the missing final
    *  stop. Flagged for sign-off rather than corrected. */
   lead:
     'S pomočjo sliderja si oglejte, kako brskalniki vidijo vašo stran. Brez te kode, skrite v ozadju, npr. Niste vidni brskalnikom in umetni inteligenci. Je le ena od plasti, ki omogoča učinkovito in pravilno vedenje vaše spletne strani',
-  intro:
-    'V ozadju mora biti urejeno vse: tisto, kar vas naredi vidne na Googlu, tisto, kar varno sprejema oddane obrazce, ter piškotki in politika zasebnosti, da stran ustreza zakonodaji.',
   humanLabel: 'Kar vidite',
   machineLabel: 'Kar vidi Google',
   /**
@@ -114,27 +112,31 @@ export const invisible = {
     layersLabel: 'Sloji pod površino',
   },
   outro:
-    'Vse to je vključeno že v osnovnem paketu. S tem se vam ni treba ukvarjati — naj to za vas uredijo profesionalci z izkušnjami.',
+    'Vsi našteti elementi so vključeni že v osnovnem paketu. Lahko ste brez skrbi tudi glede stvari, na katere sami ne bi pomislili.',
   items: [
     {
       id: 'seo-foundation',
-      label: 'Vidnost na Googlu',
-      detail: 'Tehnična osnova, ki jo iskalniki zahtevajo, vgrajena od prvega dne.',
+      label: 'Primerna oblika za iskalnike',
+      detail:
+        'Stran se ob objavi izriše v končni HTML, tako da iskalnik ali jezikovni model ob prvem obisku prebere celotno vsebino brez poganjanja skript, skupaj z naslovi, opisi in kanoničnimi povezavami, ki jih zapiše isti postopek objave.',
     },
     {
       id: 'forms',
-      label: 'Delujoči obrazci',
-      detail: 'Povpraševanja varno prispejo v vaš nabiralnik, neželena pošta pa ne.',
+      label: 'Zaščita pred spamom in delujoči obrazci',
+      detail:
+        'Na vsaki kvalitetno narejeni spletni strani obrazci ne le delujejo in ščitijo oddano vsebino pred zunanjimi zahtevki, temveč tudi avtomatično zaščitijo pred spamom s pomočjo ReCaptcha sistema, ki preverja, da je obrazec res izpolnil človek.',
     },
     {
       id: 'compliance',
       label: 'Piškotki in zasebnost',
-      detail: 'Stran usklajena z evropsko zakonodajo — brez pravnih presenečenj.',
+      detail:
+        'Nenujni piškotki se pred privolitvijo ne naložijo, posamezne kategorije lahko obiskovalec sprejme ali zavrne, privolitev pa kadarkoli prekliče. Za tehnično plat poskrbimo mi, pripravimo pa vam tudi predlogo politike zasebnosti.',
     },
     {
       id: 'hosting',
-      label: 'Objava na vaši domeni',
-      detail: 'Postavitev, gostovanje in certifikat HTTPS — ključe dobite vi.',
+      label: 'Domene, protokoli',
+      detail:
+        'Domeno registriramo ali prevzamemo obstoječo, jo usmerimo na gostovanje, uredimo zapise DNS in pridobimo certifikat, tako da vsa komunikacija poteka po protokolu HTTPS, obiskovalci pa na vaši strani nikoli ne naletijo na opozorilo o nezaupljivi povezavi.',
     },
   ] satisfies InvisibleItem[],
 }
@@ -149,7 +151,7 @@ export const references = {
   kicker: 'Reference',
   title: 'Nekaj uspešnih prejšnjih projektov',
   intro:
-    'Od osebnih predstavitev, pravnih pisarn, forenzičnih podjetij in apartmajskih nastanitev pokrivamo vse sektorje in se prilagodimo vsebini. Vsaka stran je oblikovana posebej za namen projekta in ni predloga.',
+    'Sodelujemo s strankami iz vseh sfer. Od pravno-tehnoloških pisarn, organizatorjev strateških dogodkov, študentskih društev in forenzičnih podjetij, se vsaki stranki prilagodimo in skupaj z njo začrtamo optimalen potek projekta ter upoštevamo njihove oblikovne, kot tudi funkcionalne želje.',
   /** Screen-reader suffix on each reference link (target="_blank" warning). */
   newWindowNote: 'odpre se v novem zavihku',
   /**
@@ -177,7 +179,7 @@ export const references = {
     {
       id: 'mercpeter',
       name: 'Peter Merc',
-      sector: 'Osebna predstavitev — pravnik in investitor',
+      sector: 'Osebna predstavitev: pravnik in investitor',
       url: 'https://mercpeter.netlify.app',
       urlLabel: 'mercpeter.netlify.app',
       inks: ['#ECE9E2', '#26282C', '#D2453E', '#B4AEA1'],
@@ -257,7 +259,7 @@ export const pillars = {
   kicker: 'Vsi paketi',
   title: 'Kaj vsebujejo vsi paketi?',
   intro:
-    'Trije stebri, na katerih stoji vsaka stran, ki jo izdelamo — od najmanjše do največje.',
+    'Trije stebri, na katerih stoji vsaka stran, ki jo izdelamo, od najmanjše do največje.',
   /** Interaction-only (the expanded panel's close control) — guard-skipped. */
   feedback: {
     closeLabel: 'Zapri',
@@ -269,29 +271,31 @@ export const pillars = {
       title: 'Unikaten dizajn',
       artifact: '100 % po meri',
       summary:
-        'Večina ponudnikov, slovenskih in tujih, za hitrejši postopek uporablja vnaprej pripravljene predloge. Te so videti vse enake in stran hitro izpade poceni. Naše grafične podobe so unikatne in oblikovane posebej za vas — dajejo videz kakovosti in profesionalnosti.',
+        'Večina ponudnikov, slovenskih in tujih, za hitrejši postopek uporablja vnaprej pripravljene predloge, pogosto narejene v WordPress-u. Te so si med seboj podobne, dizajn na njih pa je ponavadi preprost. Stran tako hitro izpade poceni. Grafične podobe naših strani so individualizirane in prilagojene željam vsake posamezne stranke.',
       points: [
         {
           label: 'Brez predlog',
-          detail: 'Vsaka stran je oblikovana iz vaše vsebine, ne obratno.',
+          detail: 'Vsaka stran je oblikovana na podlagi vaše vsebine in želja.',
         },
         {
-          label: 'Prepoznavnost',
-          detail: 'Barve, tipografija in podoba, ki so samo vaši.',
-        },
-        {
-          label: 'Do zadnjega odtenka',
-          detail: 'Premišljena tipografija, mreža in gibanje — nič ni naključno.',
+          label: 'Domača podoba, prilagodljivost',
+          detail:
+            'Upoštevamo dejstvo, da nekatere stranke hočejo predvsem domač občutek spletne strani, brez kompleksnih postavitev in animacij. Tudi v tem primeru imamo za vas pripravljene poenostavljene grafične predloge, ki dajejo občutek preprostosti, in dostavijo vsebino kar se da efektivno.',
         },
         {
           label: 'Zasnovano za telefon',
           detail:
-            'Večina obiskovalcev pride s telefona. Tam se dizajn začne, ne konča — in tam ga tudi preverimo.',
+            'Statistike kažejo, da kar 70 % obiskovalcev pride s telefona. Vsaki izmed spletnih strani posebno pozornost namenimo tudi mobilni verziji, ki je vključena v vseh paketih.',
         },
         {
           label: 'Dostopno vsem',
           detail:
-            'Berljive velikosti, dovolj kontrasta, delovanje s tipkovnico — po evropskem standardu dostopnosti.',
+            'Upoštevamo sodobne evropske standarde dostopnosti, ki zahtevajo berljive velikosti, dovolj kontrasta, in delovanje s tipkovnico. Gradimo po EN 301 549 / WCAG 2.1 AA. Tako vas lahko doseže vsaka stranka.',
+        },
+        {
+          label: 'Prepoznavnost',
+          detail:
+            'Podrobne animacije, grafične teksture in detajli, ki dajo vaši strani videz kakovosti in profesionalnosti.',
         },
       ],
     },
@@ -301,7 +305,7 @@ export const pillars = {
       title: 'Varnost, hitrost, skladnost',
       artifact: 'HTTPS · GDPR · piškotki',
       summary:
-        'Strokovnjaki za spletni razvoj poskrbijo, da so vaši obrazci in vneseni podatki varni, da se stran naloži hitro in da je skladna z zahtevami evropske zakonodaje — od piškotkov do politike zasebnosti. Amaterske napake tu pomenijo slabšo uvrstitev na Googlu, lahko pa tudi globe.',
+        'Strokovnjaki za spletni razvoj poskrbijo, da so vaši obrazci in vneseni podatki varni, da se stran naloži hitro in da so piškotki ter politika zasebnosti tehnično urejeni po veljavnih evropskih zahtevah. Amaterske napake tu pomenijo slabšo uvrstitev na Googlu, lahko pa tudi globe. Spletni razvijalci poskrbimo, da vaša stran ustreza standardom Core Web Vitals, ki jih upošteva tudi Google, ter mnogim drugim, pomembnim za delovanje spletne strani. V vsakem projektu se skrivajo izzivi, kot so hitrost nalaganja, varnost prenašanja podatkov iz obrazcev, zaščita pred spamom, varnost HTTPS povezave in mnoge druge, na prvi pogled neočitne stvari. Poskrbimo za vse našteto in več.',
       points: [
         {
           label: 'Varni obrazci',
@@ -309,11 +313,12 @@ export const pillars = {
         },
         {
           label: 'Hitrost nalaganja',
-          detail: 'Merjena s Core Web Vitals — merili, ki jih upošteva tudi Google.',
+          detail: 'Merjena s Core Web Vitals, po merilih, ki jih upošteva tudi Google.',
         },
         {
-          label: 'Evropska skladnost',
-          detail: 'Piškotki, politika zasebnosti in varnostne glave, urejeni vnaprej.',
+          label: 'Tehnična skladnost',
+          detail:
+            'Piškotki, politika zasebnosti in varnostne glave, tehnično urejeni vnaprej.',
         },
         {
           label: 'HTTPS in varnostne glave',
@@ -321,9 +326,9 @@ export const pillars = {
             'Certifikat in zaščitne glave, ki jih ob pregledu iščejo IT oddelki vaših strank.',
         },
         {
-          label: 'Optimizirane slike',
+          label: 'Brez strežniške izvršilne plasti',
           detail:
-            'Sodobni formati in prava velikost za vsako napravo — telefon ne prenaša namizne slike.',
+            'Stran je vnaprej prevedena v statične datoteke in se streže brez podatkovne baze ter brez kode, ki bi se izvajala na strežniku ob vsakem obisku. Odpadejo tako napadi na strežniško izvajanje kode kot tveganja zastarelih vtičnikov, ki jih OWASP uvršča med najpogostejše vzroke vdorov.',
         },
         {
           label: 'Nič vzdrževanja',
@@ -337,37 +342,38 @@ export const pillars = {
       title: 'Google in AI vidnost',
       artifact: 'sitemap.xml · JSON-LD',
       summary:
-        'Stran zgradimo tako, da jo iskalniki in AI pomočniki v celoti preberejo. Vsa vsebina je v pravem HTML-ju, ne skrita za skriptami — to danes loči strani, ki jih Google in ChatGPT priporočata, od tistih, ki jih ne najde nihče.',
+        'Stran zgradimo tako, da jo iskalniki in AI pomočniki v celoti preberejo. Vsa vsebina je v pravem HTML-ju, ne skrita za skriptami. To danes loči strani, ki jih Google in ChatGPT priporočata, od tistih, ki jih ne najde nihče.',
       points: [
         {
-          label: 'Vsebina, ki jo roboti vidijo',
+          label: 'Iskalnikom vidna vsebina',
           detail:
-            'Stran je vnaprej izrisana v čisti HTML. AI iskalniki (ChatGPT, Perplexity, Claude) ne poganjajo skript — vidijo samo to, kar je zapisano na strani.',
-        },
-        {
-          label: 'Strukturirani podatki',
-          detail:
-            'Podatki o podjetju, storitvah in cenah v obliki, ki jo Google razume (JSON-LD) — osnova za bogate zadetke in AI odgovore.',
+            'Stran je vnaprej izrisana v čistem HTML. AI in web iskalniki (Google, ChatGPT, Perplexity, Claude) tako bolj efektivno najdejo in indeksirajo stran.',
         },
         {
           label: 'Tehnični SEO',
           detail:
-            'Naslovi, opisi, kanonične povezave, zemljevid strani in robots.txt — vse ustvarjeno samodejno ob vsaki objavi, zato nikoli ne zastara.',
+            'Naslovi, meta opisi, kanonične povezave, zemljevid strani in robots.txt se ob vsaki objavi izpišejo iz same strani, ne iz ročno vzdrževanega seznama. Ker jih zapiše postopek objave, se ne morejo razhajati z vsebino, ki je na strani dejansko objavljena, in ne zastarijo, ko se ta spremeni.',
+        },
+        {
+          label: 'Strukturirani podatki',
+          detail:
+            'Podatki o podjetju, storitvah in cenah v obliki, ki jo Google razume (JSON-LD). Še ena izmed osnov za bogate zadetke in AI odgovore.',
         },
         {
           label: 'Prijava v iskalnike',
           detail:
-            'Google Search Console in Bing Webmaster Tools — tudi Copilot in ChatGPT črpata iz Bingovega indeksa.',
+            'Google Search Console in Bing Webmaster Tools, iz katerih črpata tudi Copilot in ChatGPT.',
         },
         {
           label: 'Predogled ob deljenju',
           detail:
-            'Ko nekdo deli vašo povezavo, se pokažeta slika in naslov — ne gola povezava, ki je nihče ne odpre.',
+            'Ko nekdo deli vašo povezavo, se pokažeta slika in naslov, ne pa gola povezava, ki je nihče ne odpre. Pomemben detajl, ki je pogostokrat izpuščen.',
         },
       ],
       prerez: {
         annotation: 'Core Web Vitals · berljivo brez JavaScripta',
-        gloss: 'Merila, po katerih Google razvršča strani — vgrajena v zasnovo, ne dodana naknadno.',
+        gloss:
+          'Merila, po katerih Google razvršča strani, vgrajena v zasnovo in ne dodana naknadno.',
       },
     },
   ] satisfies Pillar[],
@@ -380,10 +386,10 @@ export const differentiators = {
     {
       id: 'personalized',
       title: 'Popolnoma personalizirane strani',
-      body: 'Nobena naša stran ni predloga. Oblikovanje izhaja iz vaše vsebine, panoge in publike — zato je vsaka stran prepoznavno vaša.',
+      body: 'Nobena naša stran ni predloga. Oblikovanje izhaja iz vaše vsebine, panoge in publike, zato je vsaka stran prepoznavno vaša.',
       measure: {
         annotation: '100 % po meri',
-        gloss: 'Nič ne izhaja iz predloge — vse iz vaše vsebine.',
+        gloss: 'Nič ne izhaja iz predloge, vse iz vaše vsebine.',
       },
     },
     {
@@ -400,7 +406,7 @@ export const differentiators = {
       title: 'Objava v 3 delovnih dneh',
       body: 'Spletno stran zgradimo in objavimo na vaši domeni v treh delovnih dneh.',
       footnote:
-        'Velja za manjše in srednje projekte brez velikih podatkovnih baz — odvisno od obsega.',
+        'Velja za manjše in srednje projekte brez velikih podatkovnih baz, odvisno od obsega.',
       measure: {
         annotation: '3 delovni dnevi',
         gloss: 'Od potrjene vsebine do objave na vaši domeni.',
@@ -423,7 +429,7 @@ export const contact = {
   kicker: 'Kontakt',
   title: 'Povejte, kaj potrebujete.',
   intro:
-    'Opišite svoj projekt v nekaj stavkih — odgovorimo v enem delovnem dnevu, s konkretnim predlogom in oceno.',
+    'Opišite svoj projekt v nekaj stavkih. Odgovorimo v enem delovnem dnevu, s konkretnim predlogom in oceno.',
   topics: [
     { value: 'new-site', label: 'Nova spletna stran' },
     { value: 'redesign', label: 'Prenova obstoječe strani' },
@@ -461,7 +467,7 @@ export const contact = {
      */
     feedback: {
       submitting: 'Pošiljanje …',
-      success: 'Hvala! Sporočilo je poslano — odgovorimo v enem delovnem dnevu.',
+      success: 'Hvala! Sporočilo je poslano, odgovorimo v enem delovnem dnevu.',
       error: 'Pošiljanje ni uspelo. Poskusite znova ali nam pišite neposredno po e-pošti.',
       invalidEmail: 'Vnesite veljaven e-naslov.',
       /** Stem — the component appends the names of the missing fields. */
@@ -473,7 +479,7 @@ export const contact = {
 }
 
 export const footer = {
-  tagline: 'Hitre, dostopne in profesionalne spletne strani.',
+  tagline: 'Profesionalne, hitre in dostopne spletne rešitve.',
   emailLabel: 'Pišite nam',
   /** Colophon contract: only mechanically verifiable claims (SSG, no analytics). */
   colophon: {
@@ -499,13 +505,13 @@ export const ui = {
 export const notFound = {
   metaTitle: 'Stran ne obstaja',
   metaDescription: 'Iskana stran ne obstaja.',
-  heading: '404 — ta stran ne obstaja',
+  heading: '404: ta stran ne obstaja',
   body: 'Naslov je napačen ali pa je bila stran odstranjena.',
   homeLabel: 'Na domačo stran',
 }
 
 export const meta = {
-  title: 'SpletnaPovsod — Izdelava spletnih strani',
+  title: 'SpletnaPovsod: izdelava spletnih strani',
   description:
-    'Hitre, dostopne in profesionalne spletne strani — unikaten dizajn brez predlog, SEO in pravna skladnost v ceni, objava v 3 delovnih dneh.',
+    'Profesionalne, hitre in dostopne spletne rešitve: unikaten dizajn brez predlog, SEO in tehnično urejena zasebnost v ceni, objava v 3 delovnih dneh.',
 }
