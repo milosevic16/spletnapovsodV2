@@ -39,12 +39,23 @@ await png.clone().jpeg({ quality: 88, mozjpeg: true }).toFile(join(root, 'public
 await png.clone().png().toFile(join(root, 'public/og.png'))
 rmSync(tmpPng)
 
-// Apple touch icon: the REZ mark — the sheet, cut by the plane (180×180), rects only.
+// Apple touch icon: the pd mark on paper (180×180), the same 307 × 200
+// drawing every other copy uses, scaled to 140 wide and centred.
 const icon = `<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180">
   <rect width="180" height="180" fill="#F5F2EB"/>
-  <rect x="30" y="30" width="120" height="120" fill="none" stroke="#1A1C1E" stroke-width="8"/>
-  <rect x="34" y="96" width="112" height="50" fill="#1A1C1E"/>
-  <rect x="14" y="83" width="152" height="13" fill="#B03B22"/>
+  <g transform="translate(20 44.4) scale(0.456)">
+    <circle cx="100" cy="100" r="100" fill="#B03B22" />
+    <circle cx="207" cy="100" r="100" fill="#B03B22" />
+    <g fill="none" stroke="#F5F2EB" stroke-width="26" stroke-linecap="round">
+      <circle cx="96" cy="100" r="50" />
+      <line x1="46" y1="74" x2="46" y2="150" />
+    </g>
+    <g fill="none" stroke="#F5F2EB" stroke-width="26" stroke-linecap="round"
+      transform="rotate(180 153.5 100)">
+      <circle cx="96" cy="100" r="50" />
+      <line x1="46" y1="74" x2="46" y2="150" />
+    </g>
+  </g>
 </svg>`
 writeFileSync(
   join(root, 'public/apple-touch-icon.png'),

@@ -110,11 +110,11 @@
              flies across rather than straight down. Its left edge is what this
              has to name: the viewport's own width, less the same inset the
              frame is drawn on, less the mark's width — and the mark's width is
-             a property of its artwork, 244/144 = 1.6944 of its height. The
+             a property of its artwork, 307/200 = 1.535 of its height. The
              percentage resolves against #veil, which is fixed to inset:0, i.e.
              the layout viewport with the scrollbar already excluded — the same
              box the sheet's own right inset is measured from. */
-          --land-left: calc(100% - clamp(1.25rem, 4.9vw, 4.5rem) - 1.6944 * var(--land-h));
+          --land-left: calc(100% - clamp(1.25rem, 4.9vw, 4.5rem) - 1.535 * var(--land-h));
           --land-top: calc(45px + clamp(1.25rem, 4.9vw, 4.5rem));
           --land-h: calc(0.55 * clamp(8.25rem, 4.9rem + 5.93vw, 10.25rem));
         }
@@ -160,7 +160,7 @@
         color: #242424;
         white-space: nowrap;
         /* fly to the brand corner (translate stays; left/top/font-size land
-           it): +1.2708em / +0.75em are half the logo's width and height, so
+           it): +1.1513em / +0.75em are half the logo's width and height, so
            the untouched -50% translate centres it ON the target box. */
         animation:
           v-fly 0.6s cubic-bezier(0.22, 1, 0.36, 1) 2.35s forwards,
@@ -189,14 +189,15 @@
         animation: v-type 1ms steps(1, end) calc(0.12s + var(--i) * 0.065s) forwards;
       }
       /* The contraction: the d slides onto the p until the discs overlap at
-         the logo's own spacing (centres 100/144 of a disc apart, so the
-         second disc overlaps by 44/144 = 0.3056 of its 1.5em width). */
+         the logo's own spacing: centres 1.07 radii apart, so the second disc
+         overlaps by 93/200 of its own width — 0.6975em of a disc rendered
+         1.5em tall. */
       #veil .v-d {
         animation:
           v-type 1ms steps(1, end) calc(0.12s + var(--i) * 0.065s) forwards,
           v-join 0.45s cubic-bezier(0.22, 1, 0.36, 1) 1.5s forwards;
       }
-      /* The exaggerated tails retract to logo length (81/115 = 0.7043) as the
+      /* The exaggerated tails retract to logo length (102/145 = 0.7034) as the
          discs meet. transform-box makes the origin each stem's own top IN
          LOCAL COORDS — the d's group is rotated, so the same local animation
          mirrors itself. */
@@ -212,19 +213,18 @@
         to { opacity: 0; width: 0; }
       }
       @keyframes v-join {
-        /* The logo overlap is 44/144 of a 1.5em disc = 0.4584em — but the
-           p's own 0.06em margin-inline still stands between the two, so the
-           pull must absorb it too or the contraction stops 0.06em short of
-           the mark it crossfades onto (found in review, arithmetically:
-           0.06 − 0.4584 = −0.3984, not the −0.4584 the landing needs). */
-        to { margin-left: -0.5184em; }
+        /* The logo overlap is 0.6975em — but the p's own 0.06em
+           margin-inline still stands between the two, so the pull must absorb
+           it too or the contraction stops 0.06em short of the mark it
+           crossfades onto. */
+        to { margin-left: -0.7575em; }
       }
       @keyframes v-tail {
-        to { transform: scaleY(0.7043); }
+        to { transform: scaleY(0.7034); }
       }
       @keyframes v-fly {
         to {
-          left: calc(var(--land-left) + 1.2708em);
+          left: calc(var(--land-left) + 1.1513em);
           top: calc(var(--land-top) + 0.75em);
           font-size: calc(var(--land-h) / 1.5);
         }
@@ -271,7 +271,7 @@
            logo's own halves; the d is the p rotated 180° (the mark's point
            symmetry). Geometry pairs with the BrandMark SVG in
            StatementSection/SiteMasthead — same discs, same letterforms,
-           longer tails here (115 vs the logo's 81, retracted by v-tail). -->
+           longer tails here (145 vs the logo's 102, retracted by v-tail). -->
       <p class="v-word">
         <span class="v-ch" style="--i:0">s</span>
         <span class="v-ch" style="--i:1">p</span>
@@ -285,20 +285,20 @@
              the two letters read at different heights (owner, against the
              original mark: p and d must share a height). On the axis the twin
              lands at the same y, and the point symmetry keeps meaning itself. -->
-        <svg class="v-pd v-p" style="--i:7" viewBox="0 0 144 144">
-          <circle cx="72" cy="72" r="72" fill="#b03b22" />
-          <circle cx="79" cy="72" r="33" fill="none" stroke="#f5f2eb" stroke-width="18" />
-          <rect class="v-stem" x="37" y="39" width="18" height="115" rx="9" fill="#f5f2eb" />
+        <svg class="v-pd v-p" style="--i:7" viewBox="0 0 200 200">
+          <circle cx="100" cy="100" r="100" fill="#b03b22" />
+          <circle cx="96" cy="100" r="50" fill="none" stroke="#f5f2eb" stroke-width="26" />
+          <rect class="v-stem" x="33" y="61" width="26" height="145" rx="13" fill="#f5f2eb" />
         </svg>
         <span class="v-ch" style="--i:8">o</span>
         <span class="v-ch" style="--i:9">v</span>
         <span class="v-ch" style="--i:10">s</span>
         <span class="v-ch" style="--i:11">o</span>
-        <svg class="v-pd v-d" style="--i:12" viewBox="0 0 144 144">
-          <g transform="rotate(180 72 72)">
-            <circle cx="72" cy="72" r="72" fill="#b03b22" />
-            <circle cx="79" cy="72" r="33" fill="none" stroke="#f5f2eb" stroke-width="18" />
-            <rect class="v-stem" x="37" y="39" width="18" height="115" rx="9" fill="#f5f2eb" />
+        <svg class="v-pd v-d" style="--i:12" viewBox="0 0 200 200">
+          <g transform="rotate(180 100 100)">
+            <circle cx="100" cy="100" r="100" fill="#b03b22" />
+            <circle cx="96" cy="100" r="50" fill="none" stroke="#f5f2eb" stroke-width="26" />
+            <rect class="v-stem" x="33" y="61" width="26" height="145" rx="13" fill="#f5f2eb" />
           </g>
         </svg>
       </p>

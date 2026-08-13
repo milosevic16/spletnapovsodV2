@@ -355,26 +355,20 @@ onUnmounted(() => fx.dispose())
             <!-- The tick collar: one dashed stroke between the rings does the
                  work of two dozen marks. -->
             <circle cx="100" cy="100" r="81" class="seal-ticks" />
-            <!-- The pd mark, same geometry as the hero's — bowls ON the
-                 rotation axis so the p and the d share a height (see
-                 StatementSection; the owner measured this against the
-                 original mark). -->
-            <g transform="translate(50 71) scale(0.41)">
-              <circle cx="72" cy="72" r="72" fill="var(--rez-na-temnem)" />
-              <circle cx="172" cy="72" r="72" fill="var(--rez-na-temnem)" />
-              <g fill="none" stroke="var(--zemlja)" stroke-width="18" stroke-linecap="round">
-                <circle cx="79" cy="72" r="33" />
-                <line x1="46" y1="48" x2="46" y2="111" />
+            <!-- The pd mark, same geometry as the hero's — see
+                 StatementSection for the construction. 307 × 200 scaled to 100
+                 wide, centred on the seal's own axis. -->
+            <g transform="translate(50 67.4) scale(0.3257)">
+              <circle cx="100" cy="100" r="100" fill="var(--rez-na-temnem)" />
+              <circle cx="207" cy="100" r="100" fill="var(--rez-na-temnem)" />
+              <g fill="none" stroke="var(--zemlja)" stroke-width="26" stroke-linecap="round">
+                <circle cx="96" cy="100" r="50" />
+                <line x1="46" y1="74" x2="46" y2="150" />
               </g>
-              <g
-                fill="none"
-                stroke="var(--zemlja)"
-                stroke-width="18"
-                stroke-linecap="round"
-                transform="rotate(180 122 72)"
-              >
-                <circle cx="79" cy="72" r="33" />
-                <line x1="46" y1="48" x2="46" y2="111" />
+              <g fill="none" stroke="var(--zemlja)" stroke-width="26" stroke-linecap="round"
+                transform="rotate(180 153.5 100)">
+                <circle cx="96" cy="100" r="50" />
+                <line x1="46" y1="74" x2="46" y2="150" />
               </g>
             </g>
           </svg>

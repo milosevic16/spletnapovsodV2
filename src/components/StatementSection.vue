@@ -128,22 +128,29 @@ onUnmounted(() => {
            the p rotated 180° (the mark's point symmetry). THE VEIL LANDS HERE
            — see the header comment before touching its size or position. -->
       <span class="stmt__stamp">
-        <!-- Bowls ON the rotation axis (cy 72): the d is the p turned 180°
-             about (122,72), so a bowl 7 below centre landed its twin 7 above
-             it and the letters read at different heights (owner, against the
-             original mark). On the axis both bowls share y=72 exactly, and the
-             point symmetry keeps meaning itself. -->
-        <svg class="stmt__mark" viewBox="0 0 244 144" aria-hidden="true">
-          <circle cx="72" cy="72" r="72" fill="var(--rez)" />
-          <circle cx="172" cy="72" r="72" fill="var(--rez)" />
-          <g fill="none" stroke="var(--list)" stroke-width="18" stroke-linecap="round">
-            <circle cx="79" cy="72" r="33" />
-            <line x1="46" y1="48" x2="46" y2="111" />
+        <!-- THE CONSTRUCTION, redrawn against the owner's reference artwork:
+             two discs whose centres sit 1.07 radii apart (307 × 200, the
+             reference's own 1.535 : 1), each bowl 0.5R on its centre line with
+             a 0.26R stroke — outer 0.63R, counter 0.37R — and each stem
+             tangent to its bowl on the outside, dropping flush with its foot.
+             THE BOWLS SIT WIDER APART THAN THE DISCS, by 0.04R each, and that
+             is the part a first pass got wrong: it is what makes the two
+             strokes BRIDGE a gap at the centre and cross with a pinch instead
+             of merging into one blob, which is what concentric bowls gave. The d is the
+             p turned 180° about the mark's centre, so the two share a height
+             by construction. Copied verbatim in SiteMasthead, ContactSection's
+             seal, the intro veil and both icons — change one, change all. -->
+        <svg class="stmt__mark" viewBox="0 0 307 200" aria-hidden="true">
+          <circle cx="100" cy="100" r="100" fill="var(--rez)" />
+          <circle cx="207" cy="100" r="100" fill="var(--rez)" />
+          <g fill="none" stroke="var(--list)" stroke-width="26" stroke-linecap="round">
+            <circle cx="96" cy="100" r="50" />
+            <line x1="46" y1="74" x2="46" y2="150" />
           </g>
-          <g fill="none" stroke="var(--list)" stroke-width="18" stroke-linecap="round"
-            transform="rotate(180 122 72)">
-            <circle cx="79" cy="72" r="33" />
-            <line x1="46" y1="48" x2="46" y2="111" />
+          <g fill="none" stroke="var(--list)" stroke-width="26" stroke-linecap="round"
+            transform="rotate(180 153.5 100)">
+            <circle cx="96" cy="100" r="50" />
+            <line x1="46" y1="74" x2="46" y2="150" />
           </g>
         </svg>
       </span>
@@ -468,7 +475,7 @@ onUnmounted(() => {
    IT IS STILL A CORNER, and that is what keeps the intro veil expressible: both
    of its coordinates are insets from a viewport edge, so index.html can copy
    them as a formula (left = 100% − inset − the mark's own width, which is
-   244/144 of its height). A position hung off the drawing's own centre would
+   307/200 of its height). A position hung off the drawing's own centre would
    not be — change this and the veil's desktop landing changes with it. */
 @media (min-width: 900px) {
   .stmt__stamp {
