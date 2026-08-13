@@ -1400,5 +1400,37 @@ button.pil__face {
     font-size: 1.0625rem;
     white-space: nowrap;
   }
+
+  /* THE POINTS FLOW IN COLUMNS, not a grid, and that is the fix for the dead
+     space the owner reported. A two-track grid gives every row the height of
+     its TALLEST cell, so a short point standing beside a long one leaves a hole
+     under it: »Brez predlog« next to »Domača podoba, prilagodljivost« left
+     about half a cell empty, and the SEO plate did the same under »Iskalnikom
+     vidna vsebina«. Columns pack each track independently, so what separates
+     two points is the spacing the design asks for rather than whatever the
+     neighbouring cell happened to need.
+
+     break-inside keeps a point whole across the column break, and the spacing
+     is wider than the grid's was, which is the other half of what was asked
+     for: space-10 between the tracks against the grid's space-6, and a full
+     space-6 under each point against its space-3. */
+  .pil__points {
+    display: block;
+    columns: 2;
+    column-gap: var(--space-10);
+    margin-top: var(--space-6);
+  }
+
+  .pil__point {
+    break-inside: avoid;
+    margin-bottom: var(--space-6);
+    /* The label sits a hair further off its detail than on a phone; at this
+       size 2px reads as a collision between two weights of one line. */
+    gap: var(--space-1);
+  }
+
+  .pil__point:last-child {
+    margin-bottom: 0;
+  }
 }
 </style>

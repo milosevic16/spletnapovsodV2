@@ -217,9 +217,23 @@
   --type-display-xl-ls: -0.02em;
 
   /* display L — section titles. 96 / 80 / 48 px; ls −0.03em (−0.02 contact) */
-  --type-display-l-size: 6rem; /* 96px */
+  --type-display-l-size: 4.2rem; /* 67.2px — 96 × 0.7, on the owner's call */
   --type-display-l-weight: 400;
-  --type-display-l-lh: 0.8;
+  /* THE CARON NEEDS THE ROOM, and this is arithmetic rather than taste.
+     Measured on the real face with canvas TextMetrics: Š's accent reaches
+     0.91em above the baseline where a plain cap reaches 0.71, and the lowest
+     ink of the line above sits 0.02em under ITS baseline — so any line-height
+     below 0.93 puts the accent inside the previous line's letterforms. The role
+     shipped 0.8, which is exactly the reported »strešica covered by the upper
+     line« on every wrapped Slovenian title (»uspešnih«, »prejšnjih«,
+     »ločimo«). 1.05 clears it by 0.12em and reads as deliberate leading rather
+     than as a near-miss.
+
+     It lived in the phone block first, on the reasoning that the collision was
+     reported there; the ratio collides at EVERY width, and the owner has now
+     asked for it on desktop too, so it is the role's own value and the phone
+     override is gone rather than duplicated. */
+  --type-display-l-lh: 1.05;
   --type-display-l-ls: -0.03em;
 
   /* statement — the scroll-filled paragraphs. 48 / 32 / 24 px */
@@ -382,7 +396,7 @@
 @media (min-width: 810px) and (max-width: 1199px) {
   :root {
     --type-display-xl-size: 8.25rem; /* 132px */
-    --type-display-l-size: 5rem; /* 80px */
+    --type-display-l-size: 3.5rem; /* 56px — 80 × 0.7, with the base */
     --type-statement-size: 2rem; /* 32px */
     --type-nav-size: 1.25rem; /* 20px */
     --container: 770px;
@@ -421,18 +435,6 @@
       calc(3rem * var(--display-l-phone))
     ); /* 33.75px at ≥370px wide */
 
-    /* THE CARON NEEDS THE ROOM, and this is arithmetic, not taste. Measured on
-       the real face with canvas TextMetrics: Š's accent reaches 0.91em above
-       the baseline where a plain cap reaches 0.71, and the lowest ink of the
-       line above sits 0.02em under ITS baseline — so any line-height below
-       0.93 puts the accent inside the previous line's letterforms. The role
-       ships 0.8, which is exactly the reported »strešica covered by the upper
-       line« on every wrapped Slovenian title (»uspešnih«, »ločimo«).
-       1.05 clears it by 0.12em and reads as deliberate leading rather than as
-       a near-miss. Phone only, where the titles wrap most and the report came
-       from; the same ratio collides at every width, so the desktop role is a
-       one-line change if the owner wants it there too. */
-    --type-display-l-lh: 1.05;
     --type-statement-size: 1.5rem; /* 24px */
     --type-nav-size: 1.125rem; /* 18px */
     --type-label-size: 0.8125rem; /* 13px */

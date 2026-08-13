@@ -428,6 +428,7 @@ const sourceLines = computed(() => [
   ...factLines.map((f) => ({ id: f.id, text: f.text })),
   { id: '', text: `<h2>${invisible.title}</h2>` },
   { id: '', text: `<blockquote>${invisible.quote}</blockquote>` },
+  { id: '', text: `<p>${invisible.quoteRest}</p>` },
   { id: '', text: `<p>${invisible.lead}</p>` },
   ...invisible.items.flatMap((item) => [
     { id: '', text: `<article id="${item.id}">` },
@@ -577,6 +578,7 @@ onUnmounted(() => {
         <blockquote class="trad__quote">
           <p>{{ invisible.quote }}</p>
         </blockquote>
+        <p class="trad__lead">{{ invisible.quoteRest }}</p>
         <p class="trad__lead">{{ invisible.lead }}</p>
       </div>
 
@@ -862,7 +864,11 @@ onUnmounted(() => {
 .trad__quote p {
   /* A miniature of the statement role — the full-size statement (3rem) would
      make the band taller than any viewport. */
-  font-size: clamp(1.375rem, 1.05rem + 1.3vw, 2.25rem);
+  /* The ceiling comes down with the section titles (30%, owner's call):
+     2.25rem × 0.7. The floor and the slope are untouched, so phones are where
+     they were and only the desktop end moves. This stays the largest type in
+     the band, which is the point of it. */
+  font-size: clamp(1.375rem, 1.05rem + 1.3vw, 1.575rem);
   font-weight: var(--type-statement-weight);
   letter-spacing: var(--type-statement-ls);
   text-transform: uppercase;
@@ -915,9 +921,26 @@ onUnmounted(() => {
    drawing into the second and wrapped the callout onto a row of its own —
    which is exactly what the layout looked like. Out of flow it defines its
    patterns and occupies nothing. */
+/* THE SKEW NEEDS VERTICAL ROOM, and it had none. Every sheet is turned
+   skewY(-7deg), which lifts its right end and drops its left by
+   tan(7°) × width/2 — and the four sheets are laid out to fill the stack's
+   height exactly (0 / 23.5 / 47 / 70.5 per cent plus a 29 per cent height
+   is 99.5). So the FIRST sheet's raised corner leaves the box at the top and
+   the LAST one's leaves it at the bottom, with nothing reserved for either.
+   Measured at 1920: the first sheet reached 32px above the stack and ran into
+   the paragraph above it, which is the reported "first layer is cut off".
+
+   The overshoot is bounded because the stack's width is: the container caps at
+   1312px and this column takes just under half of it, so a 628px stack skews
+   0.1228 × 0.82 × 628 / 2 = 31.6px at the widest the layout can ever be. 48px
+   covers that with 16px of air left over — 36px cleared the collision but left
+   only 4, which reads as touching rather than as clearance. Margin rather than
+   padding, because the bands are positioned against the padding box and their
+   percentage tops would simply scale with it. */
 .asm__stack {
   position: relative;
   height: clamp(20rem, 36vw, 27rem);
+  margin-block: 3rem;
 }
 
 /* Sheets are absolute and equal: the stagger, not the thickness, is what

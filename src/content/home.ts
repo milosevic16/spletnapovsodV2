@@ -94,8 +94,12 @@ export const hero: Hero = {
 export const invisible = {
   kicker: 'Kaj dobite',
   title: 'Spletna pod površino.',
-  quote:
-    'Spletna stran ni zgolj tisto, kar vidite. Redno posodabljanje, Robots.txt, https povezave, gostovanje, vezanje domene in vzdrževanje so le nekatere izmed stvari, ki so vidne le v ozadju.',
+  quote: 'Spletna stran ni zgolj tisto, kar vidite.',
+  /** The rest of the owner's sentence, split off on their call: the statement
+   *  keeps one line and everything that ENUMERATES the background work reads
+   *  as body copy, in the lead's own size and voice. */
+  quoteRest:
+    'Redno posodabljanje, Robots.txt, https povezave, gostovanje, vezanje domene in vzdrževanje so le nekatere izmed stvari, ki so vidne le v ozadju.',
   /** Owner-supplied, VERBATIM — including »npr. Niste« and the missing final
    *  stop. Flagged for sign-off rather than corrected. */
   lead:
