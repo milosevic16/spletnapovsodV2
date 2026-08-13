@@ -24,7 +24,25 @@
  */
 import { onMounted, onUnmounted, ref } from 'vue'
 import { nav, hero, ui } from '@/content/home'
+import type { NavItem } from '@/content/home'
 import { createFx } from '@/lib/fx'
+
+/**
+ * SHARED CHROME, PER-PAGE STOPS. The masthead is the same instrument on every
+ * page, but the anchors it points at belong to whichever page mounts it: the
+ * home page's four sections are not a subpage's, and a strip that keeps
+ * pointing at #reference on a page with no reference section hands the visitor
+ * four controls that scroll nowhere.
+ *
+ * Both props default to the home page's own values, so every existing call
+ * site renders exactly what it rendered before and no caller has to know these
+ * exist. The href shape is unchanged (an in-page #anchor), which is what keeps
+ * this a prop rather than a rewrite: a subpage passes its OWN anchors.
+ */
+const props = withDefaults(
+  defineProps<{ items?: NavItem[]; cta?: { label: string; target: string } }>(),
+  { items: () => nav, cta: () => hero.ctaPrimary },
+)
 
 const fx = createFx()
 const live = ref(false)
@@ -180,7 +198,7 @@ onUnmounted(() => {
       >
         <nav class="masthead__nav" aria-label="Glavna navigacija">
           <a
-            v-for="(item, i) in nav"
+            v-for="(item, i) in props.items"
             :key="item.target"
             :href="`#${item.target}`"
             class="masthead__link"
@@ -192,11 +210,11 @@ onUnmounted(() => {
         </nav>
 
         <a
-          :href="`#${hero.ctaPrimary.target}`"
+          :href="`#${props.cta.target}`"
           class="masthead__link masthead__cta"
-          :style="{ '--i': nav.length }"
+          :style="{ '--i': props.items.length }"
           @click="close"
-          >{{ hero.ctaPrimary.label }}</a
+          >{{ props.cta.label }}</a
         >
       </div>
     </div>
