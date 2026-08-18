@@ -9,12 +9,12 @@
  *
  * The chrome gets THIS page's stops. There is no inquiry form here (a privacy
  * page is not a funnel): the masthead CTA points at the on-page »Vaše pravice«
- * section, where the contact for exercising data rights lives, and the visible
- * breadcrumb is the route back to home. JSON-LD carries a WebPage referencing
- * the site Organization, plus a BreadcrumbList that mirrors the visible trail.
+ * section, where the contact for exercising data rights lives. The route back
+ * to home is the masthead's home logo and »Domov« button. JSON-LD carries a
+ * WebPage referencing the site Organization.
  */
 import { useHead } from '@unhead/vue'
-import { meta, breadcrumb, nav, ctaPrimary } from '@/content/zasebnost'
+import { meta, nav, ctaPrimary } from '@/content/zasebnost'
 import { SITE_ORIGIN, SITE_NAME } from '@/lib/constants'
 import SiteMasthead from '@/components/SiteMasthead.vue'
 import ZasebnostHero from '@/components/ZasebnostHero.vue'
@@ -37,16 +37,6 @@ const jsonLd = {
       isPartOf: { '@id': `${SITE_ORIGIN}/#website` },
       about: { '@id': orgId },
       publisher: { '@id': orgId },
-    },
-    // Mirrors the VISIBLE trail in ZasebnostHero — never markup for a trail the
-    // reader cannot see.
-    {
-      '@type': 'BreadcrumbList',
-      '@id': `${canonical}#breadcrumb`,
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: breadcrumb.homeLabel, item: `${SITE_ORIGIN}/` },
-        { '@type': 'ListItem', position: 2, name: breadcrumb.currentLabel, item: canonical },
-      ],
     },
   ],
 }
