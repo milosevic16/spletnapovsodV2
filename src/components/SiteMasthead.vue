@@ -349,6 +349,9 @@ onUnmounted(() => {
      reserved right-hand strip the hero's own wordmark has. */
   .masthead--live .masthead__row {
     position: relative;
+    /* Above the menu sheet (z 40), which now spans from the viewport top and
+       would otherwise cover the brand and the control it slides beneath. */
+    z-index: 41;
     min-height: 44px;
     /* The desktop row centres its items; with the button out of flow the brand
        became the only one and centred with it, landing 5px off the hero's own
@@ -610,25 +613,35 @@ onUnmounted(() => {
     opacity: 0;
   }
 
-  /* The strip takes the menu's ground, and its own seam disappears so the
-     ground runs unbroken into the panel below. */
+  /* THE SHEET IS THE OPEN SURFACE. The strip used to paint its own list-2 and
+     press screen over the top band; with the panel now spanning from the
+     viewport's top edge the same surface would be painted twice at the same
+     lattice phase, doubling the dots — and the strip's 260ms background fade on
+     close was exactly the "white blinks away 1cm below the top" remnant. The
+     strip stays transparent in the open face, so the only thing that moves on
+     close is the sheet itself, retracting to the screen edge. */
   .masthead--live.masthead--open {
-    background-color: var(--list-2);
-    /* Back on for this face: the hero-face rule above kills the screen for
-       the no-bar state, and it matches whenever the masthead is live. Taken
-       from .press's own custom properties so it cannot drift from the
-       utility. */
-    background-image: var(--press-dot-hi), var(--press-dot-lo), var(--press-dot-hi),
-      var(--press-dot-lo);
     border-bottom-color: transparent;
   }
 
   .masthead--live .masthead__panel {
     position: absolute;
-    top: 100%;
+    /* FROM THE VIEWPORT'S OWN TOP EDGE, not from under the strip. The panel
+       hung at top:100%, so the fold's leading edge could only ever travel back
+       up to the strip's BOTTOM — the close died ~64px (about 1cm on a phone)
+       short of the screen edge, and the white above it faded instead of
+       sliding, which is exactly what the owner's recording shows. Spanning
+       from 0, the sheet draws down from the screen edge and retracts back to
+       it: the edge's whole journey is on-screen and it ends at the top.
+       The strip's content rides ABOVE the sheet (the row's z-index below);
+       the links clear the strip via padding that MIRRORS the row's own
+       geometry — hero-inset plus its 44px min-height. Change one, change
+       both. */
+    top: 0;
     left: 0;
     right: 0;
     z-index: 40;
+    padding-top: calc(var(--hero-inset) + 44px);
     flex-direction: column;
     align-items: stretch;
     column-gap: 0;
