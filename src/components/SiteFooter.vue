@@ -1,7 +1,15 @@
 <script setup lang="ts">
 import { nav, footer } from '@/content/home'
+import type { NavItem } from '@/content/home'
 import { CONTACT_EMAIL } from '@/lib/constants'
 import PrerezLine from './PrerezLine.vue'
+
+/**
+ * Same contract as the masthead, and it matters more here: on a phone the
+ * footer nav IS the complete in-flow navigation, so a subpage must pass its
+ * own stops or it is four dead anchors. Defaults to home's.
+ */
+const props = withDefaults(defineProps<{ items?: NavItem[] }>(), { items: () => nav })
 
 // Baked at prerender; patched client-side only across a New Year boundary.
 const year = new Date().getFullYear()
@@ -22,7 +30,7 @@ const year = new Date().getFullYear()
         </div>
 
         <nav class="footer__nav" aria-label="Navigacija v nogi">
-          <a v-for="item in nav" :key="item.target" :href="`#${item.target}`" class="footer__link">
+          <a v-for="item in props.items" :key="item.target" :href="`#${item.target}`" class="footer__link">
             {{ item.label }}
           </a>
         </nav>
