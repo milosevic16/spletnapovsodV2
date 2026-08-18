@@ -18,7 +18,7 @@
  * Service with no Offer, never a fabricated number.
  */
 import { useHead } from '@unhead/vue'
-import { meta, nav, ctaPrimary } from '@/content/apartmaji'
+import { meta, nav, ctaPrimary, contactExtras, packages } from '@/content/apartmaji'
 import { SITE_ORIGIN, SITE_NAME } from '@/lib/constants'
 import SiteMasthead from '@/components/SiteMasthead.vue'
 import ApartmajiHero from '@/components/ApartmajiHero.vue'
@@ -27,6 +27,10 @@ import ApartmajiPackages from '@/components/ApartmajiPackages.vue'
 import ApartmajiRevisions from '@/components/ApartmajiRevisions.vue'
 import ContactSection from '@/components/ContactSection.vue'
 import SiteFooter from '@/components/SiteFooter.vue'
+
+/** The form's package chips, derived from the tiers themselves — one source,
+ *  so a renamed tier can never leave a stale chip. */
+const packageChoices = packages.items.map((p) => ({ value: p.id, label: p.name }))
 
 const canonical = `${SITE_ORIGIN}/apartmaji`
 const orgId = `${SITE_ORIGIN}/#org`
@@ -88,7 +92,11 @@ useHead({
     <ApartmajiExamples />
     <ApartmajiPackages />
     <ApartmajiRevisions />
-    <ContactSection />
+    <ContactSection
+      :package-choices="packageChoices"
+      :package-label="contactExtras.packageLabel"
+      :message-label="contactExtras.messageLabel"
+    />
   </main>
   <SiteFooter :items="nav" />
 </template>

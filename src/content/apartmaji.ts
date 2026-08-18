@@ -184,3 +184,13 @@ export const nav: NavItem[] = [
 
 /** The masthead CTA. Short: the strip is one row and the CTA never wraps. */
 export const ctaPrimary = { label: 'Povprašajte', target: 'kontakt' }
+
+/**
+ * This page's overrides for the SHARED contact form (ContactSection props).
+ * The package chips' values are the tier ids from `packages` — machine
+ * identifiers stay English, so the owner's inbox sorts across languages.
+ */
+export const contactExtras = {
+  packageLabel: 'Želeni paket',
+  messageLabel: 'Dodatne informacije',
+}

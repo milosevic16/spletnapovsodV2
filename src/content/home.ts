@@ -455,6 +455,10 @@ export const contact = {
       label: 'Izdelava in objava',
       detail: 'Stran zgradimo, uskladimo z vami in objavimo na vaši domeni.',
     },
+    {
+      label: 'Plačilo',
+      detail: 'Plačate šele, ko ste popolnoma zadovoljni s spletno stranjo.',
+    },
   ],
   form: {
     topicLabel: 'Kaj potrebujete?',

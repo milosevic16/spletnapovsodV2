@@ -35,6 +35,19 @@ import { contact } from '@/content/home'
 import { CONTACT_EMAIL } from '@/lib/constants'
 import { createFx, prefersReducedMotion } from '@/lib/fx'
 
+/**
+ * Subpage variants of the one shared form. The apartment page adds a package
+ * chip row and relabels the message field; the home page passes nothing and
+ * gets the form exactly as before. Undeclared = home behaviour, so a future
+ * page cannot half-configure it by accident.
+ */
+const props = defineProps<{
+  /** Chip options for a »which tier« row; values are machine ids (English). */
+  packageChoices?: { value: string; label: string }[]
+  packageLabel?: string
+  messageLabel?: string
+}>()
+
 const fx = createFx()
 const sending = ref(false)
 const status = ref<'idle' | 'success' | 'error'>('idle')
@@ -47,6 +60,9 @@ const email = ref('')
 const topic = ref('')
 const message = ref('')
 const botcheck = ref('')
+/** The chosen package (apartment page only). Optional by design: the tiers are
+ *  an aid, not a gate — nobody is refused for not having picked one yet. */
+const pkg = ref('')
 
 /** Field ids currently in error — drives aria-invalid + focus on first offender. */
 const invalidFields = ref<Set<string>>(new Set())
@@ -127,7 +143,8 @@ async function onSubmit() {
   if (!name.value.trim()) missing.push({ id: 'f-name', label: contact.form.nameLabel })
   if (!email.value.trim()) missing.push({ id: 'f-email', label: contact.form.emailLabel })
   if (!topic.value) missing.push({ id: 'f-topic', label: contact.form.feedback.topicShort })
-  if (!message.value.trim()) missing.push({ id: 'f-message', label: contact.form.messageLabel })
+  if (!message.value.trim())
+    missing.push({ id: 'f-message', label: props.messageLabel ?? contact.form.messageLabel })
   if (missing.length) {
     invalidFields.value = new Set(missing.map((m) => m.id))
     fail(`${contact.form.feedback.required} ${missing.map((m) => m.label.toLowerCase()).join(', ')}.`)
@@ -167,6 +184,8 @@ async function onSubmit() {
         name: name.value.trim(),
         email: email.value.trim(),
         topic: topic.value,
+        // Present only when the page has the chip row AND the visitor chose.
+        ...(pkg.value ? { package: pkg.value } : {}),
         message: message.value.trim(),
       }),
     })
@@ -177,6 +196,7 @@ async function onSubmit() {
       name.value = ''
       email.value = ''
       topic.value = ''
+      pkg.value = ''
       message.value = ''
       stamp()
     } else {
@@ -207,6 +227,8 @@ onUnmounted(() => fx.dispose())
         </p>
       </header>
 
+      <div class="contact__body">
+      <div class="contact__rail">
       <!-- What happens after sending — a genuinely sequential process, which is
            the one case the house rules let carry numbers. -->
       <section class="contact__steps" :aria-label="contact.stepsTitle">
@@ -222,6 +244,42 @@ onUnmounted(() => fx.dispose())
         </ol>
       </section>
 
+      <!-- THE CONSTRUCTION FIGURE — the mark's own geometry as a drafting
+           exercise: two circles at the artwork's true spacing (centres 1.124
+           radii apart), the crossing lens hatched at 45°, centre ticks. Pure
+           decoration on the sheet: aria-hidden, text-free, desktop only. -->
+      <svg class="contact__orna" viewBox="0 0 334 222" aria-hidden="true">
+        <defs>
+          <pattern
+            id="orna-hatch"
+            width="7"
+            height="7"
+            patternTransform="rotate(45)"
+            patternUnits="userSpaceOnUse"
+          >
+            <line x1="0" y1="0" x2="0" y2="7" stroke="var(--grafit-inset)" stroke-width="1.4" />
+          </pattern>
+          <clipPath id="orna-clip"><circle cx="111" cy="111" r="100" /></clipPath>
+        </defs>
+        <g clip-path="url(#orna-clip)">
+          <circle cx="223.4" cy="111" r="100" fill="url(#orna-hatch)" />
+        </g>
+        <circle cx="111" cy="111" r="100" fill="none" stroke="var(--crta-na-temnem)" stroke-width="1.5" />
+        <circle cx="223.4" cy="111" r="100" fill="none" stroke="var(--crta-na-temnem)" stroke-width="1.5" />
+        <line
+          x1="111"
+          y1="111"
+          x2="223.4"
+          y2="111"
+          stroke="var(--crta-na-temnem)"
+          stroke-width="1"
+          stroke-dasharray="2 5"
+        />
+        <path d="M105 111h12M111 105v12" stroke="var(--rez-na-temnem)" stroke-width="1.5" fill="none" />
+        <path d="M217.4 111h12M223.4 105v12" stroke="var(--crta-na-temnem)" stroke-width="1.5" fill="none" />
+      </svg>
+      </div>
+
       <!-- THE TITLE BLOCK. method="post": with JS disabled a bare <form> would
            GET-navigate and leak the message into the URL/history; a POST leaks
            nothing. -->
@@ -233,7 +291,7 @@ onUnmounted(() => fx.dispose())
         @submit.prevent="onSubmit"
         @input="onEdit"
       >
-        <div class="form__cell">
+        <div class="form__cell form__cell--half">
           <label class="form__label" for="f-name">{{ contact.form.nameLabel }}</label>
           <input
             id="f-name"
@@ -248,7 +306,7 @@ onUnmounted(() => fx.dispose())
           />
         </div>
 
-        <div class="form__cell">
+        <div class="form__cell form__cell--half">
           <label class="form__label" for="f-email">{{ contact.form.emailLabel }}</label>
           <input
             id="f-email"
@@ -289,8 +347,35 @@ onUnmounted(() => fx.dispose())
           </div>
         </fieldset>
 
+        <!-- The tier chips — apartment page only (prop-driven). Same chip
+             mechanics as the topic row; optional, so no required/invalid
+             wiring: the tiers are an aid, not a gate. -->
+        <fieldset v-if="props.packageChoices?.length" class="form__cell form__cell--chips">
+          <legend class="form__label">{{ props.packageLabel }}</legend>
+          <div class="form__chips">
+            <label
+              v-for="(p, i) in props.packageChoices"
+              :key="p.value"
+              class="form__chip"
+              :class="{ 'form__chip--on': pkg === p.value }"
+            >
+              <input
+                :id="i === 0 ? 'f-package' : `f-package-${p.value}`"
+                v-model="pkg"
+                class="form__chip-input"
+                type="radio"
+                name="package"
+                :value="p.value"
+              />
+              <span class="form__chip-face">{{ p.label }}</span>
+            </label>
+          </div>
+        </fieldset>
+
         <div class="form__cell">
-          <label class="form__label" for="f-message">{{ contact.form.messageLabel }}</label>
+          <label class="form__label" for="f-message">{{
+            props.messageLabel ?? contact.form.messageLabel
+          }}</label>
           <textarea
             id="f-message"
             v-model="message"
@@ -366,6 +451,7 @@ onUnmounted(() => fx.dispose())
           </svg>
         </span>
       </form>
+      </div>
     </div>
   </section>
 </template>
@@ -453,6 +539,26 @@ onUnmounted(() => fx.dispose())
   color: var(--papir-dim);
   font-size: 0.9375rem;
   line-height: 1.5;
+}
+
+/* --- the composition ------------------------------------------------------------
+   One grid holds the process rail and the title block: stacked on phones,
+   side by side on wide screens (rail left, block right) so the section reads
+   as one spread instead of three bands. */
+.contact__body {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+}
+
+.contact__rail .contact__steps {
+  margin-top: var(--space-10);
+}
+
+/* The construction figure: decoration only, and only where there is room for
+   it — phones never pay scroll for an ornament. */
+.contact__orna {
+  display: none;
 }
 
 /* --- the title block ----------------------------------------------------------
@@ -750,13 +856,34 @@ onUnmounted(() => fx.dispose())
   stroke-dasharray: 3 18;
 }
 
-/* --- desktop ------------------------------------------------------------------- */
-@media (min-width: 900px) {
-  .contact__steps-list {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--space-10);
+/* --- the form's own two columns -------------------------------------------------
+   Name and e-mail share a row once there is width for two comfortable fields;
+   everything else keeps the full measure. */
+@media (min-width: 640px) {
+  .form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .form > * {
+    grid-column: 1 / -1;
+  }
+
+  .form > .form__cell--half {
+    grid-column: auto;
+  }
+}
+
+/* --- desktop ------------------------------------------------------------------- */
+/* Between one column and the spread: the steps take two columns so four of
+   them do not stack into a tower. */
+@media (min-width: 900px) and (max-width: 1099.98px) {
+  .contact__steps-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-10);
+  }
+}
+
+@media (min-width: 900px) {
   .contact__step {
     border-top: var(--divider-width) solid var(--crta-na-temnem);
     padding-top: var(--space-4);
@@ -764,6 +891,56 @@ onUnmounted(() => fx.dispose())
 
   .form {
     padding-block: var(--space-12);
+  }
+}
+
+/* The spread: rail beside block. The form gives up its centred float and
+   fills its column; the steps run as a vertical rail with the figure below. */
+@media (min-width: 1100px) {
+  .contact__body {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 40rem);
+    gap: var(--space-20);
+    align-items: start;
+  }
+
+  .contact__rail .contact__steps {
+    margin-top: var(--space-10);
+  }
+
+  .contact__steps-list {
+    gap: var(--space-6);
+  }
+
+  .contact__step {
+    grid-template-columns: 3rem minmax(0, 1fr);
+    grid-template-areas:
+      'index label'
+      'index detail';
+    column-gap: var(--space-4);
+  }
+
+  .contact__step-index {
+    grid-area: index;
+  }
+
+  .contact__step-label {
+    grid-area: label;
+  }
+
+  .contact__step-detail {
+    grid-area: detail;
+    max-width: 44ch;
+  }
+
+  .form {
+    width: 100%;
+    margin: 0;
+  }
+
+  .contact__orna {
+    display: block;
+    width: min(100%, 20rem);
+    margin-top: var(--space-16);
   }
 }
 
