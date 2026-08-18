@@ -54,7 +54,33 @@ const phone = ref(false)
 const pinned = ref(false)
 /** Phones only: pulled off the top while the reader is travelling down. */
 const stowed = ref(false)
+/** One-beat latch that turns the masthead's own transitions off while `pinned`
+ *  flips — see setPinned. */
+const snap = ref(false)
 const toggleEl = ref<HTMLButtonElement | null>(null)
+
+/**
+ * THE BAR APPEARS ONLY ON THE WAY UP (owner's call). `pinned` still means
+ * "past the hero", but crossing that line DOWNWARD must show nothing: the
+ * observer fires before the scroll listener has sampled a direction, so the
+ * bar used to arrive un-stowed for a beat and then slide out — the reported
+ * flash. Every pinned ENTRY therefore starts stowed, and only a genuine
+ * upward move (onDirection) un-stows it.
+ *
+ * The flip itself is SNAPPED: the element is jumping between the page's
+ * coordinate space (absolute, scrolled away with the hero) and the viewport's
+ * (fixed), and any transition running across that jump IS the flash. The
+ * latch holds the masthead's transitions off for the flip's frame; the timer
+ * is the fallback for throttled documents, where rAF may not run.
+ */
+function setPinned(v: boolean) {
+  if (v === pinned.value) return
+  if (v) stowed.value = true
+  snap.value = true
+  pinned.value = v
+  fx.raf(() => fx.raf(() => (snap.value = false)))
+  fx.setTimeout(() => (snap.value = false), 120)
+}
 
 function close() {
   open.value = false
@@ -109,7 +135,7 @@ onMounted(() => {
   if (sentinel && 'IntersectionObserver' in window) {
     fx.io(
       (entries) => {
-        for (const e of entries) pinned.value = !e.isIntersecting
+        for (const e of entries) setPinned(!e.isIntersecting)
       },
       { threshold: 0 },
     ).observe(sentinel)
@@ -117,7 +143,7 @@ onMounted(() => {
     // No sentinel (or no observer): fall back to a plain threshold rather than
     // leaving the bar stuck in its hero face forever.
     const onScroll = () => {
-      pinned.value = window.scrollY > 120
+      setPinned(window.scrollY > 120)
     }
     onScroll()
     fx.on(window, 'scroll', onScroll, { passive: true })
@@ -140,6 +166,7 @@ onUnmounted(() => {
       'masthead--open': open,
       'masthead--pinned': pinned,
       'masthead--stowed': stowed,
+      'masthead--snap': snap,
       'masthead--sub': !!props.home,
     }"
   >
@@ -420,18 +447,28 @@ onUnmounted(() => {
     transform: translateY(-100%);
   }
 
-  /* SUBPAGES: THE CHROME BELONGS TO THE PAGE, not the viewport (owner's call —
-     on /apartmaji the fixed controls hung over the whole scroll and read as
-     "displayed way too long"). At the top of a subpage the masthead is
-     absolute, so the logo and the menu control scroll up and away with the
-     page like any other element on it; the pinned bar and the open overlay
-     keep the base `fixed`, so scrolling back up still surfaces the bar and an
-     open menu still holds the screen. Absolute against the initial containing
-     block (no positioned ancestor), so top:0 is the top of the DOCUMENT.
-     The home page keeps its always-fixed hero face — that was tried there and
-     reverted on the owner's call, which is why this is scoped to --sub. */
-  .masthead--live.masthead--sub:not(.masthead--pinned):not(.masthead--open) {
+  /* THE CHROME BELONGS TO THE PAGE, not the viewport — every page (owner's
+     call; it was scoped to subpages first, then asked for everywhere). At the
+     top of a page the masthead is absolute, so the logo and the menu control
+     stand in the hero and scroll up and away with it like any other element;
+     nothing fixed exists while the reader travels down. The pinned bar and the
+     open overlay keep the base `fixed`, so an upward turn still surfaces the
+     bar and an open menu still holds the screen. Absolute against the initial
+     containing block (no positioned ancestor), so top:0 is the top of the
+     DOCUMENT. */
+  .masthead--live:not(.masthead--pinned):not(.masthead--open) {
     position: absolute;
+  }
+
+  /* THE PINNED FLIP IS A SNAP, NOT A TWEEN. Crossing the hero line swaps the
+     element between the page's coordinate space and the viewport's, and any
+     transition running across that swap is a visible flash — the bar used to
+     arrive and slide out when the line was crossed downward. setPinned holds
+     this class for the flip's frame; combined with entries starting stowed
+     (script), the bar can only ever APPEAR by the stow transition on a real
+     upward move. */
+  .masthead--live.masthead--snap {
+    transition: none;
   }
 
   /* The button is taken OUT of the row's flow. In flow it competes with a
