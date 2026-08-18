@@ -420,6 +420,20 @@ onUnmounted(() => {
     transform: translateY(-100%);
   }
 
+  /* SUBPAGES: THE CHROME BELONGS TO THE PAGE, not the viewport (owner's call —
+     on /apartmaji the fixed controls hung over the whole scroll and read as
+     "displayed way too long"). At the top of a subpage the masthead is
+     absolute, so the logo and the menu control scroll up and away with the
+     page like any other element on it; the pinned bar and the open overlay
+     keep the base `fixed`, so scrolling back up still surfaces the bar and an
+     open menu still holds the screen. Absolute against the initial containing
+     block (no positioned ancestor), so top:0 is the top of the DOCUMENT.
+     The home page keeps its always-fixed hero face — that was tried there and
+     reverted on the owner's call, which is why this is scoped to --sub. */
+  .masthead--live.masthead--sub:not(.masthead--pinned):not(.masthead--open) {
+    position: absolute;
+  }
+
   /* The button is taken OUT of the row's flow. In flow it competes with a
      brand that is now hero-sized, and at 320px the two plus their gap exceed
      the line — measured, the button wrapped to a second row and the bar grew
@@ -427,8 +441,13 @@ onUnmounted(() => {
      reserved right-hand strip the hero's own wordmark has. */
   .masthead--live .masthead__row {
     position: relative;
-    /* Above the menu sheet (z 40), which now spans from the viewport top and
-       would otherwise cover the brand and the control it slides beneath. */
+    /* One stacking context for the whole phone chrome. The SHEET IS A CHILD OF
+       THIS ROW, not a sibling — so this z-index lifts nothing by itself (the
+       first version of this fix believed it did, and the open menu shipped
+       with the brand and the close control painted UNDER the sheet, invisible
+       and untappable). What it does is contain the contest: inside it the
+       sheet holds 40 and everything that stands ON the strip takes 41 — see
+       the group rule after the toggle. */
     z-index: 41;
     min-height: 44px;
     /* The desktop row centres its items; with the button out of flow the brand
@@ -662,6 +681,23 @@ onUnmounted(() => {
   .masthead--live.masthead--pinned:not(.masthead--open) .masthead__toggle-label {
     max-width: 5rem;
     opacity: 1;
+  }
+
+  /* EVERYTHING THAT STANDS ON THE STRIP RIDES ABOVE THE SHEET. The sheet (the
+     panel, z 40) is a SIBLING of these inside the row, and it now spans from
+     the viewport's top — so anything left at z-auto paints underneath it and,
+     because the sheet takes pointer events, becomes untappable with it. That
+     was the shipped bug: the open menu had no visible brand and no reachable
+     close control. The brand needs `position` for its z-index to mean
+     anything; the toggle and the subpage home link are already positioned. */
+  .masthead--live .masthead__brand {
+    position: relative;
+  }
+
+  .masthead--live .masthead__brand,
+  .masthead--live .masthead__toggle,
+  .masthead--live .masthead__home {
+    z-index: 41;
   }
 
   .masthead__glyph {
