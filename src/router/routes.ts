@@ -16,6 +16,11 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/views/ApartmajiView.vue'),
   },
   {
+    path: '/zasebnost',
+    name: 'zasebnost',
+    component: () => import('@/views/ZasebnostView.vue'),
+  },
+  {
     path: '/404',
     name: 'not-found',
     component: () => import('@/views/NotFoundView.vue'),

@@ -27,6 +27,16 @@ const year = new Date().getFullYear()
         <div class="footer__brand">
           <span class="footer__wordmark">SpletnaPovsod</span>
           <p class="footer__tagline">{{ footer.tagline }}</p>
+
+          <!-- Provider identity, on every page (ZEPT). Numbers in the mono
+               register: checkable public identifiers, like the e-mail below. -->
+          <div class="footer__business">
+            <p class="footer__business-name">{{ footer.business.name }}</p>
+            <p v-for="row in footer.business.rows" :key="row.label" class="footer__business-row">
+              <span class="footer__business-label">{{ row.label }}</span>
+              <span class="footer__business-value emisija">{{ row.value }}</span>
+            </p>
+          </div>
         </div>
 
         <nav class="footer__nav" aria-label="Navigacija v nogi">
@@ -43,7 +53,10 @@ const year = new Date().getFullYear()
         </p>
       </div>
 
-      <p class="footer__legal">© {{ year }} SpletnaPovsod</p>
+      <div class="footer__legal">
+        <span class="footer__copy">© {{ year }} SpletnaPovsod</span>
+        <a :href="footer.privacyHref" class="footer__legal-link">{{ footer.privacyLabel }}</a>
+      </div>
     </div>
   </footer>
 </template>
@@ -73,6 +86,37 @@ const year = new Date().getFullYear()
   margin-top: 0.4rem;
   font-size: 0.9rem;
   max-width: 34ch;
+}
+
+.footer__business {
+  margin-top: 1.5rem;
+  display: grid;
+  gap: 0.3rem;
+}
+
+.footer__business-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--list);
+}
+
+.footer__business-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.6rem;
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.footer__business-label {
+  min-width: 6.5rem;
+  color: var(--papir-dim);
+}
+
+.footer__business-value {
+  color: var(--list);
 }
 
 .footer__nav {
@@ -115,8 +159,26 @@ const year = new Date().getFullYear()
 }
 
 .footer__legal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.5rem;
   margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--crta-na-temnem);
   font-size: 0.8rem;
+}
+
+.footer__legal-link {
+  color: var(--papir-dim);
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+  padding-block: 0.4rem; /* keeps the tap target comfortable */
+}
+
+.footer__legal-link:hover,
+.footer__legal-link:focus-visible {
+  color: var(--rez-na-temnem);
 }
 
 @media (min-width: 900px) {

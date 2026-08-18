@@ -294,6 +294,15 @@ if (home) {
     const aptContent = await importTs('src/content/apartmaji.ts', 'apartmaji')
     check(collect(aptContent, ['feedback']), apt, 'apartmaji')
   }
+
+  // The privacy subpage, same contract: every visible legal string in its own
+  // module must appear in the emitted page, so the policy can never silently
+  // lose a clause.
+  const zas = pages.find((p) => p.file === 'zasebnost.html')
+  if (zas) {
+    const zasContent = await importTs('src/content/zasebnost.ts', 'zasebnost')
+    check(collect(zasContent, []), zas, 'zasebnost')
+  }
 }
 
 // --------------------------------------------------------------------------

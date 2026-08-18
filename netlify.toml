@@ -51,6 +51,18 @@
   [headers.values]
     Cache-Control = "no-cache"
 
+# Same as apartmaji: the rule on the .html file does not cover a visit to
+# /zasebnost, so both request paths get an explicit no-cache HTML rule.
+[[headers]]
+  for = "/zasebnost"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/zasebnost.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
 [[headers]]
   for = "/assets/*"
   [headers.values]
