@@ -330,29 +330,6 @@ onUnmounted(() => {
       transform 320ms var(--ease-out);
   }
 
-  /* THE HERO FACE BELONGS TO THE PAGE, not the viewport. Fixed, the button sat
-     glued to the top-right corner through the whole hero scroll and only ever
-     hid once the sentinel had fully left — the reported "stuck button that
-     hides after you scroll past the hero". Absolute, with no positioned
-     ancestor (the masthead is a direct child of a static #app), it resolves
-     against the initial containing block at the PAGE origin, so top:0 is the
-     top of the DOCUMENT and the button scrolls up and away with the hero it
-     stands in, exactly like any other element on the sheet.
-
-     Only the hero face. The moment the menu OPENS it must overlay the viewport,
-     and once PINNED the bar must hold the top — both of those fall back to the
-     base `fixed` above because this rule excludes them. The two positions
-     coincide at scroll 0 (absolute top:0 == fixed top:0), which is the only
-     place the hero-face button is tappable anyway, so opening never jumps.
-
-     This is also why the close now settles at the very top rather than a
-     centimetre below it: the header is no longer a fixed layer that can desync
-     from the page's own top (the mobile URL bar slides the two apart), so
-     closing simply reveals the document where the document actually is. */
-  .masthead--live:not(.masthead--pinned):not(.masthead--open) {
-    position: absolute;
-  }
-
   .masthead--live .masthead__toggle,
   .masthead--live .masthead__panel {
     pointer-events: auto;
@@ -424,14 +401,13 @@ onUnmounted(() => {
        division: mark 1.216em + gap 0.5em + lettering 6.45em = 8.166em, plus the
        fixed reserve. 8.29 is that with a little slack.
 
-       AND THE FIT IS NOW LOAD-BEARING, not belt-and-braces. The hero face is
-       absolute rather than fixed (see the position override above), and an
-       absolute box DOES contribute to its container's scrollable overflow where
-       a fixed one does not — so an invisible brand wider than the line would
-       become a sideways-panning page, the exact failure this divisor prevents.
-       At hero size the box ran 339.9px inside a 280px line at 320 before this
-       fit was added; measured after the position change, the whole masthead's
-       right edge sits inside the viewport at 320/360/375, so the fit holds. */
+       At hero size this box ran 339.9px inside a 280px line at 320 (measured).
+       It is invisible here — opacity 0, the hero's own wordmark showing
+       through — so nothing about it READ as wrong, which is exactly why it
+       survived: an overflow nobody can see is still an overflow, and the only
+       reason it never reached the document is that this masthead is fixed and
+       fixed boxes are left out of scrollable overflow. Take the `position`
+       away and it becomes a sideways-panning page in one step. */
     font-size: min(
       var(--hero-wordmark),
       calc((100vw - 2 * var(--hero-inset) - var(--brand-reserve)) / 8.29)
