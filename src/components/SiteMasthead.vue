@@ -423,8 +423,13 @@ onUnmounted(() => {
   }
 
   /* The persistent home logo takes the pinned wordmark's job on subpages, so
-     the wordmark stands down and they never share the top-left. */
-  .masthead--sub .masthead__brand {
+     the wordmark stands down and they never share the top-left.
+     DOUBLED WITH --live, and that is the fix for the two overlapping logos on
+     /apartmaji: at 0,2,0 this rule was tied with the phone block's own
+     `.masthead--live .masthead__brand { display: flex }` further down, and
+     source order re-displayed the brand over the home mark. 0,3,0 wins on
+     specificity whatever the order. */
+  .masthead--live.masthead--sub .masthead__brand {
     display: none;
   }
 
@@ -563,17 +568,26 @@ onUnmounted(() => {
     padding-right: var(--brand-reserve);
     color: var(--grafit);
     opacity: 0;
-    /* THE LOGO DOES NOT ANIMATE ITS SIZE ON CLOSE (owner's call): while the
-       sheet retracts, the brand holds the size it was standing at and only the
-       fade runs. The 0s size transitions are not tweens — they are DELAYED
-       FLIPS: the resting face's size applies in one step only after the 300ms
-       fade has finished, unseen where the brand fades to nothing (the hero
-       face) and a quiet late swap where it stays (the pinned bar). This list
-       is the CLOSING list — state changes run under the list of the state
-       being entered, and entering any resting face means leaving --open. The
-       320ms delay is the fade's 300ms plus a beat; change one, change both. */
+    /* THE CLOSE IS A DESIGNED SHRINK, NOT A FONT TWEEN. The brand scales down
+       as one unit — mark and lettering together, toward the line it stands
+       on — while it fades. The owner cut the old font-size tween because it
+       reflowed the lettering while the mark's height flipped on its own
+       schedule, splitting the logo into two sizes mid-close; a transform
+       cannot do that (one node, one scale, compositor-composed), which is what
+       makes the shrink safe to reintroduce as a deliberate gesture. The
+       font-size and font-stretch flips stay DELAYED (0s past the fade) for
+       exactly that reason: the underlying size still never animates, only the
+       transform does.
+
+       This list is the CLOSING list — state changes run under the list of the
+       state being entered, and entering any resting face means leaving --open.
+       The 320ms delay is the fade's 300ms plus a beat; the scale's 300ms rides
+       the fade exactly. Change one, change all. */
+    transform: scale(0.85);
+    transform-origin: left center;
     transition:
       opacity 300ms var(--ease-out),
+      transform 300ms var(--ease-out),
       font-size 0s 320ms,
       font-stretch 0s 320ms;
   }
@@ -591,6 +605,8 @@ onUnmounted(() => {
     font-stretch: var(--wdth-monument);
     letter-spacing: -0.02em;
     opacity: 1;
+    /* A visible resting face never sits at the closing shrink's 0.85. */
+    transform: none;
   }
 
   /* Open, the wordmark is SIZED TO FIT rather than copied from the hero. The
@@ -617,13 +633,19 @@ onUnmounted(() => {
      slack. */
   .masthead--live.masthead--open .masthead__brand {
     opacity: 1;
+    /* Standing size in the open face; the close animates back to the base
+       rule's 0.85. */
+    transform: none;
     /* The OPENING list: no size entries at all, so entering the open face sets
        the size in one step at t=0 — invisible where the brand is fading in
        from nothing, and the price of the no-size-animation rule where it is
        already standing (the pinned bar's small mark becomes the big one in a
-       snap as the sheet unfolds over it). Paired with the closing list on the
-       base rule above. */
-    transition: opacity 300ms var(--ease-out);
+       snap as the sheet unfolds over it). The transform DOES ride both lists:
+       the open grows the logo 0.85 → 1 as it fades in, the mirror of the
+       close's shrink. Paired with the closing list on the base rule above. */
+    transition:
+      opacity 300ms var(--ease-out),
+      transform 300ms var(--ease-out);
     font-size: min(
       var(--hero-wordmark),
       calc(
