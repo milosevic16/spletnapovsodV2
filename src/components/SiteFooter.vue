@@ -55,7 +55,13 @@ const year = new Date().getFullYear()
 
       <div class="footer__legal">
         <span class="footer__copy">© {{ year }} SpletnaPovsod</span>
-        <a :href="footer.privacyHref" class="footer__legal-link">{{ footer.privacyLabel }}</a>
+        <a
+          v-for="link in footer.legalLinks"
+          :key="link.href"
+          :href="link.href"
+          class="footer__legal-link"
+          >{{ link.label }}</a
+        >
       </div>
     </div>
   </footer>

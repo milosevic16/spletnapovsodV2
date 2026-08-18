@@ -63,6 +63,28 @@
   [headers.values]
     Cache-Control = "no-cache"
 
+# The two terms documents, same rule: a header on the .html file never covers a
+# visit to the extensionless path.
+[[headers]]
+  for = "/pogoji-splosno"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/pogoji-splosno.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/pogoji-apartmaji"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/pogoji-apartmaji.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
 [[headers]]
   for = "/assets/*"
   [headers.values]

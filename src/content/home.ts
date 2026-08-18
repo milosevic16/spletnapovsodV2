@@ -511,8 +511,18 @@ export const footer = {
   },
   /** The footer link to the privacy subpage. A real /zasebnost route link, so
    *  it is crawlable and the global click interceptor upgrades it to SPA nav. */
-  privacyLabel: 'Politika zasebnosti',
-  privacyHref: '/zasebnost',
+  /**
+   * The legal documents, linked from every footer. Real route links, so they
+   * are crawlable and the global click interceptor upgrades them to SPA
+   * navigation. Order is the order a reader needs them: privacy first (it
+   * governs every visitor), then the terms that govern a customer, then the
+   * service module.
+   */
+  legalLinks: [
+    { label: 'Politika zasebnosti', href: '/zasebnost' },
+    { label: 'Splošni pogoji', href: '/pogoji-splosno' },
+    { label: 'Pogoji za apartmaje', href: '/pogoji-apartmaji' },
+  ],
 }
 
 export const ui = {
