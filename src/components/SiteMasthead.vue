@@ -526,10 +526,19 @@ onUnmounted(() => {
     padding-right: var(--brand-reserve);
     color: var(--grafit);
     opacity: 0;
+    /* THE LOGO DOES NOT ANIMATE ITS SIZE ON CLOSE (owner's call): while the
+       sheet retracts, the brand holds the size it was standing at and only the
+       fade runs. The 0s size transitions are not tweens — they are DELAYED
+       FLIPS: the resting face's size applies in one step only after the 300ms
+       fade has finished, unseen where the brand fades to nothing (the hero
+       face) and a quiet late swap where it stays (the pinned bar). This list
+       is the CLOSING list — state changes run under the list of the state
+       being entered, and entering any resting face means leaving --open. The
+       320ms delay is the fade's 300ms plus a beat; change one, change both. */
     transition:
       opacity 300ms var(--ease-out),
-      font-size 380ms var(--ease-out),
-      font-stretch 380ms var(--ease-out);
+      font-size 0s 320ms,
+      font-stretch 0s 320ms;
   }
 
   .masthead__brandtext {
@@ -571,6 +580,13 @@ onUnmounted(() => {
      slack. */
   .masthead--live.masthead--open .masthead__brand {
     opacity: 1;
+    /* The OPENING list: no size entries at all, so entering the open face sets
+       the size in one step at t=0 — invisible where the brand is fading in
+       from nothing, and the price of the no-size-animation rule where it is
+       already standing (the pinned bar's small mark becomes the big one in a
+       snap as the sheet unfolds over it). Paired with the closing list on the
+       base rule above. */
+    transition: opacity 300ms var(--ease-out);
     font-size: min(
       var(--hero-wordmark),
       calc(
@@ -583,6 +599,13 @@ onUnmounted(() => {
     height: 0.78em;
     width: auto;
     flex: 0 0 auto;
+    /* The mark's height flips between an em size and the fixed hero size by
+       rule, not by tween — height is not animatable here and never was. The
+       delayed flip keeps it standing at the open size for exactly as long as
+       the lettering holds its own (the brand's closing list above): without
+       it the mark snapped small at t=0 while the words held, and the logo
+       visibly broke into two sizes mid-fade. Same 320ms pairing. */
+    transition: height 0s 320ms;
   }
 
   /* OPEN, the brand's mark IS the hero's mark: same absolute size, same top,
@@ -595,6 +618,8 @@ onUnmounted(() => {
 
   .masthead--live.masthead--open .masthead__brandmark {
     height: calc(0.55 * var(--hero-display));
+    /* Opening sets the mark's size in one step, like the lettering's. */
+    transition: none;
   }
 
   .masthead--live .masthead__toggle {
