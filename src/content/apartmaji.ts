@@ -34,11 +34,6 @@ export const meta = {
     'Izdelamo spletno stran za vaš apartma ali sobe: oglaševanje izven booking platform, prikaz zasedenosti in povpraševanje prek strani. Trije paketi.',
 }
 
-export const breadcrumb = {
-  homeLabel: 'Domov',
-  currentLabel: 'Apartmaji',
-}
-
 export const hero = {
   kicker: 'Apartmaji in sobodajalci',
   title: 'Spletna stran za vaš apartma',

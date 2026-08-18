@@ -1,31 +1,18 @@
 <script setup lang="ts">
 /**
- * The subpage's opening band: breadcrumb, kicker, the page's single h1, a short
- * lead and the one call to action.
+ * The subpage's opening band: kicker, the page's single h1, a short lead and
+ * the one call to action.
  *
  * Static by design. Nothing here is built by JS, so a crawler and a JS-off
  * reader get the whole opening, the same contract the home statement band
  * keeps.
- *
- * The breadcrumb is VISIBLE and is the page's only route back to the home page
- * (this subpage is deliberately not in the main nav). It is also what earns the
- * BreadcrumbList in the view's JSON-LD, which mirrors a real trail.
  */
-import { hero, breadcrumb } from '@/content/apartmaji'
+import { hero } from '@/content/apartmaji'
 </script>
 
 <template>
   <section class="apth press press--light">
     <div class="container">
-      <nav class="apth__crumbs" aria-label="Drobtinice">
-        <ol class="apth__crumb-list">
-          <li class="apth__crumb">
-            <a href="/" class="apth__crumb-link">{{ breadcrumb.homeLabel }}</a>
-          </li>
-          <li class="apth__crumb" aria-current="page">{{ breadcrumb.currentLabel }}</li>
-        </ol>
-      </nav>
-
       <p class="kicker apth__kicker">{{ hero.kicker }}</p>
       <h1 class="apth__title">{{ hero.title }}</h1>
       <p class="apth__lead">{{ hero.lead }}</p>
@@ -42,54 +29,6 @@ import { hero, breadcrumb } from '@/content/apartmaji'
   background-color: var(--list);
   color: var(--grafit);
   padding-block: var(--section-block);
-}
-
-/* The trail is in the label register (small caps), never mono: mono is
-   reserved for genuine machine emissions (the honesty contract). */
-.apth__crumbs {
-  margin-bottom: var(--space-8);
-}
-
-.apth__crumb-list {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font-family: var(--font-display);
-  font-size: var(--fs-annot);
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--grafit-2);
-}
-
-/* Drawn separator, not a dingbat: a raw glyph can carry emoji presentation on
-   iOS and render as a colour glyph mid-line. */
-.apth__crumb + .apth__crumb::before {
-  content: '';
-  display: inline-block;
-  width: 10px;
-  height: 1px;
-  margin-right: var(--space-2);
-  vertical-align: middle;
-  background: var(--mreza-strong);
-}
-
-.apth__crumb-link {
-  display: inline-block;
-  padding-block: var(--space-2);
-  color: var(--grafit-2);
-  text-decoration: none;
-  border-bottom: 1px solid var(--mreza-strong);
-}
-
-.apth__crumb-link:hover,
-.apth__crumb-link:focus-visible {
-  color: var(--rez);
-  border-bottom-color: var(--rez);
 }
 
 .apth__kicker {

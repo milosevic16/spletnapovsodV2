@@ -10,8 +10,7 @@
  * NOT LINKED FROM THE MAIN NAV, by decision: it reads as a page for one
  * audience rather than a section of the one-pager, and adding it to the home
  * nav would change home copy that has not been signed off. It is fully
- * indexable and enters the sitemap by construction; the visible breadcrumb is
- * its route back.
+ * indexable and enters the sitemap by construction.
  *
  * The chrome gets THIS page's stops, not the home page's. ContactSection is
  * reused (one inquiry form for the page); its #kontakt anchor is what every
@@ -19,7 +18,7 @@
  * Service with no Offer, never a fabricated number.
  */
 import { useHead } from '@unhead/vue'
-import { meta, breadcrumb, nav, ctaPrimary } from '@/content/apartmaji'
+import { meta, nav, ctaPrimary } from '@/content/apartmaji'
 import { SITE_ORIGIN, SITE_NAME } from '@/lib/constants'
 import SiteMasthead from '@/components/SiteMasthead.vue'
 import ApartmajiHero from '@/components/ApartmajiHero.vue'
@@ -45,16 +44,6 @@ const jsonLd = {
       inLanguage: 'sl',
       areaServed: 'SI',
       provider: { '@id': orgId },
-    },
-    // Mirrors the VISIBLE trail in ApartmajiHero — never markup for a trail the
-    // reader cannot see.
-    {
-      '@type': 'BreadcrumbList',
-      '@id': `${canonical}#breadcrumb`,
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: breadcrumb.homeLabel, item: `${SITE_ORIGIN}/` },
-        { '@type': 'ListItem', position: 2, name: breadcrumb.currentLabel, item: canonical },
-      ],
     },
   ],
 }
