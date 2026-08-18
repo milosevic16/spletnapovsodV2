@@ -285,6 +285,15 @@ if (home) {
   check(collect(homeContent, ['feedback', 'notFound']), home, 'home')
   const p404 = pages.find((p) => p.file === '404.html')
   if (p404 && notFound) check(collect(notFound, []), p404, '404')
+
+  // The apartment subpage owns its own content module, checked against its own
+  // emitted page under the same contract: every visible string in the static
+  // HTML. A page that ever stops emitting its copy fails the build.
+  const apt = pages.find((p) => p.file === 'apartmaji.html')
+  if (apt) {
+    const aptContent = await importTs('src/content/apartmaji.ts', 'apartmaji')
+    check(collect(aptContent, ['feedback']), apt, 'apartmaji')
+  }
 }
 
 // --------------------------------------------------------------------------

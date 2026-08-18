@@ -39,6 +39,18 @@
   [headers.values]
     Cache-Control = "no-cache"
 
+# The apartment subpage. BOTH paths: header rules match the REQUEST path, so
+# the rule on the .html file does not cover a visit to /apartmaji.
+[[headers]]
+  for = "/apartmaji"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/apartmaji.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
 [[headers]]
   for = "/assets/*"
   [headers.values]

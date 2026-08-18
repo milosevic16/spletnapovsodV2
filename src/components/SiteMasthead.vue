@@ -295,12 +295,13 @@ onUnmounted(() => {
 }
 
 /* --- phone: two faces ------------------------------------------------------
-   AT THE TOP the masthead is not a header at all: it is fixed, transparent,
-   and contributes nothing but the menu button standing in the hero's own
-   top-right corner, on the same --hero-inset as the wordmark opposite it.
-   PINNED (the hero wordmark has scrolled away) it gathers into a thin bar —
-   paper ground, hairline, the small wordmark arriving from the left, the
-   button drawing up into the row with it. */
+   AT THE TOP the masthead is not a header at all: it is transparent and
+   contributes nothing but the menu button standing in the hero's own top-right
+   corner, on the same --hero-inset as the wordmark opposite it. And it belongs
+   to the PAGE there, not the viewport — see the hero-face override below.
+   PINNED (the hero has scrolled away) it gathers into a thin bar — paper
+   ground, hairline, the small wordmark arriving from the left, the button
+   drawing up into the row with it. */
 @media (max-width: 899.98px) {
   /* Three states, not two: HERO (transparent, brand blank, bare glyph),
      PINNED (thin bar, small brand) and OPEN (either of the above turned into a

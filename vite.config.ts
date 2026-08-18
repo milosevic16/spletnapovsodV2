@@ -49,6 +49,6 @@ export default defineConfig({
     // Flat output (dist/404.html, not dist/404/index.html) so canonicals never
     // point at a host's trailing-slash redirect.
     dirStyle: 'flat',
-    includedRoutes: () => ['/', '/404'],
+    includedRoutes: () => ['/', '/apartmaji', '/404'],
   },
 })
