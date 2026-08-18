@@ -82,7 +82,7 @@ useHead({
 </script>
 
 <template>
-  <SiteMasthead :items="nav" :cta="ctaPrimary" />
+  <SiteMasthead :items="nav" :cta="ctaPrimary" :home="{ href: '/', label: 'Domov' }" />
   <main id="main">
     <ApartmajiHero />
     <ApartmajiExamples />
