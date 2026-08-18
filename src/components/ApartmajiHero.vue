@@ -6,12 +6,37 @@
  * Static by design. Nothing here is built by JS, so a crawler and a JS-off
  * reader get the whole opening, the same contract the home statement band
  * keeps.
+ *
+ * THE BACKDROP is the owner's interior photo reduced to the page's own paper
+ * (one colour, faint, built by scripts/build-apartmaji-hero.mjs). It is plain
+ * static markup: a <picture> with AVIF/WebP/JPEG width variants, decorative
+ * (empty alt, aria-hidden), eager and fetchpriority=high so it is never the
+ * lazy-loaded-LCP mistake. The .press dot screen is a sibling ABOVE it, so the
+ * drafting texture stays; the content sits above both.
  */
 import { hero } from '@/content/apartmaji'
 </script>
 
 <template>
-  <section class="apth press press--light">
+  <section class="apth">
+    <picture class="apth__bgpic">
+      <source type="image/avif" srcset="/img/apt/apt-hero-v1-768.avif 768w, /img/apt/apt-hero-v1-1152.avif 1152w, /img/apt/apt-hero-v1-1536.avif 1536w, /img/apt/apt-hero-v1-2048.avif 2048w, /img/apt/apt-hero-v1-2560.avif 2560w, /img/apt/apt-hero-v1-3136.avif 3136w" sizes="100vw" />
+      <source type="image/webp" srcset="/img/apt/apt-hero-v1-768.webp 768w, /img/apt/apt-hero-v1-1152.webp 1152w, /img/apt/apt-hero-v1-1536.webp 1536w, /img/apt/apt-hero-v1-2048.webp 2048w, /img/apt/apt-hero-v1-2560.webp 2560w, /img/apt/apt-hero-v1-3136.webp 3136w" sizes="100vw" />
+      <img
+        class="apth__bg"
+        src="/img/apt/apt-hero-v1-1536.jpg"
+        srcset="/img/apt/apt-hero-v1-768.jpg 768w, /img/apt/apt-hero-v1-1152.jpg 1152w, /img/apt/apt-hero-v1-1536.jpg 1536w, /img/apt/apt-hero-v1-2048.jpg 2048w, /img/apt/apt-hero-v1-2560.jpg 2560w, /img/apt/apt-hero-v1-3136.jpg 3136w"
+        sizes="100vw"
+        width="3136"
+        height="1344"
+        alt=""
+        aria-hidden="true"
+        decoding="async"
+        fetchpriority="high"
+      />
+    </picture>
+    <div class="apth__screen press press--light" aria-hidden="true"></div>
+
     <div class="container">
       <p class="kicker apth__kicker">{{ hero.kicker }}</p>
       <h1 class="apth__title">{{ hero.title }}</h1>
@@ -26,9 +51,43 @@ import { hero } from '@/content/apartmaji'
 
 <style scoped>
 .apth {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   background-color: var(--list);
   color: var(--grafit);
   padding-block: var(--section-block);
+}
+
+/* The interior backdrop, reduced to the page's own paper: a faint monocolour
+   wash, never a photograph. Full-bleed, cover-fit, behind everything. */
+.apth__bgpic {
+  display: contents;
+}
+
+.apth__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* The .press dot screen, re-laid OVER the image so the drafting texture is not
+   buried by it. Pure decoration. */
+.apth__screen {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Content rides above the backdrop and its texture. */
+.apth > .container {
+  position: relative;
+  z-index: 2;
 }
 
 .apth__kicker {

@@ -9,7 +9,17 @@
  * NO PRICES (owner's call): the datum is the tier name, and the CTA sends the
  * visitor to ask for a quote.
  */
-import { packages } from '@/content/apartmaji'
+import { packages, type AptInclude, type AptEmphasis, type AptSeo } from '@/content/apartmaji'
+
+/**
+ * Template type guards. The include union is discriminated by shape: a plain
+ * string, an emphasis line (has `strong`), or an SEO disclosure (has
+ * `points`). vue-tsc narrows each v-if/v-else branch from these.
+ */
+const isString = (i: AptInclude): i is string => typeof i === 'string'
+const isEmphasis = (i: AptInclude): i is AptEmphasis =>
+  typeof i === 'object' && 'strong' in i
+const isSeo = (i: AptInclude): i is AptSeo => typeof i === 'object' && 'points' in i
 </script>
 
 <template>
@@ -27,7 +37,24 @@ import { packages } from '@/content/apartmaji'
           <div class="aptp__detail">
             <p class="aptp__summary">{{ p.summary }}</p>
             <ul class="aptp__includes">
-              <li v-for="inc in p.includes" :key="inc" class="aptp__include">{{ inc }}</li>
+              <li
+                v-for="(inc, i) in p.includes"
+                :key="i"
+                class="aptp__include"
+                :class="{ 'aptp__include--seo': isSeo(inc) }"
+              >
+                <template v-if="isString(inc)">{{ inc }}</template>
+                <template v-else-if="isEmphasis(inc)">{{ inc.lead }}<strong>{{ inc.strong }}</strong>{{ inc.tail }}</template>
+                <details v-else class="aptp__seo">
+                  <summary class="aptp__seo-summary">{{ inc.summary }}</summary>
+                  <div class="aptp__seo-panel">
+                    <p class="aptp__seo-intro">{{ inc.intro }}</p>
+                    <ul class="aptp__seo-list">
+                      <li v-for="pt in inc.points" :key="pt" class="aptp__seo-point">{{ pt }}</li>
+                    </ul>
+                  </div>
+                </details>
+              </li>
             </ul>
             <p v-if="p.footnote" class="aptp__foot">{{ p.footnote }}</p>
           </div>
@@ -122,6 +149,129 @@ import { packages } from '@/content/apartmaji'
   width: 12px;
   height: 1px;
   background: var(--mreza-strong);
+}
+
+/* An emphasised phrase inside an include line: heavier and a step darker than
+   the body. Never a colour change — the one red stays on the CTA. */
+.aptp__include strong {
+  font-weight: 600;
+  color: var(--grafit);
+}
+
+/* An SEO line that opens to its detail. Native <details>: the points are in the
+   DOM even when closed, so a crawler and a JS-off reader get all of them;
+   clicking only toggles visibility. */
+.aptp__seo-summary {
+  position: relative;
+  padding-right: var(--space-8);
+  cursor: pointer;
+  list-style: none;
+  color: var(--grafit);
+}
+
+/* Kill the native disclosure triangle; the +/- below is the affordance. */
+.aptp__seo-summary::-webkit-details-marker {
+  display: none;
+}
+
+/* A +/- drawn from two hairlines, never a dingbat or an emoji. The bars cross
+   at a fixed point on the right; the vertical one fades out when the row opens,
+   leaving a minus. */
+.aptp__seo-summary::after,
+.aptp__seo-summary::before {
+  content: '';
+  position: absolute;
+  background: var(--grafit-2);
+}
+
+.aptp__seo-summary::after {
+  right: 0;
+  top: 0.7em;
+  width: 12px;
+  height: 1.5px;
+}
+
+.aptp__seo-summary::before {
+  right: 5.25px;
+  top: calc(0.7em - 5.25px);
+  width: 1.5px;
+  height: 12px;
+  transition: opacity 200ms var(--ease-out);
+}
+
+.aptp__seo[open] .aptp__seo-summary::before {
+  opacity: 0;
+}
+
+@media (hover: hover) {
+  .aptp__seo-summary:hover::after,
+  .aptp__seo-summary:hover::before {
+    background: var(--grafit);
+  }
+}
+
+.aptp__seo-summary:focus-visible {
+  outline: 2px solid var(--grafit);
+  outline-offset: 3px;
+}
+
+.aptp__seo-panel {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--mreza);
+}
+
+.aptp__seo-intro {
+  max-width: 60ch;
+  margin: 0;
+  font-size: var(--fs-annot);
+  line-height: 1.55;
+  color: var(--grafit-2);
+}
+
+.aptp__seo-list {
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.aptp__seo-point {
+  position: relative;
+  max-width: 60ch;
+  padding-left: var(--space-5);
+  margin-top: var(--space-3);
+  font-size: var(--fs-annot);
+  line-height: 1.5;
+  color: var(--grafit-2);
+}
+
+.aptp__seo-point::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.6em;
+  width: 8px;
+  height: 1px;
+  background: var(--mreza-strong);
+}
+
+/* One-shot reveal on open; nothing on close (native removes the panel). Gated
+   off reduced motion, where the panel simply appears. */
+@media (prefers-reduced-motion: no-preference) {
+  .aptp__seo[open] .aptp__seo-panel {
+    animation: aptp-seo-reveal 300ms var(--ease-out);
+  }
+}
+
+@keyframes aptp-seo-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .aptp__foot {

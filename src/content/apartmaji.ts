@@ -20,11 +20,34 @@
  *     "integriran plačilni sistem" without naming one.
  */
 
+/**
+ * An include line is one of three shapes:
+ *  - a plain string;
+ *  - an EMPHASIS line kept as three separate strings (lead + strong + tail) so
+ *    each stays CONTIGUOUS in the emitted HTML — a mid-sentence <strong> would
+ *    break the full string and the content guard checks whole strings;
+ *  - an SEO line that opens (native <details>) to its own detail list, so a
+ *    visitor can click to see exactly what the optimisation covers.
+ */
+export interface AptEmphasis {
+  lead: string
+  strong: string
+  tail: string
+}
+
+export interface AptSeo {
+  summary: string
+  intro: string
+  points: string[]
+}
+
+export type AptInclude = string | AptEmphasis | AptSeo
+
 export interface AptPackage {
   id: string
   name: string
   summary: string
-  includes: string[]
+  includes: AptInclude[]
   footnote?: string
 }
 
@@ -37,15 +60,15 @@ export const meta = {
 export const hero = {
   kicker: 'Apartmaji in sobodajalci',
   title: 'Spletna stran za vaš apartma',
-  lead: 'Rezervacije prek platform nosijo provizijo, vaš oglas pa je videti kot vsi drugi. Lastna stran vam da naslov, kamor gosta pošljete neposredno, in pri poslovnih rezervacijah pusti vtis urejenega apartmaja.',
-  ctaLabel: 'Povprašajte za svoj apartma',
+  lead: 'Z lastno spletno stranjo apartmaji, dvorane in počitniške hiše ne pridobijo le vtisa profesionalnosti, sploh pri poslovnih rezervacijah, temveč stran služi tudi kot odličen kanal rezervacij, preko katerega se lahko izognete proviziji booking platform, ali pa stran uporabite kot unikaten medij za oglaševanje, ki se razlikuje od template ponudb booking platform.',
+  ctaLabel: 'Prejmite stran v roku 48 ur',
   ctaTarget: 'kontakt',
 }
 
 export const examples = {
   kicker: 'Primeri',
   title: 'Kako lahko izgleda vaša stran',
-  body: 'Pripravili smo nekaj primerov oblike in postavitve. Služijo kot izhodišče: če vam kateri ustreza, gradimo na njem, sicer opišete svoje želje.',
+  body: 'Pripravili smo nekaj primerov oblike in postavitve. Služijo le kot izhodišče, vi pa določite končno podobo.',
   /**
    * Honest empty state. The example template pages ("iz Gašprovega repota") do
    * not exist as assets yet, and fabricated preview cards are not an option on
@@ -60,7 +83,7 @@ export const examples = {
 export const packages = {
   kicker: 'Ponudba',
   title: 'Trije paketi',
-  ctaLabel: 'Povprašajte za ponudbo',
+  ctaLabel: 'Naročite spletno stran',
   ctaTarget: 'kontakt',
   items: [
     {
@@ -71,7 +94,22 @@ export const packages = {
       includes: [
         'Spletna stran z lastno domeno',
         'Prilagojena za mobilne naprave',
-        'Osnovna optimizacija za Google in AI-iskalnike (SEO in GEO)',
+        {
+          summary: 'Osnovna optimizacija za Google in AI-iskalnike (SEO in GEO)',
+          intro:
+            'Vse, kar iskalnik in umetna inteligenca potrebujeta, da stran najdeta, preberata in pravilno razumeta. Vgrajeno v stran in preverjeno ob vsaki objavi.',
+          points: [
+            'Strežniško izrisana stran: vsa vsebina je berljiva tudi brez JavaScripta, zato jo vidijo vsi iskalniki in jezikovni modeli, kot so ChatGPT, Claude in Perplexity, ki strani ne izvajajo.',
+            'Naslov strani in opis za brskalnik, prilagojena za vsako podstran.',
+            'Kanonični naslov strani, da se uvrstitvena moč ne razprši med podvojene različice.',
+            'Zemljevid strani in navodila za pajke, samodejno ustvarjena iz objavljene strani, zato ne morejo zastarati.',
+            'Dostop za pajke umetne inteligence, na primer GPTBot, ClaudeBot in PerplexityBot, da vas odgovorni motorji smejo brati.',
+            'Strukturirani podatki: iskalnik razume, da ste podjetje, in pozna vaše ime, logotip in naslov strani.',
+            'En glavni naslov, urejena hierarhija naslovov in nadomestno besedilo slik za dostopnost.',
+            'Odzivne slike, hitro nalaganje, varnostne glave in prava stran za napačne naslove.',
+            'Vgrajene kontrole ob objavi: če je naslov, jezik ali kanonični naslov strani napačen, se objava ustavi in napaka ne pride v splet.',
+          ],
+        },
         'Registracija in vezava domene',
       ],
       footnote:
@@ -83,9 +121,28 @@ export const packages = {
       summary: 'Vse iz osnovne, s prikazom zasedenosti in povpraševanjem prek strani.',
       includes: [
         'Vse iz osnovne ponudbe',
-        'Prikaz zasedenosti, samodejno usklajen z Airbnbjem; proste termine lahko dodate tudi ročno',
-        'Razširjena optimizacija za iskalnike in AI-odgovore',
-        'Obrazec za povpraševanje, vezan na zasedenost: gost izbere med prostimi termini, povpraševanje pa vam pride naravnost v e-pošto',
+        {
+          lead: 'Prikaz zasedenosti, ',
+          strong: 'samodejno usklajen z zasedenostjo na booking platformah',
+          tail: '; proste termine lahko dodate tudi ročno',
+        },
+        {
+          summary: 'Razširjena optimizacija za iskalnike in AI-odgovore',
+          intro:
+            'Vse iz osnovne optimizacije, in še bogatejša predstavitev v iskalniku ter hitrejša objava.',
+          points: [
+            'Popolnejši strukturirani podatki: dejavnost z lokacijo in kontaktom ter opis storitev, da iskalnik razume, kaj ponujate in kje.',
+            'Lastna slika za deljenje za vsako podstran, tako da se ob deljenju v družbenih omrežjih pokaže oblikovana kartica namesto splošne slike.',
+            'Hitrejša objava v iskalnikih: ob vsaki spremembi Bing in Copilot novo vsebino pobereta v nekaj minutah, namesto da čakata na naslednji obisk pajka.',
+            'Razširjene kontrole ob objavi: preverjanje oznak za družbena omrežja in veljavnosti strukturiranih podatkov.',
+            'Zagonsko poročilo: preverimo, da vsako podstran iskalniki in pajki umetne inteligence vidijo s pravo vsebino.',
+          ],
+        },
+        {
+          lead: 'Obrazec za povpraševanje, ',
+          strong: 'vezan na zasedenost',
+          tail: ': gost izbere med prostimi termini, povpraševanje pa vam pride naravnost v e-pošto',
+        },
       ],
     },
     {
@@ -104,7 +161,7 @@ export const revisions = {
   kicker: 'Popravki',
   title: 'Krog popravkov',
   intro:
-    'Vsako stran pripravimo tako, da lastniku ustreza že takoj. Ker pa ima vsak svoje želje, ki jih vnaprej ne moremo predvideti, je en krog popravkov vključen, po potrebi jih je lahko več.',
+    'Vsako stran poskusimo pripraviti tako, da lastniku ustreza že takoj. Ker pa ima vsak svoje želje, ki jih vnaprej ne moremo predvideti, po potrebi paket razširimo s krogom popravkov, v primeru kompleksnih zahtev pa več njih.',
   conditions: [
     'En krog zajema do pet strani predlaganih popravkov. Običajno en krog zadošča.',
     'Popravki so spremembe, kot so pozicija gumbov, zamenjava slik, barv ali pisave, in podobni posegi v obstoječo strukturo strani. Ne vključujejo novih funkcionalnosti ali celotne prenove grafične podobe.',
