@@ -32,13 +32,14 @@
  * NOT NUMBERED as an outline: the 01–04 by the datum is a live frame counter
  * that changes as the roll turns — an instrument reading, not an eyebrow.
  */
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { differentiators } from '@/content/home'
-import { createFx } from '@/lib/fx'
+import { createFx, prefersReducedMotion } from '@/lib/fx'
 
 const fx = createFx()
 const root = ref<HTMLElement | null>(null)
 const slot = ref<HTMLElement | null>(null)
+const display = ref<HTMLElement | null>(null)
 const live = ref(false)
 
 const items = differentiators.items
@@ -93,11 +94,109 @@ function onScroll() {
   raf = fx.raf(measure)
 }
 
+/* --- pointer shortcuts on the instrument (owner's ask) ------------------------
+ * Swiping the pinned display right-to-left advances to the next claim (and
+ * left-to-right back); tapping a sprocket jumps to its claim.
+ *
+ * THE GESTURE WRITES SCROLL, NEVER `active`. goTo() scrolls the page to where
+ * the target claim reads as current and the measurement above turns the roll
+ * from the real scroll position — `active` keeps its single writer, so the
+ * instrument still cannot disagree with the page, and the roll visibly turns
+ * through the claims the page travels past, which IS the gesture's feedback.
+ *
+ * TOUCH WIRING IS PASSIVE-ONLY AND NEVER TOUCHMOVE: a non-passive touchmove
+ * would mark the region non-fast-scrollable (the iOS trap in the house
+ * rules). Start and end are enough to judge a swipe; when WebKit claims the
+ * gesture as a scroll instead, it fires touchcancel and we correctly drop it.
+ * touch-action: pan-y on the display keeps vertical reading native. */
+
+/** Minimum travel for a swipe, and how decisively horizontal it must be. */
+const SWIPE_MIN_PX = 48
+const SWIPE_AXIS_RATIO = 1.2
+/** How long a recognized swipe suppresses the synthesized click (house rule:
+ *  one capture-phase consumer, timestamp not flag — stale reads "expired"). */
+const CLICK_SUPPRESS_MS = 400
+/** Where a jumped-to claim lands below the pinned instrument (stacked). Well
+ *  inside measure()'s reading zone, so the landing always reads as current. */
+const LAND_GAP_PX = 12
+
+let touchLive = false
+/** Compared with === only — iOS identifiers carry no sign guarantee. */
+let touchId = 0
+let touchX = 0
+let touchY = 0
+let swipedAt = 0
+
+function goTo(i: number) {
+  const host = root.value
+  const s = slot.value
+  const d = display.value
+  if (!host || !s || !d) return
+  const rows = host.querySelectorAll<HTMLElement>('.dif__claim')
+  const row = rows[Math.max(0, Math.min(items.length - 1, i))]
+  if (!row) return
+  // Same geometry read as measure(), so the landing spot and the reading line
+  // can never belong to different layouts.
+  const register = host.querySelector<HTMLElement>('.dif__register')
+  const slotBox = s.getBoundingClientRect()
+  const beside = register !== null && slotBox.right <= register.getBoundingClientRect().left + 1
+  const anchor = beside ? slotBox.top : d.getBoundingClientRect().bottom + LAND_GAP_PX
+  const top = Math.max(0, window.scrollY + row.getBoundingClientRect().top - anchor)
+  // A deliberate jump may glide; under reduced motion it lands in one step.
+  window.scrollTo({ top, behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
+}
+
+function onTouchStart(e: TouchEvent) {
+  if (touchLive) return
+  const t = e.changedTouches[0]
+  if (!t) return
+  touchLive = true
+  touchId = t.identifier
+  touchX = t.clientX
+  touchY = t.clientY
+}
+
+function onTouchEnd(e: TouchEvent) {
+  if (!touchLive) return
+  for (const t of Array.from(e.changedTouches)) {
+    if (t.identifier !== touchId) continue
+    touchLive = false
+    const dx = t.clientX - touchX
+    const dy = t.clientY - touchY
+    if (Math.abs(dx) < SWIPE_MIN_PX || Math.abs(dx) <= Math.abs(dy) * SWIPE_AXIS_RATIO) return
+    swipedAt = performance.now()
+    goTo(active.value + (dx < 0 ? 1 : -1))
+  }
+}
+
+function onTouchCancel(e: TouchEvent) {
+  for (const t of Array.from(e.changedTouches)) {
+    if (t.identifier === touchId) touchLive = false
+  }
+}
+
+/** A swipe that ends over a sprocket must not also press it. */
+function onDisplayClick(e: Event) {
+  if (performance.now() - swipedAt < CLICK_SUPPRESS_MS) {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+}
+
 onMounted(() => {
   live.value = true
   fx.on(window, 'scroll', onScroll, { passive: true })
   fx.on(window, 'resize', onScroll, { passive: true })
   measure()
+  // The display assembles only once live — wire its gestures after this tick.
+  nextTick(() => {
+    const el = display.value
+    if (!el) return
+    fx.on(el, 'touchstart', onTouchStart as EventListener, { passive: true })
+    fx.on(el, 'touchend', onTouchEnd as EventListener, { passive: true })
+    fx.on(el, 'touchcancel', onTouchCancel as EventListener, { passive: true })
+    fx.on(el, 'click', onDisplayClick, { capture: true })
+  })
 })
 
 onUnmounted(() => {
@@ -120,7 +219,7 @@ onUnmounted(() => {
     <div class="container dif__stage">
       <!-- THE INSTRUMENT. A mirror of the register beside it: aria-hidden,
            assembled only once live. -->
-      <div v-if="live" class="dif__display" aria-hidden="true">
+      <div v-if="live" ref="display" class="dif__display" aria-hidden="true">
         <div class="dif__datum">
           <span class="dif__counter">{{ counter }} / {{ total }}</span>
         </div>
@@ -131,14 +230,26 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Sprockets: one per frame, the running one filled. -->
+        <!-- Sprockets: one per frame, the running one filled. Each carries a
+             pointer-only tap surface (owner's ask: touching a tick jumps to
+             its claim). tabindex=-1 keeps the button out of the tab order —
+             the whole instrument is aria-hidden theatre, and keyboard/AT
+             readers navigate the register itself, so a focusable control in
+             here would be a focus trap into silence. -->
         <ul class="dif__sprockets">
           <li
             v-for="(d, i) in items"
             :key="d.id"
             class="dif__sprocket"
             :class="{ 'dif__sprocket--on': i === active }"
-          ></li>
+          >
+            <button
+              type="button"
+              tabindex="-1"
+              class="dif__sprocket-hit"
+              @click="goTo(i)"
+            ></button>
+          </li>
         </ul>
       </div>
 
@@ -239,6 +350,10 @@ onUnmounted(() => {
   background: var(--list-2);
   padding-bottom: var(--space-4);
   margin-bottom: var(--space-6);
+  /* Vertical reading stays native; horizontal is ours to read (the swipe).
+     Pairs with the passive-only listeners in the script — no touchmove is
+     ever registered, so the region stays fast-scrollable on iOS. */
+  touch-action: pan-y;
 }
 
 /* The datum: the red rule across the instrument's head, carrying the frame
@@ -302,10 +417,33 @@ onUnmounted(() => {
 }
 
 .dif__sprocket {
+  position: relative;
   width: 26px;
   height: 3px;
   background: var(--crta-na-temnem);
   transition: background var(--dur-tween) var(--ease-hover);
+}
+
+/* The tap surface, centred on the tick and bigger than it: 34px wide is the
+   row's own pitch (26px line + 8px gap), so neighbouring hits meet edge to
+   edge with zero overlap — a nominal 44px here would put a 10px misfire
+   strip on every boundary. 44px tall. That trades the house 44px floor down
+   to WCAG 2.2's minimum in ONE dimension, knowingly: the ticks are a
+   secondary shortcut (the whole banner swipes, and the page scrolls
+   natively), and a wrong-neighbour press is the worse failure. The overhang
+   past the display's box lands on non-interactive register text only. */
+.dif__sprocket-hit {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 34px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .dif__sprocket--on {
