@@ -19,13 +19,16 @@
  * the LIVE page crossfades in over the plate once its iframe has loaded. A
  * square close button holds the top-right corner throughout.
  *
- * PHONES GET A PAPER FADE, NOT THE LIFT (owner's call): the plate is a
- * DESKTOP capture, so zooming it fullscreen on a phone holds a zoomed-in
- * desktop page until the real (mobile-laid-out) iframe arrives — awkward, and
- * the card is small on a phone so the continuity the lift buys is gone
- * anyway. Under the site's phone breakpoint the overlay opens as a plain
- * beige fade: paper rises, the live page crossfades in over it. No plate is
- * created at all on that path.
+ * PHONES KEEP THE LIFT BUT NEVER HOLD THE PLATE (owner's call, second
+ * round): the plate is a DESKTOP capture, and what read as awkward was the
+ * zoomed desktop page HELD on screen after landing while the mobile-laid-out
+ * iframe was still loading. The motion itself was wanted. So on phones the
+ * plate flies exactly as on desktop, and ON LANDING it dissolves into the
+ * beige backdrop: page already loaded → zoom, an eyeblink of paper, page;
+ * still loading → zoom, beige, page fading in whenever it arrives. Closing
+ * restores the plate and runs the flight in reverse. Desktop keeps the plate
+ * under the crossfade, where it matches the incoming page and holding it is
+ * seamless.
  *
  * ONE OVERLAY, ONE OWNER — and this is the part that was got wrong once, so
  * it is written down. The Escape listener used to be registered per open and
@@ -85,6 +88,8 @@ const LIFT_MS = 460
 const CLOSE_MS = 380
 const FADE_MS = 240
 const SETTLE_SLACK_MS = 240
+/** Phone only: how fast the landed plate dissolves into the beige. */
+const PLATE_EXIT_MS = 200
 /** Iframe grace: past this we reveal whatever the frame has — a demo that
  *  loads slowly still appears; one that failed leaves the plate standing. */
 const IFRAME_CAP_MS = 4000
@@ -97,8 +102,7 @@ interface Saved {
 
 interface Overlay {
   root: HTMLElement
-  /** The lifting plate — desktop only; phones fade on paper instead. */
-  morph: HTMLElement | null
+  morph: HTMLElement
   backdrop: HTMLElement
   frame: HTMLIFrameElement
   closeBtn: HTMLButtonElement
@@ -171,14 +175,9 @@ function closePreview() {
   o.closeBtn.style.opacity = '0'
   animTo(o.frame, 'opacity', o.frame.style.opacity || '1', '0', 160)
 
-  // Phone: the beige fade in reverse — no plate ever existed on this path.
-  if (o.phone || !o.morph) {
-    animTo(o.backdrop, 'opacity', '1', '0', FADE_MS)
-    fx.setTimeout(() => {
-      if (overlay === o) teardown()
-    }, FADE_MS + SETTLE_SLACK_MS)
-    return
-  }
+  // Phone: the plate dissolved on landing — bring it back under the fading
+  // frame so the return flight has something to fly.
+  if (o.phone) o.morph.style.opacity = '1'
 
   // The plate returns to WHERE THE CARD IS NOW — re-measured, because a resize
   // while open moves it. Scroll cannot have (it is locked).
@@ -249,21 +248,17 @@ function openPreview(e: MouseEvent, ex: AptExample) {
   const backdrop = document.createElement('div')
   backdrop.style.cssText = 'position:absolute;inset:0;background:var(--list);'
 
-  // The plate, exactly over the card's image on frame one — desktop only.
-  let morph: HTMLElement | null = null
-  if (!phone) {
-    morph = document.createElement('div')
-    morph.setAttribute('aria-hidden', 'true')
-    morph.style.cssText =
-      `position:absolute;top:${rect.top}px;left:${rect.left}px;` +
-      `width:${rect.width}px;height:${rect.height}px;overflow:hidden;will-change:transform;`
-    const plate = document.createElement('img')
-    plate.src = img.currentSrc || img.src
-    plate.alt = ''
-    plate.style.cssText =
-      'width:100%;height:100%;object-fit:cover;object-position:top;display:block;'
-    morph.appendChild(plate)
-  }
+  // The plate, exactly over the card's image on frame one.
+  const morph = document.createElement('div')
+  morph.setAttribute('aria-hidden', 'true')
+  morph.style.cssText =
+    `position:absolute;top:${rect.top}px;left:${rect.left}px;` +
+    `width:${rect.width}px;height:${rect.height}px;overflow:hidden;will-change:transform;`
+  const plate = document.createElement('img')
+  plate.src = img.currentSrc || img.src
+  plate.alt = ''
+  plate.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:top;display:block;'
+  morph.appendChild(plate)
 
   // The live page, loading during the flight.
   const frame = document.createElement('iframe')
@@ -287,8 +282,7 @@ function openPreview(e: MouseEvent, ex: AptExample) {
     'background:var(--grafit);color:var(--list);border:2px solid var(--list);' +
     'border-radius:0;cursor:pointer;opacity:0;'
 
-  if (morph) root.append(backdrop, morph, frame, closeBtn)
-  else root.append(backdrop, frame, closeBtn)
+  root.append(backdrop, morph, frame, closeBtn)
   document.body.appendChild(root)
 
   const onKeydown = (ev: Event) => {
@@ -372,20 +366,13 @@ function openPreview(e: MouseEvent, ex: AptExample) {
   }
 
   if (reduced) {
-    // The settled state, immediately: no lift, plate (where one exists)
-    // already covering.
-    if (morph) morph.style.transform = lifted
+    // The settled state, immediately: no lift. On a phone the plate is a
+    // desktop capture with nothing to add — settle on paper instead.
+    morph.style.transform = lifted
+    if (phone) morph.style.opacity = '0'
     backdrop.style.opacity = '1'
     showChrome()
     maybeReveal()
-  } else if (!morph) {
-    // Phone: the beige fade — paper rises, the page crossfades in over it.
-    animTo(backdrop, 'opacity', '0', '1', FADE_MS)
-    fx.setTimeout(() => {
-      landed = true
-      showChrome()
-      maybeReveal()
-    }, FADE_MS + SETTLE_SLACK_MS)
   } else {
     animTo(backdrop, 'opacity', '0', '1', FADE_MS)
     animTo(morph, 'transform', 'translate(0px, 0px) scale(1)', lifted, LIFT_MS)
@@ -393,6 +380,11 @@ function openPreview(e: MouseEvent, ex: AptExample) {
     // renderer may never fire finish, and the inline end state is already set.
     fx.setTimeout(() => {
       landed = true
+      // Phone: the plate has done its flying — dissolve it into the beige so
+      // a zoomed DESKTOP page is never held while the mobile page loads.
+      if (phone && overlay === o && !o.closing) {
+        animTo(morph, 'opacity', '1', '0', PLATE_EXIT_MS)
+      }
       showChrome()
       maybeReveal()
     }, LIFT_MS + SETTLE_SLACK_MS)
