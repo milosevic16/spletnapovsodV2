@@ -8,9 +8,15 @@
  */
 
 export interface NavItem {
-  /** DOM anchor id — machine identifier, stays English. */
+  /** DOM anchor id — machine identifier, stays English. Also the render key. */
   target: string
   label: string
+  /**
+   * Full path, for a stop that leaves the page. Omitted = an in-page `#target`
+   * anchor, which is what every section stop is. The masthead reads this, so a
+   * nav can mix in-page sections and other pages without a second component.
+   */
+  href?: string
 }
 
 export interface Hero {
@@ -83,6 +89,19 @@ export const nav: NavItem[] = [
   { target: 'paketi', label: 'Paketi' },
   { target: 'razlike', label: 'Zakaj mi' },
   { target: 'kontakt', label: 'Kontakt' },
+]
+
+/**
+ * THE HOME PAGE'S HEADER STOPS — three buttons, by the owner's call (avgust
+ * 2026): home, the apartment offer, and the page's single CTA. Deliberately
+ * separate from `nav` below, which still carries the four section anchors and
+ * still feeds the FOOTER: on a phone the footer nav is the complete in-flow
+ * navigation, so emptying it of section links would strand a phone visitor.
+ * Both of these leave the page, hence `href` rather than an anchor.
+ */
+export const headerNav: NavItem[] = [
+  { target: 'domov', href: '/', label: 'Domov' },
+  { target: 'apartmaji', href: '/apartmaji', label: 'Apartmajska ponudba' },
 ]
 
 export const hero: Hero = {
@@ -455,6 +474,10 @@ export const contact = {
       label: 'Izdelava in objava',
       detail: 'Stran zgradimo, uskladimo z vami in objavimo na vaši domeni.',
     },
+    {
+      label: 'Plačilo',
+      detail: 'Plačate šele, ko ste popolnoma zadovoljni s spletno stranjo.',
+    },
   ],
   form: {
     topicLabel: 'Kaj potrebujete?',
@@ -485,11 +508,6 @@ export const contact = {
 export const footer = {
   tagline: 'Profesionalne, hitre in dostopne spletne rešitve.',
   emailLabel: 'Pišite nam',
-  /** Colophon contract: only mechanically verifiable claims (SSG, no analytics). */
-  colophon: {
-    annotation: 'statična stran · brez sledilnih piškotkov',
-    gloss: 'Tudi ta stran je zgrajena tako, kot gradimo vašo.',
-  },
   /**
    * Provider identity, shown in every footer (ZEPT provider-identification and
    * good GDPR practice). Owner-supplied and used verbatim; the registered
@@ -507,8 +525,18 @@ export const footer = {
   },
   /** The footer link to the privacy subpage. A real /zasebnost route link, so
    *  it is crawlable and the global click interceptor upgrades it to SPA nav. */
-  privacyLabel: 'Politika zasebnosti',
-  privacyHref: '/zasebnost',
+  /**
+   * The legal documents, linked from every footer. Real route links, so they
+   * are crawlable and the global click interceptor upgrades them to SPA
+   * navigation. Order is the order a reader needs them: privacy first (it
+   * governs every visitor), then the terms that govern a customer, then the
+   * service module.
+   */
+  legalLinks: [
+    { label: 'Politika zasebnosti', href: '/zasebnost' },
+    { label: 'Splošni pogoji', href: '/pogoji-splosno' },
+    { label: 'Pogoji za apartmaje', href: '/pogoji-apartmaji' },
+  ],
 }
 
 export const ui = {

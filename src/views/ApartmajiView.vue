@@ -10,8 +10,7 @@
  * NOT LINKED FROM THE MAIN NAV, by decision: it reads as a page for one
  * audience rather than a section of the one-pager, and adding it to the home
  * nav would change home copy that has not been signed off. It is fully
- * indexable and enters the sitemap by construction; the visible breadcrumb is
- * its route back.
+ * indexable and enters the sitemap by construction.
  *
  * The chrome gets THIS page's stops, not the home page's. ContactSection is
  * reused (one inquiry form for the page); its #kontakt anchor is what every
@@ -19,7 +18,7 @@
  * Service with no Offer, never a fabricated number.
  */
 import { useHead } from '@unhead/vue'
-import { meta, breadcrumb, nav, ctaPrimary } from '@/content/apartmaji'
+import { meta, nav, ctaPrimary, contactExtras, packages } from '@/content/apartmaji'
 import { SITE_ORIGIN, SITE_NAME } from '@/lib/constants'
 import SiteMasthead from '@/components/SiteMasthead.vue'
 import ApartmajiHero from '@/components/ApartmajiHero.vue'
@@ -28,6 +27,10 @@ import ApartmajiPackages from '@/components/ApartmajiPackages.vue'
 import ApartmajiRevisions from '@/components/ApartmajiRevisions.vue'
 import ContactSection from '@/components/ContactSection.vue'
 import SiteFooter from '@/components/SiteFooter.vue'
+
+/** The form's package chips, derived from the tiers themselves — one source,
+ *  so a renamed tier can never leave a stale chip. */
+const packageChoices = packages.items.map((p) => ({ value: p.id, label: p.name }))
 
 const canonical = `${SITE_ORIGIN}/apartmaji`
 const orgId = `${SITE_ORIGIN}/#org`
@@ -45,16 +48,6 @@ const jsonLd = {
       inLanguage: 'sl',
       areaServed: 'SI',
       provider: { '@id': orgId },
-    },
-    // Mirrors the VISIBLE trail in ApartmajiHero — never markup for a trail the
-    // reader cannot see.
-    {
-      '@type': 'BreadcrumbList',
-      '@id': `${canonical}#breadcrumb`,
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: breadcrumb.homeLabel, item: `${SITE_ORIGIN}/` },
-        { '@type': 'ListItem', position: 2, name: breadcrumb.currentLabel, item: canonical },
-      ],
     },
   ],
 }
@@ -93,13 +86,17 @@ useHead({
 </script>
 
 <template>
-  <SiteMasthead :items="nav" :cta="ctaPrimary" />
+  <SiteMasthead :items="nav" :cta="ctaPrimary" :home="{ href: '/', label: 'Domov' }" />
   <main id="main">
     <ApartmajiHero />
     <ApartmajiExamples />
     <ApartmajiPackages />
     <ApartmajiRevisions />
-    <ContactSection />
+    <ContactSection
+      :package-choices="packageChoices"
+      :package-label="contactExtras.packageLabel"
+      :message-label="contactExtras.messageLabel"
+    />
   </main>
   <SiteFooter :items="nav" />
 </template>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useHead } from '@unhead/vue'
-import { meta } from '@/content/home'
+import { meta, headerNav } from '@/content/home'
 import { SITE_ORIGIN, SITE_NAME, CONTACT_EMAIL } from '@/lib/constants'
 import SiteMasthead from '@/components/SiteMasthead.vue'
 import StatementSection from '@/components/StatementSection.vue'
@@ -70,7 +70,7 @@ useHead({
 </script>
 
 <template>
-  <SiteMasthead />
+  <SiteMasthead :items="headerNav" spread />
   <main id="main">
     <StatementSection />
     <!-- Owner's order: the proof (work), then what a package contains, then

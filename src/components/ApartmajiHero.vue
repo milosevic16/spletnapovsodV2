@@ -1,31 +1,43 @@
 <script setup lang="ts">
 /**
- * The subpage's opening band: breadcrumb, kicker, the page's single h1, a short
- * lead and the one call to action.
+ * The subpage's opening band: kicker, the page's single h1, a short lead and
+ * the one call to action.
  *
  * Static by design. Nothing here is built by JS, so a crawler and a JS-off
  * reader get the whole opening, the same contract the home statement band
  * keeps.
  *
- * The breadcrumb is VISIBLE and is the page's only route back to the home page
- * (this subpage is deliberately not in the main nav). It is also what earns the
- * BreadcrumbList in the view's JSON-LD, which mirrors a real trail.
+ * THE BACKDROP is the owner's interior photo reduced to the page's own paper
+ * (one colour, faint, built by scripts/build-apartmaji-hero.mjs). It is plain
+ * static markup: a <picture> with AVIF/WebP/JPEG width variants, decorative
+ * (empty alt, aria-hidden), eager and fetchpriority=high so it is never the
+ * lazy-loaded-LCP mistake. The .press dot screen is a sibling ABOVE it, so the
+ * drafting texture stays; the content sits above both.
  */
-import { hero, breadcrumb } from '@/content/apartmaji'
+import { hero } from '@/content/apartmaji'
 </script>
 
 <template>
-  <section class="apth press press--light">
-    <div class="container">
-      <nav class="apth__crumbs" aria-label="Drobtinice">
-        <ol class="apth__crumb-list">
-          <li class="apth__crumb">
-            <a href="/" class="apth__crumb-link">{{ breadcrumb.homeLabel }}</a>
-          </li>
-          <li class="apth__crumb" aria-current="page">{{ breadcrumb.currentLabel }}</li>
-        </ol>
-      </nav>
+  <section class="apth">
+    <picture class="apth__bgpic">
+      <source type="image/avif" srcset="/img/apt/apt-hero-v1-768.avif 768w, /img/apt/apt-hero-v1-1152.avif 1152w, /img/apt/apt-hero-v1-1536.avif 1536w, /img/apt/apt-hero-v1-2048.avif 2048w, /img/apt/apt-hero-v1-2560.avif 2560w, /img/apt/apt-hero-v1-3136.avif 3136w" sizes="100vw" />
+      <source type="image/webp" srcset="/img/apt/apt-hero-v1-768.webp 768w, /img/apt/apt-hero-v1-1152.webp 1152w, /img/apt/apt-hero-v1-1536.webp 1536w, /img/apt/apt-hero-v1-2048.webp 2048w, /img/apt/apt-hero-v1-2560.webp 2560w, /img/apt/apt-hero-v1-3136.webp 3136w" sizes="100vw" />
+      <img
+        class="apth__bg"
+        src="/img/apt/apt-hero-v1-1536.jpg"
+        srcset="/img/apt/apt-hero-v1-768.jpg 768w, /img/apt/apt-hero-v1-1152.jpg 1152w, /img/apt/apt-hero-v1-1536.jpg 1536w, /img/apt/apt-hero-v1-2048.jpg 2048w, /img/apt/apt-hero-v1-2560.jpg 2560w, /img/apt/apt-hero-v1-3136.jpg 3136w"
+        sizes="100vw"
+        width="3136"
+        height="1344"
+        alt=""
+        aria-hidden="true"
+        decoding="async"
+        fetchpriority="high"
+      />
+    </picture>
+    <div class="apth__screen press press--light" aria-hidden="true"></div>
 
+    <div class="container">
       <p class="kicker apth__kicker">{{ hero.kicker }}</p>
       <h1 class="apth__title">{{ hero.title }}</h1>
       <p class="apth__lead">{{ hero.lead }}</p>
@@ -39,57 +51,43 @@ import { hero, breadcrumb } from '@/content/apartmaji'
 
 <style scoped>
 .apth {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   background-color: var(--list);
   color: var(--grafit);
   padding-block: var(--section-block);
 }
 
-/* The trail is in the label register (small caps), never mono: mono is
-   reserved for genuine machine emissions (the honesty contract). */
-.apth__crumbs {
-  margin-bottom: var(--space-8);
+/* The interior backdrop, reduced to the page's own paper: a faint monocolour
+   wash, never a photograph. Full-bleed, cover-fit, behind everything. */
+.apth__bgpic {
+  display: contents;
 }
 
-.apth__crumb-list {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font-family: var(--font-display);
-  font-size: var(--fs-annot);
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--grafit-2);
+.apth__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
 }
 
-/* Drawn separator, not a dingbat: a raw glyph can carry emoji presentation on
-   iOS and render as a colour glyph mid-line. */
-.apth__crumb + .apth__crumb::before {
-  content: '';
-  display: inline-block;
-  width: 10px;
-  height: 1px;
-  margin-right: var(--space-2);
-  vertical-align: middle;
-  background: var(--mreza-strong);
+/* The .press dot screen, re-laid OVER the image so the drafting texture is not
+   buried by it. Pure decoration. */
+.apth__screen {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
 }
 
-.apth__crumb-link {
-  display: inline-block;
-  padding-block: var(--space-2);
-  color: var(--grafit-2);
-  text-decoration: none;
-  border-bottom: 1px solid var(--mreza-strong);
-}
-
-.apth__crumb-link:hover,
-.apth__crumb-link:focus-visible {
-  color: var(--rez);
-  border-bottom-color: var(--rez);
+/* Content rides above the backdrop and its texture. */
+.apth > .container {
+  position: relative;
+  z-index: 2;
 }
 
 .apth__kicker {

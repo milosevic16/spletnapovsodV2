@@ -1,27 +1,24 @@
 <script setup lang="ts">
 /**
- * /zasebnost — the privacy policy and provider-identity subpage.
+ * /pogoji-splosno — the general terms of business.
  *
- * Same contract as home and apartmaji: everything a crawler needs is in the
- * prerendered HTML, the head is emitted in setup, the canonical is absolute
- * from ONE constant, and the page is prerendered flat to dist/zasebnost.html so
- * the canonical carries no trailing slash.
+ * Same SSG contract as the other subpages: head emitted in setup, absolute
+ * canonical from one constant, prerendered flat to dist/pogoji-splosno.html.
  *
- * The chrome gets THIS page's stops. There is no inquiry form here (a privacy
- * page is not a funnel): the masthead CTA points at the on-page »Vaše pravice«
- * section, where the contact for exercising data rights lives. The route back
- * to home is the masthead's home logo and »Domov« button. JSON-LD carries a
- * WebPage referencing the site Organization.
+ * JSON-LD is a WebPage referencing the site Organization. No BreadcrumbList:
+ * this page carries no visible trail (the masthead's home link is the route
+ * back), and markup for a trail the reader cannot see is markup for a lie.
  */
 import { useHead } from '@unhead/vue'
-import { meta, nav, ctaPrimary } from '@/content/zasebnost'
+import { meta, articles, provider, updated, nav, ctaPrimary, related } from '@/content/pogoji'
 import { SITE_ORIGIN, SITE_NAME } from '@/lib/constants'
 import SiteMasthead from '@/components/SiteMasthead.vue'
-import ZasebnostHero from '@/components/ZasebnostHero.vue'
-import ZasebnostPolicy from '@/components/ZasebnostPolicy.vue'
+import PogojiHero from '@/components/PogojiHero.vue'
+import PogojiDocument from '@/components/PogojiDocument.vue'
 import SiteFooter from '@/components/SiteFooter.vue'
+import { hero } from '@/content/pogoji'
 
-const canonical = `${SITE_ORIGIN}/zasebnost`
+const canonical = `${SITE_ORIGIN}/pogoji-splosno`
 const orgId = `${SITE_ORIGIN}/#org`
 
 const jsonLd = {
@@ -37,6 +34,9 @@ const jsonLd = {
       isPartOf: { '@id': `${SITE_ORIGIN}/#website` },
       about: { '@id': orgId },
       publisher: { '@id': orgId },
+      // Mirrors the VISIBLE pointer in the hero: a reader who came in on an
+      // apartment promotion is governed by the apartment document instead.
+      relatedLink: `${SITE_ORIGIN}/pogoji-apartmaji`,
     },
   ],
 }
@@ -58,15 +58,12 @@ useHead({
   ],
   link: [
     { rel: 'canonical', href: canonical },
-    // Single-locale site: self-referential sl + x-default, no phantom alternates.
     { rel: 'alternate', hreflang: 'sl', href: canonical },
     { rel: 'alternate', hreflang: 'x-default', href: canonical },
   ],
   script: [
     {
-      // Unique id: unhead dedupes by id, and a shared one would let this page's
-      // node replace the home page's.
-      id: 'ld-zasebnost',
+      id: 'ld-pogoji-splosno',
       type: 'application/ld+json',
       innerHTML: JSON.stringify(jsonLd),
     },
@@ -77,8 +74,13 @@ useHead({
 <template>
   <SiteMasthead :items="nav" :cta="ctaPrimary" :home="{ href: '/', label: 'Domov' }" />
   <main id="main">
-    <ZasebnostHero />
-    <ZasebnostPolicy />
+    <PogojiHero :hero="hero" :related="related" />
+    <PogojiDocument
+      :articles="articles"
+      :updated="updated"
+      :provider="provider"
+      provider-in="uvod"
+    />
   </main>
   <SiteFooter :items="nav" />
 </template>

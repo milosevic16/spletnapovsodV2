@@ -35,7 +35,16 @@ import { createFx } from '@/lib/fx'
  * untouched, which is what keeps this a prop and not a rewrite.
  */
 const props = withDefaults(
-  defineProps<{ items?: NavItem[]; cta?: { label: string; target: string } }>(),
+  defineProps<{
+    items?: NavItem[]
+    cta?: { label: string; target: string }
+    /** Subpages only: a persistent home link (logo + »Domov« button). Undefined
+     *  on the home page, so its chrome is byte-for-byte unchanged. */
+    home?: { href: string; label: string }
+    /** Spread the stops across the strip instead of grouping them centred.
+     *  For a short row (the home page's three), where centring reads crowded. */
+    spread?: boolean
+  }>(),
   { items: () => nav, cta: () => hero.ctaPrimary },
 )
 
@@ -48,7 +57,33 @@ const phone = ref(false)
 const pinned = ref(false)
 /** Phones only: pulled off the top while the reader is travelling down. */
 const stowed = ref(false)
+/** One-beat latch that turns the masthead's own transitions off while `pinned`
+ *  flips — see setPinned. */
+const snap = ref(false)
 const toggleEl = ref<HTMLButtonElement | null>(null)
+
+/**
+ * THE BAR APPEARS ONLY ON THE WAY UP (owner's call). `pinned` still means
+ * "past the hero", but crossing that line DOWNWARD must show nothing: the
+ * observer fires before the scroll listener has sampled a direction, so the
+ * bar used to arrive un-stowed for a beat and then slide out — the reported
+ * flash. Every pinned ENTRY therefore starts stowed, and only a genuine
+ * upward move (onDirection) un-stows it.
+ *
+ * The flip itself is SNAPPED: the element is jumping between the page's
+ * coordinate space (absolute, scrolled away with the hero) and the viewport's
+ * (fixed), and any transition running across that jump IS the flash. The
+ * latch holds the masthead's transitions off for the flip's frame; the timer
+ * is the fallback for throttled documents, where rAF may not run.
+ */
+function setPinned(v: boolean) {
+  if (v === pinned.value) return
+  if (v) stowed.value = true
+  snap.value = true
+  pinned.value = v
+  fx.raf(() => fx.raf(() => (snap.value = false)))
+  fx.setTimeout(() => (snap.value = false), 120)
+}
 
 function close() {
   open.value = false
@@ -103,7 +138,7 @@ onMounted(() => {
   if (sentinel && 'IntersectionObserver' in window) {
     fx.io(
       (entries) => {
-        for (const e of entries) pinned.value = !e.isIntersecting
+        for (const e of entries) setPinned(!e.isIntersecting)
       },
       { threshold: 0 },
     ).observe(sentinel)
@@ -111,7 +146,7 @@ onMounted(() => {
     // No sentinel (or no observer): fall back to a plain threshold rather than
     // leaving the bar stuck in its hero face forever.
     const onScroll = () => {
-      pinned.value = window.scrollY > 120
+      setPinned(window.scrollY > 120)
     }
     onScroll()
     fx.on(window, 'scroll', onScroll, { passive: true })
@@ -134,9 +169,29 @@ onUnmounted(() => {
       'masthead--open': open,
       'masthead--pinned': pinned,
       'masthead--stowed': stowed,
+      'masthead--snap': snap,
+      'masthead--sub': !!props.home,
+      'masthead--spread': props.spread,
     }"
   >
     <div class="container masthead__row">
+      <!-- Subpages only: the pd mark, top-left, a persistent link home. On the
+           home page `home` is undefined, so this never renders. It stands in
+           for the pinned wordmark (hidden on subpages) and is the clickable
+           logo. -->
+      <a
+        v-if="props.home"
+        class="masthead__home"
+        :href="props.home.href"
+        aria-label="SpletnaPovsod, na domačo stran"
+      >
+        <svg class="masthead__homemark" aria-hidden="true" viewBox="116.2 287.19 1019.76 654.28">
+                  <circle cx="443.34" cy="614.33" r="327.14" fill="var(--rez)" />
+                  <circle cx="808.92" cy="614.11" r="327.04" fill="var(--rez)" />
+                  <path fill="var(--list)" fill-rule="evenodd" d="M268.03 829.73C261.27 828.75 255.08 826.61 250.25 823.57C247.88 822.09 243.97 819.1 242.07 817.33C237.72 813.27 233.82 806.97 232.8 802.36C232.02 798.8 231.83 785.73 231.4 704.24C231.24 675.28 231.62 619.94 232.05 608.24C232.31 601.1 232.93 590.97 233.31 587.58C233.44 586.41 233.72 583.89 233.93 581.97C234.45 577.29 235.13 573.07 236.15 568.28C236.62 566.08 237.46 562.05 238.02 559.31C239.5 552.05 240.13 549.64 241.88 544.37C243.39 539.83 243.89 538.48 247.3 529.8C248.67 526.3 254.47 514.5 257.88 508.26C259.92 504.54 263.71 498.54 266.77 494.19C268.26 492.07 270.53 488.82 271.8 486.98C279.19 476.28 291.58 462.21 302.16 452.51C309.77 445.52 317.85 439.02 324.64 434.4C333.25 428.55 342.91 422.59 347.72 420.16C352 417.99 363.24 412.51 363.41 412.51C363.49 412.51 364.07 412.28 364.7 411.99C365.33 411.7 367.88 410.69 370.36 409.73C383.88 404.52 385.81 403.9 396.35 401.3C409.55 398.04 415.33 397.05 428.43 395.83C464.09 392.48 501.33 397.91 531.16 410.79C540.33 414.75 546.92 417.86 551.42 420.36C560.9 425.62 563.24 427.03 569.36 431.19C574.46 434.65 583.72 441.5 584.94 442.7C585.13 442.89 586.19 443.75 587.28 444.62C588.38 445.49 590.06 446.89 591.02 447.75C591.97 448.6 593.77 450.17 595 451.23C599.84 455.39 609.79 465.57 615.46 472.16C618.6 475.81 623.72 482.08 625.43 484.35C626.45 485.72 627.36 486.87 627.46 486.9C627.55 486.93 627.89 486.52 628.22 485.98C628.55 485.45 629.28 484.53 629.85 483.94C631.34 482.37 634.52 478.59 637.48 474.88C643.98 466.74 649.53 460.95 658.88 452.58C669.3 443.25 677.26 437.35 689.75 429.69C692.01 428.31 694.03 427.07 694.24 426.94C694.44 426.81 694.78 426.63 694.98 426.54C695.19 426.45 695.64 426.19 695.98 425.96C696.32 425.73 697.22 425.2 697.97 424.79C699.27 424.08 700.01 423.66 702.14 422.43C704.07 421.32 707.4 419.67 710.17 418.45C711.75 417.75 713.82 416.81 714.78 416.37C715.74 415.92 717.49 415.1 718.67 414.55C723.82 412.16 740.68 406.32 747.56 404.56C765.3 400.01 784.56 397.59 803.18 397.58C828.74 397.56 852.93 401.44 873.04 408.78C888.89 414.57 897.04 418.29 913.5 427.28C916.43 428.88 922.6 432.55 925.45 434.39C927.11 435.46 929.85 437.14 938.49 442.39C941.02 443.93 942.37 444.62 942.49 444.43C942.58 444.27 942.8 442.15 942.97 439.72C944.08 423.97 947.54 414.97 955.39 407.45C958.51 404.45 959.89 403.45 964.34 400.94C972.56 396.31 977.95 395.32 986.8 396.84C994.43 398.14 1001.81 402.09 1008.11 408.23C1012.73 412.73 1015.58 418.01 1016.57 423.9C1018.17 433.36 1018.84 470.97 1018.83 549.72C1018.82 608.48 1018.62 619.38 1017.21 636.1C1015.62 655.1 1012.44 670.92 1006.86 687.63C1005.98 690.28 1004.83 693.53 1004.3 694.86C1002.28 699.93 997.25 710.47 995.31 713.71C994.07 715.76 993.94 716 991.58 720.18C988.58 725.48 985.61 729.98 980.21 737.41C975.93 743.29 971.84 748.34 965.81 755.16C962.41 759.01 951.83 769.67 948.11 772.99C945.73 775.12 945.02 775.74 940.77 779.37C938.23 781.53 935.54 783.69 933.3 785.36C932.27 786.12 930.18 787.7 928.66 788.86C926.27 790.68 922.94 793.06 921.63 793.89C921.42 794.03 920.06 794.92 918.61 795.87C915.43 797.98 910.14 801.19 907.77 802.47C905.32 803.8 903.68 804.72 902.67 805.34C901.68 805.96 893.12 810.2 892.87 810.2C892.71 810.2 890.97 810.98 887.48 812.63C883.76 814.38 882.72 814.78 874.78 817.56C870.55 819.04 861.76 821.74 858.72 822.5C856.47 823.06 843.48 825.63 841.04 826C830.98 827.51 826.49 827.98 818.75 828.37C808.92 828.86 802.51 828.93 794.47 828.65C781.63 828.19 773.65 827.39 763.34 825.51C751.53 823.35 748.63 822.64 738.17 819.29C726.11 815.44 721.36 813.59 711.05 808.69C707.58 807.05 695.94 800.67 693.05 798.83C692.33 798.38 691.68 798 691.61 798C691.54 798 691.17 797.79 690.8 797.52C690.43 797.26 688.39 795.9 686.27 794.5C684.14 793.1 681.51 791.29 680.42 790.49C679.32 789.68 677.09 788.06 675.46 786.88C665.13 779.43 650.22 766.08 641.56 756.53C641.14 756.07 640.44 755.3 640 754.82C639.57 754.34 638.51 753.13 637.66 752.13C636.81 751.13 635.42 749.58 634.58 748.69C631.81 745.76 629.11 742.62 627.9 740.91C627.24 739.99 626.56 739.23 626.37 739.23C626.19 739.23 625.5 739.87 624.84 740.66C624.18 741.45 623.58 742.15 623.51 742.22C623.44 742.29 621.93 744.18 620.15 746.43C615.73 752.01 611.65 756.61 605.86 762.52C601.61 766.86 593.04 774.89 589.65 777.71C588.16 778.94 586.08 780.71 584.68 781.94C583.43 783.03 575.84 788.81 572.63 791.11C570.7 792.5 562.91 797.73 562.38 798C562.24 798.07 561.46 798.56 560.65 799.08C559.84 799.61 557.6 800.93 555.67 802.01C553.74 803.1 552 804.09 551.79 804.22C549.51 805.66 543.52 808.73 539.72 810.4C538.48 810.95 536.36 811.92 534.99 812.56C530.53 814.66 526.58 816.16 516.93 819.41C513.99 820.41 511.4 821.31 511.18 821.43C509.64 822.23 495.57 825.28 485.55 826.99C473.72 829 469.17 829.37 453.56 829.54C437.86 829.72 428.6 829.2 417.57 827.52C412.73 826.78 396.35 823.36 391.67 822.12C387.83 821.09 378.14 817.88 372.62 815.8C358.36 810.43 343.03 802.83 329.42 794.39C327.84 793.41 324.14 791.12 321.2 789.29C318.25 787.47 314.87 785.36 313.68 784.62C312.43 783.83 311.39 783.34 311.22 783.44C311.01 783.57 310.97 784.16 311.07 785.42C311.5 790.44 310.16 797.62 307.39 805.17C306.22 808.36 303.61 812.93 301.72 815.08C300.33 816.68 293.98 822.22 292.17 823.43C288.45 825.92 283.41 828.05 278.62 829.16C276.56 829.64 269.88 829.99 268.03 829.73ZM810.9 750.44C821.01 750 828.84 748.81 839.67 746.08C847.8 744.02 850.86 742.94 860.24 738.78C866.27 736.11 867.33 735.56 871.54 732.96C879.16 728.25 878.55 728.68 886.48 722.65C888.06 721.45 890.02 719.91 890.84 719.23C893.15 717.33 899.2 711.75 900.44 710.39C901.05 709.72 902.78 707.9 904.29 706.34C907.17 703.35 912.39 697.08 915.16 693.28C920.02 686.6 923.39 681.1 926.8 674.25C930.85 666.14 931.51 664.48 934.63 654.77C938.39 643.09 939.31 638.74 940.66 626.17C941.2 621.18 941.4 608.65 941.04 603.1C940.25 591.15 937.64 579.35 932.75 565.66C930.7 559.92 925.38 548.77 922.05 543.25C919.01 538.2 916.27 533.96 914.88 532.17C914.14 531.21 912.8 529.47 911.91 528.31C903.16 516.93 891.59 506.13 880.08 498.59C871.87 493.21 861.97 487.95 854.73 485.1C838.58 478.75 817.36 475.07 799.95 475.6C784.25 476.07 765.56 479.95 751.76 485.6C741.28 489.89 738.47 491.26 732.37 495.07C732.15 495.2 731.4 495.65 730.72 496.05C728.08 497.6 723.15 500.93 721.13 502.53C712.45 509.37 708.55 512.9 702.52 519.37C685.96 537.14 676.37 554.86 670.25 578.98C669.15 583.3 667.76 589.98 667.48 592.31C667.4 592.92 667.12 595 666.86 596.91C666.03 602.91 665.76 607.15 665.77 614.1C665.78 621.57 666.05 625.58 666.99 632.4C669.06 647.38 674.61 664.97 680.97 676.73C684.86 683.9 694.07 697.6 698.28 702.45C704.69 709.84 708.63 713.81 715.15 719.47C726.13 728.99 738.01 736.12 751.24 741.14C762.7 745.49 768.88 747.08 781.01 748.8C788.18 749.82 791.98 750.19 797.95 750.43C804.53 750.69 805.18 750.69 810.9 750.44ZM463.14 748.09C471.68 747.13 482.71 744.95 488.67 743.06C491.15 742.27 504.15 737.33 506.86 736.14C508.8 735.3 511.05 734.08 516.81 730.78C520.77 728.51 522.22 727.56 527.64 723.69C532.23 720.41 534.67 718.56 535.23 717.95C535.37 717.8 537.28 716.1 539.47 714.16C544 710.16 545.61 708.54 550.41 703.14C554.77 698.24 556.08 696.62 559.39 692.04C568.32 679.71 573.31 669.7 578.69 653.32C579.88 649.72 580.96 645.22 581.91 639.99C585.61 619.5 585.83 604.63 582.7 586.08C581.57 579.39 579.95 573.39 577.27 566.03C574.25 557.74 572.13 552.9 569.39 548.04C568.79 546.98 567.77 545.1 567.11 543.87C565.99 541.76 564.2 538.97 561.05 534.41C558.21 530.29 556.06 527.62 550.52 521.32C543.26 513.06 532.12 503.44 523.53 498.01C512.37 490.96 500.29 485.5 488.08 482.01C481.03 479.99 472.12 478.28 463.14 477.22C456.22 476.4 443.84 476.4 436.01 477.21C424.51 478.41 415.91 480.22 406.01 483.5C395.02 487.15 383.81 492.63 373.25 499.53C365.27 504.75 355.79 512.73 349.7 519.35C344.06 525.48 340.25 530.27 335.95 536.65C331.5 543.25 331.03 544.03 328.41 549.23C321.01 563.91 316.62 578.63 314.37 596.29C312.27 612.76 313.47 630.72 317.85 648.09C318.77 651.74 321.49 659.82 323.78 665.68C328.69 678.24 337.31 692.27 346.8 703.17C349.54 706.32 356.87 713.47 360.8 716.83C369.03 723.87 374.99 727.95 384.35 732.97C390.48 736.26 396.83 738.89 406.12 741.99C416.66 745.51 424.3 747.03 439.11 748.54C441.77 748.81 459.71 748.47 463.14 748.09Z" />
+                </svg>
+      </a>
+
       <!-- The bar's own small wordmark, phones only, revealed once pinned.
            aria-hidden and hydration-gated: the hero already carries the brand
            for crawlers and assistive tech, and this is its second face, not a
@@ -193,9 +248,17 @@ onUnmounted(() => {
       >
         <nav class="masthead__nav" aria-label="Glavna navigacija">
           <a
+            v-if="props.home"
+            :href="props.home.href"
+            class="masthead__link masthead__homelink"
+            :style="{ '--i': 0 }"
+            @click="close"
+            >{{ props.home.label }}</a
+          >
+          <a
             v-for="(item, i) in props.items"
             :key="item.target"
-            :href="`#${item.target}`"
+            :href="item.href ?? `#${item.target}`"
             class="masthead__link"
             :style="{ '--i': i }"
             @click="close"
@@ -240,6 +303,8 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
+  /* Positioning context for the top-left home logo (subpages). */
+  position: relative;
   /* Same as the nav's internal gap, so all five items are evenly spaced. */
   gap: 0 clamp(1rem, 4vw, 3rem);
 }
@@ -262,10 +327,60 @@ onUnmounted(() => {
   column-gap: clamp(1rem, 4vw, 3rem);
 }
 
+/* SPREAD: a short row distributed across the strip rather than grouped in the
+   middle. The panel takes the full width and its two children (the nav and the
+   CTA) push apart; the nav's own stops push apart inside it, so all three land
+   evenly. The side margin keeps them off the strip's edges. Desktop only —
+   phones keep the stacked menu, which has its own layout entirely. */
+@media (min-width: 900px) {
+  .masthead--spread .masthead__panel {
+    width: 100%;
+    justify-content: space-between;
+    padding-inline: var(--space-10);
+    column-gap: var(--space-10);
+  }
+
+  /* The nav box itself is dissolved so its stops become siblings of the CTA on
+     the panel's flex line — otherwise the nav counts as ONE item and the CTA as
+     another, which put 611px between the first two stops and 80px before the
+     third (measured). With the box gone the three distribute equally.
+     `display: contents` keeps the <nav> element and its aria-label in the tree
+     while removing only its box; current Chrome, Firefox and Safari preserve
+     the landmark. */
+  .masthead--spread .masthead__nav {
+    display: contents;
+  }
+}
+
 /* Both exist only once hydrated, and only on a phone. */
 .masthead__toggle,
 .masthead__brand {
   display: none;
+}
+
+/* The home logo (subpages only). Absolute in the row so it hugs the top-left
+   content edge without disturbing the centred nav; shown on desktop AND phone.
+   The home page never renders the element, so no gating is needed here. */
+.masthead__home {
+  position: absolute;
+  left: var(--gutter);
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  z-index: 2;
+  color: var(--grafit);
+}
+
+.masthead__homemark {
+  height: 1.7rem;
+  width: auto;
+  display: block;
+}
+
+.masthead__home:focus-visible {
+  outline: 2px solid var(--grafit);
+  outline-offset: 4px;
 }
 
 /* The strip is visually narrow; the 44px tap floor lives on the links. */
@@ -331,8 +446,38 @@ onUnmounted(() => {
   }
 
   .masthead--live .masthead__toggle,
-  .masthead--live .masthead__panel {
+  .masthead--live .masthead__panel,
+  .masthead--live .masthead__home {
     pointer-events: auto;
+  }
+
+  /* The persistent home logo takes the pinned wordmark's job on subpages, so
+     the wordmark stands down and they never share the top-left.
+     DOUBLED WITH --live, and that is the fix for the two overlapping logos on
+     /apartmaji: at 0,2,0 this rule was tied with the phone block's own
+     `.masthead--live .masthead__brand { display: flex }` further down, and
+     source order re-displayed the brand over the home mark. 0,3,0 wins on
+     specificity whatever the order. */
+  .masthead--live.masthead--sub .masthead__brand {
+    display: none;
+  }
+
+  /* Phone: the logo mirrors the menu button — same line, opposite inset. It
+     rides the hero-face position and settles to bar-centre when pinned, exactly
+     as the button does. */
+  .masthead--live .masthead__home {
+    left: var(--hero-inset);
+    top: calc(var(--hero-inset) + 0.275 * var(--hero-display));
+    /* The mark RIDES between its faces instead of jumping (owner's report: the
+       subpage close read as abrupt). Opening from the bar carries it from
+       bar-centre up to the open face's line and closing carries it back, on
+       the same 300ms every other close motion runs on. Scroll-driven pin
+       flips stay instant — the snap latch covers descendants. */
+    transition: top 300ms var(--ease-out);
+  }
+
+  .masthead--live.masthead--pinned:not(.masthead--open) .masthead__home {
+    top: 50%;
   }
 
   /* Stowed: yields to a reader travelling down, returns when they turn back.
@@ -342,6 +487,39 @@ onUnmounted(() => {
     transform: translateY(-100%);
   }
 
+  /* THE CHROME BELONGS TO THE PAGE, not the viewport — every page (owner's
+     call; it was scoped to subpages first, then asked for everywhere). At the
+     top of a page the masthead is absolute, so the logo and the menu control
+     stand in the hero and scroll up and away with it like any other element;
+     nothing fixed exists while the reader travels down. The pinned bar and the
+     open overlay keep the base `fixed`, so an upward turn still surfaces the
+     bar and an open menu still holds the screen. Absolute against the initial
+     containing block (no positioned ancestor), so top:0 is the top of the
+     DOCUMENT. */
+  .masthead--live:not(.masthead--pinned):not(.masthead--open) {
+    position: absolute;
+  }
+
+  /* THE PINNED FLIP IS A SNAP, NOT A TWEEN. Crossing the hero line swaps the
+     element between the page's coordinate space and the viewport's, and any
+     transition running across that swap is a visible flash — the bar used to
+     arrive and slide out when the line was crossed downward. setPinned holds
+     this class for the flip's frame; combined with entries starting stowed
+     (script), the bar can only ever APPEAR by the stow transition on a real
+     upward move. */
+  .masthead.masthead--live.masthead--snap,
+  .masthead.masthead--live.masthead--snap * {
+    /* Descendants too: the home mark and the toggle now tween their `top`
+       between faces, and a tween running across the pinned flip's coordinate
+       -space jump is exactly the flash this latch exists to kill. Menu
+       open/close never sets the latch, so those tweens run untouched.
+       TRIPLED selector on purpose: the children's own transition rules sit at
+       0,3,0 and later in the file, so a 0,3,0 latch lost the tie on source
+       order — measured, the toggle kept its list under the latch. 0,4,0 wins
+       outright. */
+    transition: none;
+  }
+
   /* The button is taken OUT of the row's flow. In flow it competes with a
      brand that is now hero-sized, and at 320px the two plus their gap exceed
      the line — measured, the button wrapped to a second row and the bar grew
@@ -349,6 +527,14 @@ onUnmounted(() => {
      reserved right-hand strip the hero's own wordmark has. */
   .masthead--live .masthead__row {
     position: relative;
+    /* One stacking context for the whole phone chrome. The SHEET IS A CHILD OF
+       THIS ROW, not a sibling — so this z-index lifts nothing by itself (the
+       first version of this fix believed it did, and the open menu shipped
+       with the brand and the close control painted UNDER the sheet, invisible
+       and untappable). What it does is contain the contest: inside it the
+       sheet holds 40 and everything that stands ON the strip takes 41 — see
+       the group rule after the toggle. */
+    z-index: 41;
     min-height: 44px;
     /* The desktop row centres its items; with the button out of flow the brand
        became the only one and centred with it, landing 5px off the hero's own
@@ -426,25 +612,78 @@ onUnmounted(() => {
     padding-right: var(--brand-reserve);
     color: var(--grafit);
     opacity: 0;
+    /* THE CLOSE SPLITS BY FACE, and this rule is the HERO face's half (owner's
+       call, third revision). At the top of the home page the hero sheet's own
+       stamp stands exactly beneath the menu's mark — same artwork, same box —
+       so the MARK must not move at all on close: any motion on it plays
+       against its identical twin and reads as a glitch. The mark holds (its
+       height flip is delayed past the fade, see .masthead__brandmark) and only
+       the LETTERING carries the designed shrink, which lives on
+       .masthead__brandtext now rather than on this parent. The font-size and
+       font-stretch flips stay DELAYED (0s past the fade): the underlying size
+       never animates in this face.
+
+       This list is the CLOSING list for the HERO face — state changes run
+       under the list of the state being entered. The pinned face carries its
+       OWN list with real tweens (see the pinned brand rule): there the whole
+       logo shrinks smoothly to the bar's size, because no twin stands beneath
+       it and the hold-then-snap this list produces there read as a three-frame
+       stutter. The 320ms delay is the fade's 300ms plus a beat; change one,
+       change all. */
     transition:
       opacity 300ms var(--ease-out),
-      font-size 380ms var(--ease-out),
-      font-stretch 380ms var(--ease-out);
+      font-size 0s 320ms,
+      font-stretch 0s 320ms;
   }
 
+  /* THE DESIGNED SHRINK LIVES ON THE LETTERING. This is the resting (hero
+     face) state: scale 0.85 composed with the optical scaleY the text always
+     carries. Closing the menu at the top of the page, the name shrinks toward
+     its own line start while the brand fades — and the MARK, a sibling,
+     stays perfectly still over the hero's identical stamp. Opening mirrors
+     it: the open rule below stands the text at full scale, so the name grows
+     in as it fades in. One knob: the 0.85. */
   .masthead__brandtext {
     white-space: nowrap;
-    transform: scaleY(var(--hero-wordmark-scaley));
+    transform: scale(0.85) scaleY(var(--hero-wordmark-scaley));
     transform-origin: left center;
+    transition: transform 300ms var(--ease-out);
+  }
+
+  .masthead--live.masthead--open .masthead__brandtext {
+    transform: scaleY(var(--hero-wordmark-scaley));
   }
 
   /* Shut and pinned, it is the small bar mark. */
+  /* THE PINNED FACE'S CLOSING LIST IS REAL TWEENS (owner's report: the
+     hold-then-snap of the delayed flips read as a three-frame stutter when
+     closing the menu from the bar). Entering this face, font-size,
+     font-stretch and letter-spacing all animate over the fade's own 300ms, so
+     the logo shrinks continuously from the open size to the bar's — and the
+     mark rides along, because its height tween is scoped to this same face
+     below. The delayed-flip pattern survives only in the hero face, where the
+     brand fades to nothing and the mark must hold against its twin. */
   .masthead--live.masthead--pinned:not(.masthead--open) .masthead__brand {
     --hero-wordmark-scaley: 1;
     font-size: 1.05rem;
     font-stretch: var(--wdth-monument);
     letter-spacing: -0.02em;
     opacity: 1;
+    transition:
+      opacity 300ms var(--ease-out),
+      font-size 300ms var(--ease-out),
+      font-stretch 300ms var(--ease-out),
+      letter-spacing 300ms var(--ease-out);
+  }
+
+  .masthead--live.masthead--pinned:not(.masthead--open) .masthead__brandmark {
+    transition: height 300ms var(--ease-out);
+  }
+
+  /* The lettering stands untransformed in the bar — the base rule's resting
+     shrink belongs to the hero face, where the lettering is invisible. */
+  .masthead--live.masthead--pinned:not(.masthead--open) .masthead__brandtext {
+    transform: none;
   }
 
   /* Open, the wordmark is SIZED TO FIT rather than copied from the hero. The
@@ -471,6 +710,12 @@ onUnmounted(() => {
      slack. */
   .masthead--live.masthead--open .masthead__brand {
     opacity: 1;
+    /* The OPENING list: no size entries at all, so entering the open face
+       sets the size in one step at t=0 — invisible where the brand is fading
+       in from nothing, and a snap where it already stands (the pinned bar's
+       small mark becomes the big one as the sheet unfolds over it). The
+       lettering's own grow-in rides .masthead__brandtext, not this parent. */
+    transition: opacity 300ms var(--ease-out);
     font-size: min(
       var(--hero-wordmark),
       calc(
@@ -483,6 +728,15 @@ onUnmounted(() => {
     height: 0.78em;
     width: auto;
     flex: 0 0 auto;
+    /* HERO face: the mark's height flip is DELAYED past the fade, so it
+       stands dead still over the hero sheet's identical stamp while the brand
+       fades out — the owner's "no animation for the logo" at the top of the
+       page. Without the delay it snapped small at t=0 while the words held,
+       splitting the logo into two sizes mid-fade. The PINNED face overrides
+       this with a real 300ms height tween (scoped rule above), where the
+       whole logo shrinks to the bar size together. Same 320ms pairing as the
+       brand's closing list. */
+    transition: height 0s 320ms;
   }
 
   /* OPEN, the brand's mark IS the hero's mark: same absolute size, same top,
@@ -495,6 +749,8 @@ onUnmounted(() => {
 
   .masthead--live.masthead--open .masthead__brandmark {
     height: calc(0.55 * var(--hero-display));
+    /* Opening sets the mark's size in one step, like the lettering's. */
+    transition: none;
   }
 
   .masthead--live .masthead__toggle {
@@ -553,7 +809,11 @@ onUnmounted(() => {
     transition:
       background-color 260ms var(--ease-out),
       border-color 260ms var(--ease-out),
-      padding 300ms var(--ease-out);
+      padding 300ms var(--ease-out),
+      /* The control rides between bar-centre and the corner with the mark
+         opposite it — same 300ms, same reason (the face flip read as a jump
+         on subpage closes). Pin flips stay instant via the snap latch. */
+      top 300ms var(--ease-out);
   }
 
   /* Pinned, it becomes the labelled chip: one step darker than the page, with
@@ -583,6 +843,23 @@ onUnmounted(() => {
     opacity: 1;
   }
 
+  /* EVERYTHING THAT STANDS ON THE STRIP RIDES ABOVE THE SHEET. The sheet (the
+     panel, z 40) is a SIBLING of these inside the row, and it now spans from
+     the viewport's top — so anything left at z-auto paints underneath it and,
+     because the sheet takes pointer events, becomes untappable with it. That
+     was the shipped bug: the open menu had no visible brand and no reachable
+     close control. The brand needs `position` for its z-index to mean
+     anything; the toggle and the subpage home link are already positioned. */
+  .masthead--live .masthead__brand {
+    position: relative;
+  }
+
+  .masthead--live .masthead__brand,
+  .masthead--live .masthead__toggle,
+  .masthead--live .masthead__home {
+    z-index: 41;
+  }
+
   .masthead__glyph {
     width: 24px;
     height: 16px;
@@ -610,25 +887,35 @@ onUnmounted(() => {
     opacity: 0;
   }
 
-  /* The strip takes the menu's ground, and its own seam disappears so the
-     ground runs unbroken into the panel below. */
+  /* THE SHEET IS THE OPEN SURFACE. The strip used to paint its own list-2 and
+     press screen over the top band; with the panel now spanning from the
+     viewport's top edge the same surface would be painted twice at the same
+     lattice phase, doubling the dots — and the strip's 260ms background fade on
+     close was exactly the "white blinks away 1cm below the top" remnant. The
+     strip stays transparent in the open face, so the only thing that moves on
+     close is the sheet itself, retracting to the screen edge. */
   .masthead--live.masthead--open {
-    background-color: var(--list-2);
-    /* Back on for this face: the hero-face rule above kills the screen for
-       the no-bar state, and it matches whenever the masthead is live. Taken
-       from .press's own custom properties so it cannot drift from the
-       utility. */
-    background-image: var(--press-dot-hi), var(--press-dot-lo), var(--press-dot-hi),
-      var(--press-dot-lo);
     border-bottom-color: transparent;
   }
 
   .masthead--live .masthead__panel {
     position: absolute;
-    top: 100%;
+    /* FROM THE VIEWPORT'S OWN TOP EDGE, not from under the strip. The panel
+       hung at top:100%, so the fold's leading edge could only ever travel back
+       up to the strip's BOTTOM — the close died ~64px (about 1cm on a phone)
+       short of the screen edge, and the white above it faded instead of
+       sliding, which is exactly what the owner's recording shows. Spanning
+       from 0, the sheet draws down from the screen edge and retracts back to
+       it: the edge's whole journey is on-screen and it ends at the top.
+       The strip's content rides ABOVE the sheet (the row's z-index below);
+       the links clear the strip via padding that MIRRORS the row's own
+       geometry — hero-inset plus its 44px min-height. Change one, change
+       both. */
+    top: 0;
     left: 0;
     right: 0;
     z-index: 40;
+    padding-top: calc(var(--hero-inset) + 44px);
     flex-direction: column;
     align-items: stretch;
     column-gap: 0;

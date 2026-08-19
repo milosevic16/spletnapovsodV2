@@ -47,11 +47,6 @@ export const meta = {
     'Kako spletno mesto spletnapovsod.si ravna z osebnimi podatki iz kontaktnega obrazca: nameni, pravna podlaga, obdelovalci, hramba in vaše pravice.',
 }
 
-export const breadcrumb = {
-  homeLabel: 'Domov',
-  currentLabel: 'Zasebnost',
-}
-
 export const hero = {
   kicker: 'Varstvo podatkov',
   title: 'Politika zasebnosti',

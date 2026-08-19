@@ -21,6 +21,16 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/views/ZasebnostView.vue'),
   },
   {
+    path: '/pogoji-splosno',
+    name: 'pogoji-splosno',
+    component: () => import('@/views/PogojiSplosnoView.vue'),
+  },
+  {
+    path: '/pogoji-apartmaji',
+    name: 'pogoji-apartmaji',
+    component: () => import('@/views/PogojiApartmajiView.vue'),
+  },
+  {
     path: '/404',
     name: 'not-found',
     component: () => import('@/views/NotFoundView.vue'),

@@ -298,6 +298,16 @@ if (home) {
   // The privacy subpage, same contract: every visible legal string in its own
   // module must appear in the emitted page, so the policy can never silently
   // lose a clause.
+  // The two terms documents, same contract as every other page module.
+  for (const [file, mod, label] of [
+    ['pogoji-splosno.html', 'src/content/pogoji.ts', 'pogoji-splosno'],
+    ['pogoji-apartmaji.html', 'src/content/pogoji-apartmaji.ts', 'pogoji-apartmaji'],
+  ]) {
+    const page = pages.find((p) => p.file === file)
+    if (!page) continue
+    check(collect(await importTs(mod, label), []), page, label)
+  }
+
   const zas = pages.find((p) => p.file === 'zasebnost.html')
   if (zas) {
     const zasContent = await importTs('src/content/zasebnost.ts', 'zasebnost')
