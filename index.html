@@ -54,18 +54,18 @@
          change with them — each side names the other.
 
          TIMELINE (base.css settle delays and App.vue's cleanup are keyed to
-         it — change one, change all): type 0.12+i*0.065s (done ~0.9s), hold,
-         vanish 1.05-1.5s, the p's ink hands off to the overlay 1.5s, discs
-         JOIN 1.5-1.95s (the d's coin sliding onto the p's, the crossing
-         correct throughout), REST as the finished mark 1.95-2.6s, fly
-         2.6-3.2s, ground ROLLS UP 2.65-3.2s, mark blinks out 3.2-3.32s, veil
-         hidden 3.45s. THE ORDER IS THE POINT (owner): the combination is over
-         — visibly over, with a 0.65s rest — before the mark moves, and what
-         flies and settles is the finished logo; nothing about it changes
-         after it lands. (The join and the fly animate layout properties on
-         the main thread, and the old 0.3s gap could be eaten whole by
-         hydration jank right in that window — the rest also buys real
-         headroom, so a stalled join still finishes before flight.) The node is removed by
+         it — change one, change all): type 0.09+i*0.04875s (done ~0.68s),
+         hold, vanish AND JOIN together 1.0125-1.35s, fly 1.95-2.4s, ground
+         ROLLS UP 1.9875-2.4s, mark crossfades out 2.4-2.5875s, veil hidden
+         2.5875s. These are the ORIGINAL times x0.75 — the owner's 25%
+         speed-up of the whole sequence — after one structural change and only
+         one: the join no longer waits for the vanish to finish and runs
+         CONCURRENT with it (same start, same end), so the discs arrive at the
+         mark's final overlap at the very instant the collapsing letters bring
+         them together — they combine as they hit, one contraction, no second
+         gesture. (A retimed variant with an early join and a long rest was
+         built and rejected by the owner; this supersedes it.) The paint-order
+         handoff fires at the join's start, as ever. The node is removed by
          App.vue ON THE VEIL'S OWN animationend — never by the wall clock,
          which is a different clock and once cut this sequence short in
          production.
@@ -83,7 +83,7 @@
         pointer-events: none;
         /* No ground of its own any more — the ground is its own layer below,
            so rolling it up cannot clip the mark that is still flying over it. */
-        animation: veil-done 0.01s linear 3.45s forwards;
+        animation: veil-done 0.01s linear 2.5875s forwards;
         /* Where the mark lands = the hero brand mark, by shared formula:
            left/top: --hero-inset (+ the desktop masthead's 45px in-flow
            strip); height: 0.55em of --hero-display — the mark stands alone
@@ -120,7 +120,7 @@
         right: 0;
         height: 100%;
         background-color: #f5f2eb;
-        animation: v-roll 0.55s cubic-bezier(0.22, 1, 0.36, 1) 2.65s forwards;
+        animation: v-roll 0.4125s cubic-bezier(0.22, 1, 0.36, 1) 1.9875s forwards;
       }
       @media (min-width: 900px) {
         /* 45px = the masthead's in-flow strip, measured. Paired with the
@@ -219,8 +219,8 @@
            p's own leading margin), so
            the untouched -50% translate centres it ON the target box. */
         animation:
-          v-fly 0.6s cubic-bezier(0.22, 1, 0.36, 1) 2.6s forwards,
-          v-word-out 0.12s ease-out 3.2s forwards;
+          v-fly 0.45s cubic-bezier(0.22, 1, 0.36, 1) 1.95s forwards,
+          v-word-out 0.1875s ease-out 2.4s forwards;
       }
       /* A typed slot: fixed width so the contraction is animatable. */
       #veil .v-ch {
@@ -230,8 +230,8 @@
         opacity: 0;
         overflow: hidden;
         animation:
-          v-type 1ms steps(1, end) calc(0.12s + var(--i) * 0.065s) forwards,
-          v-gone 0.45s cubic-bezier(0.22, 1, 0.36, 1) 1.05s forwards;
+          v-type 1ms steps(1, end) calc(0.09s + var(--i) * 0.04875s) forwards,
+          v-gone 0.3375s cubic-bezier(0.22, 1, 0.36, 1) 1.0125s forwards;
       }
       /* The two logo letters: red disc, white letterform. The d is the p
          turned 180° — the mark's point symmetry. */
@@ -242,7 +242,7 @@
         overflow: visible;
         opacity: 0;
         margin-inline: 0.06em;
-        animation: v-type 1ms steps(1, end) calc(0.12s + var(--i) * 0.065s) forwards;
+        animation: v-type 1ms steps(1, end) calc(0.09s + var(--i) * 0.04875s) forwards;
       }
       /* The contraction: the d slides onto the p until the discs overlap at
          the logo's own spacing: centres 1.124 radii apart, so the second disc
@@ -252,7 +252,7 @@
       #veil .v-d {
         animation:
           v-type 1ms steps(1, end) calc(0.12s + var(--i) * 0.065s) forwards,
-          v-join 0.45s cubic-bezier(0.22, 1, 0.36, 1) 1.5s forwards;
+          v-join 0.3375s cubic-bezier(0.22, 1, 0.36, 1) 1.0125s forwards;
       }
       /* THE HAND-OFF, at the instant the join begins. The p's letter stops
          being drawn inside its own disc and is drawn by the overlay instead —
@@ -260,7 +260,7 @@
          PAINT ORDER, and only from here does it matter. Two steps() on one
          clock: no crossfade to mistime, no frame where both or neither shows. */
       #veil .v-ink {
-        animation: v-ink-off 1ms steps(1, end) 1.5s forwards;
+        animation: v-ink-off 1ms steps(1, end) 1.0125s forwards;
       }
       #veil .v-mark {
         position: absolute;
@@ -274,7 +274,7 @@
         max-width: none;
         overflow: visible;
         opacity: 0;
-        animation: v-ink-in 1ms steps(1, end) 1.5s forwards;
+        animation: v-ink-in 1ms steps(1, end) 1.0125s forwards;
       }
       @keyframes v-type {
         to { opacity: 1; }

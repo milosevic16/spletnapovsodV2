@@ -291,6 +291,12 @@ onUnmounted(() => {
    position is the panel's containing block, so the panel goes full-bleed on a
    phone while the row it lives in stays inside the centred measure. */
 .masthead {
+  /* THE BAR'S LOGO HEIGHT — ONE SOURCE FOR BOTH FACES. The pinned bar shows
+     the mark alone on subpages (.masthead__homemark) and the mark beside the
+     wordmark on the home page (.masthead__brandmark); the owner asked for the
+     two to read at the same size, so both take this value and cannot drift.
+     Sized to the 45px strip: 1.7rem leaves ~9px of air top and bottom. */
+  --masthead-mark: 1.7rem;
   position: relative;
   /* A GROUND OF ITS OWN. The strip used to be transparent and simply showed
      the page canvas; a screen needs a surface to sit on, and the header now
@@ -383,7 +389,7 @@ onUnmounted(() => {
 }
 
 .masthead__homemark {
-  height: 1.7rem;
+  height: var(--masthead-mark);
   width: auto;
   display: block;
 }
@@ -736,7 +742,16 @@ onUnmounted(() => {
       letter-spacing 300ms var(--ease-out);
   }
 
+  /* THE PINNED MARK MATCHES THE SUBPAGE'S (owner: the home bar's logo read
+     smaller than the same bar on /nastanitve). An explicit height also ends a
+     real ambiguity: the resting rule sizes the mark in em, so while the
+     parent's font-size tweens 30.4px -> 16.8px the mark's height depends on
+     when that em is resolved — measured 23.7px here against the subpage's
+     27.2px, and it would settle smaller still. Pinned to the shared value,
+     the two faces are equal by construction and the tween has a fixed
+     target. */
   .masthead--live.masthead--pinned:not(.masthead--open) .masthead__brandmark {
+    height: var(--masthead-mark);
     transition: height 300ms var(--ease-out);
   }
 
