@@ -333,10 +333,10 @@ textarea {
    never on SPA navigation back to home. With JS off the flag never appears and
    the page is simply, fully there: the h1 never waits on JavaScript.
 
-   DELAYS ARE KEYED TO THE VEIL TIMELINE in index.html (all times the
-   original x0.75, the owner's 25% speed-up: word typed by ~0.68s, vanish and
-   join together 1.0125–1.35s, mark flies 1.95–2.4s, ground rolls
-   1.9875–2.4s, veil hidden 2.5875s, node removed on its own animationend). The page settles WHILE
+   DELAYS ARE KEYED TO THE VEIL TIMELINE in index.html (tempo = original
+   x0.75, then a 0.7s hold on the typed word: vanish and close together
+   1.375–1.7125s, seat 1.7125s, mark flies 2.3125–2.7625s, ground rolls
+   2.35–2.7625s, veil hidden 2.95s, node removed on its own animationend). The page settles WHILE
    the mark is flying home. Change one, change the other — each side names the
    other in a comment.
 
@@ -349,7 +349,7 @@ textarea {
    return); the global kill-switch below is the floor under it. */
 @media (prefers-reduced-motion: no-preference) {
   html[data-intro] .masthead__row {
-    animation: settle-down 0.375s var(--ease-out) 1.9725s both;
+    animation: settle-down 0.375s var(--ease-out) 2.335s both;
   }
 
   html[data-intro] .stmt__title,
@@ -360,13 +360,13 @@ textarea {
      transform keyframe replaces the transform wholesale — settle-up would
      strip the stretch for the length of the animation and snap it back. */
   html[data-intro] .stmt__wordmark {
-    animation: settle-word 0.4125s var(--ease-out) 2.025s both;
+    animation: settle-word 0.4125s var(--ease-out) 2.3875s both;
   }
   html[data-intro] .stmt__title {
-    animation-delay: 2.1s;
+    animation-delay: 2.4625s;
   }
   html[data-intro] .work__plates {
-    animation-delay: 2.2875s;
+    animation-delay: 2.65s;
   }
 }
 

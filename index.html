@@ -54,18 +54,22 @@
          change with them — each side names the other.
 
          TIMELINE (base.css settle delays and App.vue's cleanup are keyed to
-         it — change one, change all): type 0.09+i*0.04875s (done ~0.68s),
-         hold, vanish AND JOIN together 1.0125-1.35s, fly 1.95-2.4s, ground
-         ROLLS UP 1.9875-2.4s, mark crossfades out 2.4-2.5875s, veil hidden
-         2.5875s. These are the ORIGINAL times x0.75 — the owner's 25%
-         speed-up of the whole sequence — after one structural change and only
-         one: the join no longer waits for the vanish to finish and runs
-         CONCURRENT with it (same start, same end), so the discs arrive at the
-         mark's final overlap at the very instant the collapsing letters bring
-         them together — they combine as they hit, one contraction, no second
-         gesture. (A retimed variant with an early join and a long rest was
-         built and rejected by the owner; this supersedes it.) The paint-order
-         handoff fires at the join's start, as ever. The node is removed by
+         it — change one, change all): type 0.09+i*0.04875s (done 0.675s),
+         HOLD 0.7s on the whole word (owner: a beat to read it), then vanish
+         AND close together 1.375-1.7125s, SEAT 1.7125s, fly 2.3125-2.7625s,
+         ground ROLLS UP 2.35-2.7625s, mark crossfades out 2.7625-2.95s, veil
+         hidden 2.95s. The tempo is still the original x0.75; the hold shifts
+         everything after the word by +0.3625s and every relative gap
+         survives.
+
+         THE DISCS NEVER INTERPENETRATE (owner: no separate rings once they
+         touch — just the final logo). The close brings the coins exactly to
+         TANGENCY, edge on edge, timed to end with the letters' collapse; at
+         that instant one steps() beat does everything at once: the d SEATS to
+         the mark's true overlap and the paint-order handoff fires, so the
+         very first overlapping frame IS the finished logo. The gradual
+         slide-through — two circles visibly passing through each other — no
+         longer exists at any frame. The node is removed by
          App.vue ON THE VEIL'S OWN animationend — never by the wall clock,
          which is a different clock and once cut this sequence short in
          production.
@@ -83,7 +87,7 @@
         pointer-events: none;
         /* No ground of its own any more — the ground is its own layer below,
            so rolling it up cannot clip the mark that is still flying over it. */
-        animation: veil-done 0.01s linear 2.5875s forwards;
+        animation: veil-done 0.01s linear 2.95s forwards;
         /* Where the mark lands = the hero brand mark, by shared formula:
            left/top: --hero-inset (+ the desktop masthead's 45px in-flow
            strip); height: 0.55em of --hero-display — the mark stands alone
@@ -120,7 +124,7 @@
         right: 0;
         height: 100%;
         background-color: #f5f2eb;
-        animation: v-roll 0.4125s cubic-bezier(0.22, 1, 0.36, 1) 1.9875s forwards;
+        animation: v-roll 0.4125s cubic-bezier(0.22, 1, 0.36, 1) 2.35s forwards;
       }
       @media (min-width: 900px) {
         /* 45px = the masthead's in-flow strip, measured. Paired with the
@@ -219,8 +223,8 @@
            p's own leading margin), so
            the untouched -50% translate centres it ON the target box. */
         animation:
-          v-fly 0.45s cubic-bezier(0.22, 1, 0.36, 1) 1.95s forwards,
-          v-word-out 0.1875s ease-out 2.4s forwards;
+          v-fly 0.45s cubic-bezier(0.22, 1, 0.36, 1) 2.3125s forwards,
+          v-word-out 0.1875s ease-out 2.7625s forwards;
       }
       /* A typed slot: fixed width so the contraction is animatable. */
       #veil .v-ch {
@@ -231,7 +235,7 @@
         overflow: hidden;
         animation:
           v-type 1ms steps(1, end) calc(0.09s + var(--i) * 0.04875s) forwards,
-          v-gone 0.3375s cubic-bezier(0.22, 1, 0.36, 1) 1.0125s forwards;
+          v-gone 0.3375s cubic-bezier(0.22, 1, 0.36, 1) 1.375s forwards;
       }
       /* The two logo letters: red disc, white letterform. The d is the p
          turned 180° — the mark's point symmetry. */
@@ -252,7 +256,8 @@
       #veil .v-d {
         animation:
           v-type 1ms steps(1, end) calc(0.12s + var(--i) * 0.065s) forwards,
-          v-join 0.3375s cubic-bezier(0.22, 1, 0.36, 1) 1.0125s forwards;
+          v-join 0.3375s cubic-bezier(0.22, 1, 0.36, 1) 1.375s forwards,
+          v-seat 1ms steps(1, end) 1.7125s forwards;
       }
       /* THE HAND-OFF, at the instant the join begins. The p's letter stops
          being drawn inside its own disc and is drawn by the overlay instead —
@@ -260,7 +265,7 @@
          PAINT ORDER, and only from here does it matter. Two steps() on one
          clock: no crossfade to mistime, no frame where both or neither shows. */
       #veil .v-ink {
-        animation: v-ink-off 1ms steps(1, end) 1.0125s forwards;
+        animation: v-ink-off 1ms steps(1, end) 1.7125s forwards;
       }
       #veil .v-mark {
         position: absolute;
@@ -274,7 +279,7 @@
         max-width: none;
         overflow: visible;
         opacity: 0;
-        animation: v-ink-in 1ms steps(1, end) 1.0125s forwards;
+        animation: v-ink-in 1ms steps(1, end) 1.7125s forwards;
       }
       @keyframes v-type {
         to { opacity: 1; }
@@ -282,11 +287,18 @@
       @keyframes v-gone {
         to { opacity: 0; width: 0; }
       }
+      /* Two stages with distinct jobs. v-join CLOSES the 0.12em of margins
+         between the coins — at its end the edges are exactly tangent, and it
+         is timed to finish with the letters' collapse, so the touch IS the
+         collision. v-seat then covers the artwork's remaining 0.6618em of
+         overlap (centres 365.58 units apart on discs 654.28 tall: the d's
+         left edge stands 0.8382em right of the p's, a pull of 1.5 − 0.8382,
+         plus the 0.06em gap the margin held) in ONE steps() frame — the
+         discs never render mid-overlap. */
       @keyframes v-join {
-        /* From the artwork's own circles: centres 365.58 units apart on discs
-           654.28 tall, so at 1.5em the d's disc left edge stands 0.8382em
-           right of the p's — a pull of 1.5 − 0.8382 = 0.6618em, plus the
-           0.06em gap the p's margin still holds between them. */
+        to { margin-left: -0.06em; }
+      }
+      @keyframes v-seat {
         to { margin-left: -0.7218em; }
       }
       @keyframes v-ink-in {
@@ -376,7 +388,7 @@
              row it paints after the d's disc, which is the whole trick: the
              sliding coin can then never cover the p's ink, so the crossing is
              correct on every frame of the join rather than being restored by
-             a fade at the end. It takes over from the p's own .v-ink at 1.85s
+             a fade at the end. It takes over from the p's own .v-ink at the seat
              — the same instant, the same place, so the swap is invisible —
              and it can be anchored at a fixed offset only because the seven
              slots before the p have finished collapsing by then. -->
