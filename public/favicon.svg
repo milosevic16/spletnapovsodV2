@@ -1,7 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <!-- The pd mark — the owner's vector artwork verbatim (see StatementSection
-       for the provenance note), scaled to 26 wide and centred on the paper. -->
-  <rect width="32" height="32" fill="#F5F2EB"/>
+       for the provenance note), scaled to 26 wide, on a TRANSPARENT ground
+       (owner: only the logo, no beige plate). The lettering inside the discs
+       stays paper-coloured — it is the mark's own ink, not a background. The
+       apple-touch icon deliberately keeps its opaque plate: iOS composites
+       black behind transparency. -->
   <g transform="translate(3 7.66) scale(0.025496) translate(-116.2 -287.19)">
     <circle cx="443.34" cy="614.33" r="327.14" fill="#B03B22" />
     <circle cx="808.92" cy="614.11" r="327.04" fill="#B03B22" />

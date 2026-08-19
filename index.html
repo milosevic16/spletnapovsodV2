@@ -178,12 +178,27 @@
          this reproduces that centring rather than guessing at it. Verified
          against the live target at 390 and 1265; paired with SiteMasthead.vue
          (.masthead__home / .masthead__homemark) — change there, change here. */
+      /* Two faces, two landings (owner's report: on a phone the mark parked
+         ~16px above the page's logo, which then "appeared below" it). Below
+         900px the subpage masthead is in its HERO face: the home mark stands
+         at left --hero-inset, its CENTRE on --hero-inset + 0.275 *
+         --hero-display, at the shared bar height (--masthead-mark, 1.7rem) —
+         so the ink top is that centre less 0.85rem. Desktop keeps the 45px
+         strip's centring. 1.7rem is a PAIRED literal with --masthead-mark in
+         SiteMasthead.vue (it is component-scoped and cannot be read here) —
+         change there, change here. */
       body:has(.masthead__home) #veil {
-        --land-left: calc(
-          max(0px, (100% - (var(--container) + 2 * var(--gutter))) / 2) + var(--gutter)
-        );
-        --land-top: calc((45px - 1.7rem) / 2);
+        --land-left: var(--hero-inset);
+        --land-top: calc(var(--hero-inset) + 0.275 * var(--hero-display) - 0.85rem);
         --land-h: 1.7rem;
+      }
+      @media (min-width: 900px) {
+        body:has(.masthead__home) #veil {
+          --land-left: calc(
+            max(0px, (100% - (var(--container) + 2 * var(--gutter))) / 2) + var(--gutter)
+          );
+          --land-top: calc((45px - 1.7rem) / 2);
+        }
       }
       /* The word: one flex row, everything in em so the fly can scale the
          whole assembly by animating font-size alone. Slightly above centre —
