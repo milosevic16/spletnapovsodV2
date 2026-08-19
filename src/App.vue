@@ -169,7 +169,11 @@ onUnmounted(() => {
   <a href="#main" class="skip-link">{{ ui.skipToContent }}</a>
   <RouterView />
   <!-- The grain: one noise layer above ALL content, both grounds (base.css
-       .grain). Static template node — no JS creates it, so the surface reads
-       the same with JS off; pure-CSS jitter, frozen under reduced motion. -->
-  <div class="grain" aria-hidden="true"></div>
+       .grain). Static template nodes — no JS creates them, so the surface
+       reads the same with JS off; pure-CSS jitter, frozen under reduced
+       motion. TWO nodes by measured necessity, one painted: the wrapper
+       carries the var()-keyframed opacity glitch (main-thread by Chromium
+       rule), the field carries the transform jitter alone so it composites —
+       see the grain contract in base.css. -->
+  <div class="grain" aria-hidden="true"><div class="grain__field"></div></div>
 </template>
