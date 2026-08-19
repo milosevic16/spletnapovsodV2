@@ -25,6 +25,23 @@
  * Re-running it is NOT a maintenance path — it would overwrite later hand
  * edits. Edit this file directly from here on.
  *
+ * WORKFLOW REWRITE (avgust 2026): the apartment offer runs on a completely
+ * different flow from the general terms — the owner mass-sends FREE design
+ * previews on his own initiative, then, per agreement, one round of revisions
+ * or none, then publishes on a demonstration address, and only after full
+ * payment binds the site to the client's real domain and hands over. Article 8
+ * carries this; 9.3, 11 and 13.2 were aligned to it, and article 2 gained the
+ * defined terms (Predogled, Predstavitveni naslov, Dejanska domena). The same
+ * pass fixed the cross-reference defects the audit found: 24.10 pointed at a
+ * točka 19.9 that does not exist, and several references to »8.2« and »7./8.4.
+ * členu« were left pointing at the wrong clause after the earlier renumbering.
+ *
+ * NOT A LEGAL SHIELD FOR THE OUTREACH. This document governs the Naročnik who
+ * ACCEPTS. It cannot make the cold mass-mailing itself lawful (ZEKom-2 consent
+ * for direct e-marketing), nor licence third-party listing photos used in a
+ * preview, nor supply the GDPR basis for processing a prospect's data. Those
+ * are the owner's decisions and a lawyer's review, flagged with the delivery.
+ *
  * DRAFT: needs owner sign-off and a lawyer's review.
  */
 import type { NavItem } from './home'
@@ -62,7 +79,7 @@ export const articles: Article[] = [
     n: "2",
     title: "Pomen izrazov",
     clauses: [
-      { n: "2.1", text: "V teh pogojih imajo izrazi naslednji pomen:", items: ["Storitev: načrtovanje, oblikovanje, programiranje, migracija, optimizacija, vzdrževanje, gostovanje in podobne digitalne storitve.", "Specifikacija: ponudba ali popis del, ki opredeljuje obseg, funkcionalnosti, roke in ceno.", "Gradivo Naročnika: besedila, slike, logotipi, videi, podatki, dostopi in vse drugo, kar Naročnik posreduje Izvajalcu.", "Rezultat dela: spletno mesto, koda, oblikovne datoteke in drugi dogovorjeni izdelki.", "Delovni dan: vsak dan razen sobot, nedelj in dela prostih dni v Republiki Sloveniji."] },
+      { n: "2.1", text: "V teh pogojih imajo izrazi naslednji pomen:", items: ["Storitev: načrtovanje, oblikovanje, programiranje, migracija, optimizacija, vzdrževanje, gostovanje in podobne digitalne storitve.", "Specifikacija: ponudba ali popis del, ki opredeljuje obseg, funkcionalnosti, roke in ceno.", "Gradivo Naročnika: besedila, slike, logotipi, videi, podatki, dostopi in vse drugo, kar Naročnik posreduje Izvajalcu.", "Rezultat dela: spletno mesto, koda, oblikovne datoteke in drugi dogovorjeni izdelki.", "Delovni dan: vsak dan razen sobot, nedelj in dela prostih dni v Republiki Sloveniji.", "Predogled: brezplačen oblikovni predlog spletne strani, ki ga Izvajalec pripravi in posreduje na lastno pobudo v okviru akcijske ponudbe.", "Predstavitveni naslov: začasni spletni naslov, na katerem je stran objavljena za pregled Naročnika pred vezavo na dejansko domeno.", "Dejanska domena: domena Naročnika, na katero se stran veže po plačilu."] },
     ],
   },
   {
@@ -117,6 +134,7 @@ export const articles: Article[] = [
     clauses: [
       { n: "7.1", text: "Naročnik zagotovi fotografije nastanitve in besedila. Naročnik jamči, da ima za vsa posredovana gradiva vse potrebne pravice, tudi kadar so fotografije nastale v okviru sodelovanja s platformo ali s tretjim fotografom." },
       { n: "7.2", text: "Če Naročnik gradiv ne zagotovi, Izvajalec spletno mesto objavi z dogovorjeno začasno vsebino, roki iz 11. člena teh pogojev pa začnejo teči šele ob prejemu popolnih gradiv." },
+      { n: "7.3", text: "Za oblikovni predogled sme Izvajalec uporabiti javno dostopne podatke o nastanitvi in lastna predstavitvena gradiva, izključno za prikaz videza strani. Pred objavo na dejanski domeni Naročnik zagotovi lastna gradiva po točki 7.1; gradiva, za katera Naročnik ne more zagotoviti potrebnih pravic, se pred objavo na dejanski domeni odstranijo ali nadomestijo." },
     ],
   },
   {
@@ -124,10 +142,13 @@ export const articles: Article[] = [
     n: "8",
     title: "Potek projekta",
     clauses: [
-      { n: "8.1", text: "Projekt praviloma poteka v treh fazah: oblikovni koncept, izvedba in vnos vsebin ter objava. Faze se lahko prekrivajo, kadar to zahteva dogovorjeni rok." },
-      { n: "8.2", text: "Vsaka faza se zaključi z odobritvijo Naročnika, ki jo je mogoče podati tudi po elektronski pošti. Odobrena faza se šteje za zaključeno; poznejši posegi vanjo se obravnavajo kot sprememba obsega po 7. členu." },
-      { n: "8.3", text: "V ceno je vključenih ⟨število⟩ krogov popravkov na oblikovni koncept. Dodatni krogi se obračunajo po veljavni urni postavki.", todo: true },
-      { n: "8.4", text: "Če Naročnik po predstavitvi predloga ne poda jasnih usmeritev, sme Izvajalec oblikovne odločitve sprejeti po lastni strokovni presoji." },
+      { n: "8.1", text: "Akcijska ponudba se začne z brezplačnim oblikovnim predogledom, ki ga Izvajalec pripravi in posreduje na lastno pobudo. Predogled je predstavitev in ne obvezujoča ponudba; s posredovanjem ali ogledom predogleda ne nastane pogodba in nobena stranka iz tega naslova ni zavezana." },
+      { n: "8.2", text: "Pogodba je sklenjena, ko Naročnik ponudbo potrdi na način iz točke 3.3. Šele s tem se začne delo, ki presega začetni predogled." },
+      { n: "8.3", text: "Glede na paket oziroma dogovor je Naročnik upravičen do enega kroga popravkov na oblikovni predogled ali do nobenega. Kaj je vključeno, je navedeno v ponudbi. Morebitni dodatni popravki se obračunajo po veljavni urni postavki." },
+      { n: "8.4", text: "Po potrditvi predogleda, s krogom popravkov ali brez njega, Izvajalec stran objavi na predstavitvenem naslovu, da jo Naročnik pregleda. Objava na predstavitvenem naslovu ne pomeni prenosa pravic; do celotnega plačila vse pravice na rezultatu dela ostanejo Izvajalcu po 16. členu." },
+      { n: "8.5", text: "Ko Naročnik potrdi končno podobo strani, poravna dogovorjeno ceno po 13. členu. Po prejemu celotnega plačila Izvajalec stran veže na dejansko domeno Naročnika ter mu preda dostope in dogovorjena gradiva po 16. členu. Strošek domene se obračuna po 15. členu." },
+      { n: "8.6", text: "Če Naročnik po predstavitvi predogleda ne poda jasnih usmeritev, sme Izvajalec oblikovne odločitve sprejeti po lastni strokovni presoji." },
+      { n: "8.7", text: "Spremembe, ki jih Naročnik zahteva po potrditvi končne podobe strani, se obravnavajo kot sprememba obsega po 10. členu." },
     ],
   },
   {
@@ -137,7 +158,7 @@ export const articles: Article[] = [
     clauses: [
       { n: "9.1", text: "Popravki so spremembe, kot so pozicija gumbov, zamenjava slik, barv ali pisave, in podobni posegi v obstoječo strukturo strani. Ne vključujejo novih funkcionalnosti ali celotne prenove grafične podobe." },
       { n: "9.2", text: "Če predlagana sprememba presega ta obseg, Izvajalec Naročnika o tem obvesti vnaprej in določi ceno glede na dodatno delo." },
-      { n: "9.3", text: "Obseg vključenih popravkov po posameznem paketu je ⟨določiti: koliko popravkov oziroma ur je vključenih in za kakšno obdobje⟩.", todo: true },
+      { n: "9.3", text: "Krogi popravkov na oblikovni predogled pred objavo so urejeni v 8. členu. Obseg morebitnih popravkov in vzdrževanja po objavi na dejanski domeni je določen v ponudbi za posamezni paket." },
     ],
   },
   {
@@ -155,10 +176,10 @@ export const articles: Article[] = [
     n: "11",
     title: "Roki",
     clauses: [
-      { n: "11.1", text: "Navedeni roki so okvirni, razen če so izrecno označeni kot fiksni ali če gre za storitvene roke iz točke 8.2." },
-      { n: "11.2", text: "Izvajalec navaja naslednje storitvene roke:", items: ["Objava spletne strani: trije delovni dnevi. Rok začne teči, ko sta izpolnjena oba pogoja: Naročnik je potrdil ponudbo in Izvajalcu izročil vsa dogovorjena gradiva v uporabni digitalni obliki.", "Manjši popravki: 24 ur v delovnem času, od prejema jasno opisane zahteve.", "Odziv na povpraševanje: en delovni dan."] },
-      { n: "11.3", text: "Izvajalec si pridržuje pravico, da rok iz točke 8.2 podaljša, če je obseg zahtevanih sprememb, popravkov ali želja Naročnika večji od obsega, na katerem navedeni rok temelji. Pravica velja tako za rok objave kot za rok za manjše popravke. Izvajalec Naročnika o podaljšanju in o novem roku obvesti brez nepotrebnega odlašanja, praviloma pred iztekom prvotnega roka." },
-      { n: "11.4", text: "Manjši popravki so spremembe, kot so pozicija gumbov, zamenjava slik, barv ali pisave, in podobni posegi v obstoječo strukturo strani. Ne vključujejo novih funkcionalnosti ali celotne prenove grafične podobe. Zahteve, ki presegajo ta obseg, se obravnavajo kot sprememba obsega po 7. členu in zanje roki iz točke 8.2 ne veljajo." },
+      { n: "11.1", text: "Navedeni roki so okvirni, razen če so izrecno označeni kot fiksni ali če gre za storitvene roke iz točke 11.2." },
+      { n: "11.2", text: "Izvajalec navaja naslednje storitvene roke:", items: ["Objava na predstavitvenem naslovu: praviloma v treh delovnih dneh po potrditvi predogleda in po prejemu vseh dogovorjenih gradiv v uporabni digitalni obliki.", "Vezava na dejansko domeno: v dveh delovnih dneh po prejemu celotnega plačila.", "Manjši popravki: 24 ur v delovnem času, od prejema jasno opisane zahteve in gradiv.", "Odziv na povpraševanje: en delovni dan."] },
+      { n: "11.3", text: "Izvajalec si pridržuje pravico, da rok iz točke 11.2 podaljša, če je obseg zahtevanih sprememb, popravkov ali želja Naročnika večji od obsega, na katerem navedeni rok temelji. Pravica velja za vse roke iz točke 11.2. Izvajalec Naročnika o podaljšanju in o novem roku obvesti brez nepotrebnega odlašanja, praviloma pred iztekom prvotnega roka." },
+      { n: "11.4", text: "Manjši popravki so spremembe, kot so pozicija gumbov, zamenjava slik, barv ali pisave, in podobni posegi v obstoječo strukturo strani. Ne vključujejo novih funkcionalnosti ali celotne prenove grafične podobe. Zahteve, ki presegajo ta obseg, se obravnavajo kot sprememba obsega po 10. členu in zanje roki iz točke 11.2 ne veljajo." },
       { n: "11.5", text: "Rok se podaljša za čas zamude Naročnika pri gradivih, odobritvah ali plačilih, in za čas trajanja višje sile." },
       { n: "11.6", text: "Zamuda Naročnika ne odloži dogovorjenih plačilnih rokov." },
     ],
@@ -179,9 +200,9 @@ export const articles: Article[] = [
     title: "Cene in plačilni pogoji",
     clauses: [
       { n: "13.1", text: "Cena je določena v ponudbi kot pavšal ali po urni postavki ⟨znesek⟩ EUR na uro, obračunani v enotah po 30 minut.", todo: true },
-      { n: "13.2", text: "Plačilna dinamika je določena v ponudbi, praviloma ⟨delitev, npr. 50 % avans ob potrditvi in 50 % pred objavo⟩.", todo: true },
+      { n: "13.2", text: "Storitev se plača v celoti, ko Naročnik potrdi končno podobo strani; avans praviloma ni potreben. Po prejemu celotnega plačila Izvajalec stran veže na dejansko domeno in preda dostope po 16. členu." },
       { n: "13.3", text: "Plačilni rok je 14 dni od izdaje računa, razen če je v ponudbi določeno drugače." },
-      { n: "13.4", text: "Ob zamudi tečejo zakonske zamudne obresti, Izvajalec pa lahko po pisnem opominu zadrži nadaljnje delo, storitve ali objavo do poravnave. Naročnik krije razumne stroške izterjave." },
+      { n: "13.4", text: "Ob zamudi tečejo zakonske zamudne obresti, Izvajalec pa lahko po pisnem opominu zadrži nadaljnje delo, storitve, vezavo na dejansko domeno ali predajo dostopov do poravnave. Naročnik krije razumne stroške izterjave." },
       { n: "13.5", text: "Ponavljajoče se storitve se obračunavajo vnaprej in se samodejno podaljšujejo, če niso odpovedane vsaj 30 dni pred iztekom obdobja. Naročnika Izvajalec na podaljšanje pisno opozori pred iztekom odpovednega roka." },
       { n: "13.6", text: "Izvajalec sme cene ponavljajočih se storitev prilagoditi enkrat letno z najmanj 60-dnevnim predhodnim obvestilom; Naročnik ima v tem primeru pravico do odpovedi brez stroškov." },
       { n: "13.7", text: "Pobot z nasprotnimi terjatvami je dopusten le, če so te nesporne ali pravnomočno ugotovljene." },
@@ -238,7 +259,7 @@ export const articles: Article[] = [
     title: "Jamstvo za napake",
     clauses: [
       { n: "17.1", text: "Izvajalec jamči, da bo rezultat dela ob prevzemu vsebinsko ustrezal potrjeni specifikaciji." },
-      { n: "17.2", text: "Jamstveni rok je ⟨število⟩ mesecev od prevzema. V tem obdobju Izvajalec brezplačno odpravi napake, ki so posledica njegovega dela. Brezplačna odprava napak ni isto kot plačljivi popravki in spremembe po 8.4.", todo: true },
+      { n: "17.2", text: "Jamstveni rok je ⟨število⟩ mesecev od prevzema. V tem obdobju Izvajalec brezplačno odpravi napake, ki so posledica njegovega dela. Brezplačna odprava napak ni isto kot plačljivi popravki in spremembe po točki 11.4.", todo: true },
       { n: "17.3", text: "Jamstvo ne velja za posege Naročnika ali tretjih v kodo ali sistem, spremembe pri zunanjih ponudnikih in vmesnikih, opustitev priporočenih varnostnih posodobitev, napake gostovanja, ki ga Izvajalec ne upravlja, ter za vsebine, ki jih vnaša Naročnik." },
       { n: "17.4", text: "Združljivost je zagotovljena za zadnji dve različici razširjenih brskalnikov v času prevzema. Odstopanja zaradi posameznih nastavitev naprav, vtičnikov ali operacijskih sistemov niso napaka." },
       { n: "17.5", text: "Izvajalec jamči za tehnično zasnovo, ki jo izvede sam: vnaprej izrisan HTML, strukturirane podatke, dostopnost vsebine iskalnikom in jezikovnim modelom brez izvajanja skript ter skladnost s Core Web Vitals po stanju ob izročitvi." },
@@ -327,7 +348,7 @@ export const articles: Article[] = [
       { n: "24.7", text: "Izvajalec skladno z Zakonom o izvensodnem reševanju potrošniških sporov ne priznava nobenega izvajalca izvensodnega reševanja potrošniških sporov kot pristojnega za reševanje potrošniškega spora iz teh pogojev." },
       { n: "24.8", text: "Potrošnik ima pri pogodbi, sklenjeni na daljavo, pravico, da v štirinajstih dneh od sklenitve pogodbe odstopi od nje brez navedbe razloga." },
       { n: "24.9", text: "Če potrošnik izrecno zahteva, da Izvajalec z izvedbo začne pred iztekom odstopnega roka, in izrecno potrdi, da je s tem seznanjen, pravica do odstopa preneha, ko je storitev v celoti opravljena. Če potrošnik odstopi po tem, ko se je izvedba na njegovo zahtevo že začela, Izvajalcu plača sorazmerni del že opravljenega dela." },
-      { n: "24.10", text: "Če potrošnik izjave iz točke 19.9 ne poda, Izvajalec z izvedbo počaka do izteka odstopnega roka. Storitveni rok iz točke 8.2 v tem primeru začne teči z iztekom odstopnega roka." },
+      { n: "24.10", text: "Če potrošnik izjave iz točke 24.9 ne poda, Izvajalec z izvedbo počaka do izteka odstopnega roka. Storitveni roki iz točke 11.2 v tem primeru začnejo teči z iztekom odstopnega roka." },
     ],
   },
 ]
