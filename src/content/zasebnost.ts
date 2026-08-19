@@ -18,6 +18,25 @@
  *   - The supervisory-authority block is the verified public contact of the
  *     Informacijski pooblaščenec.
  *
+ * THE OUTREACH DATASET (clause »trzenje«) is the Art. 14 notice for prospect
+ * data we did NOT collect from the person. It is load-bearing rather than
+ * informational: Art. 14(5)(b) excuses notifying ~1,500 operators individually
+ * only ON CONDITION that the same information is made publicly available, so
+ * this published clause IS the exemption. Deleting it does not simplify the
+ * page, it removes the legal basis for not writing to every one of them.
+ *   - The RETENTION (12 months) and the SUPPRESSION-LIST practice it describes
+ *     are commitments the owner must actually keep, not copy.
+ *   - Sources: RNO is named because every contact detail comes from it. The
+ *     enrichment portals are described by category rather than by brand, which
+ *     Art. 14(2)(f) permits and which avoids publishing a scraping inventory.
+ *     Name them if the owner prefers maximal transparency.
+ *   - The legitimate-interest balancing test (LIA) the clause says we hold MUST
+ *     exist as a written document before this ships.
+ *   - Instantly's DPA and transfer mechanism are NOT yet read. The »Komu
+ *     podatke posredujemo« clause claims SCCs for non-EEA processors on the
+ *     strength of the Web3Forms DPA; verify Instantly the same way, or the
+ *     claim over-reaches.
+ *
  * House copy rules hold: no em dashes in visible copy, no rhetorical-question
  * hook, no exclamation marks. DRAFT: needs owner + legal sign-off before launch.
  */
@@ -44,13 +63,13 @@ export interface Processor {
 export const meta = {
   title: 'Politika zasebnosti in podatki o ponudniku',
   description:
-    'Kako spletno mesto spletnapovsod.si ravna z osebnimi podatki iz kontaktnega obrazca: nameni, pravna podlaga, obdelovalci, hramba in vaše pravice.',
+    'Kako spletnapovsod.si ravna z osebnimi podatki iz kontaktnega obrazca in iz zbirke za neposredno trženje: nameni, pravna podlaga, hramba in vaše pravice.',
 }
 
 export const hero = {
   kicker: 'Varstvo podatkov',
   title: 'Politika zasebnosti',
-  lead: 'To spletno mesto zbira osebne podatke le prek kontaktnega obrazca. Spodaj je opisano, katere podatke obdelamo, s kakšnim namenom, kako dolgo jih hranimo in katere pravice imate.',
+  lead: 'To spletno mesto zbira osebne podatke prek kontaktnega obrazca, ločeno pa vodimo zbirko javno objavljenih kontaktnih podatkov nastanitvenih obratov za predstavitev svojih storitev. Spodaj je opisano, katere podatke obdelamo, s kakšnim namenom, kako dolgo jih hranimo in katere pravice imate.',
 }
 
 /** The provider / controller identity, rendered as a small register block in
@@ -87,6 +106,18 @@ export const clauses: Clause[] = [
     ],
   },
   {
+    id: 'trzenje',
+    cite: 'Splošna uredba, členi 6, 14 in 21',
+    title: 'Podatki o nastanitvenih obratih za neposredno trženje',
+    body: [
+      'Poleg podatkov iz kontaktnega obrazca vodimo zbirko kontaktnih podatkov nastanitvenih obratov v Sloveniji in jo uporabljamo za predstavitev svojih storitev izdelave spletnih strani. Ta razdelek je informacija o obdelavi po 14. členu Splošne uredbe za primere, ko podatkov nismo pridobili neposredno od vas.',
+      'Obdelujemo naziv obrata, naslov, kategorijo in zmogljivost, kontaktne podatke, torej e-naslov, telefon in spletni naslov, ter podatke o javno objavljeni ponudbi obrata. Kontaktne podatke pridobimo izključno iz Registra nastanitvenih obratov, ki ga vodi AJPES in je javno dostopen. Podatke o ponudbi dopolnimo iz javno objavljenih oglasov na rezervacijskih in nepremičninskih portalih ter iz razkritij o trgovcih, ki jih ti portali objavljajo na podlagi Uredbe (EU) 2022/2065.',
+      'Pravna podlaga je zakoniti interes po točki (f) prvega odstavka 6. člena Splošne uredbe. Naš interes je predstavitev lastnih storitev obratom, ki jih te storitve lahko zadevajo. Obdelujemo le poslovne kontaktne podatke, ki so že javno objavljeni, zato ocenjujemo, da obdelava ne posega nesorazmerno v vaše pravice. Oceno tega tehtanja hranimo in jo na zahtevo predložimo nadzornemu organu.',
+      'Podatke hranimo dvanajst mesecev od zadnjega stika, nato jih izbrišemo ali osvežimo iz javnega registra. Če iz stika nastane poslovno razmerje, veljajo roki hrambe iz tega razmerja.',
+      'Obdelavi za namen neposrednega trženja lahko kadar koli ugovarjate, brez utemeljitve in brez stroškov. Ugovor sporočite na navedeni e-naslov, po prejemu pa vaše podatke za ta namen nemudoma prenehamo obdelovati. Vaš e-naslov v tem primeru ohranimo samo na internem seznamu izključitev, in sicer zato, da vas ob naslednjem uvozu iz javnega registra ne bi znova kontaktirali.',
+    ],
+  },
+  {
     id: 'deljenje',
     cite: 'Splošna uredba, členi 13, 28 in 46',
     title: 'Komu podatke posredujemo',
@@ -115,10 +146,11 @@ export const clauses: Clause[] = [
   },
   {
     id: 'pravice',
-    cite: 'Splošna uredba, členi 15 do 20',
+    cite: 'Splošna uredba, členi 15 do 21',
     title: 'Vaše pravice',
     body: [
       'V zvezi s svojimi osebnimi podatki imate pravico do dostopa, popravka, izbrisa, omejitve obdelave in prenosljivosti podatkov. Zahtevo pošljite na navedeni e-naslov, odgovorimo pa najpozneje v enem mesecu od prejema.',
+      'Kadar podatke obdelujemo na podlagi zakonitega interesa, lahko obdelavi ugovarjate. Če gre za neposredno trženje, je ta pravica brezpogojna, obdelavo za ta namen pa ustavimo takoj po prejemu ugovora.',
       'Če menite, da z obdelavo kršimo predpise, se lahko pritožite pri nadzornem organu za varstvo osebnih podatkov.',
     ],
   },
@@ -149,6 +181,23 @@ export const processorGroups: { label: string; items: Processor[] }[] = [
         name: 'Web3Forms (Web3Creative)',
         purpose: 'Sprejem in dostava oddanih obrazcev',
         where: 'EU in ZDA',
+      },
+    ],
+  },
+  {
+    label: 'Obdelovalci pri neposrednem trženju',
+    items: [
+      {
+        name: 'Google Workspace',
+        purpose: 'Poštni predali in pošiljanje sporočil',
+        where: 'EU in ZDA',
+        flag: true,
+      },
+      {
+        name: 'Instantly',
+        purpose: 'Vodenje seznama prejemnikov in zaporedja sporočil',
+        where: 'ZDA',
+        flag: true,
       },
     ],
   },
@@ -215,6 +264,7 @@ export const updated = {
 export const nav: NavItem[] = [
   { target: 'podatki', label: 'Podatki' },
   { target: 'obdelava', label: 'Obdelava' },
+  { target: 'trzenje', label: 'Trženje' },
   { target: 'piskotki', label: 'Piškotki' },
 ]
 
