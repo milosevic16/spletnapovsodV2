@@ -83,17 +83,18 @@ export const examples = {
    * THE DEMO IS LABELLED AS A DEMO, in visible copy — the honesty rule the
    * whole site runs on. The three cards are renders of real template packs
    * (SpehKing/register_nastanitev: atelier, veduta, mariven-stay) driven with
-   * a FICTIONAL apartment: invented name, invented copy and reviews, abstract
-   * generated plates instead of photographs. Nothing on them belongs to a real
-   * operator — the generator's own output is built from scraped content of
-   * real owners and must never appear here. Provenance + refresh ritual:
-   * scripts/build-primeri-images.mjs.
+   * a FICTIONAL apartment: invented name, invented copy and reviews. The
+   * photographs are CC0 (public-domain) images from Openverse — provenance
+   * ships at /primeri/photos/PROVENANCE.json — because nothing here may come
+   * from a real operator: the generator's own output is built from scraped
+   * content of real owners and must never appear on this site. Refresh
+   * ritual: scripts/build-primeri-images.mjs.
    *
    * Display names (Atelje / Veduta / Rezidenca) are OUR labels for the layouts,
    * not the packs' internal codenames — needs owner sign-off like all copy.
    */
   demoNote:
-    'Prikazani primeri so demonstracija: apartma, besedila in slike na njih so izmišljeni.',
+    'Prikazani primeri so demonstracija: apartma, besedila in mnenja so izmišljeni, fotografije so simbolične.',
   items: [
     {
       id: 'primer-atelier',

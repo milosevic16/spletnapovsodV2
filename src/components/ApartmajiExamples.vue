@@ -4,11 +4,12 @@
  *
  * THE CARDS ARE A LABELLED DEMO. Each is a real render of a template pack
  * (SpehKing/register_nastanitev: atelier, veduta, mariven-stay) driven with a
- * fictional apartment — invented name, copy and reviews, abstract generated
- * plates instead of photographs — because the generator's own output is built
- * from scraped content of real operators, which must never appear here. The
- * visible demoNote says exactly that; provenance and the refresh ritual live
- * in scripts/build-primeri-images.mjs.
+ * fictional apartment — invented name, copy and reviews; the photographs are
+ * CC0 public-domain images (Openverse, provenance shipped at
+ * /primeri/photos/PROVENANCE.json) — because the generator's own output is
+ * built from scraped content of real operators, which must never appear
+ * here. The visible demoNote says exactly that; the refresh ritual lives in
+ * scripts/build-primeri-images.mjs.
  *
  * EVERY CARD IS A REAL LINK to its shipped demo page (/primeri/<pack>/ —
  * noindex, out of the sitemap by construction since postbuild scans top-level
@@ -30,9 +31,10 @@
  * body.
  *
  * Overlay nodes are injected on demand and styled inline (scoped CSS cannot
- * reach body-appended nodes); they sit at z-index 8000, BELOW the grain at
- * 9000, because the noise layer lies over everything by design — the preview
- * is content, and content lives under the grain. Every wait is capped: a
+ * reach body-appended nodes); they sit at z-index 9500, ABOVE the grain at
+ * 9000 — an owner call that overrides the grain-over-everything doctrine for
+ * this one surface: the preview shows ANOTHER site, not our sheet, so our
+ * paper texture must not play over it. Every wait is capped: a
  * renderer that never fires animation finish or iframe load still ends in the
  * settled state (the same settle-with-timeout discipline the rest of the
  * effects follow). Everything routes through fx and dies on unmount; the
@@ -137,7 +139,7 @@ function openPreview(e: MouseEvent, ex: AptExample) {
   root.setAttribute('role', 'dialog')
   root.setAttribute('aria-modal', 'true')
   root.setAttribute('aria-label', `${examples.feedback.previewTitle}: ${ex.name}`)
-  root.style.cssText = 'position:fixed;inset:0;z-index:8000;'
+  root.style.cssText = 'position:fixed;inset:0;z-index:9500;'
 
   const backdrop = document.createElement('div')
   backdrop.style.cssText = 'position:absolute;inset:0;background:var(--list);'

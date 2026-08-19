@@ -8,11 +8,12 @@
  * PROVENANCE, which is the whole point of these images: the captures are
  * renders of template packs from SpehKing/register_nastanitev (atelier,
  * veduta, mariven-stay) driven with a FICTIONAL apartment — invented name
- * (»Apartma Lipa«), invented copy and reviews, and abstract generated plates
- * instead of photographs. Nothing in them belongs to a real operator; that is
- * deliberate, because every page the generator's own pipeline produces is
- * built from scraped Airbnb/Booking content of real owners, which must never
- * appear on this site. The templates emit English UI today; the demo HTML was
+ * (»Apartma Lipa«), invented copy and reviews. The photographs inside the
+ * renders are CC0 (public-domain) images from Openverse; the id-by-id list
+ * ships with the pages at public/primeri/photos/PROVENANCE.json. Nothing in
+ * them belongs to a real operator; that is deliberate, because every page
+ * the generator's own pipeline produces is built from scraped Airbnb/Booking
+ * content of real owners, which must never appear on this site. The templates emit English UI today; the demo HTML was
  * post-translated to Slovenian to show what a delivered site looks like.
  * Driver + capture scripts: session scratchpad (render-demo.py,
  * capture-demo.mjs), one-shot by design.
