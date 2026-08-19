@@ -2,7 +2,6 @@
 import { nav, footer } from '@/content/home'
 import type { NavItem } from '@/content/home'
 import { CONTACT_EMAIL } from '@/lib/constants'
-import PrerezLine from './PrerezLine.vue'
 
 /**
  * Same contract as the masthead, and it matters more here: on a phone the
@@ -18,11 +17,6 @@ const year = new Date().getFullYear()
 <template>
   <footer class="footer press">
     <div class="container">
-      <!-- Colophon contract: every annotation here must stay mechanically
-           verifiable against the shipped artifact (SSG output, no analytics,
-           no tracking cookies). If that ever changes, change the content FIRST. -->
-      <PrerezLine on-dark :annotation="footer.colophon.annotation" :gloss="footer.colophon.gloss" />
-
       <div class="footer__cols">
         <div class="footer__brand">
           <span class="footer__wordmark">SpletnaPovsod</span>

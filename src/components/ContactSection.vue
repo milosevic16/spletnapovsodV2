@@ -620,16 +620,32 @@ onUnmounted(() => fx.dispose())
   text-transform: none;
 }
 
+/* THE ONE FIELD THAT IS A BOX. Every other field is a rule, because a rule is
+   enough to say »type here« for one line. The free-text field is the only one
+   whose EXTENT matters (how much may I write?), and a bottom rule alone leaves
+   its height invisible — so it is drawn closed. Deliberately not applied to the
+   other fields: if every field were boxed, the block would stop reading as a
+   ruled title block and start reading as a stack of inputs. */
 .form__textarea {
   line-height: 1.55;
   resize: vertical;
   min-height: 8rem;
+  border: 2px solid var(--color-input-line);
+  padding: var(--space-3);
 }
 
 .form__input:focus,
 .form__input:not(:placeholder-shown) {
   border-bottom-color: var(--list);
   outline: none;
+}
+
+/* The boxed field inks its WHOLE frame on the same state the rules ink on, or
+   the box would stay dim while every rule beside it went bright. Declared after
+   the rule above so it wins at equal specificity. */
+.form__textarea:focus,
+.form__textarea:not(:placeholder-shown) {
+  border-color: var(--list);
 }
 
 /* Keyboard focus still has to be unmistakable — the inked rule alone is the
@@ -947,7 +963,12 @@ onUnmounted(() => fx.dispose())
 /* --- phones -------------------------------------------------------------------- */
 @media (max-width: 899.98px) {
   .form {
-    /* The heavy edge stays; the block simply takes the measure it has. */
+    /* NO FRAME ON A PHONE (owner's call). The title block's top and right rules
+       are the motif at desk width; on a phone they read as a stray white line
+       hugging the screen edge rather than as a drawn frame, so the block keeps
+       its ruled cells and drops the frame. */
+    border-top: 0;
+    border-right: 0;
     padding-right: var(--space-5);
   }
 

@@ -41,6 +41,9 @@ const props = withDefaults(
     /** Subpages only: a persistent home link (logo + »Domov« button). Undefined
      *  on the home page, so its chrome is byte-for-byte unchanged. */
     home?: { href: string; label: string }
+    /** Spread the stops across the strip instead of grouping them centred.
+     *  For a short row (the home page's three), where centring reads crowded. */
+    spread?: boolean
   }>(),
   { items: () => nav, cta: () => hero.ctaPrimary },
 )
@@ -168,6 +171,7 @@ onUnmounted(() => {
       'masthead--stowed': stowed,
       'masthead--snap': snap,
       'masthead--sub': !!props.home,
+      'masthead--spread': props.spread,
     }"
   >
     <div class="container masthead__row">
@@ -254,7 +258,7 @@ onUnmounted(() => {
           <a
             v-for="(item, i) in props.items"
             :key="item.target"
-            :href="`#${item.target}`"
+            :href="item.href ?? `#${item.target}`"
             class="masthead__link"
             :style="{ '--i': i }"
             @click="close"
@@ -321,6 +325,31 @@ onUnmounted(() => {
   justify-content: center;
   flex-wrap: wrap;
   column-gap: clamp(1rem, 4vw, 3rem);
+}
+
+/* SPREAD: a short row distributed across the strip rather than grouped in the
+   middle. The panel takes the full width and its two children (the nav and the
+   CTA) push apart; the nav's own stops push apart inside it, so all three land
+   evenly. The side margin keeps them off the strip's edges. Desktop only —
+   phones keep the stacked menu, which has its own layout entirely. */
+@media (min-width: 900px) {
+  .masthead--spread .masthead__panel {
+    width: 100%;
+    justify-content: space-between;
+    padding-inline: var(--space-10);
+    column-gap: var(--space-10);
+  }
+
+  /* The nav box itself is dissolved so its stops become siblings of the CTA on
+     the panel's flex line — otherwise the nav counts as ONE item and the CTA as
+     another, which put 611px between the first two stops and 80px before the
+     third (measured). With the box gone the three distribute equally.
+     `display: contents` keeps the <nav> element and its aria-label in the tree
+     while removing only its box; current Chrome, Firefox and Safari preserve
+     the landmark. */
+  .masthead--spread .masthead__nav {
+    display: contents;
+  }
 }
 
 /* Both exist only once hydrated, and only on a phone. */
@@ -568,44 +597,77 @@ onUnmounted(() => {
     padding-right: var(--brand-reserve);
     color: var(--grafit);
     opacity: 0;
-    /* THE CLOSE IS A DESIGNED SHRINK, NOT A FONT TWEEN. The brand scales down
-       as one unit — mark and lettering together, toward the line it stands
-       on — while it fades. The owner cut the old font-size tween because it
-       reflowed the lettering while the mark's height flipped on its own
-       schedule, splitting the logo into two sizes mid-close; a transform
-       cannot do that (one node, one scale, compositor-composed), which is what
-       makes the shrink safe to reintroduce as a deliberate gesture. The
-       font-size and font-stretch flips stay DELAYED (0s past the fade) for
-       exactly that reason: the underlying size still never animates, only the
-       transform does.
+    /* THE CLOSE SPLITS BY FACE, and this rule is the HERO face's half (owner's
+       call, third revision). At the top of the home page the hero sheet's own
+       stamp stands exactly beneath the menu's mark — same artwork, same box —
+       so the MARK must not move at all on close: any motion on it plays
+       against its identical twin and reads as a glitch. The mark holds (its
+       height flip is delayed past the fade, see .masthead__brandmark) and only
+       the LETTERING carries the designed shrink, which lives on
+       .masthead__brandtext now rather than on this parent. The font-size and
+       font-stretch flips stay DELAYED (0s past the fade): the underlying size
+       never animates in this face.
 
-       This list is the CLOSING list — state changes run under the list of the
-       state being entered, and entering any resting face means leaving --open.
-       The 320ms delay is the fade's 300ms plus a beat; the scale's 300ms rides
-       the fade exactly. Change one, change all. */
-    transform: scale(0.85);
-    transform-origin: left center;
+       This list is the CLOSING list for the HERO face — state changes run
+       under the list of the state being entered. The pinned face carries its
+       OWN list with real tweens (see the pinned brand rule): there the whole
+       logo shrinks smoothly to the bar's size, because no twin stands beneath
+       it and the hold-then-snap this list produces there read as a three-frame
+       stutter. The 320ms delay is the fade's 300ms plus a beat; change one,
+       change all. */
     transition:
       opacity 300ms var(--ease-out),
-      transform 300ms var(--ease-out),
       font-size 0s 320ms,
       font-stretch 0s 320ms;
   }
 
+  /* THE DESIGNED SHRINK LIVES ON THE LETTERING. This is the resting (hero
+     face) state: scale 0.85 composed with the optical scaleY the text always
+     carries. Closing the menu at the top of the page, the name shrinks toward
+     its own line start while the brand fades — and the MARK, a sibling,
+     stays perfectly still over the hero's identical stamp. Opening mirrors
+     it: the open rule below stands the text at full scale, so the name grows
+     in as it fades in. One knob: the 0.85. */
   .masthead__brandtext {
     white-space: nowrap;
-    transform: scaleY(var(--hero-wordmark-scaley));
+    transform: scale(0.85) scaleY(var(--hero-wordmark-scaley));
     transform-origin: left center;
+    transition: transform 300ms var(--ease-out);
+  }
+
+  .masthead--live.masthead--open .masthead__brandtext {
+    transform: scaleY(var(--hero-wordmark-scaley));
   }
 
   /* Shut and pinned, it is the small bar mark. */
+  /* THE PINNED FACE'S CLOSING LIST IS REAL TWEENS (owner's report: the
+     hold-then-snap of the delayed flips read as a three-frame stutter when
+     closing the menu from the bar). Entering this face, font-size,
+     font-stretch and letter-spacing all animate over the fade's own 300ms, so
+     the logo shrinks continuously from the open size to the bar's — and the
+     mark rides along, because its height tween is scoped to this same face
+     below. The delayed-flip pattern survives only in the hero face, where the
+     brand fades to nothing and the mark must hold against its twin. */
   .masthead--live.masthead--pinned:not(.masthead--open) .masthead__brand {
     --hero-wordmark-scaley: 1;
     font-size: 1.05rem;
     font-stretch: var(--wdth-monument);
     letter-spacing: -0.02em;
     opacity: 1;
-    /* A visible resting face never sits at the closing shrink's 0.85. */
+    transition:
+      opacity 300ms var(--ease-out),
+      font-size 300ms var(--ease-out),
+      font-stretch 300ms var(--ease-out),
+      letter-spacing 300ms var(--ease-out);
+  }
+
+  .masthead--live.masthead--pinned:not(.masthead--open) .masthead__brandmark {
+    transition: height 300ms var(--ease-out);
+  }
+
+  /* The lettering stands untransformed in the bar — the base rule's resting
+     shrink belongs to the hero face, where the lettering is invisible. */
+  .masthead--live.masthead--pinned:not(.masthead--open) .masthead__brandtext {
     transform: none;
   }
 
@@ -633,19 +695,12 @@ onUnmounted(() => {
      slack. */
   .masthead--live.masthead--open .masthead__brand {
     opacity: 1;
-    /* Standing size in the open face; the close animates back to the base
-       rule's 0.85. */
-    transform: none;
-    /* The OPENING list: no size entries at all, so entering the open face sets
-       the size in one step at t=0 — invisible where the brand is fading in
-       from nothing, and the price of the no-size-animation rule where it is
-       already standing (the pinned bar's small mark becomes the big one in a
-       snap as the sheet unfolds over it). The transform DOES ride both lists:
-       the open grows the logo 0.85 → 1 as it fades in, the mirror of the
-       close's shrink. Paired with the closing list on the base rule above. */
-    transition:
-      opacity 300ms var(--ease-out),
-      transform 300ms var(--ease-out);
+    /* The OPENING list: no size entries at all, so entering the open face
+       sets the size in one step at t=0 — invisible where the brand is fading
+       in from nothing, and a snap where it already stands (the pinned bar's
+       small mark becomes the big one as the sheet unfolds over it). The
+       lettering's own grow-in rides .masthead__brandtext, not this parent. */
+    transition: opacity 300ms var(--ease-out);
     font-size: min(
       var(--hero-wordmark),
       calc(
@@ -658,12 +713,14 @@ onUnmounted(() => {
     height: 0.78em;
     width: auto;
     flex: 0 0 auto;
-    /* The mark's height flips between an em size and the fixed hero size by
-       rule, not by tween — height is not animatable here and never was. The
-       delayed flip keeps it standing at the open size for exactly as long as
-       the lettering holds its own (the brand's closing list above): without
-       it the mark snapped small at t=0 while the words held, and the logo
-       visibly broke into two sizes mid-fade. Same 320ms pairing. */
+    /* HERO face: the mark's height flip is DELAYED past the fade, so it
+       stands dead still over the hero sheet's identical stamp while the brand
+       fades out — the owner's "no animation for the logo" at the top of the
+       page. Without the delay it snapped small at t=0 while the words held,
+       splitting the logo into two sizes mid-fade. The PINNED face overrides
+       this with a real 300ms height tween (scoped rule above), where the
+       whole logo shrinks to the bar size together. Same 320ms pairing as the
+       brand's closing list. */
     transition: height 0s 320ms;
   }
 
