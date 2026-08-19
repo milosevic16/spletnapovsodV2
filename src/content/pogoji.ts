@@ -14,16 +14,11 @@
  * us: one base document, one module, one stated precedence, no duplicated
  * clause that can drift.
  *
- * PLACEHOLDERS. Clauses carrying ⟨…⟩ are owner decisions not yet made; each is
- * flagged `todo: true` and the page marks it »dopolniti« beside the clause, so
- * a reviewer finds them in one pass. Three remain: 10.1 (urna postavka), 11.7
- * (navedba avtorstva) and 11.8 (izvorne datoteke). Money, VAT status and licence
- * scope are never invented.
- *
- * The document-wide OSNUTEK banner was REMOVED on the owner’s call (avgust
- * 2026). The per-clause flags are what is left, so nothing on the page now says
- * the document as a whole is unfinished — worth knowing before it is published
- * while any ⟨…⟩ remains.
+ * NO PLACEHOLDERS REMAIN: the owner's docx pass (avgust 2026, »Splošni pogoji
+ * (1).docx«) resolved the last three (10.1 pavšal, 11.7 navedba avtorstva,
+ * 11.8 izvorne datoteke). The Clause.todo field stays — the apartment module
+ * still uses it. The document-wide OSNUTEK banner was removed earlier on the
+ * owner's call.
  *
  * DRAFT: needs owner sign-off and a lawyer's review before it governs anything.
  */
@@ -92,7 +87,7 @@ export const articles: Article[] = [
       },
       {
         n: '1.3',
-        text: 'Za posamezne storitve lahko Izvajalec objavi samostojne posebne pogoje. Kadar za neko naročilo veljajo taki posebni pogoji, ti splošni pogoji za tisto naročilo ne veljajo. To velja zlasti za naročila, sklenjena na podlagi akcijske ponudbe za apartmajske storitve, za katera veljajo posebni pogoji za apartmaje. V ponudbi je vedno navedeno, kateri pogoji veljajo.',
+        text: 'Za posamezne storitve lahko Izvajalec objavi samostojne posebne pogoje. Kadar za neko naročilo veljajo taki posebni pogoji, ti splošni pogoji za tisto naročilo ne veljajo. To velja zlasti za naročila, sklenjena na podlagi akcijske ponudbe za apartmajske storitve, za katera veljajo posebni pogoji za apartmaje.',
       },
       {
         n: '1.4',
@@ -154,6 +149,21 @@ export const articles: Article[] = [
         n: '4.4',
         text: 'Izvajalec ni dolžan zagotavljati panožnega ali pravnega svetovanja. Njegova priporočila niso pravno mnenje; za vprašanja skladnosti mora Naročnik pridobiti ustrezen nasvet.',
       },
+      // 4.5–4.7 moved here from 15.6–15.8 on the owner's docx instruction:
+      // they draw the same boundary as 4.4 (what the Izvajalec's work is NOT),
+      // so they belong with the scope of services, not with data protection.
+      {
+        n: '4.5',
+        text: 'Za vsebinsko pravno skladnost spletnega mesta odgovarja Naročnik. To vključuje zlasti vsebino politike zasebnosti, splošnih pogojev, obvestil o piškotkih in drugih pravnih besedil, pravno podlago za obdelavo osebnih podatkov, skladnost dejavnosti Naročnika s predpisi ter resničnost objavljenih navedb.',
+      },
+      {
+        n: '4.6',
+        text: 'Če Izvajalec Naročniku posreduje vzorec, predlogo ali predlog pravnega besedila, je to zgolj tehnični pripomoček in ne pravno mnenje. Izvajalec ne odgovarja za njegovo pravno ustreznost, popolnost, ažurnost ali skladnost z dejavnostjo Naročnika. Naročnik mora vsako tako besedilo pred objavo preveriti sam oziroma pri ustreznem strokovnjaku in ga prilagoditi svoji dejavnosti.',
+      },
+      {
+        n: '4.7',
+        text: 'Izvajalec ne odgovarja za pravne posledice objave besedil, ki jih je Naročnik prevzel po vzorcu Izvajalca in jih ni preveril.',
+      },
     ],
   },
   {
@@ -182,13 +192,22 @@ export const articles: Article[] = [
     n: '6',
     title: 'Potek projekta',
     clauses: [
+      // Article 6 rewritten per the owner's docx instruction (avgust 2026): the
+      // project runs by phases — free concept, 40% advance before content work,
+      // two included rounds, remainder at final-look confirmation, then domain
+      // binding and handover. 10.2, 8.2 and 11.8 were aligned to this flow in
+      // the same pass; see the commit message for the audit.
       {
         n: '6.1',
-        text: 'Projekt praviloma poteka v treh fazah: oblikovni koncept, izvedba in vnos vsebin ter objava. Faze se lahko prekrivajo, kadar to zahteva dogovorjeni rok.',
+        text: 'Projekt poteka po naslednjih fazah: oblikovni koncept, izvedba vsebinskih želja, vključena kroga popravkov, plačilo preostanka ter vezava domene in predaja. Faze se lahko prekrivajo, kadar to zahteva dogovorjeni rok.',
       },
       {
         n: '6.2',
-        text: 'Vsaka faza se zaključi z odobritvijo Naročnika, ki jo je mogoče podati tudi po elektronski pošti. Odobrena faza se šteje za zaključeno; poznejši posegi vanjo se obravnavajo kot sprememba obsega po 7. členu.',
+        text: 'Oblikovni koncept Izvajalec pripravi in posreduje brezplačno, razen če je vnaprej dogovorjeno drugače. Brezplačni oblikovni koncept Naročnika ne zavezuje.',
+      },
+      {
+        n: '6.3',
+        text: 'Po prejemu vsebinskih želja Naročnika in po plačilu avansa iz točke 10.2 Izvajalec začne z izvedbo: oblikovni koncept dopolni z vsebino in uredi vsebinske želje Naročnika.',
       },
       {
         // OWNER TO DO: »krog popravkov« still needs a precise definition here —
@@ -196,14 +215,26 @@ export const articles: Article[] = [
         // comments inside one round, what turns a request into a change of scope
         // under article 7). The apartment module defines it loosely as up to
         // five pages of proposed corrections; this document defines nothing yet,
-        // and two rounds are now PROMISED, so the definition is load-bearing.
+        // and two rounds are PROMISED, so the definition is load-bearing.
         // Deliberately a code comment, not a visible flag: authoring reminders
         // never ship in renderable content.
-        n: '6.3',
-        text: 'V ceno sta vključena dva kroga popravkov na oblikovni koncept. Dodatni krogi se obračunajo po veljavni urni postavki.',
+        n: '6.4',
+        text: 'V ceno sta vključena dva kroga popravkov na oblikovni koncept. Popravki se praviloma uredijo že v prvem krogu; drugi je na voljo, kadar je potreben. Dodatni krogi se obračunajo po veljavni urni postavki.',
       },
       {
-        n: '6.4',
+        n: '6.5',
+        text: 'Ko Naročnik potrdi končno podobo strani, poravna preostanek plačila po točki 10.2, vključno s stroškom registracije domene, ki mu ga sporoči Izvajalec, razen kadar Naročnik v skladu z dogovorom registracijo domene uredi sam.',
+      },
+      {
+        n: '6.6',
+        text: 'Po prejemu celotnega plačila Izvajalec veže domeno na spletno mesto ter Naročniku preda dostopne podatke in, na njegovo željo, izvorne datoteke in kodo v skladu s točko 11.8.',
+      },
+      {
+        n: '6.7',
+        text: 'Vsaka faza se zaključi z odobritvijo Naročnika, ki jo je mogoče podati tudi po elektronski pošti. Odobrena faza se šteje za zaključeno; poznejši posegi vanjo se obravnavajo kot sprememba obsega po 7. členu.',
+      },
+      {
+        n: '6.8',
         text: 'Če Naročnik po predstavitvi predloga ne poda jasnih usmeritev, sme Izvajalec oblikovne odločitve sprejeti po lastni strokovni presoji.',
       },
     ],
@@ -234,8 +265,8 @@ export const articles: Article[] = [
         n: '8.2',
         text: 'Izvajalec navaja naslednje storitvene roke:',
         items: [
-          'Objava spletne strani: trije delovni dnevi. Rok začne teči po dogovorjeni končni podobi, torej po zadnjem naročenem krogu popravkov, in ob pogoju, da je Naročnik potrdil ponudbo ter izročil vsa dogovorjena gradiva v uporabni digitalni obliki. Rok velja za manjše in srednje projekte brez podatkovnih baz.',
-          'Manjši popravki: 24 ur v delovnem času, od prejema jasno opisane zahteve.',
+          'Objava spletne strani: trije delovni dnevi. Rok začne teči po dogovorjeni končni podobi, torej po zadnjem naročenem krogu popravkov, in ob pogoju, da je Naročnik potrdil ponudbo, izročil vsa dogovorjena gradiva v uporabni digitalni obliki in poravnal preostanek plačila po točki 10.2. Rok velja za manjše in srednje projekte brez podatkovnih baz.',
+          'Manjši popravki: 24 ur v delovnem času, od prejema jasno opisane zahteve in prejetih gradiv.',
           'Odziv na povpraševanje: en delovni dan.',
         ],
       },
@@ -245,7 +276,7 @@ export const articles: Article[] = [
       },
       {
         n: '8.4',
-        text: 'Manjši popravki so spremembe, kot so pozicija gumbov, zamenjava slik, barv ali pisave, in podobni posegi v obstoječo strukturo strani. Ne vključujejo novih funkcionalnosti ali celotne prenove grafične podobe. Zahteve, ki presegajo ta obseg, se obravnavajo kot sprememba obsega po 7. členu in zanje roki iz točke 8.2 ne veljajo.',
+        text: 'Manjši popravki so spremembe, kot so pozicija gumbov, zamenjava slik, barv ali pisave, in podobni posegi v obstoječo strukturo strani. Ne vključujejo novih funkcionalnosti ali celotne prenove grafične podobe. Zahteve, ki presegajo ta obseg, se obravnavajo kot sprememba obsega po 7. členu in se obračunajo kot samostojen krog popravkov. Zanje roki iz točke 8.2 ne veljajo.',
       },
       {
         n: '8.5',
@@ -280,12 +311,11 @@ export const articles: Article[] = [
     clauses: [
       {
         n: '10.1',
-        text: 'Cena je določena v ponudbi kot pavšal ali po urni postavki ⟨znesek⟩ EUR na uro, obračunani v enotah po 30 minut.',
-        todo: true,
+        text: 'Cena je določena v ponudbi kot pavšal, individualno glede na obseg projekta. Cena je Naročniku znana vnaprej.',
       },
       {
         n: '10.2',
-        text: 'Plačilna dinamika je določena v ponudbi, praviloma pa je naslednja: prvi predlog spletne strani je brezplačen in Naročnika ne zavezuje; pred začetkom krogov popravkov Naročnik plača avans v višini 50 odstotkov dogovorjene cene; preostanek zapade v plačilo po objavi spletne strani na domeni Naročnika.',
+        text: 'Plačilna dinamika je določena v ponudbi, praviloma pa je naslednja: oblikovni koncept je brezplačen in Naročnika ne zavezuje; pred začetkom izvedbe vsebinskih želja Naročnik plača avans v višini 40 odstotkov dogovorjene cene; preostanek zapade v plačilo, ko Naročnik po zaključenih krogih popravkov potrdi končno podobo strani. Vezava domene in predaja se opravita po prejemu celotnega plačila.',
       },
       { n: '10.3', text: 'Plačilni rok je 14 dni od izdaje računa, razen če je v ponudbi določeno drugače.' },
       {
@@ -343,13 +373,11 @@ export const articles: Article[] = [
       },
       {
         n: '11.7',
-        text: 'Navedba avtorstva v nogi spletnega mesta je ⟨dogovorjena ali neobvezna⟩. Če je dogovorjena, njena odstranitev pomeni kršitev pogodbe.',
-        todo: true,
+        text: 'Navedba avtorstva v nogi spletnega mesta je dogovorjena in je njena odstranitev kršitev pogodbe. Pred sklenitvijo pogodbe se je na željo Naročnika mogoče odplačno dogovoriti, da se navedba avtorstva opusti.',
       },
       {
         n: '11.8',
-        text: 'Izvorne datoteke in izvorna koda se predajo ⟨v katerem primeru in pod katerimi pogoji⟩.',
-        todo: true,
+        text: 'Po celotnem plačilu se izvorne datoteke in izvorna koda na željo Naročnika predajo Naročniku.',
       },
     ],
   },
@@ -487,18 +515,6 @@ export const articles: Article[] = [
         n: '15.5',
         text: 'Izvajalec zagotavlja tehnično izvedbo: vgradnjo mehanizmov za privolitve, tehnično pravilno umestitev pravnih besedil na spletno mesto, varen prenos podatkov iz obrazcev in druge tehnične ukrepe, dogovorjene v specifikaciji.',
       },
-      {
-        n: '15.6',
-        text: 'Za vsebinsko pravno skladnost odgovarja Naročnik. To vključuje zlasti vsebino politike zasebnosti, splošnih pogojev, obvestil o piškotkih in drugih pravnih besedil, pravno podlago za obdelavo osebnih podatkov, skladnost dejavnosti Naročnika s predpisi ter resničnost objavljenih navedb.',
-      },
-      {
-        n: '15.7',
-        text: 'Če Izvajalec Naročniku posreduje vzorec, predlogo ali predlog pravnega besedila, je to zgolj tehnični pripomoček in ne pravno mnenje. Izvajalec ne odgovarja za njegovo pravno ustreznost, popolnost, ažurnost ali skladnost z dejavnostjo Naročnika. Naročnik mora vsako tako besedilo pred objavo preveriti sam oziroma pri ustreznem strokovnjaku in ga prilagoditi svoji dejavnosti.',
-      },
-      {
-        n: '15.8',
-        text: 'Izvajalec ne odgovarja za pravne posledice objave besedil, ki jih je Naročnik prevzel po vzorcu Izvajalca in jih ni preveril.',
-      },
     ],
   },
   {
@@ -545,8 +561,13 @@ export const articles: Article[] = [
         text: 'Projektna pogodba preneha z izpolnitvijo. Naročniška razmerja se sklepajo za obdobje 12 mesecev s samodejnim podaljševanjem in odpovednim rokom 30 dni pred iztekom.',
       },
       {
+        // Softened on the owner's docx instruction (avgust 2026): pay what was
+        // actually performed — no 50% floor, no forfeited advance. The advance
+        // counts toward the settlement and any surplus is returned, so the same
+        // fair rule holds for everyone and the consumer carve-out collapses
+        // into the general one; 19.8–19.10 still govern consumer withdrawal.
         n: '18.2',
-        text: 'Ob odstopu Naročnika med izvedbo se plača celotno do tedaj opravljeno delo in nastali stroški; avans se ne vrača. Pri pavšalnih projektih je Naročnik dolžan plačati najmanj 50 odstotkov celotne pogodbene vrednosti. Ta odstavek se ne uporablja za Naročnike, ki so potrošniki; ti plačajo opravljeno delo in dokazane stroške.',
+        text: 'Ob odstopu Naročnika med izvedbo Naročnik plača do tedaj opravljeno delo in dejansko nastale stroške. Že plačani avans se všteje v to plačilo; če avans presega vrednost do tedaj opravljenega dela in stroškov, Izvajalec razliko vrne. Ta točka ne posega v pravice potrošnikov iz točk 19.8 do 19.10.',
       },
       {
         n: '18.3',
