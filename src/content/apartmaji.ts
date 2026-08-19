@@ -65,19 +65,53 @@ export const hero = {
   ctaTarget: 'kontakt',
 }
 
+export interface AptExample {
+  /** Machine id — the image basename: /img/primeri/<id>-<width>.<ext>. */
+  id: string
+  name: string
+  gloss: string
+  alt: string
+}
+
 export const examples = {
   kicker: 'Primeri',
   title: 'Kako lahko izgleda vaša stran',
   body: 'Pripravili smo nekaj primerov oblike in postavitve. Služijo le kot izhodišče, vi pa določite končno podobo.',
   /**
-   * Honest empty state. The example template pages ("iz Gašprovega repota") do
-   * not exist as assets yet, and fabricated preview cards are not an option on
-   * this project. When the screenshots arrive they drop into
-   * ApartmajiExamples.vue's grid (build them through
-   * scripts/build-reference-images.mjs for the same AVIF/WebP/JPEG variants and
-   * versioned filenames as the portfolio).
+   * THE DEMO IS LABELLED AS A DEMO, in visible copy — the honesty rule the
+   * whole site runs on. The three cards are renders of real template packs
+   * (SpehKing/register_nastanitev: atelier, veduta, mariven-stay) driven with
+   * a FICTIONAL apartment: invented name, invented copy and reviews, abstract
+   * generated plates instead of photographs. Nothing on them belongs to a real
+   * operator — the generator's own output is built from scraped content of
+   * real owners and must never appear here. Provenance + refresh ritual:
+   * scripts/build-primeri-images.mjs.
+   *
+   * Display names (Atelje / Veduta / Rezidenca) are OUR labels for the layouts,
+   * not the packs' internal codenames — needs owner sign-off like all copy.
    */
-  pending: 'Primeri so v pripravi. Do takrat povejte, kaj vam je všeč, in pripravimo osnutek.',
+  demoNote:
+    'Prikazani primeri so demonstracija: apartma, besedila in slike na njih so izmišljeni.',
+  items: [
+    {
+      id: 'primer-atelier',
+      name: 'Atelje',
+      gloss: 'Deljena postavitev: podatki o apartmaju ob strani, vsebina teče mimo njih.',
+      alt: 'Primer strani z deljeno postavitvijo: levo ime apartmaja s podatki, desno opis in galerija.',
+    },
+    {
+      id: 'primer-veduta',
+      name: 'Veduta',
+      gloss: 'Fotografija čez ves zaslon, pod njo pas s ključnimi podatki.',
+      alt: 'Primer strani s celozaslonsko fotografijo, imenom apartmaja in pasom s podatki.',
+    },
+    {
+      id: 'primer-mariven',
+      name: 'Rezidenca',
+      gloss: 'Umirjena serifna tipografija, ime apartmaja na sredini fotografije.',
+      alt: 'Primer strani z imenom apartmaja na sredini celozaslonske fotografije.',
+    },
+  ] satisfies AptExample[],
 }
 
 export const packages = {
