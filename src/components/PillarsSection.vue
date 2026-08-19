@@ -283,7 +283,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section id="paketi" ref="host" class="pil" :class="{ 'pil--live': live }" @keydown="onSectionKeys">
+  <section id="paketi" ref="host" class="pil grain" :class="{ 'pil--live': live }" @keydown="onSectionKeys">
     <div class="container">
       <header class="pil__head">
         <p class="pil__kicker">{{ pillars.kicker }}</p>
@@ -493,7 +493,9 @@ onUnmounted(() => {
 
 <style scoped>
 .pil {
-  background: var(--list-2);
+  /* background-COLOR, not the shorthand: the shorthand resets background-image
+     and would silently erase the .grain texture this section now carries. */
+  background-color: var(--list-2);
   padding-block: var(--section-block);
 }
 

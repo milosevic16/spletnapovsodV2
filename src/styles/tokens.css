@@ -317,8 +317,16 @@
   --card-width: 300px;
 
   /* -------------------------------------------------------------------------
-     TEXTURE — one noise layer over EVERYTHING (grain above content, like the
-     reference's fixed 400×225 video at opacity 0.1). Layer: base.css .grain.
+     TEXTURE — one static frame of noise, carried by SECTIONS, not by the
+     page. The overlay era (a fixed layer over everything, then an animated
+     one) ended on the owner's call: no clocks, one frame, and only the bands
+     WITHOUT the press screen carry it — the press already gives those bands
+     their stock, and two textures on one ground read as dirt. Utility:
+     base.css .grain, applied per section root; the hero lays it OVER its film
+     as a sibling instead (a background layer would hide beneath the video).
+     The 0.1 strength that was the overlay's opacity is BAKED into the tile
+     (the <g opacity> wrapper below), because background-image has no per-layer
+     opacity and the strength must survive as one source of truth.
 
      The tile is speckle PLUS the reference's vertical striping. Frame analysis
      of the design package's recording (idle dark-ground patches) found the
@@ -336,8 +344,7 @@
      vs 2.9, same autocorrelation shape — structure and loudness preserved,
      only the grain size moved. Lines you feel, not lines you read.
      ---------------------------------------------------------------------- */
-  --noise-opacity: 0.1;
-  --noise-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9 0.3' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Cfilter id='l'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.17 0.005' numOctaves='1' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='2' intercept='-0.5'/%3E%3CfeFuncG type='linear' slope='2' intercept='-0.5'/%3E%3CfeFuncB type='linear' slope='2' intercept='-0.5'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3Crect width='100%25' height='100%25' filter='url(%23l)' opacity='0.38'/%3E%3C/svg%3E");
+  --noise-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9 0.3' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Cfilter id='l'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.17 0.005' numOctaves='1' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='2' intercept='-0.5'/%3E%3CfeFuncG type='linear' slope='2' intercept='-0.5'/%3E%3CfeFuncB type='linear' slope='2' intercept='-0.5'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Cg opacity='0.1'%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3Crect width='100%25' height='100%25' filter='url(%23l)' opacity='0.38'/%3E%3C/g%3E%3C/svg%3E");
 
   /* -------------------------------------------------------------------------
      MOTION — durations/eases the reference actually runs (motion.md).

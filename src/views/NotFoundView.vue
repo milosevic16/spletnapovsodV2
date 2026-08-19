@@ -14,7 +14,7 @@ useHead({
 </script>
 
 <template>
-  <main id="main" class="nf">
+  <main id="main" class="nf grain">
     <h1>{{ notFound.heading }}</h1>
     <p>{{ notFound.body }}</p>
     <p><a href="/" class="nf__home">{{ notFound.homeLabel }}</a></p>

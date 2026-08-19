@@ -119,6 +119,10 @@ onUnmounted(() => {
       <source :src="clip('webm')" type="video/webm" />
       <source :src="clip('mp4')" type="video/mp4" />
     </video>
+    <!-- The static, laid OVER the film — the NastanitveHero screen pattern: a
+         texture that must sit on imagery cannot be a background layer under
+         it. One frame, no clocks; the sheet (z-index 1) stays above it. -->
+    <div class="stmt__snow grain" aria-hidden="true"></div>
     <!-- The sheet. data-brand-sentinel is a contract with SiteMasthead: the
          phone bar appears exactly when this element leaves the screen, so the
          brand is never absent from the page. -->
@@ -221,6 +225,13 @@ onUnmounted(() => {
 /* --- the sheet --------------------------------------------------------------
    The frame is inset by exactly --hero-inset, which is what puts its top-left
    corner where the veil lands the mark. */
+.stmt__snow {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
 .stmt__sheet {
   position: relative;
   /* Above the film and its tint. */

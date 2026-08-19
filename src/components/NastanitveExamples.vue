@@ -54,10 +54,10 @@
  * body.
  *
  * Overlay nodes are injected on demand and styled inline (scoped CSS cannot
- * reach body-appended nodes); they sit at z-index 9500, ABOVE the grain at
- * 9000 — an owner call that overrides the grain-over-everything doctrine for
- * this one surface: the preview shows ANOTHER site, not our sheet, so our
- * paper texture must not play over it. Every wait is capped: a renderer that
+ * reach body-appended nodes); they sit at z-index 9500. (That number dates
+ * from the fixed grain overlay at 9000, which is gone — the grain is a
+ * per-section ground now — but the headroom is harmless and body-appended
+ * overlays still need to clear every in-page stacking context.) Every wait is capped: a renderer that
  * never fires animation finish or iframe load still ends in the settled state
  * (the same settle-with-timeout discipline the rest of the effects follow).
  * Everything routes through fx and dies on unmount; the SPA click interceptor
@@ -449,7 +449,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section id="primeri" class="apte">
+  <section id="primeri" class="apte grain">
     <div class="container">
       <p class="kicker apte__kicker">{{ examples.kicker }}</p>
       <h2 class="apte__title">{{ examples.title }}</h2>
