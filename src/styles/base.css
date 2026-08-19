@@ -303,8 +303,11 @@ textarea {
    video at opacity 0.1 ABOVE all content; that single fact (grain over the
    photographs too, not behind them) is what welds imagery and surface into
    one material. Stand-in: an feTurbulence tile (--noise-tile, tokens.css)
-   jittered by a discrete transform loop — compositor-only, ~3.6 jumps/s,
-   matching the measured temporal cadence (|Δ| ≈ 1.1 luma / 280ms).
+   jittered by a discrete transform loop — compositor-only, ~12 jumps/s.
+   (The first build matched the recording's bursty ~3.6 jumps/s cadence; the
+   owner asked for real-TV consistency instead — denser, steadier, finer — so
+   the cadence is now uniform-irregular and the reference recording is no
+   longer the cadence's source of truth.)
 
    THE PERFORMANCE CONTRACT, paid for once: ONE element, and only `transform`
    and `opacity` are ever animated — both compositor properties, so the layer
@@ -347,36 +350,209 @@ textarea {
     grain-glitch 23s steps(1, end) infinite;
 }
 
-/* Discrete positions on an UNEVEN clock — steps(1, end) holds each keyframe's
-   value until the next, so the texture JUMPS (TV static), never slides. The
-   cadence is the recording's: bursts of ~155ms kicks separated by near-still
-   spells of ~700ms (measured |Δ| series runs of 4–7 between long stretches
-   of ~0.1). A metronome reads as strobing; this reads as static. */
+/* Dense positions on an IRREGULAR clock — steps(1, end) holds each value
+   until the next, so the texture JUMPS (TV static), never slides. ~12 jumps/s,
+   holds 55–112ms (median 81), every jump ≥60px manhattan from the last so each
+   frame fully decorrelates — the owner's "more consistent, move more". The
+   irregular holds are what keep it from reading as a strobe; the old build's
+   long still spells (~700ms, from the reference recording) are gone. All
+   offsets stay within ±110px, inside the element's ±120px oversize, so
+   coverage never breaks (the performance contract above). Generated
+   deterministically (scratchpad gen-jitter.mjs, seed 47) — regenerate rather
+   than hand-edit. The 100% keyframe is translate(0,0): with steps(1,end) it is
+   never DISPLAYED in the loop (the previous hold runs to the wrap), but it IS
+   the reduced-motion rest state the kill-switch freezes onto, so it must stay
+   the untransformed origin. */
 @keyframes grain-jitter {
   0% {
     transform: translate(0, 0);
   }
-  4% {
-    transform: translate(-34px, 18px);
+  1.18% {
+    transform: translate(-103px, 29px);
   }
-  8% {
-    transform: translate(23px, -40px);
+  2.34% {
+    transform: translate(105px, -92px);
   }
-  /* still spell */
-  41% {
-    transform: translate(-38px, -26px);
+  4.36% {
+    transform: translate(72px, -37px);
   }
-  45% {
-    transform: translate(30px, 33px);
+  5.45% {
+    transform: translate(-47px, -38px);
   }
-  /* still spell */
-  74% {
-    transform: translate(41px, -12px);
+  7.53% {
+    transform: translate(109px, 70px);
   }
-  78% {
-    transform: translate(-27px, 28px);
+  9.60% {
+    transform: translate(-56px, -94px);
   }
-  /* still spell */
+  11.21% {
+    transform: translate(96px, -28px);
+  }
+  12.55% {
+    transform: translate(-25px, 46px);
+  }
+  14.02% {
+    transform: translate(-47px, -76px);
+  }
+  15.89% {
+    transform: translate(-97px, -36px);
+  }
+  16.93% {
+    transform: translate(-30px, 43px);
+  }
+  18.40% {
+    transform: translate(-90px, 69px);
+  }
+  19.94% {
+    transform: translate(100px, 98px);
+  }
+  21.81% {
+    transform: translate(37px, -55px);
+  }
+  23.35% {
+    transform: translate(-63px, -54px);
+  }
+  24.41% {
+    transform: translate(-110px, -85px);
+  }
+  25.65% {
+    transform: translate(-66px, 74px);
+  }
+  27.45% {
+    transform: translate(-36px, -100px);
+  }
+  29.00% {
+    transform: translate(-98px, -25px);
+  }
+  31.07% {
+    transform: translate(33px, 50px);
+  }
+  32.76% {
+    transform: translate(-25px, -68px);
+  }
+  34.66% {
+    transform: translate(73px, 102px);
+  }
+  36.02% {
+    transform: translate(94px, -54px);
+  }
+  37.43% {
+    transform: translate(-38px, 86px);
+  }
+  39.35% {
+    transform: translate(-30px, -76px);
+  }
+  40.88% {
+    transform: translate(39px, 53px);
+  }
+  42.65% {
+    transform: translate(32px, -73px);
+  }
+  44.13% {
+    transform: translate(107px, 107px);
+  }
+  45.78% {
+    transform: translate(99px, -102px);
+  }
+  47.71% {
+    transform: translate(-89px, -58px);
+  }
+  48.88% {
+    transform: translate(-38px, -37px);
+  }
+  49.91% {
+    transform: translate(63px, -34px);
+  }
+  51.52% {
+    transform: translate(-41px, -80px);
+  }
+  52.85% {
+    transform: translate(109px, -28px);
+  }
+  54.87% {
+    transform: translate(-45px, 35px);
+  }
+  56.98% {
+    transform: translate(-68px, 104px);
+  }
+  58.24% {
+    transform: translate(90px, -48px);
+  }
+  60.14% {
+    transform: translate(99px, -110px);
+  }
+  61.65% {
+    transform: translate(-41px, -26px);
+  }
+  63.53% {
+    transform: translate(-82px, 30px);
+  }
+  64.63% {
+    transform: translate(53px, 92px);
+  }
+  65.74% {
+    transform: translate(-82px, 92px);
+  }
+  67.26% {
+    transform: translate(-91px, -89px);
+  }
+  68.41% {
+    transform: translate(31px, -56px);
+  }
+  70.16% {
+    transform: translate(101px, 41px);
+  }
+  72.07% {
+    transform: translate(73px, 103px);
+  }
+  73.83% {
+    transform: translate(28px, -107px);
+  }
+  75.03% {
+    transform: translate(86px, -74px);
+  }
+  76.55% {
+    transform: translate(-24px, 39px);
+  }
+  78.35% {
+    transform: translate(-97px, -36px);
+  }
+  80.06% {
+    transform: translate(-49px, -107px);
+  }
+  82.15% {
+    transform: translate(106px, -52px);
+  }
+  83.63% {
+    transform: translate(-74px, 61px);
+  }
+  85.40% {
+    transform: translate(59px, -100px);
+  }
+  86.89% {
+    transform: translate(-54px, 33px);
+  }
+  88.23% {
+    transform: translate(34px, 85px);
+  }
+  89.87% {
+    transform: translate(83px, 101px);
+  }
+  90.92% {
+    transform: translate(-88px, 69px);
+  }
+  92.56% {
+    transform: translate(-76px, -72px);
+  }
+  94.22% {
+    transform: translate(85px, 37px);
+  }
+  95.68% {
+    transform: translate(-89px, 101px);
+  }
+  97.19% {
+    transform: translate(-102px, -39px);
+  }
   100% {
     transform: translate(0, 0);
   }

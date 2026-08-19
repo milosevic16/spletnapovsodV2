@@ -328,13 +328,16 @@
 
      INTENSITY IS DELIBERATELY *NOT* THE RECORDING'S. Matching the reference's
      raw composite numbers (tile std ~59) was built once and rejected on sight
-     as too loud. This tile holds the APPROVED intensity — measured std 14.5
-     against the previous tile's 14.9 — and spends the whole change on
-     structure instead: column-band std 0.99 → 5.45, anisotropy ratio 1.4 →
-     3.1, period minimum at lag 5. Lines you feel, not lines you read.
+     as too loud. The tile holds the APPROVED intensity; the speckle was later
+     made FINER on the owner's call (real-TV grain: smaller particles, same
+     loudness) — baseFrequency 0.5 0.17 → 0.9 0.3, particle size ×0.55 both
+     axes. Re-measured through one pipeline against the coarse tile it
+     replaced: std 11.3 vs 10.9, column-band std 2.71 vs 2.70, anisotropy 3.0
+     vs 2.9, same autocorrelation shape — structure and loudness preserved,
+     only the grain size moved. Lines you feel, not lines you read.
      ---------------------------------------------------------------------- */
   --noise-opacity: 0.1;
-  --noise-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.5 0.17' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Cfilter id='l'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.17 0.005' numOctaves='1' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='2' intercept='-0.5'/%3E%3CfeFuncG type='linear' slope='2' intercept='-0.5'/%3E%3CfeFuncB type='linear' slope='2' intercept='-0.5'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3Crect width='100%25' height='100%25' filter='url(%23l)' opacity='0.38'/%3E%3C/svg%3E");
+  --noise-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9 0.3' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Cfilter id='l'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.17 0.005' numOctaves='1' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='2' intercept='-0.5'/%3E%3CfeFuncG type='linear' slope='2' intercept='-0.5'/%3E%3CfeFuncB type='linear' slope='2' intercept='-0.5'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3Crect width='100%25' height='100%25' filter='url(%23l)' opacity='0.38'/%3E%3C/svg%3E");
 
   /* -------------------------------------------------------------------------
      MOTION — durations/eases the reference actually runs (motion.md).
