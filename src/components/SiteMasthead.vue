@@ -2,7 +2,10 @@
 /**
  * The masthead: four section buttons plus the call to action.
  *
- * DESKTOP (≥900px) — all five centred on a narrow strip, as they are.
+ * DESKTOP (≥900px) — all five centred on a narrow strip. The strip scrolls
+ * away with the page and RETURNS ON THE WAY UP, driven by the same pinned +
+ * stowed state the phone bar uses, so there is one behaviour and one state
+ * machine at both widths (see the desktop block at the foot of the styles).
  *
  * PHONE — the strip carries a single »Meni« chip, and opening it TRANSFORMS
  * the strip into the menu rather than dropping a separate panel over it: the
@@ -53,9 +56,10 @@ const live = ref(false)
 const open = ref(false)
 /** Whether the chip is the nav's only face — drives `inert`, so it must be real. */
 const phone = ref(false)
-/** Phones only: the bar has gathered itself out of the hero and taken the top. */
+/** The bar has gathered itself out of the hero and taken the top. Both widths:
+ *  the phone bar goes absolute -> fixed, the desktop strip relative -> sticky. */
 const pinned = ref(false)
-/** Phones only: pulled off the top while the reader is travelling down. */
+/** Pulled off the top while the reader is travelling down. Both widths. */
 const stowed = ref(false)
 /** One-beat latch that turns the masthead's own transitions off while `pinned`
  *  flips — see setPinned. */
@@ -1049,6 +1053,42 @@ onUnmounted(() => {
   /* The last row keeps no rule: the panel's own border closes the sheet. */
   .masthead--live .masthead__panel .masthead__cta::after {
     content: none;
+  }
+}
+
+/* --- desktop: the strip returns on the way up --------------------------------
+   The same state machine as the phone bar, with ONE difference that matters:
+   the flip is relative -> STICKY, never -> fixed. Sticky keeps the element's
+   flow box exactly where it was, so crossing the pinned line moves nothing
+   below it. Going fixed here would have pulled a 45px strip out of the flow
+   and jumped the entire page up by its height at the moment of the flip.
+
+   Entries start stowed (setPinned), so crossing the line DOWNWARD shows
+   nothing; only a genuine upward turn brings the strip back. Unpinning returns
+   it to its flow position, which by then is at the top of the page anyway. */
+@media (min-width: 900px) {
+  .masthead--live.masthead--pinned {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    /* The base rule's two transitions restated: this declaration replaces it
+       wholesale, and dropping them would make the ground and the seam snap. */
+    transition:
+      background-color 220ms var(--ease-out),
+      border-bottom-color 220ms var(--ease-out),
+      transform 320ms var(--ease-out);
+  }
+
+  .masthead--live.masthead--pinned.masthead--stowed:not(.masthead--open) {
+    transform: translateY(-100%);
+  }
+
+  /* The same snap the phone flip needs, for the same reason: a transition
+     running across the coordinate-space jump IS the flash. Desktop's jump is
+     smaller (the flow box stays) but the transform still tweens across it. */
+  .masthead.masthead--live.masthead--snap,
+  .masthead.masthead--live.masthead--snap * {
+    transition: none;
   }
 }
 </style>
