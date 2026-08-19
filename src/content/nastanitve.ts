@@ -134,13 +134,6 @@ export const packages = {
   title: 'Trije paketi',
   ctaLabel: 'Naročite spletno stran',
   ctaTarget: 'kontakt',
-  /**
-   * Interaction-only: names the house selector, which exists only once the
-   * section hydrates. Skipped by the content guard, like the form's strings.
-   */
-  feedback: {
-    streetLabel: 'Izbira paketa',
-  },
   items: [
     {
       id: 'basic',
