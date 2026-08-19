@@ -354,7 +354,7 @@ textarea {
 
   html[data-intro] .stmt__title,
   html[data-intro] .work__plates {
-    animation: settle-up 0.55s var(--ease-out) both;
+    animation: settle-up 0.4125s var(--ease-out) both;
   }
   /* Own keyframes: the wordmark RESTS at scaleY(--hero-wordmark-scaley), and a
      transform keyframe replaces the transform wholesale — settle-up would
