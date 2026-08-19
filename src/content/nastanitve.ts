@@ -60,7 +60,20 @@ export const meta = {
 export const hero = {
   kicker: 'Za ponudnike nastanitev',
   title: 'Spletna stran za vašo nastanitev',
-  lead: 'Z lastno spletno stranjo ponudniki nastanitev in dvoran ne pridobijo le vtisa profesionalnosti, sploh pri poslovnih rezervacijah, temveč stran služi tudi kot odličen kanal rezervacij, preko katerega se lahko izognete proviziji booking platform, ali pa stran uporabite kot unikaten medij za oglaševanje, ki se razlikuje od template ponudb booking platform.',
+  /**
+   * TWO OWNER-SUPPLIED VARIANTS OF ONE LEAD, both verbatim (avgust 2026).
+   * `lead` is the full sentence; `leadShort` is the owner's own shortened
+   * cut for phones, which drops the audience list, the business-bookings
+   * aside and the closing template clause. Both ship in the static HTML and
+   * CSS picks one at the 809px breakpoint (NastanitveHero) — the content
+   * guard therefore checks both, and neither can rot unnoticed.
+   *
+   * VERBATIM includes »hoteli, ter drugi«: standard Slovene takes no comma
+   * before »ter«. Shipped as written, per the house rule that owner copy is
+   * authoritative; flagged for sign-off rather than silently corrected.
+   */
+  lead: 'Z lastno spletno stranjo apartmaji, hoteli, ter drugi ponudniki nastanitev in dvoran ne pridobijo le vtisa profesionalnosti, sploh pri poslovnih rezervacijah, temveč stran služi tudi kot odličen kanal rezervacij, preko katerega se lahko izognete proviziji booking platform, ali pa stran uporabite kot unikaten medij za oglaševanje, ki se razlikuje od template ponudb booking platform.',
+  leadShort: 'Z lastno spletno stranjo ponudniki nastanitev ne pridobijo le vtisa profesionalnosti, temveč stran služi tudi kot odličen kanal rezervacij, preko katerega se lahko izognete proviziji booking platform, ali pa stran uporabite kot unikaten medij za oglaševanje.',
   ctaLabel: 'Prejmite stran v roku 48 ur',
   ctaTarget: 'kontakt',
 }

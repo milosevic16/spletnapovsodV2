@@ -40,7 +40,14 @@ import { hero } from '@/content/nastanitve'
     <div class="container">
       <p class="kicker apth__kicker">{{ hero.kicker }}</p>
       <h1 class="apth__title">{{ hero.title }}</h1>
-      <p class="apth__lead">{{ hero.lead }}</p>
+      <!-- One lead, two owner-written lengths. BOTH are in the static HTML
+           (so the content guard checks both and a crawler is never served a
+           blank), and the breakpoint below shows exactly one. `display: none`
+           is deliberate over visually-hidden: it takes the inactive variant
+           out of the accessibility tree too, so a screen reader hears the
+           lead once, not twice. -->
+      <p class="apth__lead apth__lead--wide">{{ hero.lead }}</p>
+      <p class="apth__lead apth__lead--narrow">{{ hero.leadShort }}</p>
 
       <p class="apth__cta-wrap">
         <a :href="`#${hero.ctaTarget}`" class="apth__cta">{{ hero.ctaLabel }}</a>
@@ -126,6 +133,12 @@ import { hero } from '@/content/nastanitve'
   color: var(--grafit-2);
 }
 
+/* Above the phone breakpoint the full lead runs; the short cut is out of the
+   document entirely (and out of the a11y tree with it). */
+.apth__lead--narrow {
+  display: none;
+}
+
 .apth__cta-wrap {
   margin-top: var(--space-10);
   margin-bottom: 0;
@@ -169,6 +182,14 @@ import { hero } from '@/content/nastanitve'
 @media (max-width: 809px) {
   .apth__lead {
     max-width: none;
+  }
+
+  /* Phones take the owner's shorter cut, and only that one. */
+  .apth__lead--wide {
+    display: none;
+  }
+  .apth__lead--narrow {
+    display: block;
   }
 }
 </style>

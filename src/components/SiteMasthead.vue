@@ -40,7 +40,9 @@ import { createFx } from '@/lib/fx'
 const props = withDefaults(
   defineProps<{
     items?: NavItem[]
-    cta?: { label: string; target: string }
+    /** Explicit null = the page has no in-page action (404: every anchor
+     *  would be dead, and the home link already is the action). */
+    cta?: { label: string; target: string } | null
     /** Subpages only: a persistent home link (logo + »Domov« button). Undefined
      *  on the home page, so its chrome is byte-for-byte unchanged. */
     home?: { href: string; label: string }
@@ -272,6 +274,7 @@ onUnmounted(() => {
         </nav>
 
         <a
+          v-if="props.cta"
           :href="`#${props.cta.target}`"
           class="masthead__link masthead__cta"
           :style="{ '--i': props.items.length }"
