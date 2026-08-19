@@ -1,33 +1,33 @@
 [
   {
     "file": "01.jpg",
+    "openverse_id": "f8eba931-d9be-4446-a52f-3afec6fe0497",
+    "license": "cc0",
+    "what": "veranda deck over misty valley, string lights, golden hour"
+  },
+  {
+    "file": "02.jpg",
     "openverse_id": "a63e1367-7acd-4e84-a1a2-66d569e7bc0c",
     "license": "cc0",
     "what": "living room, sofa + spiral stairs"
   },
   {
-    "file": "02.jpg",
+    "file": "03.jpg",
     "openverse_id": "1b7a9f3d-da84-4569-916a-1d48c21a2e60",
     "license": "cc0",
     "what": "bedroom, corner windows"
   },
   {
-    "file": "03.jpg",
+    "file": "04.jpg",
     "openverse_id": "ab136a9f-5b12-4382-aa67-70db96b6519f",
     "license": "cc0",
     "what": "modern kitchen, island"
   },
   {
-    "file": "04.jpg",
+    "file": "05.jpg",
     "openverse_id": "2a6f7783-f77e-4972-985b-31559a2e8830",
     "license": "cc0",
     "what": "bathroom, freestanding tub"
-  },
-  {
-    "file": "05.jpg",
-    "openverse_id": "0d29ad42-8289-4068-96f7-2e897c6ef69f",
-    "license": "cc0",
-    "what": "rooftop terrace, mountains"
   },
   {
     "file": "06.jpg",

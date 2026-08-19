@@ -191,8 +191,8 @@ function closeGlyph(): string {
   // Drawn ✕ — two rules at the masthead glyph's stroke weight. Inline SVG,
   // never a dingbat codepoint (iOS emoji-presentation trap).
   return (
-    '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" ' +
-    'stroke="currentColor" stroke-width="1.4"><line x1="5" y1="5" x2="19" y2="19"/>' +
+    '<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" fill="none" ' +
+    'stroke="currentColor" stroke-width="1.8"><line x1="5" y1="5" x2="19" y2="19"/>' +
     '<line x1="19" y1="5" x2="5" y2="19"/></svg>'
   )
 }
@@ -251,11 +251,15 @@ function openPreview(e: MouseEvent, ex: AptExample) {
   closeBtn.type = 'button'
   closeBtn.setAttribute('aria-label', examples.feedback.close)
   closeBtn.innerHTML = closeGlyph()
+  // PROMINENT (owner's call): the button sits over an UNKNOWN page — any of
+  // the three demos, any scroll state — so it inverts to solid graphite with
+  // a paper outline: dark chip reads on light regions, the outline carries it
+  // over dark ones. 52px, up from the 44px floor; square, flat, no shadow.
   closeBtn.style.cssText =
-    'position:absolute;top:max(12px, env(safe-area-inset-top));' +
-    'right:max(12px, env(safe-area-inset-right));width:44px;height:44px;' +
+    'position:absolute;top:max(14px, env(safe-area-inset-top));' +
+    'right:max(14px, env(safe-area-inset-right));width:52px;height:52px;' +
     'display:inline-flex;align-items:center;justify-content:center;' +
-    'background:var(--list);color:var(--grafit);border:1px solid var(--grafit);' +
+    'background:var(--grafit);color:var(--list);border:2px solid var(--list);' +
     'border-radius:0;cursor:pointer;opacity:0;'
 
   root.append(backdrop, morph, frame, closeBtn)
