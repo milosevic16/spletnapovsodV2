@@ -97,11 +97,11 @@ export const examples = {
     'Prikazani primeri so demonstracija: apartma, besedila in mnenja so izmišljeni, fotografije so simbolične.',
   items: [
     {
-      id: 'primer-atelier',
-      demo: '/primeri/atelier/index.html',
-      name: 'Atelje',
-      gloss: 'Deljena postavitev: podatki o apartmaju ob strani, vsebina teče mimo njih.',
-      alt: 'Primer strani z deljeno postavitvijo: levo ime apartmaja s podatki, desno opis in galerija.',
+      id: 'primer-mariven',
+      demo: '/primeri/mariven-stay/index.html',
+      name: 'Rezidenca',
+      gloss: 'Umirjena serifna tipografija, ime apartmaja na sredini fotografije.',
+      alt: 'Primer strani z imenom apartmaja na sredini celozaslonske fotografije.',
     },
     {
       id: 'primer-veduta',
@@ -111,11 +111,11 @@ export const examples = {
       alt: 'Primer strani s celozaslonsko fotografijo, imenom apartmaja in pasom s podatki.',
     },
     {
-      id: 'primer-mariven',
-      demo: '/primeri/mariven-stay/index.html',
-      name: 'Rezidenca',
-      gloss: 'Umirjena serifna tipografija, ime apartmaja na sredini fotografije.',
-      alt: 'Primer strani z imenom apartmaja na sredini celozaslonske fotografije.',
+      id: 'primer-atelier',
+      demo: '/primeri/atelier/index.html',
+      name: 'Atelje',
+      gloss: 'Deljena postavitev: podatki o apartmaju ob strani, vsebina teče mimo njih.',
+      alt: 'Primer strani z deljeno postavitvijo: levo ime apartmaja s podatki, desno opis in galerija.',
     },
   ] satisfies AptExample[],
   /**

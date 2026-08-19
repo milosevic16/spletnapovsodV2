@@ -11,15 +11,26 @@
  * here. The visible demoNote says exactly that; the refresh ritual lives in
  * scripts/build-primeri-images.mjs.
  *
- * EVERY CARD IS A REAL LINK to its shipped demo page (/primeri/<pack>/ —
- * noindex, out of the sitemap by construction since postbuild scans top-level
- * HTML only). With JS off, or for a crawler, the link simply navigates: no
- * dead control. With JS, the click is upgraded to THE LIFT: the card's own
- * plate zooms — uniformly, no distortion — from its place on the sheet until
- * it covers the screen (the system's 1:1 gesture: the drawing at full scale),
- * a paper backdrop rises under it, and the LIVE page crossfades in over the
- * plate once its iframe has loaded. A square hairline close button holds the
- * top-right corner for the whole fullscreen stay.
+ * EVERY CARD IS A REAL LINK to its shipped demo page. With JS off, or for a
+ * crawler, the link simply navigates: no dead control. With JS, the click is
+ * upgraded to THE LIFT: the card's own plate zooms — uniformly, no distortion
+ * — from its place on the sheet until it covers the screen (the system's 1:1
+ * gesture: the drawing at full scale), a paper backdrop rises under it, and
+ * the LIVE page crossfades in over the plate once its iframe has loaded. A
+ * square hairline close button holds the top-right corner throughout.
+ *
+ * ONE OVERLAY, ONE OWNER — and this is the part that was got wrong once, so
+ * it is written down. The Escape listener used to be registered per open and
+ * never removed, so every handler closed over ITS OWN nodes while all of them
+ * tested the SHARED module-level `overlay`. Opening three previews left three
+ * live document listeners; the oldest ran first, tore down a root that was
+ * already gone, nulled the shared reference, and orphaned the dialog actually
+ * on screen — which then could never be closed (measured: three dialogs in the
+ * DOM at once). Now: the listener is registered natively per open and REMOVED
+ * in teardown, teardown is idempotent (it nulls the reference FIRST, so
+ * re-entry is impossible), and every deferred callback guards on OBJECT
+ * IDENTITY — a timer belonging to a closed overlay can never act on the one
+ * that replaced it.
  *
  * The overlay is a dialog in the workflow-rules sense: role="dialog" +
  * aria-modal, focus moves to the close button on open (preventScroll — a
@@ -34,17 +45,17 @@
  * reach body-appended nodes); they sit at z-index 9500, ABOVE the grain at
  * 9000 — an owner call that overrides the grain-over-everything doctrine for
  * this one surface: the preview shows ANOTHER site, not our sheet, so our
- * paper texture must not play over it. Every wait is capped: a
- * renderer that never fires animation finish or iframe load still ends in the
- * settled state (the same settle-with-timeout discipline the rest of the
- * effects follow). Everything routes through fx and dies on unmount; the
- * SPA click interceptor in App.vue ignores the upgraded clicks because it
- * checks e.defaultPrevented first.
+ * paper texture must not play over it. Every wait is capped: a renderer that
+ * never fires animation finish or iframe load still ends in the settled state
+ * (the same settle-with-timeout discipline the rest of the effects follow).
+ * Everything routes through fx and dies on unmount; the SPA click interceptor
+ * in App.vue ignores the upgraded clicks because it checks e.defaultPrevented
+ * first.
  *
  * Reduced motion: no lift, no crossfade — the dialog appears settled and
  * fully functional immediately. The animation is the garnish, never the door.
  */
-import { onMounted, onUnmounted } from 'vue'
+import { onUnmounted } from 'vue'
 import { examples } from '@/content/apartmaji'
 import { createFx, prefersReducedMotion } from '@/lib/fx'
 import type { AptExample } from '@/content/apartmaji'
@@ -63,24 +74,36 @@ const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)'
 /** One knob per phase; every JS wait is (duration + slack) so a frozen
  *  renderer can never wedge the overlay mid-flight. */
 const LIFT_MS = 460
+const CLOSE_MS = 380
 const FADE_MS = 240
 const SETTLE_SLACK_MS = 240
 /** Iframe grace: past this we reveal whatever the frame has — a demo that
  *  loads slowly still appears; one that failed leaves the plate standing. */
 const IFRAME_CAP_MS = 4000
 
+interface Saved {
+  y: number
+  html: string
+  body: string
+}
+
 interface Overlay {
   root: HTMLElement
+  morph: HTMLElement
+  backdrop: HTMLElement
+  frame: HTMLIFrameElement
+  closeBtn: HTMLButtonElement
   invoker: HTMLElement
-  scrollY: number
-  htmlOverflow: string
-  bodyOverflow: string
+  plateSource: HTMLImageElement
+  saved: Saved
+  reduced: boolean
   closing: boolean
+  onKeydown: (e: Event) => void
 }
 
 let overlay: Overlay | null = null
 
-function lockScroll(): { y: number; html: string; body: string } {
+function lockScroll(): Saved {
   // Order is load-bearing (house recipe): capture FIRST — the lock completes
   // an in-flight scroll — then overflow hidden, then re-pin the offset.
   const y = window.scrollY
@@ -92,7 +115,7 @@ function lockScroll(): { y: number; html: string; body: string } {
   return { y, html, body }
 }
 
-function unlockScroll(saved: { y: number; html: string; body: string }) {
+function unlockScroll(saved: Saved) {
   document.documentElement.style.overflow = saved.html
   document.body.style.overflow = saved.body
   window.scrollTo({ top: saved.y, behavior: 'instant' as ScrollBehavior })
@@ -103,6 +126,65 @@ function unlockScroll(saved: { y: number; html: string; body: string }) {
 function animTo(el: HTMLElement, prop: string, from: string, to: string, ms: number) {
   el.style.setProperty(prop, to)
   return fx.anim(el, [{ [prop]: from }, { [prop]: to }], { duration: ms, easing: EASE, fill: 'none' })
+}
+
+/**
+ * Idempotent, and the ONLY place overlay state is released. Nulls the module
+ * reference before touching the DOM, so a second call (stray timer, second
+ * Escape, unmount) finds nothing to do.
+ */
+function teardown(restoreFocus = true) {
+  const o = overlay
+  if (!o) return
+  overlay = null
+  document.removeEventListener('keydown', o.onKeydown)
+  try {
+    o.frame.contentWindow?.removeEventListener('keydown', o.onKeydown)
+  } catch {
+    /* frame gone or cross-origin — nothing to remove */
+  }
+  o.root.remove()
+  unlockScroll(o.saved)
+  if (restoreFocus) o.invoker.focus({ preventScroll: true })
+}
+
+function closePreview() {
+  const o = overlay
+  if (!o || o.closing) return
+  o.closing = true
+
+  if (o.reduced) {
+    teardown()
+    return
+  }
+
+  o.closeBtn.style.opacity = '0'
+  animTo(o.frame, 'opacity', o.frame.style.opacity || '1', '0', 160)
+
+  // The plate returns to WHERE THE CARD IS NOW — re-measured, because a resize
+  // while open moves it. Scroll cannot have (it is locked).
+  const back = o.plateSource.getBoundingClientRect()
+  const s = Math.max(window.innerWidth / back.width, window.innerHeight / back.height)
+  const bx = window.innerWidth / 2 - (back.left + back.width / 2)
+  const by = window.innerHeight / 2 - (back.top + back.height / 2)
+  o.morph.style.top = `${back.top}px`
+  o.morph.style.left = `${back.left}px`
+  o.morph.style.width = `${back.width}px`
+  o.morph.style.height = `${back.height}px`
+  animTo(
+    o.morph,
+    'transform',
+    `translate(${bx}px, ${by}px) scale(${s})`,
+    'translate(0px, 0px) scale(1)',
+    CLOSE_MS,
+  )
+  animTo(o.backdrop, 'opacity', '1', '0', FADE_MS)
+
+  // Timed teardown for the same reason the landing is timed — and identity
+  // guarded, so this timer can never tear down a LATER overlay.
+  fx.setTimeout(() => {
+    if (overlay === o) teardown()
+  }, CLOSE_MS + SETTLE_SLACK_MS)
 }
 
 function closeGlyph(): string {
@@ -121,7 +203,10 @@ function openPreview(e: MouseEvent, ex: AptExample) {
   if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
   if (overlay) {
     e.preventDefault()
-    return
+    // Mid-close: finish that teardown now and open the new one, rather than
+    // swallowing the click and leaving the visitor tapping a dead card.
+    if (!overlay.closing) return
+    teardown(false)
   }
   const invoker = e.currentTarget as HTMLElement
   const img = invoker.querySelector('img')
@@ -132,7 +217,6 @@ function openPreview(e: MouseEvent, ex: AptExample) {
   const rect = img.getBoundingClientRect()
   const vw = window.innerWidth
   const vh = window.innerHeight
-
   const saved = lockScroll()
 
   const root = document.createElement('div')
@@ -177,7 +261,43 @@ function openPreview(e: MouseEvent, ex: AptExample) {
   root.append(backdrop, morph, frame, closeBtn)
   document.body.appendChild(root)
 
-  overlay = { root, invoker, scrollY: saved.y, htmlOverflow: saved.html, bodyOverflow: saved.body, closing: false }
+  const onKeydown = (ev: Event) => {
+    const k = ev as KeyboardEvent
+    if (k.key === 'Escape') {
+      closePreview()
+      return
+    }
+    // Two stops: the close button and the page itself. Keep Tab between them.
+    if (k.key === 'Tab') {
+      if (k.shiftKey && document.activeElement === closeBtn) {
+        k.preventDefault()
+        frame.focus()
+      } else if (!k.shiftKey && document.activeElement === frame) {
+        k.preventDefault()
+        closeBtn.focus()
+      }
+    }
+  }
+
+  const o: Overlay = {
+    root,
+    morph,
+    backdrop,
+    frame,
+    closeBtn,
+    invoker,
+    plateSource: img,
+    saved,
+    reduced,
+    closing: false,
+    onKeydown,
+  }
+  overlay = o
+
+  // Native listener, removed in teardown — NOT fx.on, which has no off handle
+  // and would leave one live handler per open (see the header note).
+  document.addEventListener('keydown', onKeydown)
+  closeBtn.addEventListener('click', () => closePreview())
 
   // Uniform cover scale about the plate's centre: no distortion in flight.
   const s = Math.max(vw / rect.width, vh / rect.height)
@@ -186,19 +306,17 @@ function openPreview(e: MouseEvent, ex: AptExample) {
   const lifted = `translate(${dx}px, ${dy}px) scale(${s})`
 
   let revealed = false
-  const reveal = () => {
-    if (revealed || !overlay || overlay.closing) return
+  let landed = reduced
+  let loaded = false
+  const maybeReveal = () => {
+    if (!landed || !loaded || revealed) return
+    if (overlay !== o || o.closing) return
     revealed = true
     if (reduced) frame.style.opacity = '1'
     else animTo(frame, 'opacity', '0', '1', FADE_MS)
   }
 
-  let landed = reduced
-  let loaded = false
-  const maybeReveal = () => {
-    if (landed && loaded) reveal()
-  }
-  fx.on(frame, 'load', () => {
+  frame.addEventListener('load', () => {
     loaded = true
     maybeReveal()
     // Same-origin: let Escape reach us from inside the page, best effort.
@@ -216,7 +334,7 @@ function openPreview(e: MouseEvent, ex: AptExample) {
   }, IFRAME_CAP_MS)
 
   const showChrome = () => {
-    if (!overlay || overlay.closing) return
+    if (overlay !== o || o.closing) return
     if (reduced) closeBtn.style.opacity = '1'
     else animTo(closeBtn, 'opacity', '0', '1', 180)
     closeBtn.focus({ preventScroll: true })
@@ -239,71 +357,12 @@ function openPreview(e: MouseEvent, ex: AptExample) {
       maybeReveal()
     }, LIFT_MS + SETTLE_SLACK_MS)
   }
-
-  fx.on(closeBtn, 'click', () => closePreview())
-
-  function onKeydown(ev: Event) {
-    const k = ev as KeyboardEvent
-    if (k.key === 'Escape') {
-      closePreview()
-      return
-    }
-    // Two stops: the close button and the page itself. Keep Tab between them.
-    if (k.key === 'Tab') {
-      if (k.shiftKey && document.activeElement === closeBtn) {
-        k.preventDefault()
-        frame.focus()
-      } else if (!k.shiftKey && document.activeElement === frame) {
-        k.preventDefault()
-        closeBtn.focus()
-      }
-    }
-  }
-  fx.on(document, 'keydown', onKeydown)
-
-  function closePreview() {
-    if (!overlay || overlay.closing) return
-    overlay.closing = true
-    const done = () => {
-      root.remove()
-      unlockScroll({ y: saved.y, html: saved.html, body: saved.body })
-      overlay = null
-      invoker.focus({ preventScroll: true })
-    }
-    if (reduced) {
-      done()
-      return
-    }
-    closeBtn.style.opacity = '0'
-    animTo(frame, 'opacity', frame.style.opacity || '1', '0', 160)
-    // The plate returns to WHERE THE CARD IS NOW — re-measured, because a
-    // resize while open moves it. Scroll cannot have (it is locked).
-    const back = img!.getBoundingClientRect()
-    const s2 = Math.max(vw / back.width, vh / back.height)
-    const bx = window.innerWidth / 2 - (back.left + back.width / 2)
-    const by = window.innerHeight / 2 - (back.top + back.height / 2)
-    morph.style.top = `${back.top}px`
-    morph.style.left = `${back.left}px`
-    morph.style.width = `${back.width}px`
-    morph.style.height = `${back.height}px`
-    animTo(morph, 'transform', `translate(${bx}px, ${by}px) scale(${s2})`, 'translate(0px, 0px) scale(1)', LIFT_MS - 80)
-    animTo(backdrop, 'opacity', '1', '0', FADE_MS)
-    // Timed teardown for the same reason the landing is timed.
-    fx.setTimeout(done, LIFT_MS - 80 + SETTLE_SLACK_MS)
-  }
 }
 
-onMounted(() => {
-  /* listeners are wired per-click; nothing to arm at mount */
-})
-
 onUnmounted(() => {
-  // The overlay must not outlive the view: remove it and give the scroll back.
-  if (overlay) {
-    overlay.root.remove()
-    unlockScroll({ y: overlay.scrollY, html: overlay.htmlOverflow, body: overlay.bodyOverflow })
-    overlay = null
-  }
+  // The overlay must not outlive the view: drop it without stealing focus
+  // (the invoker is being unmounted with it), then kill every tracked effect.
+  teardown(false)
   fx.dispose()
 })
 </script>
