@@ -42,6 +42,19 @@
  * preview, nor supply the GDPR basis for processing a prospect's data. Those
  * are the owner's decisions and a lawyer's review, flagged with the delivery.
  *
+ * NO WITHDRAWAL PERIOD, BY THE OWNER'S CALL (avgust 2026): the accommodation
+ * offer is addressed to people ordering FOR THEIR ACCOMMODATION ACTIVITY, so
+ * the buyer is practically never a consumer and the distance-contract
+ * withdrawal machinery (the old 24.8–24.10) is REMOVED rather than waived.
+ * Article 23 now carries the business-purpose declaration and — deliberately —
+ * a residual clause: a contractual waiver of a real consumer's statutory
+ * rights would be void (ZVPot-1 is mandatory law), and claiming otherwise
+ * would itself be an unfair commercial practice. So the document does not
+ * pretend the right can be signed away; it states the offer's business
+ * nature, has the Naročnik declare it, and leaves mandatory law untouched for
+ * the edge case. THE GENERAL TERMS (pogoji.ts) KEEP their consumer-withdrawal
+ * clauses 19.8–19.10 — ordinary orders can genuinely come from consumers.
+ *
  * DRAFT: needs owner sign-off and a lawyer's review.
  */
 import type { NavItem } from './home'
@@ -320,7 +333,7 @@ export const articles: Article[] = [
     title: "Trajanje, odpoved in odstop",
     clauses: [
       { n: "22.1", text: "Projektna pogodba preneha z izpolnitvijo. Naročniška razmerja se sklepajo za obdobje 12 mesecev s samodejnim podaljševanjem in odpovednim rokom 30 dni pred iztekom." },
-      { n: "22.2", text: "Ob odstopu Naročnika med izvedbo Naročnik plača do tedaj opravljeno delo in dejansko nastale stroške. Že plačani avans se všteje v to plačilo; če avans presega vrednost do tedaj opravljenega dela in stroškov, Izvajalec razliko vrne. Ta točka ne posega v pravice potrošnikov iz točk 24.8 do 24.10." },
+      { n: "22.2", text: "Ob odstopu Naročnika med izvedbo Naročnik plača do tedaj opravljeno delo in dejansko nastale stroške. Že plačani avans se všteje v to plačilo; če avans presega vrednost do tedaj opravljenega dela in stroškov, Izvajalec razliko vrne. Ta točka ne posega v pravice iz točke 23.3." },
       { n: "22.3", text: "Vsaka stranka lahko odstopi iz utemeljenega razloga, če druga stranka bistveno krši pogodbo in kršitve ne odpravi v 14 dneh po pisnem opominu." },
       { n: "22.4", text: "Ob prenehanju Izvajalec proti plačilu vseh zapadlih obveznosti izroči podatke, vsebine in dostope v standardni obliki. Podatke hrani še 30 dni, nato jih sme izbrisati." },
     ],
@@ -328,10 +341,11 @@ export const articles: Article[] = [
   {
     id: "potrosniki",
     n: "23",
-    title: "Naročniki, ki so potrošniki",
+    title: "Poslovna narava naročil",
     clauses: [
-      { n: "23.1", text: "Sobodajalec, ki naroča storitev v okviru registrirane dejavnosti, ni potrošnik. Fizična oseba, ki storitev naroči zunaj svoje poslovne dejavnosti, je potrošnik in zanjo veljajo določbe 24. člena teh pogojev o odstopu od pogodbe." },
-      { n: "23.2", text: "Ker je storitev praviloma opravljena v nekaj delovnih dneh, Izvajalec potrošnika pred začetkom izvedbe pozove, naj poda izjavo o takojšnjem začetku izvedbe. Brez te izjave se z izvedbo počaka do izteka odstopnega roka." },
+      { n: "23.1", text: "Ponudba je namenjena osebam, ki opravljajo nastanitveno dejavnost in spletno stran naročajo za namen te dejavnosti. Naročnik s potrditvijo ponudbe izjavlja, da storitev naroča v okviru svoje dejavnosti in za njen namen." },
+      { n: "23.2", text: "Naročnik, ki storitev naroča za namen svoje dejavnosti, ni potrošnik. Zanj ne veljajo pravila o odstopu od pogodbe, sklenjene na daljavo, in odstopnega roka ni." },
+      { n: "23.3", text: "Če za posamezno naročilo kljub izjavi iz točke 23.1 velja, da je Naročnik potrošnik, ostanejo njegove pravice po prisilnih predpisih neokrnjene." },
     ],
   },
   {
@@ -346,9 +360,6 @@ export const articles: Article[] = [
       { n: "24.5", text: "Za pogodbo velja pravo Republike Slovenije, brez kolizijskih pravil in brez Dunajske konvencije o mednarodni prodaji blaga." },
       { n: "24.6", text: "Stranki spore rešujeta sporazumno; sicer je pristojno stvarno pristojno sodišče po sedežu Izvajalca. Pri potrošnikih velja zakonsko določena pristojnost." },
       { n: "24.7", text: "Izvajalec skladno z Zakonom o izvensodnem reševanju potrošniških sporov ne priznava nobenega izvajalca izvensodnega reševanja potrošniških sporov kot pristojnega za reševanje potrošniškega spora iz teh pogojev." },
-      { n: "24.8", text: "Potrošnik ima pri pogodbi, sklenjeni na daljavo, pravico, da v štirinajstih dneh od sklenitve pogodbe odstopi od nje brez navedbe razloga." },
-      { n: "24.9", text: "Če potrošnik izrecno zahteva, da Izvajalec z izvedbo začne pred iztekom odstopnega roka, in izrecno potrdi, da je s tem seznanjen, pravica do odstopa preneha, ko je storitev v celoti opravljena. Če potrošnik odstopi po tem, ko se je izvedba na njegovo zahtevo že začela, Izvajalcu plača sorazmerni del že opravljenega dela." },
-      { n: "24.10", text: "Če potrošnik izjave iz točke 24.9 ne poda, Izvajalec z izvedbo počaka do izteka odstopnega roka. Storitveni roki iz točke 11.2 v tem primeru začnejo teči z iztekom odstopnega roka." },
     ],
   },
 ]
