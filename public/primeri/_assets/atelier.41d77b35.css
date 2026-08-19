@@ -1,0 +1,183 @@
+/* atelier — editorial split: sticky specimen-sheet panel + scrolling column.
+   Flat surfaces, hairline rules, no shadows, no JS.
+   Consumes ONLY design-DNA custom properties. */
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--c-bg);
+  color: var(--c-ink);
+  font-family: var(--font-body);
+  font-size: 1.0425rem;
+  line-height: 1.68;
+  -webkit-font-smoothing: antialiased;
+}
+
+:root {
+  --sp: calc(1rem * var(--space));
+  --hairline: color-mix(in srgb, var(--c-ink) 15%, transparent);
+  --gutter: clamp(2rem, 5vw, 4.5rem);
+}
+
+a { color: var(--c-accent); text-underline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--c-accent); outline-offset: 3px; border-radius: 2px; }
+/* stroke styling lives here, not in the sprite — only <symbol>s are inlined */
+.icon {
+  width: 1.02em; height: 1.02em; vertical-align: -0.15em;
+  fill: none; stroke: currentColor; stroke-width: 1.7;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* ---------------------------------------------------------------- split */
+.split { display: grid; grid-template-columns: clamp(320px, 36vw, 440px) 1fr; }
+
+.panel {
+  position: sticky; top: 0; align-self: start;
+  height: 100svh;
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: calc(2.6 * var(--sp)) calc(2 * var(--sp));
+  border-right: 1px solid var(--hairline);
+  background: var(--c-surface);
+}
+.eyebrow {
+  font-size: 0.76rem; letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--c-muted); margin: 0 0 1.1em;
+}
+.acc-medium .eyebrow { color: var(--c-accent); }
+.panel h1 {
+  font-family: var(--font-display); font-weight: var(--w-display);
+  font-size: clamp(2rem, 3.4vw, 3rem); line-height: 1.05;
+  letter-spacing: var(--track-display); text-transform: var(--case-heading);
+  margin: 0 0 0.4em;
+}
+.tagline { color: var(--c-muted); margin: 0 0 2em; font-size: 1.02rem; }
+
+.specs { margin: 0; border-top: 1px solid var(--hairline); }
+.specs div {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 0.55em 0; border-bottom: 1px solid var(--hairline);
+}
+.specs dt { color: var(--c-muted); font-size: 0.86rem; display: flex; gap: 0.5em; align-items: center; }
+.specs dt .icon { color: var(--c-accent); }
+.specs dd { margin: 0; font-family: var(--font-display); font-weight: var(--w-display); font-size: 1.05rem; }
+
+.panel-cta { display: grid; gap: 0.6rem; margin-top: calc(1.6 * var(--sp)); }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5em;
+  padding: 0.75em 1.3em; border-radius: var(--radius);
+  text-decoration: none; font-weight: 600; font-size: 0.98rem;
+}
+.btn-solid { background: var(--c-accent); color: var(--c-accent-ink); }
+.btn-solid:hover { filter: brightness(1.08); }
+.btn-line { border: 1px solid var(--hairline); color: var(--c-ink); }
+.btn-line:hover { border-color: var(--c-accent); }
+.panel-mail { margin: 0.2em 0 0; text-align: center; font-size: 0.82rem; color: var(--c-muted); }
+
+/* ---------------------------------------------------------------- flow */
+.flow { padding: calc(2.2 * var(--sp)) var(--gutter) calc(3 * var(--sp)); min-width: 0; }
+.flow section { padding-block: calc(2.4 * var(--sp)); }
+.flow section:first-child { padding-top: calc(1.2 * var(--sp)); }
+
+/* Section headings: the rule crosses the gutter back toward the panel —
+   the device that stitches the two columns together. */
+.flow h2 {
+  position: relative;
+  font-family: var(--font-display); font-weight: var(--w-display);
+  font-size: clamp(1.35rem, 2.4vw, 1.8rem);
+  letter-spacing: var(--track-display); text-transform: var(--case-heading);
+  margin: 0 0 calc(1.4 * var(--sp));
+}
+.flow h2 .rule {
+  position: absolute; left: calc(-1 * var(--gutter)); top: 0.62em;
+  width: calc(var(--gutter) - 1.1rem); border-top: 1px solid var(--c-accent);
+}
+
+.intro { max-width: 42rem; }
+.intro .lede { font-size: clamp(1.15rem, 1.9vw, 1.35rem); line-height: 1.55; margin-top: 0; }
+.intro p { margin: 0 0 1.1em; }
+
+/* gallery */
+.gal-filmstrip .strip {
+  display: flex; gap: 1.1rem; overflow-x: auto;
+  scroll-snap-type: x mandatory; padding-bottom: 0.7rem;
+}
+.gal-filmstrip .plate { flex: 0 0 min(78%, 34rem); scroll-snap-align: start; }
+.gal-stacked .strip { display: grid; gap: calc(2 * var(--sp)); }
+.plate { margin: 0; }
+.plate img { width: 100%; display: block; border-radius: var(--radius); aspect-ratio: 3 / 2; object-fit: cover; }
+.gal-stacked .plate img { aspect-ratio: auto; }
+.plate figcaption {
+  display: flex; gap: 0.8em; align-items: baseline;
+  padding-top: 0.5em; font-size: 0.82rem; color: var(--c-muted);
+}
+.plate-no { font-family: var(--font-display); font-weight: var(--w-display); color: var(--c-accent); }
+
+/* amenities */
+.amenity-cols { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 2.5rem; max-width: 40rem; }
+.amenity-cols li {
+  display: flex; gap: 0.7em; align-items: center;
+  break-inside: avoid;
+  padding: 0.6em 0; border-bottom: 1px solid var(--hairline);
+  font-size: 0.98rem;
+}
+.amenity-cols .icon { color: var(--c-accent); width: 1.2em; height: 1.2em; }
+
+/* reviews as pull-quotes */
+.pull { margin: 0 0 calc(2 * var(--sp)); max-width: 44rem; }
+.pull p {
+  position: relative;
+  font-size: clamp(1.15rem, 2vw, 1.4rem); line-height: 1.5;
+  margin: 0 0 0.6em; padding-left: 1.6rem;
+}
+.pull p::before {
+  content: "\201C";
+  position: absolute; left: 0; top: -0.12em;
+  font-family: var(--font-display); font-weight: var(--w-display);
+  font-size: 1.9em; line-height: 1; color: var(--c-accent);
+}
+.pull footer {
+  padding-left: 1.6rem; font-size: 0.8rem; color: var(--c-muted);
+  letter-spacing: 0.12em; text-transform: uppercase;
+}
+
+/* location + host */
+.place {
+  font-family: var(--font-display); font-weight: var(--w-display);
+  font-size: clamp(1.9rem, 4vw, 2.8rem); line-height: 1.05;
+  letter-spacing: var(--track-display); text-transform: var(--case-heading);
+  margin: 0 0 0.2em;
+}
+.place-line { color: var(--c-muted); margin: 0 0 1em; max-width: 38rem; }
+.map-link { font-weight: 600; }
+.host { max-width: 40rem; color: var(--c-muted); }
+.host strong { color: var(--c-ink); }
+
+.footer { border-top: 1px solid var(--hairline); padding-top: calc(1.6 * var(--sp)); color: var(--c-muted); font-size: 0.84rem; }
+.footer p { margin: 0.25em 0; }
+.foot-note { opacity: 0.75; }
+
+/* ---------------------------------------------------------------- mobile */
+.mobilebar { display: none; }
+@media (max-width: 900px) {
+  .split { display: block; }
+  .panel { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--hairline); }
+  .panel-cta { display: none; }
+  .flow { padding-inline: clamp(1.1rem, 4.5vw, 2rem); padding-bottom: 6.5rem; }
+  .flow h2 .rule { display: none; }
+  .amenity-cols { columns: 1; }
+  .mobilebar {
+    display: flex; gap: 0.6rem;
+    position: fixed; inset: auto 0 0 0; z-index: 30;
+    padding: 0.7rem clamp(1.1rem, 4.5vw, 2rem) calc(0.7rem + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--c-surface) 88%, transparent);
+    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    border-top: 1px solid var(--hairline);
+  }
+  .mobilebar .btn { flex: 1; }
+}
+
+/* map: small embed inside the location section, above the contact panel */
+.location .map-embed { margin-top: calc(0.9 * var(--sp)); }
+.map-embed iframe { display: block; width: 100%; height: 300px; border: 0;
+                    border-radius: var(--radius); }

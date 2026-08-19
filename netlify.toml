@@ -22,7 +22,13 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
-    Content-Security-Policy = "frame-ancestors 'none'"
+    # 'self', not 'none', since avgust 2026: the Primeri preview overlay on
+    # /apartmaji iframes the site's own demo pages (/primeri/*). Same-origin
+    # framing only — every third-party origin is still refused, which is the
+    # actual clickjacking threat. Netlify concatenates duplicate CSP headers
+    # (both would be enforced, strictest wins), so this cannot be overridden
+    # per-path; the global value is the one that must carry the allowance.
+    Content-Security-Policy = "frame-ancestors 'self'"
 
 [[headers]]
   for = "/"
@@ -36,6 +42,15 @@
 
 [[headers]]
   for = "/404.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+# The Primeri demo pages (fictional template renders, noindex, iframed by the
+# preview overlay). no-cache because their assets are NOT immutable-named:
+# photos/ and the page itself refresh under the same names, so no browser may
+# hold them for a year the way /img/* is held.
+[[headers]]
+  for = "/primeri/*"
   [headers.values]
     Cache-Control = "no-cache"
 

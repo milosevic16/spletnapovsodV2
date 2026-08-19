@@ -68,6 +68,8 @@ export const hero = {
 export interface AptExample {
   /** Machine id — the image basename: /img/primeri/<id>-<width>.<ext>. */
   id: string
+  /** The shipped demo page this card previews — a real URL, machine identifier. */
+  demo: string
   name: string
   gloss: string
   alt: string
@@ -95,23 +97,35 @@ export const examples = {
   items: [
     {
       id: 'primer-atelier',
+      demo: '/primeri/atelier/',
       name: 'Atelje',
       gloss: 'Deljena postavitev: podatki o apartmaju ob strani, vsebina teče mimo njih.',
       alt: 'Primer strani z deljeno postavitvijo: levo ime apartmaja s podatki, desno opis in galerija.',
     },
     {
       id: 'primer-veduta',
+      demo: '/primeri/veduta/',
       name: 'Veduta',
       gloss: 'Fotografija čez ves zaslon, pod njo pas s ključnimi podatki.',
       alt: 'Primer strani s celozaslonsko fotografijo, imenom apartmaja in pasom s podatki.',
     },
     {
       id: 'primer-mariven',
+      demo: '/primeri/mariven-stay/',
       name: 'Rezidenca',
       gloss: 'Umirjena serifna tipografija, ime apartmaja na sredini fotografije.',
       alt: 'Primer strani z imenom apartmaja na sredini celozaslonske fotografije.',
     },
   ] satisfies AptExample[],
+  /**
+   * Interaction-only strings for the fullscreen preview overlay — rendered
+   * only after a click, so the content guard skips this key by contract.
+   */
+  feedback: {
+    close: 'Zapri predogled',
+    /** Composed with the card name into the dialog's accessible name. */
+    previewTitle: 'Predogled',
+  },
 }
 
 export const packages = {
