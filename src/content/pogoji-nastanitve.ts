@@ -90,7 +90,7 @@ export const articles: Article[] = [
       { n: "3.1", text: "Ponudbe so neobvezujoče in veljajo 30 dni od izdaje, razen če je navedeno drugače." },
       { n: "3.2", text: "Cene in roki v ponudbi temeljijo na podatkih, ki jih posreduje Naročnik. Če se ti izkažejo za nepopolne ali napačne, ima Izvajalec pravico do prilagoditve ponudbe." },
       { n: "3.3", text: "Pogodba je sklenjena s pisno ali elektronsko potrditvijo naročila ali s plačilom avansa." },
-      { n: "3.4", text: "Cene so navedene ⟨z DDV / brez DDV, oziroma navedba, da Izvajalec ni zavezanec za DDV po 1. odstavku 94. člena ZDDV-1⟩. Naročnikom, ki so potrošniki, so cene vedno navedene kot končne.", todo: true },
+      { n: "3.4", text: "Izvajalec ni zavezanec za DDV po prvem odstavku 94. člena Zakona o davku na dodano vrednost, zato DDV na računih ni obračunan. Navedene cene so končne." },
     ],
   },
   {
@@ -102,6 +102,9 @@ export const articles: Article[] = [
       { n: "4.2", text: "Med storitve praviloma niso vključeni, razen ob posebnem dogovoru: zakup in podaljševanje domen, gostovanje, licence za tretje programske komponente, fotografije iz plačljivih bank, pisanje in lektoriranje vsebin, prevodi, oglaševalske kampanje, izobraževanje uporabnikov in poznejše vzdrževanje. Kar je v ponudbi ali paketu izrecno navedeno kot vključeno, je vključeno in ima prednost pred tem odstavkom." },
       { n: "4.3", text: "Izvajalec sme za izvedbo pritegniti podizvajalce." },
       { n: "4.4", text: "Izvajalec ni dolžan zagotavljati panožnega ali pravnega svetovanja. Njegova priporočila niso pravno mnenje; za vprašanja skladnosti mora Naročnik pridobiti ustrezen nasvet." },
+      { n: "4.5", text: "Za vsebinsko pravno skladnost spletnega mesta odgovarja Naročnik. To vključuje zlasti vsebino politike zasebnosti, splošnih pogojev, obvestil o piškotkih in drugih pravnih besedil, pravno podlago za obdelavo osebnih podatkov, skladnost dejavnosti Naročnika s predpisi ter resničnost objavljenih navedb." },
+      { n: "4.6", text: "Če Izvajalec Naročniku posreduje vzorec, predlogo ali predlog pravnega besedila, je to zgolj tehnični pripomoček in ne pravno mnenje. Izvajalec ne odgovarja za njegovo pravno ustreznost, popolnost, ažurnost ali skladnost z dejavnostjo Naročnika. Naročnik mora vsako tako besedilo pred objavo preveriti sam oziroma pri ustreznem strokovnjaku in ga prilagoditi svoji dejavnosti." },
+      { n: "4.7", text: "Izvajalec ne odgovarja za pravne posledice objave besedil, ki jih je Naročnik prevzel po vzorcu Izvajalca in jih ni preveril." },
     ],
   },
   {
@@ -144,7 +147,7 @@ export const articles: Article[] = [
     clauses: [
       { n: "8.1", text: "Akcijska ponudba se začne z brezplačnim oblikovnim predogledom, ki ga Izvajalec pripravi in posreduje na lastno pobudo. Predogled je predstavitev in ne obvezujoča ponudba; s posredovanjem ali ogledom predogleda ne nastane pogodba in nobena stranka iz tega naslova ni zavezana." },
       { n: "8.2", text: "Pogodba je sklenjena, ko Naročnik ponudbo potrdi na način iz točke 3.3. Šele s tem se začne delo, ki presega začetni predogled." },
-      { n: "8.3", text: "Glede na paket oziroma dogovor je Naročnik upravičen do enega kroga popravkov na oblikovni predogled ali do nobenega. Kaj je vključeno, je navedeno v ponudbi. Morebitni dodatni popravki se obračunajo po veljavni urni postavki." },
+      { n: "8.3", text: "Glede na paket oziroma dogovor je Naročnik upravičen do enega kroga popravkov na oblikovni predogled ali do nobenega. Kaj je vključeno, je navedeno v ponudbi. Morebitni dodatni popravki se obračunajo po urni postavki iz točke 13.1." },
       { n: "8.4", text: "Po potrditvi predogleda, s krogom popravkov ali brez njega, Izvajalec stran objavi na predstavitvenem naslovu, da jo Naročnik pregleda. Objava na predstavitvenem naslovu ne pomeni prenosa pravic; do celotnega plačila vse pravice na rezultatu dela ostanejo Izvajalcu po 16. členu." },
       { n: "8.5", text: "Ko Naročnik potrdi končno podobo strani, poravna dogovorjeno ceno po 13. členu. Po prejemu celotnega plačila Izvajalec stran veže na dejansko domeno Naročnika ter mu preda dostope in dogovorjena gradiva po 16. členu. Strošek domene se obračuna po 15. členu." },
       { n: "8.6", text: "Če Naročnik po predstavitvi predogleda ne poda jasnih usmeritev, sme Izvajalec oblikovne odločitve sprejeti po lastni strokovni presoji." },
@@ -179,7 +182,7 @@ export const articles: Article[] = [
       { n: "11.1", text: "Navedeni roki so okvirni, razen če so izrecno označeni kot fiksni ali če gre za storitvene roke iz točke 11.2." },
       { n: "11.2", text: "Izvajalec navaja naslednje storitvene roke:", items: ["Objava na predstavitvenem naslovu: praviloma v treh delovnih dneh po potrditvi predogleda in po prejemu vseh dogovorjenih gradiv v uporabni digitalni obliki.", "Vezava na dejansko domeno: v dveh delovnih dneh po prejemu celotnega plačila.", "Manjši popravki: 24 ur v delovnem času, od prejema jasno opisane zahteve in gradiv.", "Odziv na povpraševanje: en delovni dan."] },
       { n: "11.3", text: "Izvajalec si pridržuje pravico, da rok iz točke 11.2 podaljša, če je obseg zahtevanih sprememb, popravkov ali želja Naročnika večji od obsega, na katerem navedeni rok temelji. Pravica velja za vse roke iz točke 11.2. Izvajalec Naročnika o podaljšanju in o novem roku obvesti brez nepotrebnega odlašanja, praviloma pred iztekom prvotnega roka." },
-      { n: "11.4", text: "Manjši popravki so spremembe, kot so pozicija gumbov, zamenjava slik, barv ali pisave, in podobni posegi v obstoječo strukturo strani. Ne vključujejo novih funkcionalnosti ali celotne prenove grafične podobe. Zahteve, ki presegajo ta obseg, se obravnavajo kot sprememba obsega po 10. členu in zanje roki iz točke 11.2 ne veljajo." },
+      { n: "11.4", text: "Manjši popravki so spremembe, kot so pozicija gumbov, zamenjava slik, barv ali pisave, in podobni posegi v obstoječo strukturo strani. Ne vključujejo novih funkcionalnosti ali celotne prenove grafične podobe. Zahteve, ki presegajo ta obseg, se obravnavajo kot sprememba obsega po 10. členu; obračunajo se kot dodaten krog popravkov po točki 8.3 ali po urni postavki, kot je določeno v oceni iz točke 10.1. Zanje roki iz točke 11.2 ne veljajo." },
       { n: "11.5", text: "Rok se podaljša za čas zamude Naročnika pri gradivih, odobritvah ali plačilih, in za čas trajanja višje sile." },
       { n: "11.6", text: "Zamuda Naročnika ne odloži dogovorjenih plačilnih rokov." },
     ],
@@ -199,7 +202,7 @@ export const articles: Article[] = [
     n: "13",
     title: "Cene in plačilni pogoji",
     clauses: [
-      { n: "13.1", text: "Cena je določena v ponudbi kot pavšal ali po urni postavki ⟨znesek⟩ EUR na uro, obračunani v enotah po 30 minut.", todo: true },
+      { n: "13.1", text: "Cena je določena v ponudbi kot pavšal, individualno glede na obseg projekta. Cena je Naročniku znana vnaprej. Kadar se posamezno delo obračuna po urni postavki, zlasti dodatni krogi popravkov po točki 8.3 in opravila v zvezi z domeno po točki 14.4, velja urna postavka, ki jo Izvajalec sporoči vnaprej in pred začetkom takega dela." },
       { n: "13.2", text: "Storitev se plača v celoti, ko Naročnik potrdi končno podobo strani; avans praviloma ni potreben. Po prejemu celotnega plačila Izvajalec stran veže na dejansko domeno in preda dostope po 16. členu." },
       { n: "13.3", text: "Plačilni rok je 14 dni od izdaje računa, razen če je v ponudbi določeno drugače." },
       { n: "13.4", text: "Ob zamudi tečejo zakonske zamudne obresti, Izvajalec pa lahko po pisnem opominu zadrži nadaljnje delo, storitve, vezavo na dejansko domeno ali predajo dostopov do poravnave. Naročnik krije razumne stroške izterjave." },
@@ -216,7 +219,7 @@ export const articles: Article[] = [
       { n: "14.1", text: "Domena se registrira v imenu in za račun Naročnika. Za registracijo in podaljševanje veljajo pravila pristojnega registra, ki jih Naročnik sprejme." },
       { n: "14.2", text: "Zakup domene v nobenem primeru ni vključen v ceno storitve. V ceno je vključena le tehnična nastavitev domene in njena vezava na spletno mesto. Strošek registracije in vsakoletnega podaljšanja krije Naročnik." },
       { n: "14.3", text: "Podaljševanje domene je obveznost Naročnika. Izvajalec priporoča, da Naročnik podaljševanje uredi sam neposredno pri registrarju in da poskrbi za veljavne kontaktne podatke ter način plačila pri registrarju." },
-      { n: "14.4", text: "Če Naročnik podaljšanje domene ali druga opravila v zvezi z domeno prenese na Izvajalca, se ta opravila obračunajo po veljavni urni postavki oziroma po dogovorjenem ceniku, poleg stroška podaljšanja pri registrarju. Izvajalec teh opravil ni dolžan izvesti brez predhodnega dogovora." },
+      { n: "14.4", text: "Če Naročnik podaljšanje domene ali druga opravila v zvezi z domeno prenese na Izvajalca, se ta opravila obračunajo po urni postavki iz točke 13.1 oziroma po dogovorjenem ceniku, poleg stroška podaljšanja pri registrarju. Izvajalec teh opravil ni dolžan izvesti brez predhodnega dogovora." },
       { n: "14.5", text: "Izvajalec ne odgovarja za posledice poteka domene, do katerega pride, ker Naročnik podaljšanja ni uredil pravočasno, in ne spremlja rokov podaljšanja, razen če je to izrecno dogovorjeno." },
       { n: "14.6", text: "Kadar spletno mesto gostuje pri tretjem ponudniku, veljajo tudi pogoji in raven storitve tega ponudnika. Izvajalec ne jamči določene letne razpoložljivosti gostovanja in ne odgovarja za izpade na strani tretjega ponudnika." },
       { n: "14.7", text: "Koda in vsebina spletnega mesta se vodita v sistemu za nadzor različic, iz katerega je mogoča obnovitev. To Naročnika ne razbremeni obveznosti hranjenja lastnih kopij podatkov, ki jih sam vnaša." },
@@ -249,8 +252,8 @@ export const articles: Article[] = [
       { n: "16.4", text: "Komponente tretjih oseb so podvržene svojim licencam. Izvajalec Naročnika obvesti, kadar so potrebne plačljive licence; te niso zajete v ceni, razen če je dogovorjeno drugače." },
       { n: "16.5", text: "Zavrnjeni ali nerealizirani osnutki ostanejo v celoti last Izvajalca." },
       { n: "16.6", text: "Izvajalec sme rezultat dela navesti med referencami in ga uporabiti v predstavitvenih gradivih. Naročnik lahko to pravico pisno izključi." },
-      { n: "16.7", text: "Navedba avtorstva v nogi spletnega mesta je ⟨dogovorjena ali neobvezna⟩. Če je dogovorjena, njena odstranitev pomeni kršitev pogodbe.", todo: true },
-      { n: "16.8", text: "Izvorne datoteke in izvorna koda se predajo ⟨v katerem primeru in pod katerimi pogoji⟩.", todo: true },
+      { n: "16.7", text: "Navedba avtorstva v nogi spletnega mesta je dogovorjena in je njena odstranitev kršitev pogodbe. Pred sklenitvijo pogodbe se je na željo Naročnika mogoče odplačno dogovoriti, da se navedba avtorstva opusti." },
+      { n: "16.8", text: "Po celotnem plačilu se izvorne datoteke in izvorna koda na željo Naročnika predajo Naročniku." },
     ],
   },
   {
@@ -259,7 +262,7 @@ export const articles: Article[] = [
     title: "Jamstvo za napake",
     clauses: [
       { n: "17.1", text: "Izvajalec jamči, da bo rezultat dela ob prevzemu vsebinsko ustrezal potrjeni specifikaciji." },
-      { n: "17.2", text: "Jamstveni rok je ⟨število⟩ mesecev od prevzema. V tem obdobju Izvajalec brezplačno odpravi napake, ki so posledica njegovega dela. Brezplačna odprava napak ni isto kot plačljivi popravki in spremembe po točki 11.4.", todo: true },
+      { n: "17.2", text: "Jamstveni rok s temi pogoji ni podaljšan; veljajo zakonski roki. Za Naročnika, ki je potrošnik, veljajo v celoti zakonske pravice iz naslova neskladnosti po Zakonu o varstvu potrošnikov, ki jih ta dokument ne omejuje in ne skrajšuje. Za Naročnika, ki ni potrošnik, veljajo pravila o odgovornosti za napake po Obligacijskem zakoniku. V jamstvenem roku Izvajalec brezplačno odpravi napake, ki so posledica njegovega dela; brezplačna odprava napak ni isto kot plačljivi popravki in spremembe po točki 11.4." },
       { n: "17.3", text: "Jamstvo ne velja za posege Naročnika ali tretjih v kodo ali sistem, spremembe pri zunanjih ponudnikih in vmesnikih, opustitev priporočenih varnostnih posodobitev, napake gostovanja, ki ga Izvajalec ne upravlja, ter za vsebine, ki jih vnaša Naročnik." },
       { n: "17.4", text: "Združljivost je zagotovljena za zadnji dve različici razširjenih brskalnikov v času prevzema. Odstopanja zaradi posameznih nastavitev naprav, vtičnikov ali operacijskih sistemov niso napaka." },
       { n: "17.5", text: "Izvajalec jamči za tehnično zasnovo, ki jo izvede sam: vnaprej izrisan HTML, strukturirane podatke, dostopnost vsebine iskalnikom in jezikovnim modelom brez izvajanja skript ter skladnost s Core Web Vitals po stanju ob izročitvi." },
@@ -290,9 +293,6 @@ export const articles: Article[] = [
       { n: "19.3", text: "Naročnik je seznanjen s podobdelovalci, ki jih Izvajalec uporablja pri izvedbi, in Izvajalec ga o spremembah pravočasno obvesti." },
       { n: "19.4", text: "Izvajalec izvaja primerne tehnične in organizacijske ukrepe ter Naročnika brez nepotrebnega odlašanja obvesti o kršitvi varstva osebnih podatkov." },
       { n: "19.5", text: "Izvajalec zagotavlja tehnično izvedbo: vgradnjo mehanizmov za privolitve, tehnično pravilno umestitev pravnih besedil na spletno mesto, varen prenos podatkov iz obrazcev in druge tehnične ukrepe, dogovorjene v specifikaciji." },
-      { n: "19.6", text: "Za vsebinsko pravno skladnost odgovarja Naročnik. To vključuje zlasti vsebino politike zasebnosti, splošnih pogojev, obvestil o piškotkih in drugih pravnih besedil, pravno podlago za obdelavo osebnih podatkov, skladnost dejavnosti Naročnika s predpisi ter resničnost objavljenih navedb." },
-      { n: "19.7", text: "Če Izvajalec Naročniku posreduje vzorec, predlogo ali predlog pravnega besedila, je to zgolj tehnični pripomoček in ne pravno mnenje. Izvajalec ne odgovarja za njegovo pravno ustreznost, popolnost, ažurnost ali skladnost z dejavnostjo Naročnika. Naročnik mora vsako tako besedilo pred objavo preveriti sam oziroma pri ustreznem strokovnjaku in ga prilagoditi svoji dejavnosti." },
-      { n: "19.8", text: "Izvajalec ne odgovarja za pravne posledice objave besedil, ki jih je Naročnik prevzel po vzorcu Izvajalca in jih ni preveril." },
     ],
   },
   {
@@ -320,7 +320,7 @@ export const articles: Article[] = [
     title: "Trajanje, odpoved in odstop",
     clauses: [
       { n: "22.1", text: "Projektna pogodba preneha z izpolnitvijo. Naročniška razmerja se sklepajo za obdobje 12 mesecev s samodejnim podaljševanjem in odpovednim rokom 30 dni pred iztekom." },
-      { n: "22.2", text: "Ob odstopu Naročnika med izvedbo se plača celotno do tedaj opravljeno delo in nastali stroški; avans se ne vrača. Pri pavšalnih projektih je Naročnik dolžan plačati najmanj 50 odstotkov celotne pogodbene vrednosti. Ta odstavek se ne uporablja za Naročnike, ki so potrošniki; ti plačajo opravljeno delo in dokazane stroške." },
+      { n: "22.2", text: "Ob odstopu Naročnika med izvedbo Naročnik plača do tedaj opravljeno delo in dejansko nastale stroške. Že plačani avans se všteje v to plačilo; če avans presega vrednost do tedaj opravljenega dela in stroškov, Izvajalec razliko vrne. Ta točka ne posega v pravice potrošnikov iz točk 24.8 do 24.10." },
       { n: "22.3", text: "Vsaka stranka lahko odstopi iz utemeljenega razloga, če druga stranka bistveno krši pogodbo in kršitve ne odpravi v 14 dneh po pisnem opominu." },
       { n: "22.4", text: "Ob prenehanju Izvajalec proti plačilu vseh zapadlih obveznosti izroči podatke, vsebine in dostope v standardni obliki. Podatke hrani še 30 dni, nato jih sme izbrisati." },
     ],
