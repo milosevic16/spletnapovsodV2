@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * The privacy page's opening band: kicker, the page's single h1 and a short
- * lead. Static by design, same contract as the apartmaji hero.
+ * lead. Static by design, same contract as the nastanitve hero.
  */
 import { hero } from '@/content/zasebnost'
 </script>

@@ -14,7 +14,7 @@
  * lazy-loaded-LCP mistake. The .press dot screen is a sibling ABOVE it, so the
  * drafting texture stays; the content sits above both.
  */
-import { hero } from '@/content/apartmaji'
+import { hero } from '@/content/nastanitve'
 </script>
 
 <template>

@@ -9,17 +9,17 @@
  * NO PRICES (owner's call): the datum is the tier name, and the CTA sends the
  * visitor to ask for a quote.
  */
-import { packages, type AptInclude, type AptEmphasis, type AptSeo } from '@/content/apartmaji'
+import { packages, type NastInclude, type NastEmphasis, type NastSeo } from '@/content/nastanitve'
 
 /**
  * Template type guards. The include union is discriminated by shape: a plain
  * string, an emphasis line (has `strong`), or an SEO disclosure (has
  * `points`). vue-tsc narrows each v-if/v-else branch from these.
  */
-const isString = (i: AptInclude): i is string => typeof i === 'string'
-const isEmphasis = (i: AptInclude): i is AptEmphasis =>
+const isString = (i: NastInclude): i is string => typeof i === 'string'
+const isEmphasis = (i: NastInclude): i is NastEmphasis =>
   typeof i === 'object' && 'strong' in i
-const isSeo = (i: AptInclude): i is AptSeo => typeof i === 'object' && 'points' in i
+const isSeo = (i: NastInclude): i is NastSeo => typeof i === 'object' && 'points' in i
 </script>
 
 <template>

@@ -1,6 +1,6 @@
 /**
- * Posebni pogoji za apartmajske storitve — the STANDALONE document at
- * /pogoji-apartmaji.
+ * Posebni pogoji za nastanitvene storitve — the STANDALONE document at
+ * /pogoji-nastanitve.
  *
  * A SELF-CONTAINED CONTRACT, by the owner's call (avgust 2026). This was a
  * module that leaned on the general terms; it is now one complete document that
@@ -11,13 +11,13 @@
  * the two in step any more, so that is now a human duty.
  *
  * WHEN THIS DOCUMENT APPLIES — article 1, and the point of the rewrite: only
- * where the Naročnik was approached with an akcijska ponudba for apartment
+ * where the Naročnik was approached with an akcijska ponudba for accommodation
  * services, and only for the order made on that offer. Everything else falls to
  * the general terms, which carry a matching pointer here.
  *
  * THIS FILE IS GENERATED, NOT TYPED. The general provisions were ported
  * VERBATIM out of the evaluated pogoji.ts, so no legal text was retyped and
- * none could drift in transcription; the apartment-specific articles were kept
+ * none could drift in transcription; the accommodation-specific articles were kept
  * as written; articles and clauses were renumbered in one pass; and the three
  * outward cross-references were repointed at this document's own articles. The
  * generator asserted that every cross-reference was hit and that no mention of
@@ -25,7 +25,7 @@
  * Re-running it is NOT a maintenance path — it would overwrite later hand
  * edits. Edit this file directly from here on.
  *
- * WORKFLOW REWRITE (avgust 2026): the apartment offer runs on a completely
+ * WORKFLOW REWRITE (avgust 2026): the accommodation offer runs on a completely
  * different flow from the general terms — the owner mass-sends FREE design
  * previews on his own initiative, then, per agreement, one round of revisions
  * or none, then publishes on a demonstration address, and only after full
@@ -48,15 +48,15 @@ import type { NavItem } from './home'
 import type { Article } from './pogoji'
 
 export const meta = {
-  title: 'Posebni pogoji za apartmajske storitve',
+  title: 'Posebni pogoji za nastanitvene storitve',
   description:
-    'Pogoji za izdelavo spletnih strani za apartmaje in sobodajalce. Veljajo za naročila, sklenjena na podlagi akcijske ponudbe za apartmajske storitve.',
+    'Pogoji za izdelavo spletnih strani za nastanitve in sobodajalce. Veljajo za naročila, sklenjena na podlagi akcijske ponudbe za nastanitvene storitve.',
 }
 
 export const hero = {
   kicker: 'Pravni dokumenti',
-  title: 'Posebni pogoji za apartmaje',
-  lead: 'Ti pogoji veljajo za izdelavo spletnih strani za apartmaje, sobe in druge nastanitve, in sicer za naročila, sklenjena na podlagi akcijske ponudbe za apartmajske storitve. So samostojen dokument in ne napotujejo na druge pogoje poslovanja.',
+  title: 'Posebni pogoji za nastanitve',
+  lead: 'Ti pogoji veljajo za izdelavo spletnih strani za nastanitve, in sicer za naročila, sklenjena na podlagi akcijske ponudbe za nastanitvene storitve. So samostojen dokument in ne napotujejo na druge pogoje poslovanja.',
 }
 
 export const articles: Article[] = [
@@ -65,8 +65,8 @@ export const articles: Article[] = [
     n: "1",
     title: "Veljavnost teh pogojev",
     clauses: [
-      { n: "1.1", text: "Ti pogoji urejajo pravice in obveznosti med spodaj navedenim izvajalcem (v nadaljevanju: Izvajalec) in naročnikom storitev (v nadaljevanju: Naročnik) pri izdelavi in vzdrževanju spletnih strani za apartmaje, sobe in druge nastanitvene zmogljivosti." },
-      { n: "1.2", text: "Ti pogoji veljajo izključno za naročila, pri katerih je Izvajalec Naročnika kontaktiral z akcijsko ponudbo za apartmajske storitve, in samo za naročilo, sklenjeno na podlagi te ponudbe. Za naročila, ki niso nastala na podlagi take akcijske ponudbe, ti pogoji ne veljajo." },
+      { n: "1.1", text: "Ti pogoji urejajo pravice in obveznosti med spodaj navedenim izvajalcem (v nadaljevanju: Izvajalec) in naročnikom storitev (v nadaljevanju: Naročnik) pri izdelavi in vzdrževanju spletnih strani za nastanitve, kot so apartmaji, sobe in počitniške hiše." },
+      { n: "1.2", text: "Ti pogoji veljajo izključno za naročila, pri katerih je Izvajalec Naročnika kontaktiral z akcijsko ponudbo za nastanitvene storitve, in samo za naročilo, sklenjeno na podlagi te ponudbe. Za naročila, ki niso nastala na podlagi take akcijske ponudbe, ti pogoji ne veljajo." },
       { n: "1.3", text: "V akcijski ponudbi je vedno navedeno, da zanjo veljajo ti pogoji. Če ponudba tega ne navaja, ti pogoji za tisto naročilo ne veljajo." },
       { n: "1.4", text: "Ta dokument je samostojen in celovit. Za razmerja, za katera velja po prejšnjih odstavkih, se drugi pogoji poslovanja Izvajalca ne uporabljajo." },
       { n: "1.5", text: "Pogoji so sestavni del akcijske ponudbe, predračuna, naročila in pogodbe. Naročnik jih sprejme s podpisom pogodbe, s pisno ali elektronsko potrditvijo ponudbe ali s plačilom avansa, kar nastopi prej." },
@@ -227,7 +227,7 @@ export const articles: Article[] = [
   {
     id: "domena-apt",
     n: "15",
-    title: "Domena pri apartmajskih paketih",
+    title: "Domena pri nastanitvenih paketih",
     clauses: [
       { n: "15.1", text: "Tudi kadar paket vključuje registracijo in vezavo domene, zakup domene ni vključen v ceno. Vključena je le tehnična nastavitev in vezava na spletno mesto." },
       { n: "15.2", text: "Ceno domene določa registrar in jo Izvajalec Naročniku sporoči, preden domeno registrira. Strošek prvega zakupa in vsakoletnega podaljšanja krije Naročnik." },

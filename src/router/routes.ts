@@ -11,9 +11,9 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/views/HomeView.vue'),
   },
   {
-    path: '/apartmaji',
-    name: 'apartmaji',
-    component: () => import('@/views/ApartmajiView.vue'),
+    path: '/nastanitve',
+    name: 'nastanitve',
+    component: () => import('@/views/NastanitveView.vue'),
   },
   {
     path: '/zasebnost',
@@ -26,9 +26,9 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/views/PogojiSplosnoView.vue'),
   },
   {
-    path: '/pogoji-apartmaji',
-    name: 'pogoji-apartmaji',
-    component: () => import('@/views/PogojiApartmajiView.vue'),
+    path: '/pogoji-nastanitve',
+    name: 'pogoji-nastanitve',
+    component: () => import('@/views/PogojiNastanitveView.vue'),
   },
   {
     path: '/404',

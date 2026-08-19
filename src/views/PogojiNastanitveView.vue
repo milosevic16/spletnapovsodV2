@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * /pogoji-apartmaji — the service module of terms for apartment work.
+ * /pogoji-nastanitve — the service module of terms for accommodation work.
  *
  * It renders the SAME components as the general terms, with its own content:
  * one instrument, two documents. The hero carries the standing pointer back to
@@ -12,14 +12,14 @@
  * documents drift apart.
  */
 import { useHead } from '@unhead/vue'
-import { meta, hero, articles, updated, nav, ctaPrimary } from '@/content/pogoji-apartmaji'
+import { meta, hero, articles, updated, nav, ctaPrimary } from '@/content/pogoji-nastanitve'
 import { SITE_ORIGIN, SITE_NAME } from '@/lib/constants'
 import SiteMasthead from '@/components/SiteMasthead.vue'
 import PogojiHero from '@/components/PogojiHero.vue'
 import PogojiDocument from '@/components/PogojiDocument.vue'
 import SiteFooter from '@/components/SiteFooter.vue'
 
-const canonical = `${SITE_ORIGIN}/pogoji-apartmaji`
+const canonical = `${SITE_ORIGIN}/pogoji-nastanitve`
 const orgId = `${SITE_ORIGIN}/#org`
 
 const jsonLd = {
@@ -61,7 +61,7 @@ useHead({
   ],
   script: [
     {
-      id: 'ld-pogoji-apartmaji',
+      id: 'ld-pogoji-nastanitve',
       type: 'application/ld+json',
       innerHTML: JSON.stringify(jsonLd),
     },

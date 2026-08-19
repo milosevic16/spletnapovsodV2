@@ -7,7 +7,7 @@
  * Optionally renders a standing note pointing at a RELATED document. Since
  * avgust 2026 the two terms documents are independent of each other, so this is
  * no longer a precedence note: it is the general document telling a reader who
- * came in on an apartment promotion that a different document governs them.
+ * came in on an accommodation promotion that a different document governs them.
  */
 defineProps<{
   hero: { kicker: string; title: string; lead: string }

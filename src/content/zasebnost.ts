@@ -1,7 +1,7 @@
 /**
  * All visible copy for the /zasebnost subpage (privacy policy + provider
  * identity). Components render; this module owns every string. Machine
- * identifiers (anchor ids) stay ASCII, like the apartmaji subpage.
+ * identifiers (anchor ids) stay ASCII, like the nastanitve subpage.
  *
  * SOURCE OF THE FACTS, and their status:
  *   - Provider identity (POVSOD, Gregor Anželj, s.p.; MŠ 6774644000;

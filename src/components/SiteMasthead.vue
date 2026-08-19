@@ -480,7 +480,7 @@ onUnmounted(() => {
      0,5,0 ON PURPOSE: the pinned face's brand rule sets `opacity: 1` at
      0,4,0 and sits later in the file, so any tie re-shows the wordmark over
      the home mark in the bar — the two overlapping logos reported on
-     /apartmaji, one specificity war earlier. The extra .masthead wins
+     /nastanitve, one specificity war earlier. The extra .masthead wins
      outright whatever the source order. (It also outranks the snap latch,
      which is fine: on a pin flip both of this rule's faces are hidden, so
      the surviving size tweens run invisibly.) */

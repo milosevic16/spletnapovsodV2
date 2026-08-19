@@ -2,7 +2,7 @@
 /**
  * /zasebnost — the privacy policy and provider-identity subpage.
  *
- * Same contract as home and apartmaji: everything a crawler needs is in the
+ * Same contract as home and nastanitve: everything a crawler needs is in the
  * prerendered HTML, the head is emitted in setup, the canonical is absolute
  * from ONE constant, and the page is prerendered flat to dist/zasebnost.html so
  * the canonical carries no trailing slash.

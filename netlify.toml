@@ -23,7 +23,7 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
     # 'self', not 'none', since avgust 2026: the Primeri preview overlay on
-    # /apartmaji iframes the site's own demo pages (/primeri/*). Same-origin
+    # /nastanitve iframes the site's own demo pages (/primeri/*). Same-origin
     # framing only — every third-party origin is still refused, which is the
     # actual clickjacking threat. Netlify concatenates duplicate CSP headers
     # (both would be enforced, strictest wins), so this cannot be overridden
@@ -54,19 +54,19 @@
   [headers.values]
     Cache-Control = "no-cache"
 
-# The apartment subpage. BOTH paths: header rules match the REQUEST path, so
-# the rule on the .html file does not cover a visit to /apartmaji.
+# The nastanitve subpage. BOTH paths: header rules match the REQUEST path, so
+# the rule on the .html file does not cover a visit to /nastanitve.
 [[headers]]
-  for = "/apartmaji"
+  for = "/nastanitve"
   [headers.values]
     Cache-Control = "no-cache"
 
 [[headers]]
-  for = "/apartmaji.html"
+  for = "/nastanitve.html"
   [headers.values]
     Cache-Control = "no-cache"
 
-# Same as apartmaji: the rule on the .html file does not cover a visit to
+# Same as nastanitve: the rule on the .html file does not cover a visit to
 # /zasebnost, so both request paths get an explicit no-cache HTML rule.
 [[headers]]
   for = "/zasebnost"
@@ -91,12 +91,12 @@
     Cache-Control = "no-cache"
 
 [[headers]]
-  for = "/pogoji-apartmaji"
+  for = "/pogoji-nastanitve"
   [headers.values]
     Cache-Control = "no-cache"
 
 [[headers]]
-  for = "/pogoji-apartmaji.html"
+  for = "/pogoji-nastanitve.html"
   [headers.values]
     Cache-Control = "no-cache"
 

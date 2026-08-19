@@ -1,8 +1,8 @@
 /**
- * All visible copy for the /apartmaji subpage. Components render; this module
+ * All visible copy for the /nastanitve subpage. Components render; this module
  * owns every string. Machine identifiers (ids, anchor targets) stay English.
  *
- * SOURCE: the owner's notes for the apartment offer (avgust 2026), rewritten
+ * SOURCE: the owner's notes for the accommodation offer (avgust 2026), rewritten
  * to real sentences. The house copy rules hold: no em dashes in visible copy,
  * no rhetorical-question hook, no exclamation marks, no unbacked superlatives,
  * lists as long as the content wants rather than reflexively three.
@@ -29,43 +29,43 @@
  *  - an SEO line that opens (native <details>) to its own detail list, so a
  *    visitor can click to see exactly what the optimisation covers.
  */
-export interface AptEmphasis {
+export interface NastEmphasis {
   lead: string
   strong: string
   tail: string
 }
 
-export interface AptSeo {
+export interface NastSeo {
   summary: string
   intro: string
   points: string[]
 }
 
-export type AptInclude = string | AptEmphasis | AptSeo
+export type NastInclude = string | NastEmphasis | NastSeo
 
-export interface AptPackage {
+export interface NastPackage {
   id: string
   name: string
   summary: string
-  includes: AptInclude[]
+  includes: NastInclude[]
   footnote?: string
 }
 
 export const meta = {
-  title: 'Spletna stran za apartma: ponudba in paketi',
+  title: 'Spletna stran za nastanitev: ponudba in paketi',
   description:
-    'Izdelamo spletno stran za vaš apartma ali sobe: oglaševanje izven booking platform, prikaz zasedenosti in povpraševanje prek strani. Trije paketi.',
+    'Izdelamo spletno stran za vašo nastanitev: oglaševanje izven booking platform, prikaz zasedenosti in povpraševanje prek strani. Trije paketi.',
 }
 
 export const hero = {
-  kicker: 'Apartmaji in sobodajalci',
-  title: 'Spletna stran za vaš apartma',
-  lead: 'Z lastno spletno stranjo apartmaji, dvorane in počitniške hiše ne pridobijo le vtisa profesionalnosti, sploh pri poslovnih rezervacijah, temveč stran služi tudi kot odličen kanal rezervacij, preko katerega se lahko izognete proviziji booking platform, ali pa stran uporabite kot unikaten medij za oglaševanje, ki se razlikuje od template ponudb booking platform.',
+  kicker: 'Za ponudnike nastanitev',
+  title: 'Spletna stran za vašo nastanitev',
+  lead: 'Z lastno spletno stranjo ponudniki nastanitev in dvoran ne pridobijo le vtisa profesionalnosti, sploh pri poslovnih rezervacijah, temveč stran služi tudi kot odličen kanal rezervacij, preko katerega se lahko izognete proviziji booking platform, ali pa stran uporabite kot unikaten medij za oglaševanje, ki se razlikuje od template ponudb booking platform.',
   ctaLabel: 'Prejmite stran v roku 48 ur',
   ctaTarget: 'kontakt',
 }
 
-export interface AptExample {
+export interface NastExample {
   /** Machine id — the image basename: /img/primeri/<id>-<width>.<ext>. */
   id: string
   /** The shipped demo page this card previews — a real URL, machine identifier. */
@@ -101,23 +101,23 @@ export const examples = {
       demo: '/primeri/veduta/index.html',
       name: 'Veduta',
       gloss: 'Fotografija čez ves zaslon, pod njo pas s ključnimi podatki.',
-      alt: 'Primer strani s celozaslonsko fotografijo, imenom apartmaja in pasom s podatki.',
+      alt: 'Primer strani s celozaslonsko fotografijo, imenom nastanitve in pasom s podatki.',
     },
     {
       id: 'primer-mariven',
       demo: '/primeri/mariven-stay/index.html',
       name: 'Rezidenca',
-      gloss: 'Umirjena serifna tipografija, ime apartmaja na sredini fotografije.',
-      alt: 'Primer strani z imenom apartmaja na sredini celozaslonske fotografije.',
+      gloss: 'Umirjena serifna tipografija, ime nastanitve na sredini fotografije.',
+      alt: 'Primer strani z imenom nastanitve na sredini celozaslonske fotografije.',
     },
     {
       id: 'primer-atelier',
       demo: '/primeri/atelier/index.html',
       name: 'Atelje',
-      gloss: 'Deljena postavitev: podatki o apartmaju ob strani, vsebina teče mimo njih.',
-      alt: 'Primer strani z deljeno postavitvijo: levo ime apartmaja s podatki, desno opis in galerija.',
+      gloss: 'Deljena postavitev: podatki o nastanitvi ob strani, vsebina teče mimo njih.',
+      alt: 'Primer strani z deljeno postavitvijo: levo ime nastanitve s podatki, desno opis in galerija.',
     },
-  ] satisfies AptExample[],
+  ] satisfies NastExample[],
   /**
    * Interaction-only strings for the fullscreen preview overlay — rendered
    * only after a click, so the content guard skips this key by contract.
@@ -139,7 +139,7 @@ export const packages = {
       id: 'basic',
       name: 'Osnovna',
       summary:
-        'Za oglaševanje apartmaja izven booking platform in urejen vtis pri poslovnih rezervacijah.',
+        'Za oglaševanje nastanitve izven booking platform in urejen vtis pri poslovnih rezervacijah.',
       includes: [
         'Spletna stran z lastno domeno',
         'Prilagojena za mobilne naprave',
@@ -203,7 +203,7 @@ export const packages = {
         'Integriran plačilni sistem: gost plača neposredno na vaši strani',
       ],
     },
-  ] satisfies AptPackage[],
+  ] satisfies NastPackage[],
 }
 
 export const revisions = {

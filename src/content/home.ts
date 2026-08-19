@@ -99,7 +99,7 @@ export const nav: NavItem[] = [
 
 /**
  * THE HOME PAGE'S HEADER STOPS — three buttons, by the owner's call (avgust
- * 2026): home, the apartment offer, and the page's single CTA. Deliberately
+ * 2026): home, the accommodation offer, and the page's single CTA. Deliberately
  * separate from `nav` below, which still carries the four section anchors and
  * still feeds the FOOTER: on a phone the footer nav is the complete in-flow
  * navigation, so emptying it of section links would strand a phone visitor.
@@ -107,7 +107,7 @@ export const nav: NavItem[] = [
  */
 export const headerNav: NavItem[] = [
   { target: 'domov', href: '/', label: 'Domov' },
-  { target: 'apartmaji', href: '/apartmaji', label: 'Apartmajska ponudba' },
+  { target: 'nastanitve', href: '/nastanitve', label: 'Nastanitvena ponudba' },
 ]
 
 export const hero: Hero = {
@@ -540,7 +540,7 @@ export const footer = {
   legalLinks: [
     { label: 'Politika zasebnosti', href: '/zasebnost' },
     { label: 'Splošni pogoji', href: '/pogoji-splosno' },
-    { label: 'Pogoji za apartmaje', href: '/pogoji-apartmaji' },
+    { label: 'Pogoji za nastanitve', href: '/pogoji-nastanitve' },
   ],
 }
 

@@ -35,8 +35,8 @@ const jsonLd = {
       about: { '@id': orgId },
       publisher: { '@id': orgId },
       // Mirrors the VISIBLE pointer in the hero: a reader who came in on an
-      // apartment promotion is governed by the apartment document instead.
-      relatedLink: `${SITE_ORIGIN}/pogoji-apartmaji`,
+      // accommodation promotion is governed by the accommodation document instead.
+      relatedLink: `${SITE_ORIGIN}/pogoji-nastanitve`,
     },
   ],
 }

@@ -36,7 +36,7 @@ import { CONTACT_EMAIL } from '@/lib/constants'
 import { createFx, prefersReducedMotion } from '@/lib/fx'
 
 /**
- * Subpage variants of the one shared form. The apartment page adds a package
+ * Subpage variants of the one shared form. The nastanitve page adds a package
  * chip row and relabels the message field; the home page passes nothing and
  * gets the form exactly as before. Undeclared = home behaviour, so a future
  * page cannot half-configure it by accident.
@@ -60,7 +60,7 @@ const email = ref('')
 const topic = ref('')
 const message = ref('')
 const botcheck = ref('')
-/** The chosen package (apartment page only). Optional by design: the tiers are
+/** The chosen package (nastanitve page only). Optional by design: the tiers are
  *  an aid, not a gate — nobody is refused for not having picked one yet. */
 const pkg = ref('')
 
@@ -347,7 +347,7 @@ onUnmounted(() => fx.dispose())
           </div>
         </fieldset>
 
-        <!-- The tier chips — apartment page only (prop-driven). Same chip
+        <!-- The tier chips — nastanitve page only (prop-driven). Same chip
              mechanics as the topic row; optional, so no required/invalid
              wiring: the tiers are an aid, not a gate. -->
         <fieldset v-if="props.packageChoices?.length" class="form__cell form__cell--chips">

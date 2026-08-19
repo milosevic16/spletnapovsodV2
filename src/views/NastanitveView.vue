@@ -1,11 +1,11 @@
 <script setup lang="ts">
 /**
- * /apartmaji — the offer subpage for apartment owners and sobodajalci.
+ * /nastanitve — the offer subpage for accommodation owners and sobodajalci.
  *
  * Same contract as the home page: everything a crawler needs is in the
  * prerendered HTML, the head is emitted in setup (not on mount), the canonical
  * is absolute from ONE constant, and the page is prerendered flat to
- * dist/apartmaji.html so the canonical carries no trailing slash.
+ * dist/nastanitve.html so the canonical carries no trailing slash.
  *
  * NOT LINKED FROM THE MAIN NAV, by decision: it reads as a page for one
  * audience rather than a section of the one-pager, and adding it to the home
@@ -18,13 +18,13 @@
  * Service with no Offer, never a fabricated number.
  */
 import { useHead } from '@unhead/vue'
-import { meta, nav, ctaPrimary, contactExtras, packages } from '@/content/apartmaji'
+import { meta, nav, ctaPrimary, contactExtras, packages } from '@/content/nastanitve'
 import { SITE_ORIGIN, SITE_NAME } from '@/lib/constants'
 import SiteMasthead from '@/components/SiteMasthead.vue'
-import ApartmajiHero from '@/components/ApartmajiHero.vue'
-import ApartmajiExamples from '@/components/ApartmajiExamples.vue'
-import ApartmajiPackages from '@/components/ApartmajiPackages.vue'
-import ApartmajiRevisions from '@/components/ApartmajiRevisions.vue'
+import NastanitveHero from '@/components/NastanitveHero.vue'
+import NastanitveExamples from '@/components/NastanitveExamples.vue'
+import NastanitvePackages from '@/components/NastanitvePackages.vue'
+import NastanitveRevisions from '@/components/NastanitveRevisions.vue'
 import ContactSection from '@/components/ContactSection.vue'
 import SiteFooter from '@/components/SiteFooter.vue'
 
@@ -32,7 +32,7 @@ import SiteFooter from '@/components/SiteFooter.vue'
  *  so a renamed tier can never leave a stale chip. */
 const packageChoices = packages.items.map((p) => ({ value: p.id, label: p.name }))
 
-const canonical = `${SITE_ORIGIN}/apartmaji`
+const canonical = `${SITE_ORIGIN}/nastanitve`
 const orgId = `${SITE_ORIGIN}/#org`
 
 const jsonLd = {
@@ -43,7 +43,7 @@ const jsonLd = {
       '@id': `${canonical}#service`,
       name: meta.title,
       description: meta.description,
-      serviceType: 'Izdelava spletnih strani za apartmaje',
+      serviceType: 'Izdelava spletnih strani za nastanitve',
       url: canonical,
       inLanguage: 'sl',
       areaServed: 'SI',
@@ -77,7 +77,7 @@ useHead({
     {
       // Unique id: unhead dedupes by id, and a shared one would let this page's
       // node replace the home page's.
-      id: 'ld-apartmaji',
+      id: 'ld-nastanitve',
       type: 'application/ld+json',
       innerHTML: JSON.stringify(jsonLd),
     },
@@ -88,10 +88,10 @@ useHead({
 <template>
   <SiteMasthead :items="nav" :cta="ctaPrimary" :home="{ href: '/', label: 'Domov' }" />
   <main id="main">
-    <ApartmajiHero />
-    <ApartmajiExamples />
-    <ApartmajiPackages />
-    <ApartmajiRevisions />
+    <NastanitveHero />
+    <NastanitveExamples />
+    <NastanitvePackages />
+    <NastanitveRevisions />
     <ContactSection
       :package-choices="packageChoices"
       :package-label="contactExtras.packageLabel"

@@ -286,13 +286,13 @@ if (home) {
   const p404 = pages.find((p) => p.file === '404.html')
   if (p404 && notFound) check(collect(notFound, []), p404, '404')
 
-  // The apartment subpage owns its own content module, checked against its own
+  // The nastanitve subpage owns its own content module, checked against its own
   // emitted page under the same contract: every visible string in the static
   // HTML. A page that ever stops emitting its copy fails the build.
-  const apt = pages.find((p) => p.file === 'apartmaji.html')
+  const apt = pages.find((p) => p.file === 'nastanitve.html')
   if (apt) {
-    const aptContent = await importTs('src/content/apartmaji.ts', 'apartmaji')
-    check(collect(aptContent, ['feedback']), apt, 'apartmaji')
+    const aptContent = await importTs('src/content/nastanitve.ts', 'nastanitve')
+    check(collect(aptContent, ['feedback']), apt, 'nastanitve')
   }
 
   // The privacy subpage, same contract: every visible legal string in its own
@@ -301,7 +301,7 @@ if (home) {
   // The two terms documents, same contract as every other page module.
   for (const [file, mod, label] of [
     ['pogoji-splosno.html', 'src/content/pogoji.ts', 'pogoji-splosno'],
-    ['pogoji-apartmaji.html', 'src/content/pogoji-apartmaji.ts', 'pogoji-apartmaji'],
+    ['pogoji-nastanitve.html', 'src/content/pogoji-nastanitve.ts', 'pogoji-nastanitve'],
   ]) {
     const page = pages.find((p) => p.file === file)
     if (!page) continue

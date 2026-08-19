@@ -68,9 +68,9 @@
  * fully functional immediately. The animation is the garnish, never the door.
  */
 import { onUnmounted } from 'vue'
-import { examples } from '@/content/apartmaji'
+import { examples } from '@/content/nastanitve'
 import { createFx, prefersReducedMotion } from '@/lib/fx'
-import type { AptExample } from '@/content/apartmaji'
+import type { NastExample } from '@/content/nastanitve'
 
 /** Emitted by scripts/build-primeri-images.mjs — 2:1 crops at these widths. */
 const WIDTHS = [560, 840, 1104]
@@ -238,7 +238,7 @@ const mobilePlate = (id: string) => `/img/primeri/${id}-mobile-780.jpg`
 
 /** Warm the phone plate before the click lands, once per card. */
 const warmed = new Set<string>()
-function warm(ex: AptExample) {
+function warm(ex: NastExample) {
   if (warmed.has(ex.id)) return
   if (!window.matchMedia('(max-width: 809.98px)').matches) return
   warmed.add(ex.id)
@@ -255,7 +255,7 @@ function closeGlyph(): string {
   )
 }
 
-function openPreview(e: MouseEvent, ex: AptExample) {
+function openPreview(e: MouseEvent, ex: NastExample) {
   // Modified clicks keep native behaviour (new tab etc.) — same etiquette as
   // the global interceptor, which skips them too.
   if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return

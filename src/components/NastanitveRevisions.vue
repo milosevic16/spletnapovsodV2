@@ -7,7 +7,7 @@
  * limit (a round is bounded, and out-of-scope work is priced), which the house
  * voice rules ask for over an open-ended promise.
  */
-import { revisions } from '@/content/apartmaji'
+import { revisions } from '@/content/nastanitve'
 </script>
 
 <template>

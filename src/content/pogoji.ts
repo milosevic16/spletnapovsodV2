@@ -7,7 +7,7 @@
  * not here; this module is the document itself.
  *
  * THE TWO-DOCUMENT ARCHITECTURE. These are the GENERAL terms. Service-specific
- * terms (currently: apartmaji) live in their own module and, by their own
+ * terms (currently: nastanitve) live in their own module and, by their own
  * precedence clause, override these where they differ. That is the Dutch and
  * Belgian pattern the template's own annex describes, and it is the structure
  * that keeps OZ 83 (ambiguity is read against the drafter) from working against
@@ -90,7 +90,7 @@ export const articles: Article[] = [
       },
       {
         n: '1.3',
-        text: 'Za posamezne storitve lahko Izvajalec objavi samostojne posebne pogoje. Kadar za neko naročilo veljajo taki posebni pogoji, ti splošni pogoji za tisto naročilo ne veljajo. To velja zlasti za naročila, sklenjena na podlagi akcijske ponudbe za apartmajske storitve, za katera veljajo posebni pogoji za apartmaje.',
+        text: 'Za posamezne storitve lahko Izvajalec objavi samostojne posebne pogoje. Kadar za neko naročilo veljajo taki posebni pogoji, ti splošni pogoji za tisto naročilo ne veljajo. To velja zlasti za naročila, sklenjena na podlagi akcijske ponudbe za nastanitvene storitve, za katera veljajo posebni pogoji za nastanitve.',
       },
       {
         n: '1.4',
@@ -627,17 +627,17 @@ export const articles: Article[] = [
 ]
 
 /**
- * THE POINTER TO THE APARTMENT TERMS. Since avgust 2026 the apartment document
+ * THE POINTER TO THE ACCOMMODATION TERMS. Since avgust 2026 the accommodation document
  * is standalone and governs on its own whenever the customer was approached
- * with an akcijska ponudba for apartment services. A reader who arrived that
+ * with an akcijska ponudba for accommodation services. A reader who arrived that
  * way must not read this document and assume it binds them, so this document
  * says so at the top and links across. Rendered by PogojiHero as a standing
  * note; the href is a machine identifier and stays ASCII.
  */
 export const related = {
-  label: 'Posebni pogoji za apartmaje',
-  href: '/pogoji-apartmaji',
-  note: 'Če vas je Izvajalec kontaktiral z akcijsko ponudbo za apartmajske storitve, za to naročilo ti splošni pogoji ne veljajo. Zanj veljajo posebni pogoji za apartmaje, ki so samostojen dokument:',
+  label: 'Posebni pogoji za nastanitve',
+  href: '/pogoji-nastanitve',
+  note: 'Če vas je Izvajalec kontaktiral z akcijsko ponudbo za nastanitvene storitve, za to naročilo ti splošni pogoji ne veljajo. Zanj veljajo posebni pogoji za nastanitve, ki so samostojen dokument:',
 }
 
 export const updated = { label: 'Različica', value: 'v1.1, osnutek, avgust 2026' }
