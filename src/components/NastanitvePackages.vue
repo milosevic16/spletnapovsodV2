@@ -29,8 +29,14 @@ const isSeo = (i: NastInclude): i is NastSeo => typeof i === 'object' && 'points
       <h2 class="aptp__title">{{ packages.title }}</h2>
 
       <ol class="aptp__register">
-        <li v-for="p in packages.items" :key="p.id" class="aptp__row">
+        <li v-for="p in packages.items" :key="p.id" class="aptp__row" :class="`aptp__row--${p.id}`">
           <div class="aptp__datum">
+            <!-- The tier's material specimen — a drawing legend's swatch, so
+                 the three entries read apart at a glance. Density ascends with
+                 the tier: outlined void, 45° section hatch, solid poché with
+                 the cut riding its top edge. Decorative (the includes lists
+                 carry the real differences), hence aria-hidden. -->
+            <span class="aptp__swatch" aria-hidden="true"></span>
             <h3 class="aptp__name">{{ p.name }}</h3>
           </div>
 
@@ -109,6 +115,13 @@ const isSeo = (i: NastInclude): i is NastSeo => typeof i === 'object' && 'points
   border-bottom: 1px solid var(--mreza-strong);
 }
 
+.aptp__datum {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
 .aptp__name {
   margin: 0;
   font-family: var(--font-display);
@@ -117,6 +130,45 @@ const isSeo = (i: NastInclude): i is NastSeo => typeof i === 'object' && 'points
   line-height: 1.15;
   letter-spacing: -0.01em;
   color: var(--grafit);
+}
+
+/* The specimen: one square per tier, drawn with the sheet's own conventions —
+   line work and fills only, no shadow, no rounded corner. The hatches are
+   hairline gradients, the same technique as the .press screen: line work by
+   gradient, never a colour ramp. */
+.aptp__swatch {
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--mreza-strong);
+  background-color: var(--list-2);
+}
+
+/* Osnovna — the void convention: an outlined bay, one diagonal. */
+.aptp__row--basic .aptp__swatch {
+  background-image: linear-gradient(
+    45deg,
+    transparent calc(50% - 0.5px),
+    var(--mreza-strong) calc(50% - 0.5px) calc(50% + 0.5px),
+    transparent calc(50% + 0.5px)
+  );
+}
+
+/* Napredna — 45° section hatch: drawn substance. */
+.aptp__row--advanced .aptp__swatch {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent 0 5px,
+    var(--grafit-2) 5px 6px
+  );
+}
+
+/* Profi — poché: the solid mass, and the one red as the cut plane along its
+   top edge. The red already owns "the cut + the CTA" on this site, so the top
+   tier carrying it is the system speaking, not a sprinkle. */
+.aptp__row--profi .aptp__swatch {
+  background-color: var(--grafit);
+  border-color: var(--grafit);
+  border-top: 3px solid var(--rez);
 }
 
 .aptp__summary {
@@ -325,6 +377,23 @@ const isSeo = (i: NastInclude): i is NastSeo => typeof i === 'object' && 'points
     grid-template-columns: minmax(0, 1fr);
     gap: var(--space-4);
     padding-block: var(--space-8);
+  }
+
+  /* One column: the specimen sits beside the name, not above it. */
+  .aptp__datum {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .aptp__swatch {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 auto;
+  }
+
+  .aptp__row--profi .aptp__swatch {
+    border-top-width: 2px;
   }
 
   .aptp__foot {

@@ -449,7 +449,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section id="primeri" class="apte press press--light">
+  <section id="primeri" class="apte">
     <div class="container">
       <p class="kicker apte__kicker">{{ examples.kicker }}</p>
       <h2 class="apte__title">{{ examples.title }}</h2>

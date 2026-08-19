@@ -18,7 +18,7 @@
  * Service with no Offer, never a fabricated number.
  */
 import { useHead } from '@unhead/vue'
-import { meta, nav, ctaPrimary, contactExtras, packages } from '@/content/nastanitve'
+import { meta, nav, headerNav, ctaPrimary, contactExtras, packages } from '@/content/nastanitve'
 import { SITE_ORIGIN, SITE_NAME } from '@/lib/constants'
 import SiteMasthead from '@/components/SiteMasthead.vue'
 import NastanitveHero from '@/components/NastanitveHero.vue'
@@ -86,7 +86,7 @@ useHead({
 </script>
 
 <template>
-  <SiteMasthead :items="nav" :cta="ctaPrimary" :home="{ href: '/', label: 'Domov' }" />
+  <SiteMasthead :items="headerNav" :cta="ctaPrimary" :home="{ href: '/', label: 'Domov' }" />
   <main id="main">
     <NastanitveHero />
     <NastanitveExamples />

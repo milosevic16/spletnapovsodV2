@@ -107,7 +107,7 @@ export const nav: NavItem[] = [
  */
 export const headerNav: NavItem[] = [
   { target: 'domov', href: '/', label: 'Domov' },
-  { target: 'nastanitve', href: '/nastanitve', label: 'Nastanitvena ponudba' },
+  { target: 'nastanitve', href: '/nastanitve', label: 'Ponudba za nastanitve' },
 ]
 
 export const hero: Hero = {
@@ -461,7 +461,6 @@ export const contact = {
   topics: [
     { value: 'new-site', label: 'Nova spletna stran' },
     { value: 'redesign', label: 'Prenova obstoječe strani' },
-    { value: 'ecommerce-booking', label: 'Trgovina ali rezervacije' },
     { value: 'other', label: 'Drugo' },
   ] satisfies ContactTopic[],
   /** Expectation-setting next to the form. */
@@ -540,7 +539,7 @@ export const footer = {
   legalLinks: [
     { label: 'Politika zasebnosti', href: '/zasebnost' },
     { label: 'Splošni pogoji', href: '/pogoji-splosno' },
-    { label: 'Pogoji za nastanitve', href: '/pogoji-nastanitve' },
+    { label: 'Pogoji ponudb za nastanitve', href: '/pogoji-nastanitve' },
   ],
 }
 

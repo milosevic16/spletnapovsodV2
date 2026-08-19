@@ -75,6 +75,17 @@ import { hero } from '@/content/nastanitve'
   object-position: center;
 }
 
+/* A phone-width crop of this 2.33:1 room shows one narrow slice. Centred it
+   lands on the empty wall over the sofa; the picture's own subject — the
+   pendant lights and the dining table — sits at ~61–82% of the width, so the
+   crop aims there (80% keeps the window centred on the lamps once cover's
+   percentage mapping is accounted for). */
+@media (max-width: 809px) {
+  .apth__bg {
+    object-position: 80% center;
+  }
+}
+
 /* The .press dot screen, re-laid OVER the image so the drafting texture is not
    buried by it. Pure decoration. */
 .apth__screen {

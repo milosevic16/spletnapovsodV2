@@ -231,8 +231,20 @@ export const nav: NavItem[] = [
   { target: 'kontakt', label: 'Kontakt' },
 ]
 
+/**
+ * The HEADER'S OWN stops (owner's call): Domov — rendered by the masthead's
+ * `home` prop — then Paketi, Popravki, and the CTA. Primeri and Kontakt stay
+ * reachable through the footer, which keeps the complete `nav` above: on a
+ * phone the footer is the full in-flow navigation, so it must not thin out
+ * with the header.
+ */
+export const headerNav: NavItem[] = [
+  { target: 'paketi', label: 'Paketi' },
+  { target: 'popravki', label: 'Popravki' },
+]
+
 /** The masthead CTA. Short: the strip is one row and the CTA never wraps. */
-export const ctaPrimary = { label: 'Povprašajte', target: 'kontakt' }
+export const ctaPrimary = { label: 'Naročite stran', target: 'kontakt' }
 
 /**
  * This page's overrides for the SHARED contact form (ContactSection props).

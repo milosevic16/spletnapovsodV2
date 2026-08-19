@@ -336,7 +336,10 @@ onUnmounted(() => {
   .masthead--spread .masthead__panel {
     width: 100%;
     justify-content: space-between;
-    padding-inline: var(--space-10);
+    /* The side inset pulls the outer stops toward the middle: the owner read
+       the strip as too spread at 40px, so the outer margin roughly triples on
+       a wide screen (128px at 1440) and the three land closer together. */
+    padding-inline: clamp(2.5rem, 8.9vw, 8rem);
     column-gap: var(--space-10);
   }
 
