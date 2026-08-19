@@ -78,9 +78,14 @@ const props = defineProps<{
             class="pgd__clause"
             :class="{ 'pgd__clause--todo': clause.todo }"
           >
+            <!-- Number and flag butted together: a newline between them
+                 condenses to a text-node space in the client render, and the
+                 emitted HTML's minifier strips that space — one hydration
+                 text mismatch per clause (measured: ~100 across the two terms
+                 pages). The flag is display:block, so no visual gap ever came
+                 from it. -->
             <p class="pgd__clause-n">
-              {{ clause.n }}
-              <span v-if="clause.todo" class="pgd__clause-flag">dopolniti</span>
+              {{ clause.n }}<span v-if="clause.todo" class="pgd__clause-flag">dopolniti</span>
             </p>
             <div class="pgd__clause-body">
               <p class="pgd__text">{{ clause.text }}</p>

@@ -82,6 +82,35 @@ onMounted(() => {
   veil?.addEventListener('animationend', (e) => {
     if (e.animationName === 'veil-done') cleanupVeil()
   })
+  /* TWO GUARDS for mounts that arrive off the veil's clock. Hydration keeps
+     prod on it (main.ts), but the dev server client-renders every node at
+     mount, and a slow-enough prod load can mount after the veil has already
+     finished — in both, the settles' assumption that they share the veil's t0
+     breaks, and the header waits out its 2.63s delay against a page the sheet
+     has already revealed.
+
+     1. The veil is already spent (its veil-done animation finished before this
+        listener existed, so the event is gone — or it will never fire: reduced
+        motion sets display:none and no animation is ever created): clean up
+        NOW instead of leaving the page to the 12s net.
+     2. The veil is still running but THIS mount created settle animations
+        younger than it (dev's client render; any future hydration bail):
+        re-anchor their startTime to the veil's, so they play exactly as
+        choreographed — already-elapsed portions resolve instantly, and on a
+        healthy hydrated load every startTime is equal and this writes
+        nothing. */
+  const veilDone = veil
+    ?.getAnimations?.()
+    .find((a) => (a as CSSAnimation).animationName === 'veil-done')
+  if (!veilDone || veilDone.playState === 'finished' || veilDone.playState === 'idle') {
+    cleanupVeil()
+  } else if (veilDone.startTime != null && document.getAnimations) {
+    for (const a of document.getAnimations()) {
+      const name = (a as CSSAnimation).animationName
+      if (name?.startsWith('settle-') && a.startTime !== veilDone.startTime)
+        a.startTime = veilDone.startTime
+    }
+  }
   veilTimer = window.setTimeout(cleanupVeil, VEIL_NET_MS)
 })
 onUnmounted(() => {

@@ -430,10 +430,16 @@ const sourceLines = computed(() => [
   { id: '', text: `<blockquote>${invisible.quote}</blockquote>` },
   { id: '', text: `<p>${invisible.quoteRest}</p>` },
   { id: '', text: `<p>${invisible.lead}</p>` },
+  /* No leading indentation on the nested lines: .trad__line renders with
+     default white-space, so leading spaces never displayed anyway (CSS
+     collapses them) — but the emitted HTML's minifier STRIPS them while the
+     client render keeps them, and hydration flags every such line as a text
+     mismatch (measured: 8 warnings per load). The nesting reads from the
+     article wrapper lines. */
   ...invisible.items.flatMap((item) => [
     { id: '', text: `<article id="${item.id}">` },
-    { id: '', text: `  <h3>${item.label}</h3>` },
-    { id: '', text: `  <p>${item.detail}</p>` },
+    { id: '', text: `<h3>${item.label}</h3>` },
+    { id: '', text: `<p>${item.detail}</p>` },
     { id: '', text: `</article>` },
   ]),
   { id: '', text: `<p>${invisible.outro}</p>` },
@@ -548,7 +554,14 @@ onUnmounted(() => {
          Decorative for assistive tech; the rendered layer carries every
          string. -->
     <div ref="screen" class="trad__source" aria-hidden="true">
-      <div class="container trad__source-in" :style="{ marginTop: gapShift + 'px' }">
+      <!-- Zero stays unitless: the emitted HTML's minifier rewrites the
+           SSR'd margin-top:0px to margin-top:0, and hydration compares
+           values, so the client's initial render must produce the same
+           form. Non-zero values only ever exist after mount. -->
+      <div
+        class="container trad__source-in"
+        :style="{ marginTop: gapShift ? gapShift + 'px' : '0' }"
+      >
         <code
           v-for="(line, n) in sourceLines"
           :key="n"

@@ -39,6 +39,19 @@ const fx = createFx()
 
 const items = references.items
 
+/** The ink swatches' hex, in the emitted HTML's own normal form. The build's
+ *  minifier (ssgOptions formatting: 'minify') rewrites inline-style colors —
+ *  lowercases them and collapses repeated pairs (#FFFFFF → #fff) — and
+ *  hydration compares the client's bytes against that, so anything but the
+ *  minified form logs a mismatch on every load. These spans are the project's
+ *  only inline-style hex. (A hex the minifier would swap for a shorter NAMED
+ *  color — #ff0000 → red — would still mismatch; no sampled palette has one.) */
+const cssInk = (hex: string) => {
+  const x = hex.toLowerCase()
+  const m = /^#([0-9a-f])\1([0-9a-f])\2([0-9a-f])\3$/.exec(x)
+  return m ? `#${m[1]}${m[2]}${m[3]}` : x
+}
+
 /**
  * How many projects stand at rest. Six is more work than either layout wants
  * to show at once — a phone would scroll through six full-width belts before
@@ -291,11 +304,13 @@ onUnmounted(() => {
                      the materials legend it is. Decorative, so hidden from the
                      accessibility tree. -->
                 <span class="wkr__inks" aria-hidden="true">
+                  <!-- cssInk: the minifier's normal form, or hydration logs a
+                       mismatch — see the helper. -->
                   <span
                     v-for="ink in item.inks"
                     :key="ink"
                     class="wkr__ink"
-                    :style="{ background: ink }"
+                    :style="{ background: cssInk(ink) }"
                   ></span>
                 </span>
               </span>
