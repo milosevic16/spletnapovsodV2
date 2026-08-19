@@ -451,14 +451,25 @@ onUnmounted(() => {
     pointer-events: auto;
   }
 
-  /* The persistent home logo takes the pinned wordmark's job on subpages, so
-     the wordmark stands down and they never share the top-left.
-     DOUBLED WITH --live, and that is the fix for the two overlapping logos on
-     /apartmaji: at 0,2,0 this rule was tied with the phone block's own
-     `.masthead--live .masthead__brand { display: flex }` further down, and
-     source order re-displayed the brand over the home mark. 0,3,0 wins on
-     specificity whatever the order. */
-  .masthead--live.masthead--sub .masthead__brand {
+  /* SUBPAGES CARRY TWO IDENTITIES, so exactly one of them stands in the
+     top-left at a time — and WHICH one depends on the face.
+
+     RESTING (hero face, pinned bar): the persistent home logo does the job,
+     so the wordmark stands down. Doubled with --live because at 0,2,0 this
+     tied with the phone block's own `.masthead--live .masthead__brand
+     { display: flex }` further down and lost on source order — the two
+     overlapping logos reported on /apartmaji.
+
+     OPEN: the menu is the SITE's own header, so it carries the full brand
+     exactly as the home page does — mark and »SpletnaPovsod« together. The
+     wordmark was missing there because this hide was unscoped (owner's
+     report). The home mark steps aside for it, so the corner is never shared;
+     home stays one tap away as the panel's own »Domov« row. */
+  .masthead--live.masthead--sub:not(.masthead--open) .masthead__brand {
+    display: none;
+  }
+
+  .masthead--live.masthead--sub.masthead--open .masthead__home {
     display: none;
   }
 
@@ -468,6 +479,12 @@ onUnmounted(() => {
   .masthead--live .masthead__home {
     left: var(--hero-inset);
     top: calc(var(--hero-inset) + 0.275 * var(--hero-display));
+    /* The mark RIDES between its faces instead of jumping (owner's report: the
+       subpage close read as abrupt). Opening from the bar carries it from
+       bar-centre up to the open face's line and closing carries it back, on
+       the same 300ms every other close motion runs on. Scroll-driven pin
+       flips stay instant — the snap latch covers descendants. */
+    transition: top 300ms var(--ease-out);
   }
 
   .masthead--live.masthead--pinned:not(.masthead--open) .masthead__home {
@@ -501,7 +518,16 @@ onUnmounted(() => {
      this class for the flip's frame; combined with entries starting stowed
      (script), the bar can only ever APPEAR by the stow transition on a real
      upward move. */
-  .masthead--live.masthead--snap {
+  .masthead.masthead--live.masthead--snap,
+  .masthead.masthead--live.masthead--snap * {
+    /* Descendants too: the home mark and the toggle now tween their `top`
+       between faces, and a tween running across the pinned flip's coordinate
+       -space jump is exactly the flash this latch exists to kill. Menu
+       open/close never sets the latch, so those tweens run untouched.
+       TRIPLED selector on purpose: the children's own transition rules sit at
+       0,3,0 and later in the file, so a 0,3,0 latch lost the tie on source
+       order — measured, the toggle kept its list under the latch. 0,4,0 wins
+       outright. */
     transition: none;
   }
 
@@ -794,7 +820,11 @@ onUnmounted(() => {
     transition:
       background-color 260ms var(--ease-out),
       border-color 260ms var(--ease-out),
-      padding 300ms var(--ease-out);
+      padding 300ms var(--ease-out),
+      /* The control rides between bar-centre and the corner with the mark
+         opposite it — same 300ms, same reason (the face flip read as a jump
+         on subpage closes). Pin flips stay instant via the snap latch. */
+      top 300ms var(--ease-out);
   }
 
   /* Pinned, it becomes the labelled chip: one step darker than the page, with
