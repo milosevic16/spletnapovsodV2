@@ -455,22 +455,55 @@ onUnmounted(() => {
      top-left at a time — and WHICH one depends on the face.
 
      RESTING (hero face, pinned bar): the persistent home logo does the job,
-     so the wordmark stands down. Doubled with --live because at 0,2,0 this
-     tied with the phone block's own `.masthead--live .masthead__brand
-     { display: flex }` further down and lost on source order — the two
-     overlapping logos reported on /apartmaji.
+     so the wordmark stands down. OPEN: the menu is the SITE's own header, so
+     it carries the full brand exactly as the home page does — mark and
+     »SpletnaPovsod« together — and the home mark steps aside; home stays one
+     tap away as the panel's own »Domov« row.
 
-     OPEN: the menu is the SITE's own header, so it carries the full brand
-     exactly as the home page does — mark and »SpletnaPovsod« together. The
-     wordmark was missing there because this hide was unscoped (owner's
-     report). The home mark steps aside for it, so the corner is never shared;
-     home stays one tap away as the panel's own »Domov« row. */
-  .masthead--live.masthead--sub:not(.masthead--open) .masthead__brand {
-    display: none;
+     THE HANDOVER IS A CROSSFADE, NOT A CUT (owner's report: closing the menu
+     deleted the wordmark on its first frame — these hides were display:none,
+     and display is not animatable). Both hides are opacity+visibility now.
+     Closing, the brand runs the same 300ms shrink-and-fade the home page's
+     pinned face runs (the list here is that rule's, plus the visibility
+     flip; in the hero face the size entries find no delta and the
+     lettering's own scale shrink carries the motion) while the home mark
+     fades back in beneath it, riding its top tween down into whichever face
+     is entered. Opening mirrors it: the brand's own open rule fades it in
+     while the home mark fades out along its ride up. Each visibility flip
+     TRAILS its fade (the same 320ms beat as every delayed flip in this
+     file), so the hidden element leaves the tab order and hit-testing
+     exactly as display:none had it — after the motion instead of in place
+     of it. Neither hide can flash on first paint: the brand enters the DOM
+     via v-if already in this state (insertions do not transition), and the
+     home mark's hide only ever applies on a user-initiated open.
+
+     0,5,0 ON PURPOSE: the pinned face's brand rule sets `opacity: 1` at
+     0,4,0 and sits later in the file, so any tie re-shows the wordmark over
+     the home mark in the bar — the two overlapping logos reported on
+     /apartmaji, one specificity war earlier. The extra .masthead wins
+     outright whatever the source order. (It also outranks the snap latch,
+     which is fine: on a pin flip both of this rule's faces are hidden, so
+     the surviving size tweens run invisibly.) */
+  .masthead.masthead--live.masthead--sub:not(.masthead--open) .masthead__brand {
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity 300ms var(--ease-out),
+      font-size 300ms var(--ease-out),
+      font-stretch 300ms var(--ease-out),
+      letter-spacing 300ms var(--ease-out),
+      visibility 0s 320ms;
   }
 
   .masthead--live.masthead--sub.masthead--open .masthead__home {
-    display: none;
+    opacity: 0;
+    visibility: hidden;
+    /* The OPEN-entering list: the mark fades out while riding its top tween
+       up toward the open face's line, opposite the brand fading in. */
+    transition:
+      top 300ms var(--ease-out),
+      opacity 300ms var(--ease-out),
+      visibility 0s 320ms;
   }
 
   /* Phone: the logo mirrors the menu button — same line, opposite inset. It
@@ -483,8 +516,14 @@ onUnmounted(() => {
        subpage close read as abrupt). Opening from the bar carries it from
        bar-centre up to the open face's line and closing carries it back, on
        the same 300ms every other close motion runs on. Scroll-driven pin
-       flips stay instant — the snap latch covers descendants. */
-    transition: top 300ms var(--ease-out);
+       flips stay instant — the snap latch covers descendants. Opacity rides
+       the same list as the RESTING-entering half of the open/close crossfade
+       (the two-identities block above); visibility is deliberately NOT
+       listed, so the un-hide lands at t=0 and the fade-in is never running
+       on an invisible element. */
+    transition:
+      top 300ms var(--ease-out),
+      opacity 300ms var(--ease-out);
   }
 
   .masthead--live.masthead--pinned:not(.masthead--open) .masthead__home {
