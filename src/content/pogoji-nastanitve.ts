@@ -356,9 +356,8 @@ export const articles: Article[] = [
 export const updated = { label: 'Različica', value: 'v2.0, osnutek, avgust 2026' }
 
 export const nav: NavItem[] = [
-  { target: 'veljavnost', label: 'Veljavnost' },
-  { target: 'paketi', label: 'Paketi' },
-  { target: 'popravki-apt', label: 'Popravki' },
+  { target: 'potek', label: 'Potek' },
+  { target: 'roki', label: 'Roki' },
 ]
 
-export const ctaPrimary = { label: 'Potrošniki', target: 'potrosniki' }
+export const ctaPrimary = { label: 'Pravna odgovornost', target: 'odgovornost' }

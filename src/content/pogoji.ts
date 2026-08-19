@@ -644,9 +644,8 @@ export const updated = { label: 'Različica', value: 'v1.1, osnutek, avgust 2026
 
 /** In-page stops for this document. */
 export const nav: NavItem[] = [
-  { target: 'obseg', label: 'Obseg' },
+  { target: 'potek', label: 'Potek' },
   { target: 'roki', label: 'Roki' },
-  { target: 'cene', label: 'Cene' },
 ]
 
-export const ctaPrimary = { label: 'Odgovornost', target: 'odgovornost' }
+export const ctaPrimary = { label: 'Pravna odgovornost', target: 'odgovornost' }
