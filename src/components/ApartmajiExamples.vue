@@ -19,16 +19,17 @@
  * the LIVE page crossfades in over the plate once its iframe has loaded. A
  * square close button holds the top-right corner throughout.
  *
- * PHONES KEEP THE LIFT BUT NEVER HOLD THE PLATE (owner's call, second
- * round): the plate is a DESKTOP capture, and what read as awkward was the
- * zoomed desktop page HELD on screen after landing while the mobile-laid-out
- * iframe was still loading. The motion itself was wanted. So on phones the
- * plate flies exactly as on desktop, and ON LANDING it dissolves into the
- * beige backdrop: page already loaded → zoom, an eyeblink of paper, page;
- * still loading → zoom, beige, page fading in whenever it arrives. Closing
- * restores the plate and runs the flight in reverse. Desktop keeps the plate
- * under the crossfade, where it matches the incoming page and holding it is
- * seamless.
+ * ONE PLATE PER SCREEN (owner's call, third round — the dissolve trick still
+ * read wrong, and the owner named the real fix): each demo is captured TWICE,
+ * desktop 1440×900 and mobile 390×844, and the overlay flies the capture that
+ * matches the screen. On a phone the plate is the MOBILE page's own top, so
+ * holding it after landing is seamless again — exactly the desktop behaviour
+ * — and the plate flies GEOMETRICALLY (top/left/width/height, aspect morphing
+ * card→viewport, object-fit recomputing every frame) so the mobile capture is
+ * never distorted and lands pixel-aligned with the incoming iframe. Desktop
+ * keeps the uniform transform lift. One brief layout animation on one fixed
+ * element is the accepted cost; the plates are warmed on pointerenter so a
+ * cold first open rarely flies beige.
  *
  * ONE OVERLAY, ONE OWNER — and this is the part that was got wrong once, so
  * it is written down. The Escape listener used to be registered per open and
@@ -88,8 +89,6 @@ const LIFT_MS = 460
 const CLOSE_MS = 380
 const FADE_MS = 240
 const SETTLE_SLACK_MS = 240
-/** Phone only: how fast the landed plate dissolves into the beige. */
-const PLATE_EXIT_MS = 200
 /** Iframe grace: past this we reveal whatever the frame has — a demo that
  *  loads slowly still appears; one that failed leaves the plate standing. */
 const IFRAME_CAP_MS = 4000
@@ -175,27 +174,32 @@ function closePreview() {
   o.closeBtn.style.opacity = '0'
   animTo(o.frame, 'opacity', o.frame.style.opacity || '1', '0', 160)
 
-  // Phone: the plate dissolved on landing — bring it back under the fading
-  // frame so the return flight has something to fly.
-  if (o.phone) o.morph.style.opacity = '1'
-
   // The plate returns to WHERE THE CARD IS NOW — re-measured, because a resize
   // while open moves it. Scroll cannot have (it is locked).
   const back = o.plateSource.getBoundingClientRect()
-  const s = Math.max(window.innerWidth / back.width, window.innerHeight / back.height)
-  const bx = window.innerWidth / 2 - (back.left + back.width / 2)
-  const by = window.innerHeight / 2 - (back.top + back.height / 2)
-  o.morph.style.top = `${back.top}px`
-  o.morph.style.left = `${back.left}px`
-  o.morph.style.width = `${back.width}px`
-  o.morph.style.height = `${back.height}px`
-  animTo(
-    o.morph,
-    'transform',
-    `translate(${bx}px, ${by}px) scale(${s})`,
-    'translate(0px, 0px) scale(1)',
-    CLOSE_MS,
-  )
+  if (o.phone) {
+    flyRect(
+      o.morph,
+      { top: 0, left: 0, width: window.innerWidth, height: window.innerHeight },
+      back,
+      CLOSE_MS,
+    )
+  } else {
+    const s = Math.max(window.innerWidth / back.width, window.innerHeight / back.height)
+    const bx = window.innerWidth / 2 - (back.left + back.width / 2)
+    const by = window.innerHeight / 2 - (back.top + back.height / 2)
+    o.morph.style.top = `${back.top}px`
+    o.morph.style.left = `${back.left}px`
+    o.morph.style.width = `${back.width}px`
+    o.morph.style.height = `${back.height}px`
+    animTo(
+      o.morph,
+      'transform',
+      `translate(${bx}px, ${by}px) scale(${s})`,
+      'translate(0px, 0px) scale(1)',
+      CLOSE_MS,
+    )
+  }
   animTo(o.backdrop, 'opacity', '1', '0', FADE_MS)
 
   // Timed teardown for the same reason the landing is timed — and identity
@@ -203,6 +207,42 @@ function closePreview() {
   fx.setTimeout(() => {
     if (overlay === o) teardown()
   }, CLOSE_MS + SETTLE_SLACK_MS)
+}
+
+interface Rect {
+  top: number
+  left: number
+  width: number
+  height: number
+}
+
+/** Geometric flight: top/left/width/height, end state written inline FIRST,
+ *  fill:'none' — same cancel-safety as animTo, for the one element whose
+ *  aspect must morph so its object-fit content never distorts. */
+function flyRect(el: HTMLElement, from: Rect, to: Rect, ms: number) {
+  el.style.top = `${to.top}px`
+  el.style.left = `${to.left}px`
+  el.style.width = `${to.width}px`
+  el.style.height = `${to.height}px`
+  return fx.anim(
+    el,
+    [
+      { top: `${from.top}px`, left: `${from.left}px`, width: `${from.width}px`, height: `${from.height}px` },
+      { top: `${to.top}px`, left: `${to.left}px`, width: `${to.width}px`, height: `${to.height}px` },
+    ],
+    { duration: ms, easing: EASE, fill: 'none' },
+  )
+}
+
+const mobilePlate = (id: string) => `/img/primeri/${id}-mobile-780.jpg`
+
+/** Warm the phone plate before the click lands, once per card. */
+const warmed = new Set<string>()
+function warm(ex: AptExample) {
+  if (warmed.has(ex.id)) return
+  if (!window.matchMedia('(max-width: 809.98px)').matches) return
+  warmed.add(ex.id)
+  new Image().src = mobilePlate(ex.id)
 }
 
 function closeGlyph(): string {
@@ -255,9 +295,12 @@ function openPreview(e: MouseEvent, ex: AptExample) {
     `position:absolute;top:${rect.top}px;left:${rect.left}px;` +
     `width:${rect.width}px;height:${rect.height}px;overflow:hidden;will-change:transform;`
   const plate = document.createElement('img')
-  plate.src = img.currentSrc || img.src
+  // The capture that MATCHES this screen; paper ground while it decodes, so a
+  // cold open flies beige rather than white.
+  plate.src = phone ? mobilePlate(ex.id) : img.currentSrc || img.src
   plate.alt = ''
-  plate.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:top;display:block;'
+  plate.style.cssText =
+    'width:100%;height:100%;object-fit:cover;object-position:top;display:block;background:var(--list);'
   morph.appendChild(plate)
 
   // The live page, loading during the flight.
@@ -366,25 +409,31 @@ function openPreview(e: MouseEvent, ex: AptExample) {
   }
 
   if (reduced) {
-    // The settled state, immediately: no lift. On a phone the plate is a
-    // desktop capture with nothing to add — settle on paper instead.
-    morph.style.transform = lifted
-    if (phone) morph.style.opacity = '0'
+    // The settled state, immediately: no lift. The plate matches this screen,
+    // so it may simply sit covering until the page arrives.
+    if (phone) {
+      morph.style.top = '0px'
+      morph.style.left = '0px'
+      morph.style.width = `${vw}px`
+      morph.style.height = `${vh}px`
+    } else {
+      morph.style.transform = lifted
+    }
     backdrop.style.opacity = '1'
     showChrome()
     maybeReveal()
   } else {
     animTo(backdrop, 'opacity', '0', '1', FADE_MS)
-    animTo(morph, 'transform', 'translate(0px, 0px) scale(1)', lifted, LIFT_MS)
+    if (phone) {
+      // Aspect morphs card→viewport; object-fit keeps the capture true.
+      flyRect(morph, rect, { top: 0, left: 0, width: vw, height: vh }, LIFT_MS)
+    } else {
+      animTo(morph, 'transform', 'translate(0px, 0px) scale(1)', lifted, LIFT_MS)
+    }
     // Landing is timed, not awaited from the animation — a non-compositing
     // renderer may never fire finish, and the inline end state is already set.
     fx.setTimeout(() => {
       landed = true
-      // Phone: the plate has done its flying — dissolve it into the beige so
-      // a zoomed DESKTOP page is never held while the mobile page loads.
-      if (phone && overlay === o && !o.closing) {
-        animTo(morph, 'opacity', '1', '0', PLATE_EXIT_MS)
-      }
       showChrome()
       maybeReveal()
     }, LIFT_MS + SETTLE_SLACK_MS)
@@ -408,7 +457,12 @@ onUnmounted(() => {
 
       <ul class="apte__grid">
         <li v-for="ex in examples.items" :key="ex.id" class="apte__card">
-          <a class="apte__link" :href="ex.demo" @click="openPreview($event, ex)">
+          <a
+            class="apte__link"
+            :href="ex.demo"
+            @click="openPreview($event, ex)"
+            @pointerenter="warm(ex)"
+          >
             <figure class="apte__figure">
               <picture>
                 <source type="image/avif" :srcset="srcset(ex.id, 'avif')" :sizes="SIZES" />

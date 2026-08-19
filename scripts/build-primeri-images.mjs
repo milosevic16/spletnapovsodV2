@@ -56,3 +56,19 @@ for (const s of SOURCES) {
   }
   console.log(`primeri: ${s.id} done`)
 }
+
+/** MOBILE PLATES — the overlay's flying plate on phones. Full frame of the
+ *  390×844@2x capture (no crop: the plate must equal the top of the incoming
+ *  mobile page exactly), one JPEG at native 780w. The component sets these as
+ *  a plain <img src>, so one format is deliberate. */
+const MOBILE = [
+  { id: 'primer-atelier', file: 'capture/primer-atelier-mobile.png' },
+  { id: 'primer-veduta', file: 'capture/primer-veduta-mobile.png' },
+  { id: 'primer-mariven', file: 'capture/primer-mariven-stay-mobile.png' },
+]
+for (const m of MOBILE) {
+  await sharp(join(root, m.file))
+    .jpeg({ quality: 78, mozjpeg: true })
+    .toFile(join(outDir, `${m.id}-mobile-780.jpg`))
+  console.log(`primeri: ${m.id} mobile plate done`)
+}
