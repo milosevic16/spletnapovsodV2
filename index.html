@@ -55,17 +55,22 @@
 
          TIMELINE (base.css settle delays and App.vue's cleanup are keyed to
          it — change one, change all): type 0.12+i*0.065s (done ~0.9s), hold,
-         vanish 1.35-1.8s, the p's ink hands off to the overlay 1.85s, discs
-         JOIN 1.85-2.3s (the d's coin sliding onto the p's, the crossing
-         correct throughout), fly 2.6-3.2s, ground ROLLS UP 2.65-3.2s, mark
-         crossfades out 3.2-3.45s, veil hidden 3.45s. The node is removed by
-         App.vue ON THE VEIL'S OWN animationend — never by the wall clock,
-         which is a different clock and once cut this sequence short in
-         production. (This is the ORIGINAL choreography, restored verbatim on
-         the owner's call after three retimed variants — early join, x0.75
-         with join-at-collision, hold-plus-instant-seat — were each built,
-         watched and rejected. The experiments live in git history; do not
-         rebuild them.) The node is removed by
+         vanish 1.35-1.8s, the p's ink hands off to the overlay 1.5s, discs
+         JOIN 1.5-1.95s OVERLAPPING the vanish (the d's coin sliding onto the
+         p's while the letters are still collapsing, the crossing correct
+         throughout), fly 2.6-3.2s, ground ROLLS UP 2.65-3.2s, mark crossfades
+         out 3.2-3.45s, veil hidden 3.45s. The node is removed by App.vue ON
+         THE VEIL'S OWN animationend — never by the wall clock, which is a
+         different clock and once cut this sequence short in production.
+
+         THE JOIN LEADS INTO THE VANISH'S TAIL BY DESIGN — restored from the
+         veil's birth commit (d826d4e ran vanish@1.35 and join@1.5), after a
+         later rework drifted the join to 1.85, AFTER the vanish, and the
+         owner caught the symptom: the two coins stood still, slightly apart,
+         for a beat before joining. Offset-overlap is what makes the whole
+         contraction one continuous motion. (Distinct from the rejected
+         experiments in git history — same-window join-at-collision, x0.75
+         tempo, hold-plus-instant-seat; do not rebuild those.) The node is removed by
          App.vue ON THE VEIL'S OWN animationend — never by the wall clock,
          which is a different clock and once cut this sequence short in
          production.
@@ -252,7 +257,7 @@
       #veil .v-d {
         animation:
           v-type 1ms steps(1, end) calc(0.12s + var(--i) * 0.065s) forwards,
-          v-join 0.45s cubic-bezier(0.22, 1, 0.36, 1) 1.85s forwards;
+          v-join 0.45s cubic-bezier(0.22, 1, 0.36, 1) 1.5s forwards;
       }
       /* THE HAND-OFF, at the instant the join begins. The p's letter stops
          being drawn inside its own disc and is drawn by the overlay instead —
@@ -260,7 +265,7 @@
          PAINT ORDER, and only from here does it matter. Two steps() on one
          clock: no crossfade to mistime, no frame where both or neither shows. */
       #veil .v-ink {
-        animation: v-ink-off 1ms steps(1, end) 1.85s forwards;
+        animation: v-ink-off 1ms steps(1, end) 1.5s forwards;
       }
       #veil .v-mark {
         position: absolute;
@@ -274,7 +279,7 @@
         max-width: none;
         overflow: visible;
         opacity: 0;
-        animation: v-ink-in 1ms steps(1, end) 1.85s forwards;
+        animation: v-ink-in 1ms steps(1, end) 1.5s forwards;
       }
       @keyframes v-type {
         to { opacity: 1; }
@@ -376,7 +381,7 @@
              row it paints after the d's disc, which is the whole trick: the
              sliding coin can then never cover the p's ink, so the crossing is
              correct on every frame of the join rather than being restored by
-             a fade at the end. It takes over from the p's own .v-ink at 1.85s
+             a fade at the end. It takes over from the p's own .v-ink at 1.5s
              — the same instant, the same place, so the swap is invisible —
              and it can be anchored at a fixed offset only because the seven
              slots before the p have finished collapsing by then. -->
