@@ -553,7 +553,7 @@ onUnmounted(() => {
          the earlier cut staged only the strata and kept the brief on the band).
          Decorative for assistive tech; the rendered layer carries every
          string. -->
-    <div ref="screen" class="trad__source" aria-hidden="true">
+    <div ref="screen" class="trad__source grain" aria-hidden="true">
       <!-- Zero stays unitless: the emitted HTML's minifier rewrites the
            SSR'd margin-top:0px to margin-top:0, and hydration compares
            values, so the client's initial render must produce the same
@@ -819,8 +819,17 @@ onUnmounted(() => {
      differ by two brightnesses of one surface — the failing the previous
      values were tuned against — but by being two SURFACES: paper source
      against bronze band, 10.17:1 apart. Being an opaque child it covers the
-     press screen, so it is measured flat. */
-  background: var(--color-paper);
+     press screen, so it is measured flat.
+
+     IT CARRIES THE STATIC (.grain), which is why this is background-COLOR and
+     not the shorthand: the shorthand resets background-image and would erase
+     the tile silently. The section root is a press band and therefore has no
+     texture of its own, so there is no doubling — this half is a different
+     SURFACE, the untreated paper the machine sees, and the static is what
+     stops it reading as a blank plate. The texture sits UNDER the code, where
+     the old full-page overlay used to sit over it, so the letters composite
+     clean and the contrast can only improve. */
+  background-color: var(--color-paper);
   clip-path: inset(0 0 0 calc(var(--scan, 55) * 1%));
   overflow: hidden;
 }
