@@ -219,7 +219,11 @@ export const articles: Article[] = [
     title: "Pravice intelektualne lastnine",
     clauses: [
       { n: "16.1", text: "Do celotnega plačila vse pravice na rezultatu dela ostanejo Izvajalcu." },
-      { n: "16.2", text: "Po celotnem plačilu Naročnik pridobi ⟨izključno ali neizključno⟩ ter časovno in krajevno neomejeno pravico do uporabe dogovorjenega rezultata dela za lastne poslovne namene, vključno s pravico do predelave.", todo: true },
+      // Same licence decision as the general terms 11.2 (owner, avgust 2026):
+      // NON-EXCLUSIVE. Applied here so the two documents cannot say different
+      // things about the same grant — and it would be backwards for the cheaper
+      // promotional offer to hand over more than the general terms do.
+      { n: "16.2", text: "Po celotnem plačilu Naročnik pridobi neizključno ter časovno in krajevno neomejeno pravico do uporabe dogovorjenega rezultata dela za lastne poslovne namene, vključno s pravico do predelave. Ta pravica ne posega v pravice Izvajalca iz točk 16.3, 16.5 in 16.6." },
       { n: "16.3", text: "Prenos se ne nanaša na predhodno obstoječe znanje, ogrodja, knjižnice, interna orodja, skripte, delovne predloge in ponovno uporabljive komponente Izvajalca. Naročnik zanje prejme trajno neizključno licenco v obsegu, potrebnem za uporabo rezultata." },
       { n: "16.4", text: "Komponente tretjih oseb so podvržene svojim licencam. Izvajalec Naročnika obvesti, kadar so potrebne plačljive licence; te niso zajete v ceni, razen če je dogovorjeno drugače." },
       { n: "16.5", text: "Zavrnjeni ali nerealizirani osnutki ostanejo v celoti last Izvajalca." },

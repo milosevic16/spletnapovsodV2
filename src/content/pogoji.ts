@@ -310,18 +310,23 @@ export const articles: Article[] = [
     clauses: [
       { n: '11.1', text: 'Do celotnega plačila vse pravice na rezultatu dela ostanejo Izvajalcu.' },
       {
-        // OWNER'S CALL: EXCLUSIVE. Flagged in session, and worth re-reading with
-        // the lawyer, because exclusivity cuts against three things in this very
-        // article: 11.3 (the Izvajalec keeps his frameworks and reusable
-        // components — the boundary between "rezultat dela" and those is what
-        // decides whether this house's shared system may be reused for the next
-        // client), 11.5 (rejected drafts stay with the Izvajalec) and 11.6 (the
-        // reference right). ZASP also asks a written form and a stated scope for
-        // transfers of material rights, which an electronic acceptance of terms
-        // may not satisfy for an EXCLUSIVE grant. Non-exclusive would carry the
-        // same practical value for the client and none of this risk.
+        // OWNER'S CALL, revised in session (avgust 2026): NON-EXCLUSIVE. The
+        // first pass said exclusive; the concern was raised and the owner
+        // changed it. This is also the agency default, and for a good reason:
+        // a house that reuses one design system across clients cannot promise
+        // exclusivity over a result whose boundary with 11.3's components is
+        // undrawn. Non-exclusive gives the client everything they actually
+        // need — use, host, modify, forever, anywhere — and leaves 11.3, 11.5
+        // and 11.6 standing without having to carve them out of the grant.
+        //
+        // NOT PROMISED HERE, and an open owner decision: a narrow undertaking
+        // not to reuse the client's INDIVIDUAL visual identity for another
+        // client. That is what a client usually means when they ask for
+        // exclusivity, and it is the normal way to give it to them without
+        // touching the reusable system. It creates a real obligation, so it
+        // waits for sign-off rather than being slipped in here.
         n: '11.2',
-        text: 'Po celotnem plačilu Naročnik pridobi izključno ter časovno in krajevno neomejeno pravico do uporabe dogovorjenega rezultata dela za lastne poslovne namene, vključno s pravico do predelave. Izključnost se nanaša na rezultat dela, izdelan po naročilu, in ne posega v pravice Izvajalca iz točk 11.3, 11.5 in 11.6.',
+        text: 'Po celotnem plačilu Naročnik pridobi neizključno ter časovno in krajevno neomejeno pravico do uporabe dogovorjenega rezultata dela za lastne poslovne namene, vključno s pravico do predelave. Ta pravica ne posega v pravice Izvajalca iz točk 11.3, 11.5 in 11.6.',
       },
       {
         n: '11.3',
