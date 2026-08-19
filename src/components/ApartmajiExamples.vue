@@ -17,7 +17,15 @@
  * — from its place on the sheet until it covers the screen (the system's 1:1
  * gesture: the drawing at full scale), a paper backdrop rises under it, and
  * the LIVE page crossfades in over the plate once its iframe has loaded. A
- * square hairline close button holds the top-right corner throughout.
+ * square close button holds the top-right corner throughout.
+ *
+ * PHONES GET A PAPER FADE, NOT THE LIFT (owner's call): the plate is a
+ * DESKTOP capture, so zooming it fullscreen on a phone holds a zoomed-in
+ * desktop page until the real (mobile-laid-out) iframe arrives — awkward, and
+ * the card is small on a phone so the continuity the lift buys is gone
+ * anyway. Under the site's phone breakpoint the overlay opens as a plain
+ * beige fade: paper rises, the live page crossfades in over it. No plate is
+ * created at all on that path.
  *
  * ONE OVERLAY, ONE OWNER — and this is the part that was got wrong once, so
  * it is written down. The Escape listener used to be registered per open and
@@ -89,7 +97,8 @@ interface Saved {
 
 interface Overlay {
   root: HTMLElement
-  morph: HTMLElement
+  /** The lifting plate — desktop only; phones fade on paper instead. */
+  morph: HTMLElement | null
   backdrop: HTMLElement
   frame: HTMLIFrameElement
   closeBtn: HTMLButtonElement
@@ -97,6 +106,7 @@ interface Overlay {
   plateSource: HTMLImageElement
   saved: Saved
   reduced: boolean
+  phone: boolean
   closing: boolean
   onKeydown: (e: Event) => void
 }
@@ -161,6 +171,15 @@ function closePreview() {
   o.closeBtn.style.opacity = '0'
   animTo(o.frame, 'opacity', o.frame.style.opacity || '1', '0', 160)
 
+  // Phone: the beige fade in reverse — no plate ever existed on this path.
+  if (o.phone || !o.morph) {
+    animTo(o.backdrop, 'opacity', '1', '0', FADE_MS)
+    fx.setTimeout(() => {
+      if (overlay === o) teardown()
+    }, FADE_MS + SETTLE_SLACK_MS)
+    return
+  }
+
   // The plate returns to WHERE THE CARD IS NOW — re-measured, because a resize
   // while open moves it. Scroll cannot have (it is locked).
   const back = o.plateSource.getBoundingClientRect()
@@ -214,6 +233,8 @@ function openPreview(e: MouseEvent, ex: AptExample) {
   e.preventDefault() // also parks the SPA interceptor (checks defaultPrevented)
 
   const reduced = prefersReducedMotion()
+  // The site's own phone breakpoint — the same 809.98 the stylesheets use.
+  const phone = window.matchMedia('(max-width: 809.98px)').matches
   const rect = img.getBoundingClientRect()
   const vw = window.innerWidth
   const vh = window.innerHeight
@@ -228,17 +249,21 @@ function openPreview(e: MouseEvent, ex: AptExample) {
   const backdrop = document.createElement('div')
   backdrop.style.cssText = 'position:absolute;inset:0;background:var(--list);'
 
-  // The plate, exactly over the card's image on frame one.
-  const morph = document.createElement('div')
-  morph.setAttribute('aria-hidden', 'true')
-  morph.style.cssText =
-    `position:absolute;top:${rect.top}px;left:${rect.left}px;` +
-    `width:${rect.width}px;height:${rect.height}px;overflow:hidden;will-change:transform;`
-  const plate = document.createElement('img')
-  plate.src = img.currentSrc || img.src
-  plate.alt = ''
-  plate.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:top;display:block;'
-  morph.appendChild(plate)
+  // The plate, exactly over the card's image on frame one — desktop only.
+  let morph: HTMLElement | null = null
+  if (!phone) {
+    morph = document.createElement('div')
+    morph.setAttribute('aria-hidden', 'true')
+    morph.style.cssText =
+      `position:absolute;top:${rect.top}px;left:${rect.left}px;` +
+      `width:${rect.width}px;height:${rect.height}px;overflow:hidden;will-change:transform;`
+    const plate = document.createElement('img')
+    plate.src = img.currentSrc || img.src
+    plate.alt = ''
+    plate.style.cssText =
+      'width:100%;height:100%;object-fit:cover;object-position:top;display:block;'
+    morph.appendChild(plate)
+  }
 
   // The live page, loading during the flight.
   const frame = document.createElement('iframe')
@@ -262,7 +287,8 @@ function openPreview(e: MouseEvent, ex: AptExample) {
     'background:var(--grafit);color:var(--list);border:2px solid var(--list);' +
     'border-radius:0;cursor:pointer;opacity:0;'
 
-  root.append(backdrop, morph, frame, closeBtn)
+  if (morph) root.append(backdrop, morph, frame, closeBtn)
+  else root.append(backdrop, frame, closeBtn)
   document.body.appendChild(root)
 
   const onKeydown = (ev: Event) => {
@@ -293,6 +319,7 @@ function openPreview(e: MouseEvent, ex: AptExample) {
     plateSource: img,
     saved,
     reduced,
+    phone,
     closing: false,
     onKeydown,
   }
@@ -345,11 +372,20 @@ function openPreview(e: MouseEvent, ex: AptExample) {
   }
 
   if (reduced) {
-    // The settled state, immediately: no lift, plate already covering.
-    morph.style.transform = lifted
+    // The settled state, immediately: no lift, plate (where one exists)
+    // already covering.
+    if (morph) morph.style.transform = lifted
     backdrop.style.opacity = '1'
     showChrome()
     maybeReveal()
+  } else if (!morph) {
+    // Phone: the beige fade — paper rises, the page crossfades in over it.
+    animTo(backdrop, 'opacity', '0', '1', FADE_MS)
+    fx.setTimeout(() => {
+      landed = true
+      showChrome()
+      maybeReveal()
+    }, FADE_MS + SETTLE_SLACK_MS)
   } else {
     animTo(backdrop, 'opacity', '0', '1', FADE_MS)
     animTo(morph, 'transform', 'translate(0px, 0px) scale(1)', lifted, LIFT_MS)

@@ -97,18 +97,18 @@ export const examples = {
     'Prikazani primeri so demonstracija: apartma, besedila in mnenja so izmišljeni, fotografije so simbolične.',
   items: [
     {
-      id: 'primer-mariven',
-      demo: '/primeri/mariven-stay/index.html',
-      name: 'Rezidenca',
-      gloss: 'Umirjena serifna tipografija, ime apartmaja na sredini fotografije.',
-      alt: 'Primer strani z imenom apartmaja na sredini celozaslonske fotografije.',
-    },
-    {
       id: 'primer-veduta',
       demo: '/primeri/veduta/index.html',
       name: 'Veduta',
       gloss: 'Fotografija čez ves zaslon, pod njo pas s ključnimi podatki.',
       alt: 'Primer strani s celozaslonsko fotografijo, imenom apartmaja in pasom s podatki.',
+    },
+    {
+      id: 'primer-mariven',
+      demo: '/primeri/mariven-stay/index.html',
+      name: 'Rezidenca',
+      gloss: 'Umirjena serifna tipografija, ime apartmaja na sredini fotografije.',
+      alt: 'Primer strani z imenom apartmaja na sredini celozaslonske fotografije.',
     },
     {
       id: 'primer-atelier',
