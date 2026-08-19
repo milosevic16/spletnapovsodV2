@@ -71,8 +71,14 @@ export interface Differentiator {
   title: string
   body: string
   footnote?: string
-  /** The Prerez instrument for this claim: measured value + plain-Slovenian gloss. */
-  measure: { annotation: string; gloss: string; ticks?: string[] }
+  /**
+   * The Prerez instrument for this claim: the measured value, and a
+   * plain-Slovenian gloss WHERE THE NUMBER NEEDS ONE. The gloss is optional
+   * because a claim whose body already states the consequence would only
+   * repeat itself (the 24h support claim does exactly that) — and a restated
+   * line is noise, not instrumentation.
+   */
+  measure: { annotation: string; gloss?: string; ticks?: string[] }
 }
 
 export interface ContactTopic {
@@ -429,7 +435,7 @@ export const differentiators = {
       title: 'Objava v 3 delovnih dneh',
       body: 'Spletno stran zgradimo in objavimo na vaši domeni v treh delovnih dneh.',
       footnote:
-        'Velja za manjše in srednje projekte brez velikih podatkovnih baz, odvisno od obsega.',
+        'Velja po dogovorjeni končni podobi, po zadnjem krogu naročenih popravkov. Velja za manjše in srednje projekte brez podatkovnih baz.',
       measure: {
         annotation: '3 delovni dnevi',
         gloss: 'Od potrjene vsebine do objave na vaši domeni.',
@@ -442,7 +448,6 @@ export const differentiators = {
       body: 'Želite popravek ali novo funkcijo? Na voljo smo kadarkoli v delovnem času, manjše popravke uredimo v 24 urah.',
       measure: {
         annotation: '24 h',
-        gloss: 'Toliko časa ima manjši popravek, ne teden dni.',
       },
     },
   ] satisfies Differentiator[],

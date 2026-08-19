@@ -153,7 +153,7 @@ onUnmounted(() => {
           <p class="dif__mark annot">{{ d.measure.annotation }}</p>
           <h3 class="dif__claim-title">{{ d.title }}</h3>
           <p class="dif__body">{{ d.body }}</p>
-          <p class="dif__gloss">{{ d.measure.gloss }}</p>
+          <p v-if="d.measure.gloss" class="dif__gloss">{{ d.measure.gloss }}</p>
           <!-- The one genuinely sequential thing here: the three working days
                the claim promises. -->
           <ul v-if="d.measure.ticks" class="dif__days">
