@@ -14,11 +14,14 @@
  * us: one base document, one module, one stated precedence, no duplicated
  * clause that can drift.
  *
- * NO PLACEHOLDERS REMAIN: the owner's docx pass (avgust 2026, »Splošni pogoji
- * (1).docx«) resolved the last three (10.1 pavšal, 11.7 navedba avtorstva,
- * 11.8 izvorne datoteke). The Clause.todo field stays — the apartment module
- * still uses it. The document-wide OSNUTEK banner was removed earlier on the
- * owner's call.
+ * ONE PLACEHOLDER, BY DECISION. The owner's docx pass (avgust 2026, »Splošni
+ * pogoji (1).docx«) resolved 10.1, 11.7 and 11.8. What remains is 6.4's
+ * definition of a »krog popravkov«, which the owner asked to keep VISIBLE
+ * rather than as a code note — so it carries ⟨…⟩ and `todo: true`, and the
+ * page prints »dopolniti« beside it. That is the document's own declared
+ * incompleteness marker, not an authoring reminder smuggled into content.
+ * The version line still reads »osnutek«, which is the matching signal at
+ * document level; the document-wide OSNUTEK banner stays removed.
  *
  * DRAFT: needs owner sign-off and a lawyer's review before it governs anything.
  */
@@ -210,16 +213,14 @@ export const articles: Article[] = [
         text: 'Po prejemu vsebinskih želja Naročnika in po plačilu avansa iz točke 10.2 Izvajalec začne z izvedbo: oblikovni koncept dopolni z vsebino in uredi vsebinske želje Naročnika.',
       },
       {
-        // OWNER TO DO: »krog popravkov« still needs a precise definition here —
-        // what one round covers (how many pages of comments, how many rounds of
-        // comments inside one round, what turns a request into a change of scope
-        // under article 7). The apartment module defines it loosely as up to
-        // five pages of proposed corrections; this document defines nothing yet,
-        // and two rounds are PROMISED, so the definition is load-bearing.
-        // Deliberately a code comment, not a visible flag: authoring reminders
-        // never ship in renderable content.
+        // The definition of a »krog popravkov« is the one decision left open in
+        // this document, and the owner asked for it to stay VISIBLE (avgust
+        // 2026) rather than sit in a code note: two rounds are promised, so
+        // what one round covers is load-bearing — it decides where article 7
+        // (change of scope) starts and what 8.4 bills as an extra round.
         n: '6.4',
-        text: 'V ceno sta vključena dva kroga popravkov na oblikovni koncept. Popravki se praviloma uredijo že v prvem krogu; drugi je na voljo, kadar je potreben. Dodatni krogi se obračunajo po veljavni urni postavki.',
+        text: 'V ceno sta vključena dva kroga popravkov na oblikovni koncept. Popravki se praviloma uredijo že v prvem krogu; drugi je na voljo, kadar je potreben. En krog popravkov obsega ⟨določiti: obseg enega kroga — koliko pripomb oziroma strani pripomb, v kakšnem roku jih Naročnik posreduje in kdaj se krog šteje za zaključen⟩. Dodatni krogi se obračunajo po urni postavki iz točke 10.1.',
+        todo: true,
       },
       {
         n: '6.5',
@@ -231,7 +232,7 @@ export const articles: Article[] = [
       },
       {
         n: '6.7',
-        text: 'Vsaka faza se zaključi z odobritvijo Naročnika, ki jo je mogoče podati tudi po elektronski pošti. Odobrena faza se šteje za zaključeno; poznejši posegi vanjo se obravnavajo kot sprememba obsega po 7. členu.',
+        text: 'Vsaka vsebinska faza se zaključi z odobritvijo Naročnika, ki jo je mogoče podati tudi po elektronski pošti. Odobrena faza se šteje za zaključeno; poznejši posegi vanjo se obravnavajo kot sprememba obsega po 7. členu.',
       },
       {
         n: '6.8',
@@ -276,7 +277,7 @@ export const articles: Article[] = [
       },
       {
         n: '8.4',
-        text: 'Manjši popravki so spremembe, kot so pozicija gumbov, zamenjava slik, barv ali pisave, in podobni posegi v obstoječo strukturo strani. Ne vključujejo novih funkcionalnosti ali celotne prenove grafične podobe. Zahteve, ki presegajo ta obseg, se obravnavajo kot sprememba obsega po 7. členu in se obračunajo kot samostojen krog popravkov. Zanje roki iz točke 8.2 ne veljajo.',
+        text: 'Manjši popravki so spremembe, kot so pozicija gumbov, zamenjava slik, barv ali pisave, in podobni posegi v obstoječo strukturo strani. Ne vključujejo novih funkcionalnosti ali celotne prenove grafične podobe. Zahteve, ki presegajo ta obseg, se obravnavajo kot sprememba obsega po 7. členu; obračunajo se kot dodaten krog popravkov po točki 6.4 ali po urni postavki, kot je določeno v oceni iz točke 7.1. Zanje roki iz točke 8.2 ne veljajo.',
       },
       {
         n: '8.5',
@@ -311,7 +312,7 @@ export const articles: Article[] = [
     clauses: [
       {
         n: '10.1',
-        text: 'Cena je določena v ponudbi kot pavšal, individualno glede na obseg projekta. Cena je Naročniku znana vnaprej.',
+        text: 'Cena je določena v ponudbi kot pavšal, individualno glede na obseg projekta. Cena je Naročniku znana vnaprej. Kadar se posamezno delo obračuna po urni postavki, zlasti dodatni krogi popravkov po točki 6.4 in opravila v zvezi z domeno po točki 13.4, velja urna postavka, ki jo Izvajalec sporoči vnaprej in pred začetkom takega dela.',
       },
       {
         n: '10.2',
@@ -435,7 +436,7 @@ export const articles: Article[] = [
       },
       {
         n: '13.4',
-        text: 'Če Naročnik podaljšanje domene ali druga opravila v zvezi z domeno prenese na Izvajalca, se ta opravila obračunajo po veljavni urni postavki oziroma po dogovorjenem ceniku, poleg stroška podaljšanja pri registrarju. Izvajalec teh opravil ni dolžan izvesti brez predhodnega dogovora.',
+        text: 'Če Naročnik podaljšanje domene ali druga opravila v zvezi z domeno prenese na Izvajalca, se ta opravila obračunajo po urni postavki iz točke 10.1 oziroma po dogovorjenem ceniku, poleg stroška podaljšanja pri registrarju. Izvajalec teh opravil ni dolžan izvesti brez predhodnega dogovora.',
       },
       {
         n: '13.5',
