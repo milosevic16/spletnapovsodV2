@@ -81,6 +81,13 @@
          + press screen), never the hero's — the hero is what gets revealed
          underneath, so the two must differ. -->
     <style>
+      /* No data-intro, no veil: the head script above decides BEFORE first
+         paint (suppressed return visit, or the script's own absence). The
+         hidden veil creates no animations, so App.vue's existing no-animation
+         guard removes the node at mount — the same path reduced motion takes. */
+      html:not([data-intro]) #veil {
+        display: none;
+      }
       #veil {
         position: fixed;
         inset: 0;
@@ -332,7 +339,26 @@
       // staggered arrival behind the parting sheet) plays once and never again
       // on SPA navigation. App.vue clears it when the intro is spent. With JS
       // off the attribute never appears and the page is simply, fully there.
-      document.documentElement.dataset.intro = ''
+      //
+      // WINDOWED (owner): the intro plays only for a visitor who has been away
+      // — not on every refresh. A timestamp in localStorage marks the last
+      // hard load, SLIDING: every load restamps it, so the intro returns only
+      // after five continuous minutes of absence, not five minutes after it
+      // last played (someone refreshing every minute never re-watches it).
+      // Runs synchronously in <head>, so the attribute exists before first
+      // paint and the veil's own CSS gate below can never flash either way.
+      // Storage denied or absent (strict private modes) throws -> the catch
+      // plays the intro: the failure mode is a first-visit experience, never
+      // a broken one. With JS off nothing here runs and the <noscript> rule
+      // below drops the veil, exactly as before.
+      try {
+        var spNow = Date.now()
+        var spAway = spNow - (+localStorage.getItem('sp-veil-seen') || 0)
+        if (spAway > 300000) document.documentElement.dataset.intro = ''
+        localStorage.setItem('sp-veil-seen', String(spNow))
+      } catch (e) {
+        document.documentElement.dataset.intro = ''
+      }
     </script>
     <noscript>
       <style>

@@ -140,8 +140,8 @@ export const clauses: Clause[] = [
     cite: 'ZEKom-2 · Direktiva 2002/58, člen 5(3)',
     title: 'Piškotki in sledenje',
     body: [
-      'To spletno mesto ne uporablja piškotkov. Ne nameščamo analitike, sledilnih skript, oglasnih pikslov ali vtičnikov družbenih omrežij in ne uporabljamo lokalne shrambe brskalnika.',
-      'Ker na vaši napravi ne shranjujemo ničesar, tudi ne prikazujemo pasice za privolitev, saj privoliti ni v kaj. To lahko preverite sami v razvijalskih orodjih brskalnika, kjer za to domeno ni nobenega vnosa v shrambi.',
+      'To spletno mesto ne uporablja piškotkov. Ne nameščamo analitike, sledilnih skript, oglasnih pikslov ali vtičnikov družbenih omrežij.',
+      'V lokalni shrambi brskalnika hranimo en sam funkcijski zapis z imenom sp-veil-seen, časovni žig zadnjega obiska, ki uvodno animacijo predvaja samo obiskovalcem, ki jih dlje časa ni bilo. Zapis ostane v vašem brskalniku, ne vsebuje osebnih podatkov in se nikamor ne pošilja. Ker gre za nujno funkcijsko shrambo brez sledenja, pasice za privolitev ne prikazujemo. To lahko preverite sami v razvijalskih orodjih brskalnika.',
     ],
   },
   {
