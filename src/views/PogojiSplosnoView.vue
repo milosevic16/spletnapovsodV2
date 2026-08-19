@@ -10,7 +10,7 @@
  * back), and markup for a trail the reader cannot see is markup for a lie.
  */
 import { useHead } from '@unhead/vue'
-import { meta, articles, provider, updated, nav, ctaPrimary } from '@/content/pogoji'
+import { meta, articles, provider, updated, nav, ctaPrimary, related } from '@/content/pogoji'
 import { SITE_ORIGIN, SITE_NAME } from '@/lib/constants'
 import SiteMasthead from '@/components/SiteMasthead.vue'
 import PogojiHero from '@/components/PogojiHero.vue'
@@ -34,6 +34,9 @@ const jsonLd = {
       isPartOf: { '@id': `${SITE_ORIGIN}/#website` },
       about: { '@id': orgId },
       publisher: { '@id': orgId },
+      // Mirrors the VISIBLE pointer in the hero: a reader who came in on an
+      // apartment promotion is governed by the apartment document instead.
+      relatedLink: `${SITE_ORIGIN}/pogoji-apartmaji`,
     },
   ],
 }
@@ -71,7 +74,7 @@ useHead({
 <template>
   <SiteMasthead :items="nav" :cta="ctaPrimary" :home="{ href: '/', label: 'Domov' }" />
   <main id="main">
-    <PogojiHero :hero="hero" />
+    <PogojiHero :hero="hero" :related="related" />
     <PogojiDocument
       :articles="articles"
       :updated="updated"

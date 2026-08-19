@@ -12,7 +12,7 @@
  * documents drift apart.
  */
 import { useHead } from '@unhead/vue'
-import { meta, hero, base, articles, updated, nav, ctaPrimary } from '@/content/pogoji-apartmaji'
+import { meta, hero, articles, updated, nav, ctaPrimary } from '@/content/pogoji-apartmaji'
 import { SITE_ORIGIN, SITE_NAME } from '@/lib/constants'
 import SiteMasthead from '@/components/SiteMasthead.vue'
 import PogojiHero from '@/components/PogojiHero.vue'
@@ -35,9 +35,6 @@ const jsonLd = {
       isPartOf: { '@id': `${SITE_ORIGIN}/#website` },
       about: { '@id': orgId },
       publisher: { '@id': orgId },
-      // The module states, in its markup as in its text, which document it
-      // belongs to.
-      relatedLink: `${SITE_ORIGIN}/pogoji-splosno`,
     },
   ],
 }
@@ -75,7 +72,7 @@ useHead({
 <template>
   <SiteMasthead :items="nav" :cta="ctaPrimary" :home="{ href: '/', label: 'Domov' }" />
   <main id="main">
-    <PogojiHero :hero="hero" :base="base" />
+    <PogojiHero :hero="hero" />
     <PogojiDocument :articles="articles" :updated="updated" />
   </main>
   <SiteFooter :items="nav" />

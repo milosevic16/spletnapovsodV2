@@ -468,6 +468,12 @@ onUnmounted(() => {
   .masthead--live .masthead__home {
     left: var(--hero-inset);
     top: calc(var(--hero-inset) + 0.275 * var(--hero-display));
+    /* The mark RIDES between its faces instead of jumping (owner's report: the
+       subpage close read as abrupt). Opening from the bar carries it from
+       bar-centre up to the open face's line and closing carries it back, on
+       the same 300ms every other close motion runs on. Scroll-driven pin
+       flips stay instant — the snap latch covers descendants. */
+    transition: top 300ms var(--ease-out);
   }
 
   .masthead--live.masthead--pinned:not(.masthead--open) .masthead__home {
@@ -501,7 +507,16 @@ onUnmounted(() => {
      this class for the flip's frame; combined with entries starting stowed
      (script), the bar can only ever APPEAR by the stow transition on a real
      upward move. */
-  .masthead--live.masthead--snap {
+  .masthead.masthead--live.masthead--snap,
+  .masthead.masthead--live.masthead--snap * {
+    /* Descendants too: the home mark and the toggle now tween their `top`
+       between faces, and a tween running across the pinned flip's coordinate
+       -space jump is exactly the flash this latch exists to kill. Menu
+       open/close never sets the latch, so those tweens run untouched.
+       TRIPLED selector on purpose: the children's own transition rules sit at
+       0,3,0 and later in the file, so a 0,3,0 latch lost the tie on source
+       order — measured, the toggle kept its list under the latch. 0,4,0 wins
+       outright. */
     transition: none;
   }
 
@@ -794,7 +809,11 @@ onUnmounted(() => {
     transition:
       background-color 260ms var(--ease-out),
       border-color 260ms var(--ease-out),
-      padding 300ms var(--ease-out);
+      padding 300ms var(--ease-out),
+      /* The control rides between bar-centre and the corner with the mark
+         opposite it — same 300ms, same reason (the face flip read as a jump
+         on subpage closes). Pin flips stay instant via the snap latch. */
+      top 300ms var(--ease-out);
   }
 
   /* Pinned, it becomes the labelled chip: one step darker than the page, with

@@ -4,13 +4,14 @@
  * it and the only difference between them is their words: the same instrument
  * with per-page content, the pattern the masthead and footer already follow.
  *
- * Optionally renders a standing note pointing at the base document, which is
- * what makes the apartment module legible as a module rather than as a rival
- * contract.
+ * Optionally renders a standing note pointing at a RELATED document. Since
+ * avgust 2026 the two terms documents are independent of each other, so this is
+ * no longer a precedence note: it is the general document telling a reader who
+ * came in on an apartment promotion that a different document governs them.
  */
 defineProps<{
   hero: { kicker: string; title: string; lead: string }
-  base?: { label: string; href: string; note: string }
+  related?: { label: string; href: string; note: string }
 }>()
 </script>
 
@@ -21,9 +22,9 @@ defineProps<{
       <h1 class="pgh__title">{{ hero.title }}</h1>
       <p class="pgh__lead">{{ hero.lead }}</p>
 
-      <p v-if="base" class="pgh__base">
-        <span class="pgh__base-note">{{ base.note }}</span>
-        <a :href="base.href" class="pgh__base-link">{{ base.label }}</a>
+      <p v-if="related" class="pgh__base">
+        <span class="pgh__base-note">{{ related.note }}</span>
+        <a :href="related.href" class="pgh__base-link">{{ related.label }}</a>
       </p>
     </div>
   </section>

@@ -83,7 +83,7 @@ export const articles: Article[] = [
       },
       {
         n: '1.3',
-        text: 'Za posamezne storitve lahko Izvajalec objavi posebne pogoje. Če se posebni pogoji razlikujejo od teh splošnih pogojev, imajo za tisto storitev prednost posebni pogoji. V ponudbi je vedno navedeno, kateri pogoji veljajo.',
+        text: 'Za posamezne storitve lahko Izvajalec objavi samostojne posebne pogoje. Kadar za neko naročilo veljajo taki posebni pogoji, ti splošni pogoji za tisto naročilo ne veljajo. To velja zlasti za naročila, sklenjena na podlagi akcijske ponudbe za apartmajske storitve, za katera veljajo posebni pogoji za apartmaje. V ponudbi je vedno navedeno, kateri pogoji veljajo.',
       },
       {
         n: '1.4',
@@ -571,7 +571,21 @@ export const articles: Article[] = [
   },
 ]
 
-export const updated = { label: 'Različica', value: 'v1.0, osnutek, avgust 2026' }
+/**
+ * THE POINTER TO THE APARTMENT TERMS. Since avgust 2026 the apartment document
+ * is standalone and governs on its own whenever the customer was approached
+ * with an akcijska ponudba for apartment services. A reader who arrived that
+ * way must not read this document and assume it binds them, so this document
+ * says so at the top and links across. Rendered by PogojiHero as a standing
+ * note; the href is a machine identifier and stays ASCII.
+ */
+export const related = {
+  label: 'Posebni pogoji za apartmaje',
+  href: '/pogoji-apartmaji',
+  note: 'Če vas je Izvajalec kontaktiral z akcijsko ponudbo za apartmajske storitve, za to naročilo ti splošni pogoji ne veljajo. Zanj veljajo posebni pogoji za apartmaje, ki so samostojen dokument:',
+}
+
+export const updated = { label: 'Različica', value: 'v1.1, osnutek, avgust 2026' }
 
 /** In-page stops for this document. */
 export const nav: NavItem[] = [
