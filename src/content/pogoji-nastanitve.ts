@@ -56,7 +56,7 @@ export const meta = {
 export const hero = {
   kicker: 'Pravni dokumenti',
   title: 'Posebni pogoji za nastanitve',
-  lead: 'Ti pogoji veljajo za izdelavo spletnih strani za nastanitve, in sicer za naročila, sklenjena na podlagi akcijske ponudbe za nastanitvene storitve. So samostojen dokument in ne napotujejo na druge pogoje poslovanja.',
+  lead: 'Ti pogoji veljajo za izdelavo spletnih strani za nastanitve, in sicer za naročila, sklenjena na podlagi akcijske ponudbe za nastanitvene storitve.',
 }
 
 export const articles: Article[] = [

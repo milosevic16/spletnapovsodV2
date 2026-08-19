@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useHead } from '@unhead/vue'
 import { ui } from '@/content/home'
 import { wireGround, type GroundHandle } from '@/lib/ground'
+import { prefersReducedMotion } from '@/lib/fx'
 
 // unhead owns htmlAttrs at prerender — declare the real lang or it emits "en".
 // It ALSO injects a default viewport meta that REPLACES the shell's authored
@@ -29,7 +30,13 @@ function onDocumentClick(e: MouseEvent) {
   if (!anchor) return
   if (anchor.target && anchor.target !== '_self') return
   const href = anchor.getAttribute('href')
-  if (!href || href.startsWith('#')) return
+  if (!href) return
+  // Same-page anchor: hand it back to the browser, smoothly. `#` alone is a
+  // no-op target and gets nothing.
+  if (href.startsWith('#')) {
+    if (href.length > 1 && !prefersReducedMotion()) lendSmoothScroll()
+    return
+  }
   if (/^[a-z][a-z0-9+.-]*:/i.test(href) && !href.startsWith(location.origin)) return
   const url = new URL(href, location.href)
   if (url.origin !== location.origin) return
@@ -70,6 +77,42 @@ function cleanupVeil() {
 /** The page-wide light→dark ground switch (src/lib/ground.ts). Lives here for
  *  the app's lifetime; refreshed on route commit because a navigation does
  *  not always produce the scroll event the listener keys on. */
+/**
+ * IN-PAGE ANCHORS SCROLL SMOOTHLY, and the smoothness is LENT for the gesture
+ * rather than declared globally.
+ *
+ * The native fragment navigation is left to run: the browser updates the hash,
+ * pushes the history entry, and honours scroll-margin-top, which a manual
+ * window.scrollTo does not (every anchor target on this site relies on that
+ * offset to clear the fixed header). All this adds is scroll-behavior for as
+ * long as the jump takes.
+ *
+ * Never a standing `html { scroll-behavior: smooth }`: that turns EVERY
+ * programmatic scroll into an animation, and the per-frame corrective loops on
+ * this site (the wall's and the carousel's collapse anchors) would then chase a
+ * target that moves again next frame and never settle. Those loops pass
+ * behavior:'instant' explicitly, which outranks the property — but the lend
+ * window keeps them out of reach of the question entirely.
+ *
+ * Cleared on scrollend where it exists, and always on a timeout, so a jump that
+ * never fires the event cannot leave the property armed.
+ */
+const SMOOTH_LEND_MS = 1400
+let smoothTimer = 0
+
+function releaseSmoothScroll() {
+  window.clearTimeout(smoothTimer)
+  document.documentElement.style.scrollBehavior = ''
+  window.removeEventListener('scrollend', releaseSmoothScroll)
+}
+
+function lendSmoothScroll() {
+  document.documentElement.style.scrollBehavior = 'smooth'
+  window.clearTimeout(smoothTimer)
+  smoothTimer = window.setTimeout(releaseSmoothScroll, SMOOTH_LEND_MS)
+  window.addEventListener('scrollend', releaseSmoothScroll, { once: true })
+}
+
 let ground: GroundHandle | null = null
 let removeGroundHook: (() => void) | null = null
 
@@ -115,6 +158,7 @@ onMounted(() => {
 })
 onUnmounted(() => {
   document.removeEventListener('click', onDocumentClick)
+  releaseSmoothScroll()
   removeGroundHook?.()
   ground?.dispose()
   clearTimeout(veilTimer)
