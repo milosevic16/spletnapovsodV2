@@ -182,10 +182,30 @@ const year = new Date().getFullYear()
 }
 
 @media (min-width: 900px) {
+  /* THE FOUR STOPS SIT ON ONE ROW (owner). They were wrapping »Kontakt« onto
+     a second line: the nav's 1fr track measured 300px against the 331px the
+     four tracked-out caps need — a 31px shortfall — while the mail column was
+     given the same 300px for 154px of ink.
+
+     So the nav track is sized to its CONTENT (auto) rather than to a share of
+     the row, and the surplus comes back out of the mail column, which had it
+     spare. The mail column keeps a max-content floor so the address itself can
+     never be squeezed into a wrap: below roughly 1000px the fr shares alone
+     would have taken it under its own width, and .emisija's overflow-wrap
+     would then break the address mid-string. The brand column takes whatever
+     is left (minmax(0, 2fr) — the 0 floor lets it give ground instead of
+     forcing an overflow). */
   .footer__cols {
-    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-columns: minmax(0, 2fr) auto minmax(max-content, 1fr);
     gap: 3rem;
     align-items: start;
+  }
+
+  /* Belt to the track's braces: the row is single by declaration too, so a
+     later copy change cannot quietly reintroduce the wrap. Desktop only —
+     phones stack and must keep wrapping. */
+  .footer__nav {
+    flex-wrap: nowrap;
   }
 }
 </style>
