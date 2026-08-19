@@ -239,7 +239,14 @@ Netlify free plan + private repo: **no Co-Authored-By trailers in commits**.
    delovnem dnevu", "objava v 3 delovnih dneh" + scope note, "popravki v 24 urah", AND
    the redesign's new strings (chamber labels/glosses, ledger titles, plate labels,
    »Globina reza«).
-2. **Web3Forms access key** → Netlify env `VITE_WEB3FORMS_KEY` (+ local `.env.local`).
+2. **Web3Forms access key** — key supplied and wired LOCALLY (avgust 2026): it lives
+   in `.env.local` (gitignored) and the form is verified working end to end against
+   the live API. STILL OPEN: the same `VITE_WEB3FORMS_KEY` must be added to the
+   Netlify env (owner's dashboard — nobody else can set it), or every deployed
+   build ships without a key and the form fails closed with its error line. Env
+   vars are read at BUILD time, so a redeploy is required after adding it.
+   Confirm too WHICH inbox the key delivers to — Web3Forms sends to the address
+   the key was registered with, not to `CONTACT_EMAIL`.
 3. **Contact e-mail** — `info@spletnapovsod.si` is assumed from the domain, unverified
    (`src/lib/constants.ts`).
 4. **Company legal facts** (registered name, address, VAT) — needed for the privacy-policy
