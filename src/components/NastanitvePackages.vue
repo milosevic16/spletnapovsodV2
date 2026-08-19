@@ -1,36 +1,41 @@
 <script setup lang="ts">
 /**
- * The three packages as A BUILDING IN SECTION — the page's audience runs
- * houses, and the tiers ascend, so the selector is a drawn guest house:
- * Osnovna is the ground floor, Napredna the storey above, Profi the floor
- * under the roof. Selecting a floor drives the site's cut motif: the two red
- * section planes CLIMB the building to bound the chosen floor, the floor
- * takes the quiet red wash, and the tier's contents print beside the drawing
- * line by line. Upgrade = building up, in the drawing vocabulary the whole
- * site already speaks (hatch, poché, dimension rail, planes with square end
- * ticks). Depth stays DRAWN — line weight and fills, never a shadow.
+ * The three packages as A BUILDING IN SECTION — all three storeys in full
+ * view. The audience runs houses and the tiers ascend, so the schedule IS a
+ * drawn guest house: Osnovna the ground floor, Napredna the storey above,
+ * Profi under the roof, poché earth below, one gable over everything. Every
+ * floor shows its name and summary FROM THE START (the owner's requirement:
+ * the three must be equally visible); clicking a floor expands that floor in
+ * place — its includes unfold inside the storey, the red section planes
+ * appear on its slab lines, and the quiet red wash floods it.
  *
- * ON ARRIVAL (IntersectionObserver, once) the house draws itself: the roof
- * strokes in, the floors hatch in bottom-up, the ground line rules across
- * its below-grade poché, then the planes arrive on the default floor. All
- * one-shot, class-driven CSS; with reduced motion `drawn` is set immediately
- * and the kill-switch collapses the animations, so the static drawing IS the
- * finished state. With JS off nothing is ever hidden: the floors are an inert
- * drawing and ALL three tier panels stand open in flow (the disclosure
- * contract every interactive section on this site keeps).
+ * The toggles are INDEPENDENT, not an exclusive accordion, for two reasons:
+ * comparison (two tiers open side by side is the real buying question), and
+ * scroll honesty — nothing above the click ever collapses, and because each
+ * floor's body unfolds BELOW its own header inside the band, the clicked
+ * control never moves (the column-reverse stack lays floors top-down from
+ * Profi, so growth always happens below the point of interaction).
  *
- * ACCESSIBILITY: the floors are a real vertical tablist — roving tabindex,
- * arrows move the selection (visually: up is up — the stack renders
- * bottom-up via column-reverse, so ArrowUp selects the HIGHER tier), Home
- * and End jump to the ends, focus follows selection. Each floor is a
- * 62px-tall button (44px floor honoured); panels are tabpanels labelled by
- * their tabs. The floor labels sit on paper chips so the hatch never runs
- * through the lettering (the drafting convention: fills break around text).
+ * DISTINCTNESS AT REST: each floor's left edge is its material strip, hatch
+ * density ascending with the tier — sparse lines, 45° section hatch, full
+ * cross-hatch — the drawing convention for "more substance", so the three
+ * read apart before any interaction. Text never sits on hatch.
  *
- * NO PRICES (owner's call), and the tier ids stay machine identifiers — the
- * contact form's chips derive from them.
+ * ON ARRIVAL (IntersectionObserver + the mandatory safety net) the house
+ * draws itself once: roof stroke, floors hatching in bottom-up, the ground
+ * line ruling across the poché. Class-driven one-shot CSS; every keyframe
+ * ends on the stylesheet rest, so force-finish or reduced motion land on the
+ * finished drawing.
+ *
+ * CONTRACTS: with JS off every floor stands OPEN in flow (the collapsed
+ * state exists only once live — progressive disclosure ships expanded);
+ * reduced motion gets instant toggles (kill-switch) on the fully drawn
+ * house. Buttons are real <h3><button aria-expanded aria-controls> pairs,
+ * bodies are labelled regions, closed bodies are inert. Tier ids stay
+ * machine identifiers (the contact form's chips derive from them).
+ * NO PRICES (owner's call).
  */
-import { nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, reactive, ref } from 'vue'
 import { packages, type NastInclude, type NastEmphasis, type NastSeo } from '@/content/nastanitve'
 import { createFx, prefersReducedMotion } from '@/lib/fx'
 
@@ -42,73 +47,24 @@ const isSeo = (i: NastInclude): i is NastSeo => typeof i === 'object' && 'points
 const fx = createFx()
 const live = ref(false)
 const drawn = ref(false)
-/** The selected tier = the selected FLOOR. Index into packages.items. */
-const tier = ref(0)
-const stack = ref<HTMLElement | null>(null)
 const drawing = ref<HTMLElement | null>(null)
 
+/** Which floors stand open. Live starts all shut (the equal resting state);
+ *  with JS off this is never consulted — everything is open in flow. */
+const open = reactive<boolean[]>(packages.items.map(() => false))
+
+function toggle(n: number) {
+  open[n] = !open[n]
+}
+
 /** How much of the drawing must be visible before the house draws itself. */
-const DRAW_VISIBLE = 0.3
+const DRAW_VISIBLE = 0.25
 /** Safety net: if the observer never delivers (throttled tab, exotic pane),
  *  the house must still exist — disconnect FIRST, then force-draw. */
 const DRAW_NET_MS = 4000
 
-function floorAt(i: number): HTMLElement | undefined {
-  return stack.value?.querySelectorAll<HTMLElement>('.aptp__floor')[i]
-}
-
-/**
- * Aim the two section planes at the selected floor's slab lines. Measured
- * from layout (offsetTop is render-order truth, immune to the stack's
- * column-reverse), written as two custom properties the planes transition
- * between — the climb is one CSS transition, no per-frame work.
- */
-let planeRaf = 0
-function placePlanes() {
-  planeRaf = 0
-  const f = floorAt(tier.value)
-  const st = stack.value
-  if (!f || !st) return
-  st.style.setProperty('--pt', `${f.offsetTop}px`)
-  st.style.setProperty('--pb', `${f.offsetTop + f.offsetHeight}px`)
-}
-
-/** Cancel-and-reschedule, never a boolean latch (house rule). */
-function schedulePlanes() {
-  if (planeRaf) cancelAnimationFrame(planeRaf)
-  planeRaf = fx.raf(placePlanes)
-}
-
-function select(n: number) {
-  tier.value = n
-  nextTick(placePlanes)
-}
-
-/** Vertical tablist, oriented like the building: ArrowUp selects the HIGHER
- *  floor. Focus follows selection — the tablist contract. */
-function onFloorKeys(e: KeyboardEvent) {
-  const n = packages.items.length
-  let next = -1
-  if (e.key === 'ArrowUp' || e.key === 'ArrowRight') next = Math.min(tier.value + 1, n - 1)
-  else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') next = Math.max(tier.value - 1, 0)
-  else if (e.key === 'Home') next = 0
-  else if (e.key === 'End') next = n - 1
-  if (next < 0 || next === tier.value) return
-  e.preventDefault()
-  select(next)
-  nextTick(() => floorAt(next)?.focus())
-}
-
 onMounted(() => {
   live.value = true
-  nextTick(placePlanes)
-
-  // Re-aim the planes whenever the drawing's geometry can move.
-  fx.on(window, 'resize', schedulePlanes, { passive: true })
-  document.fonts?.ready.then(schedulePlanes)
-  if ('ResizeObserver' in window && stack.value) {
-    fx.ro(schedulePlanes).observe(stack.value)
-  }
 
   // Reduced motion: the drawn state IS the resting design — no arrival act.
   // No IntersectionObserver: never hide what cannot be un-hidden.
@@ -149,113 +105,102 @@ onUnmounted(() => {
       <p class="kicker aptp__kicker">{{ packages.kicker }}</p>
       <h2 class="aptp__title">{{ packages.title }}</h2>
 
-      <div class="aptp__instrument">
-        <!-- THE DRAWING: a guest house in section. Sticky beside the panel on
-             desktop so the selector never scrolls away from what it selects. -->
-        <div ref="drawing" class="aptp__drawing">
-          <!-- The roof, stroked in on arrival. Decoration: the panels carry
-               every fact. -->
-          <svg class="aptp__roof" viewBox="0 0 264 62" aria-hidden="true">
-            <path
-              class="aptp__roofpath"
-              d="M2 60 L132 4 L262 60"
-              pathLength="100"
-              fill="none"
-              stroke="var(--grafit)"
-              stroke-width="1.5"
-            />
-          </svg>
+      <!-- THE BUILDING. Roof, three storeys, ground line, below-grade poché.
+           DOM ascends Osnovna → Profi (reading, focus and JS-off order); the
+           stack renders bottom-up, as a building stands. -->
+      <div ref="drawing" class="aptp__house">
+        <svg class="aptp__roof" viewBox="0 0 800 56" preserveAspectRatio="none" aria-hidden="true">
+          <path
+            class="aptp__roofpath"
+            d="M3 54 L400 4 L797 54"
+            pathLength="100"
+            fill="none"
+            stroke="var(--grafit)"
+            stroke-width="1.5"
+            vector-effect="non-scaling-stroke"
+          />
+        </svg>
 
-          <div
-            ref="stack"
-            class="aptp__stack"
-            :role="live ? 'tablist' : undefined"
-            :aria-label="live ? packages.feedback.floorsLabel : undefined"
-            aria-orientation="vertical"
-            @keydown="live && onFloorKeys($event)"
-          >
-            <!-- Dimension rail: extension ticks, no figure — this drawing
-                 measures nothing we could honestly put a number on. -->
-            <span class="aptp__dim" aria-hidden="true"></span>
+        <ol class="aptp__stack">
+          <!-- Dimension rail: extension ticks, no figure — this drawing
+               measures nothing we could honestly put a number on. -->
+          <span class="aptp__dim" aria-hidden="true"></span>
 
-            <component
-              :is="live ? 'button' : 'div'"
-              v-for="(p, n) in packages.items"
-              :id="`tab-${p.id}`"
-              :key="p.id"
-              class="aptp__floor"
-              :class="{ 'aptp__floor--on': live && n === tier }"
-              :style="{ '--n': n }"
-              :type="live ? 'button' : undefined"
-              :role="live ? 'tab' : undefined"
-              :aria-selected="live ? String(n === tier) : undefined"
-              :aria-controls="live ? `panel-${p.id}` : undefined"
-              :tabindex="live ? (n === tier ? 0 : -1) : undefined"
-              @click="live && select(n)"
-            >
-              <span class="aptp__hatch" aria-hidden="true"></span>
-              <span class="aptp__floor-label">{{ p.name }}</span>
-            </component>
-
-            <!-- The cut planes, bounding the selected floor. They CLIMB when
-                 the visitor upgrades — one transition on two properties. -->
-            <template v-if="live">
-              <span class="aptp__plane aptp__plane--top" aria-hidden="true"></span>
-              <span class="aptp__plane aptp__plane--bot" aria-hidden="true"></span>
-            </template>
-          </div>
-
-          <!-- The ground: a heavier line running past the walls, and the
-               below-grade poché the whole site stands things on. -->
-          <span class="aptp__groundline" aria-hidden="true"></span>
-          <span class="aptp__earth" aria-hidden="true"></span>
-        </div>
-
-        <!-- THE SCHEDULE: the selected tier's contents. With JS off all three
-             stand open in flow; live, they swap as tabpanels and the lines
-             print in with a short stagger. -->
-        <div class="aptp__panels">
-          <article
+          <li
             v-for="(p, n) in packages.items"
-            :id="`panel-${p.id}`"
             :key="p.id"
-            class="aptp__panel"
-            :role="live ? 'tabpanel' : undefined"
-            :aria-labelledby="live ? `tab-${p.id}` : undefined"
-            :hidden="live && n !== tier"
+            class="aptp__floor"
+            :class="[`aptp__floor--${p.id}`, { 'aptp__floor--open': !live || open[n] }]"
+            :style="{ '--n': n }"
           >
-            <h3 class="aptp__name aptp__rline" style="--i: 0">{{ p.name }}</h3>
-            <p class="aptp__summary aptp__rline" style="--i: 1">{{ p.summary }}</p>
-            <ul class="aptp__includes">
-              <li
-                v-for="(inc, i) in p.includes"
-                :key="i"
-                class="aptp__include aptp__rline"
-                :class="{ 'aptp__include--seo': isSeo(inc) }"
-                :style="{ '--i': i + 2 }"
+            <!-- The floor's material strip: its tier's density, ascending. -->
+            <span class="aptp__strip" aria-hidden="true"></span>
+
+            <!-- The cut planes on the slab lines, present while the floor is
+                 open — the site's red rule with square end ticks. -->
+            <span class="aptp__plane aptp__plane--top" aria-hidden="true"></span>
+            <span class="aptp__plane aptp__plane--bot" aria-hidden="true"></span>
+
+            <div class="aptp__room">
+              <h3 class="aptp__name">
+                <button
+                  v-if="live"
+                  :id="`floor-${p.id}`"
+                  type="button"
+                  class="aptp__toggle"
+                  :aria-expanded="open[n] ? 'true' : 'false'"
+                  :aria-controls="`room-${p.id}`"
+                  @click="toggle(n)"
+                >
+                  <span class="aptp__toggle-name">{{ p.name }}</span>
+                  <span class="aptp__glyph" aria-hidden="true"></span>
+                </button>
+                <span v-else :id="`floor-${p.id}`" class="aptp__toggle">
+                  <span class="aptp__toggle-name">{{ p.name }}</span>
+                </span>
+              </h3>
+
+              <p class="aptp__summary">{{ p.summary }}</p>
+
+              <div
+                :id="`room-${p.id}`"
+                class="aptp__body"
+                role="region"
+                :aria-labelledby="`floor-${p.id}`"
+                :inert="live && !open[n] ? true : undefined"
               >
-                <template v-if="isString(inc)">{{ inc }}</template>
-                <template v-else-if="isEmphasis(inc)">{{ inc.lead }}<strong>{{ inc.strong }}</strong>{{ inc.tail }}</template>
-                <details v-else class="aptp__seo">
-                  <summary class="aptp__seo-summary">{{ inc.summary }}</summary>
-                  <div class="aptp__seo-panel">
-                    <p class="aptp__seo-intro">{{ inc.intro }}</p>
-                    <ul class="aptp__seo-list">
-                      <li v-for="pt in inc.points" :key="pt" class="aptp__seo-point">{{ pt }}</li>
-                    </ul>
-                  </div>
-                </details>
-              </li>
-            </ul>
-            <p
-              v-if="p.footnote"
-              class="aptp__foot aptp__rline"
-              :style="{ '--i': p.includes.length + 2 }"
-            >
-              {{ p.footnote }}
-            </p>
-          </article>
-        </div>
+                <div class="aptp__body-in">
+                  <ul class="aptp__includes">
+                    <li
+                      v-for="(inc, i) in p.includes"
+                      :key="i"
+                      class="aptp__include"
+                      :class="{ 'aptp__include--seo': isSeo(inc) }"
+                    >
+                      <template v-if="isString(inc)">{{ inc }}</template>
+                      <template v-else-if="isEmphasis(inc)">{{ inc.lead }}<strong>{{ inc.strong }}</strong>{{ inc.tail }}</template>
+                      <details v-else class="aptp__seo">
+                        <summary class="aptp__seo-summary">{{ inc.summary }}</summary>
+                        <div class="aptp__seo-panel">
+                          <p class="aptp__seo-intro">{{ inc.intro }}</p>
+                          <ul class="aptp__seo-list">
+                            <li v-for="pt in inc.points" :key="pt" class="aptp__seo-point">{{ pt }}</li>
+                          </ul>
+                        </div>
+                      </details>
+                    </li>
+                  </ul>
+                  <p v-if="p.footnote" class="aptp__foot">{{ p.footnote }}</p>
+                </div>
+              </div>
+            </div>
+          </li>
+        </ol>
+
+        <!-- The ground: a heavier line running past the walls, and the
+             below-grade poché the whole site stands things on. -->
+        <span class="aptp__groundline" aria-hidden="true"></span>
+        <span class="aptp__earth" aria-hidden="true"></span>
       </div>
 
       <p class="aptp__cta-wrap">
@@ -287,46 +232,31 @@ onUnmounted(() => {
   text-transform: uppercase;
 }
 
-/* --- the instrument: drawing beside schedule ------------------------------ */
-.aptp__instrument {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-10) var(--space-16);
-}
-
-@media (min-width: 900px) {
-  .aptp__instrument {
-    grid-template-columns: 300px minmax(0, 1fr);
-    align-items: start;
-  }
-
-  /* The selector stays beside what it selects while a long tier scrolls. */
-  .aptp__drawing {
-    position: sticky;
-    top: calc(var(--nav-h, 59px) + var(--space-8));
-  }
-}
-
-/* --- the house ------------------------------------------------------------- */
-.aptp__drawing {
-  width: min(264px, 100%);
+/* --- the building ----------------------------------------------------------
+   One gable, three storeys, ground and earth. Proportioned as a long pension
+   rather than a cottage: the storeys are full schedule rows. */
+.aptp__house {
+  max-width: 780px;
 }
 
 .aptp__roof {
   display: block;
   width: 100%;
-  height: auto;
+  height: clamp(34px, 6vw, 56px);
   margin-bottom: -1px;
 }
 
-/* The walls: the building's outline is the drawing's heaviest line. */
+/* The walls carry the drawing's heaviest line. */
 .aptp__stack {
   position: relative;
   display: flex;
-  /* DOM ascends Osnovna → Profi (the reading and tab order); the BUILDING
-     puts the ground floor at the bottom. offsetTop measurement is unaffected:
-     it reads rendered positions. */
+  /* DOM ascends Osnovna → Profi; the BUILDING puts the ground floor at the
+     bottom. Each floor's body unfolds below its own header, so growth always
+     happens below the click — nothing above ever moves. */
   flex-direction: column-reverse;
+  margin: 0;
+  padding: 0;
+  list-style: none;
   border-inline: 1.5px solid var(--grafit);
 }
 
@@ -356,100 +286,77 @@ onUnmounted(() => {
   bottom: 0;
 }
 
-/* A floor: one storey of the section. Its top border is the slab above it —
-   with the column-reverse stack this lands between storeys, and the top
-   storey's line is the wall plate under the roof. */
+/* A storey. Its top border is the slab above it: between storeys in the
+   reversed stack, and the wall plate under the roof for Profi. */
 .aptp__floor {
   position: relative;
-  display: flex;
-  align-items: center;
-  min-height: 62px;
-  padding: 0 var(--space-4);
-  margin: 0;
-  border: 0;
+  display: grid;
+  grid-template-columns: clamp(40px, 8vw, 64px) minmax(0, 1fr);
   border-top: 1px solid var(--mreza-strong);
-  background: none;
-  font: inherit;
-  color: inherit;
-  text-align: left;
-  transition: background-color 240ms var(--ease-out);
+  transition: background-color 280ms var(--ease-out);
 }
 
-button.aptp__floor {
-  cursor: pointer;
-}
-
-button.aptp__floor:focus-visible {
-  outline: 2px solid var(--grafit);
-  outline-offset: -4px;
-}
-
-/* The selected floor takes the quiet red wash — the token whose job is
+/* The open floor takes the quiet red wash — the token whose job is
    "opened ground" — so the cut reads in fill as well as in planes. */
-.aptp__floor--on {
+.aptp__floor--open {
   background-color: var(--rez-vodni);
 }
 
-/* The section hatch. Line work drawn by gradient (the .press technique),
-   dimmed until the floor is selected. */
-.aptp__hatch {
-  position: absolute;
-  inset: 0;
+/* The material strip: the floor's tier drawn as density. Line work by
+   gradient (the .press technique), never a colour ramp; deepens when open. */
+.aptp__strip {
+  position: relative;
+  border-right: 1px solid var(--mreza-strong);
+  opacity: 0.55;
+  transition: opacity 280ms var(--ease-out);
   pointer-events: none;
+}
+
+.aptp__floor--open .aptp__strip {
+  opacity: 0.95;
+}
+
+/* Osnovna — sparse lines: the lightest build. */
+.aptp__floor--basic .aptp__strip {
   background-image: repeating-linear-gradient(
     45deg,
-    transparent 0 6px,
-    var(--grafit-2) 6px 7px
+    transparent 0 9px,
+    var(--grafit-2) 9px 10px
   );
-  opacity: 0.16;
-  transition: opacity 240ms var(--ease-out);
 }
 
-@media (hover: hover) {
-  button.aptp__floor:hover .aptp__hatch {
-    opacity: 0.34;
-  }
+/* Napredna — the standard 45° section hatch. */
+.aptp__floor--advanced .aptp__strip {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent 0 5px,
+    var(--grafit-2) 5px 6px
+  );
 }
 
-.aptp__floor--on .aptp__hatch {
-  opacity: 0.42;
+/* Profi — cross-hatch: the densest material in the drawing convention. */
+.aptp__floor--profi .aptp__strip {
+  background-image:
+    repeating-linear-gradient(45deg, transparent 0 5px, var(--grafit-2) 5px 6px),
+    repeating-linear-gradient(-45deg, transparent 0 5px, var(--grafit-2) 5px 6px);
 }
 
-/* The floor's name on a paper chip: fills break around lettering, so the
-   hatch never runs through the word. */
-.aptp__floor-label {
-  position: relative;
-  z-index: 1;
-  padding: 3px 10px;
-  background: var(--list);
-  font-family: var(--font-display);
-  font-weight: 500;
-  font-size: 0.8125rem;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--grafit-2);
-  transition: color 240ms var(--ease-out);
-}
-
-.aptp__floor--on .aptp__floor-label,
-button.aptp__floor:hover .aptp__floor-label {
-  color: var(--grafit);
-}
-
-/* The cut planes: the site's red rule with square end ticks, overhanging the
-   walls the way a section plane runs past the building. The climb is the
-   `top` transition; reduced motion collapses it to a jump (kill-switch). */
+/* The cut planes on the open floor's slab lines: red rules with square end
+   ticks, overhanging the walls the way a section plane runs past the
+   building. They draw across when the floor opens. */
 .aptp__plane {
   position: absolute;
   left: -8px;
   right: -8px;
   height: 2px;
-  margin-top: -1px;
   background: var(--rez);
   pointer-events: none;
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: left center;
   transition:
-    top 380ms var(--ease-out),
-    opacity 300ms var(--ease-out);
+    opacity 240ms var(--ease-out),
+    transform 360ms var(--ease-out);
 }
 .aptp__plane::before,
 .aptp__plane::after {
@@ -467,141 +374,22 @@ button.aptp__floor:hover .aptp__floor-label {
   right: 0;
 }
 .aptp__plane--top {
-  top: var(--pt, 0px);
+  top: -1px;
 }
 .aptp__plane--bot {
-  top: var(--pb, 62px);
+  bottom: -1px;
 }
 
-/* The ground line runs past the walls; below it, the earth is poché. */
-.aptp__groundline {
-  display: block;
-  width: 112%;
-  margin-left: -6%;
-  height: 2px;
-  background: var(--grafit);
-}
-.aptp__earth {
-  display: block;
-  width: 112%;
-  margin-left: -6%;
-  height: 16px;
-  background-image: repeating-linear-gradient(
-    45deg,
-    transparent 0 5px,
-    var(--grafit-2) 5px 6px
-  );
-  opacity: 0.45;
+.aptp__floor--open .aptp__plane {
+  opacity: 1;
+  transform: scaleX(1);
 }
 
-/* --- the arrival act --------------------------------------------------------
-   Hidden states exist ONLY once the app is live (never in static HTML), and
-   the drawn state's last frame equals the stylesheet rest. */
-.aptp--live:not(.aptp--drawn) .aptp__roofpath {
-  stroke-dasharray: 100;
-  stroke-dashoffset: 100;
-}
-.aptp--live:not(.aptp--drawn) .aptp__hatch,
-.aptp--live:not(.aptp--drawn) .aptp__floor-label,
-.aptp--live:not(.aptp--drawn) .aptp__groundline,
-.aptp--live:not(.aptp--drawn) .aptp__earth,
-.aptp--live:not(.aptp--drawn) .aptp__dim,
-.aptp--live:not(.aptp--drawn) .aptp__plane {
-  opacity: 0;
+/* The room: the floor's content column. */
+.aptp__room {
+  padding: var(--space-5) var(--space-5) var(--space-6);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .aptp--drawn .aptp__roofpath {
-    stroke-dasharray: 100;
-    animation: aptp-roof 700ms var(--ease-out) both;
-  }
-  .aptp--drawn .aptp__groundline {
-    animation: aptp-rule 600ms var(--ease-out) both;
-    transform-origin: left center;
-  }
-  .aptp--drawn .aptp__earth {
-    animation: aptp-earth 500ms var(--ease-out) 350ms both;
-  }
-  .aptp--drawn .aptp__dim {
-    animation: aptp-fade 500ms var(--ease-out) 500ms both;
-  }
-  /* Floors hatch in bottom-up: the build ascends. */
-  .aptp--drawn .aptp__hatch {
-    animation: aptp-hatch 450ms var(--ease-out) both;
-    animation-delay: calc(250ms + var(--n, 0) * 140ms);
-  }
-  .aptp--drawn .aptp__floor-label {
-    animation: aptp-fade 450ms var(--ease-out) both;
-    animation-delay: calc(250ms + var(--n, 0) * 140ms);
-  }
-  .aptp--drawn .aptp__plane {
-    animation: aptp-planes 400ms var(--ease-out) 800ms both;
-  }
-  /* The schedule prints line by line on every selection (display:none →
-     shown restarts the animation), capped by the longest list at ~600ms. */
-  .aptp--live .aptp__rline {
-    animation: aptp-line 320ms var(--ease-out) both;
-    animation-delay: calc(var(--i, 0) * 45ms);
-  }
-}
-
-/* Keyframes end at each element's stylesheet rest — cancel-safe anywhere.
-   Elements resting BELOW opacity 1 (hatch .16/.42, earth .45) get their own
-   from-zero keyframes with no `to`, so the cascade's resting value is the
-   landing. */
-@keyframes aptp-roof {
-  from {
-    stroke-dashoffset: 100;
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-@keyframes aptp-rule {
-  from {
-    opacity: 1;
-    transform: scaleX(0);
-  }
-  to {
-    opacity: 1;
-    transform: scaleX(1);
-  }
-}
-@keyframes aptp-fade {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-@keyframes aptp-hatch {
-  from {
-    opacity: 0;
-  }
-}
-@keyframes aptp-earth {
-  from {
-    opacity: 0;
-  }
-}
-@keyframes aptp-planes {
-  from {
-    opacity: 0;
-  }
-}
-@keyframes aptp-line {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* --- the schedule ----------------------------------------------------------- */
 .aptp__name {
   margin: 0;
   font-family: var(--font-display);
@@ -612,11 +400,96 @@ button.aptp__floor:hover .aptp__floor-label {
   color: var(--grafit);
 }
 
+/* The whole name row is the control: name left, drawn +/- right, 44px met.
+   The h3>button pair is the accordion's canonical accessible shape. */
+.aptp__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+
+button.aptp__toggle {
+  cursor: pointer;
+}
+
+button.aptp__toggle:focus-visible {
+  outline: 2px solid var(--grafit);
+  outline-offset: 3px;
+}
+
+/* The drawn +/-: two hairlines, the site's disclosure device. The vertical
+   bar fades when open, leaving a minus. Never a dingbat, never an emoji. */
+.aptp__glyph {
+  position: relative;
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+}
+.aptp__glyph::before,
+.aptp__glyph::after {
+  content: '';
+  position: absolute;
+  background: var(--grafit-2);
+  transition: opacity 200ms var(--ease-out);
+}
+.aptp__glyph::after {
+  left: 0;
+  right: 0;
+  top: 6.25px;
+  height: 1.5px;
+}
+.aptp__glyph::before {
+  top: 0;
+  bottom: 0;
+  left: 6.25px;
+  width: 1.5px;
+}
+.aptp__floor--open .aptp__glyph::before {
+  opacity: 0;
+}
+
+@media (hover: hover) {
+  button.aptp__toggle:hover .aptp__glyph::before,
+  button.aptp__toggle:hover .aptp__glyph::after {
+    background: var(--grafit);
+  }
+}
+
 .aptp__summary {
-  margin: var(--space-3) 0 0;
+  margin: var(--space-2) 0 0;
   font-size: var(--fs-lead);
   line-height: 1.5;
   color: var(--grafit);
+  max-width: 58ch;
+}
+
+/* --- the unfolding room ------------------------------------------------------
+   Collapsed state exists ONLY live (JS off ships everything open). The
+   grid-rows transition needs no measurement; the inner wrapper clips. Closed
+   bodies are inert (out of the tab order and off assistive tech). */
+.aptp__body {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 360ms var(--ease-out);
+}
+
+.aptp--live .aptp__body[inert] {
+  grid-template-rows: 0fr;
+}
+
+.aptp__body-in {
+  overflow: hidden;
+  min-height: 0;
 }
 
 .aptp__includes {
@@ -647,22 +520,6 @@ button.aptp__floor:hover .aptp__floor-label {
 .aptp__include strong {
   font-weight: 600;
   color: var(--grafit);
-}
-
-/* JS-off: the three schedules stand open in sequence, ruled apart. Live, the
-   rules and spacing collapse — only one panel shows at a time. */
-.aptp__panel + .aptp__panel {
-  margin-top: var(--space-10);
-  padding-top: var(--space-10);
-  border-top: 1px solid var(--mreza-strong);
-}
-.aptp--live .aptp__panel + .aptp__panel {
-  margin-top: 0;
-  padding-top: 0;
-  border-top: 0;
-}
-.aptp__panel[hidden] {
-  display: none;
 }
 
 .aptp__seo-summary {
@@ -781,6 +638,103 @@ button.aptp__floor:hover .aptp__floor-label {
   color: var(--grafit-2);
 }
 
+/* The ground line runs past the walls; below it, the earth is poché. */
+.aptp__groundline {
+  display: block;
+  width: 104%;
+  margin-left: -2%;
+  height: 2px;
+  background: var(--grafit);
+}
+.aptp__earth {
+  display: block;
+  width: 104%;
+  margin-left: -2%;
+  height: 16px;
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent 0 5px,
+    var(--grafit-2) 5px 6px
+  );
+  opacity: 0.45;
+}
+
+/* --- the arrival act --------------------------------------------------------
+   Hidden states exist ONLY once the app is live (never in static HTML), and
+   every keyframe ends on the element's stylesheet rest. */
+.aptp--live:not(.aptp--drawn) .aptp__roofpath {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+}
+.aptp--live:not(.aptp--drawn) .aptp__strip,
+.aptp--live:not(.aptp--drawn) .aptp__groundline,
+.aptp--live:not(.aptp--drawn) .aptp__earth,
+.aptp--live:not(.aptp--drawn) .aptp__dim {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .aptp--drawn .aptp__roofpath {
+    stroke-dasharray: 100;
+    animation: aptp-roof 700ms var(--ease-out) both;
+  }
+  .aptp--drawn .aptp__groundline {
+    animation: aptp-rule 600ms var(--ease-out) both;
+    transform-origin: left center;
+  }
+  .aptp--drawn .aptp__earth {
+    animation: aptp-earth 500ms var(--ease-out) 350ms both;
+  }
+  .aptp--drawn .aptp__dim {
+    animation: aptp-fade 500ms var(--ease-out) 500ms both;
+  }
+  /* The strips hatch in bottom-up: the build ascends. */
+  .aptp--drawn .aptp__strip {
+    animation: aptp-strip 450ms var(--ease-out) both;
+    animation-delay: calc(220ms + var(--n, 0) * 140ms);
+  }
+}
+
+/* Keyframes end at each element's stylesheet rest — cancel-safe anywhere.
+   Elements resting BELOW opacity 1 (strip .55, earth .45) get from-only
+   keyframes, so the cascade's resting value is the landing. */
+@keyframes aptp-roof {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes aptp-rule {
+  from {
+    opacity: 1;
+    transform: scaleX(0);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+@keyframes aptp-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes aptp-strip {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes aptp-earth {
+  from {
+    opacity: 0;
+  }
+}
+
 .aptp__cta-wrap {
   margin-top: var(--space-12);
   margin-bottom: 0;
@@ -819,14 +773,18 @@ button.aptp__floor:hover .aptp__floor-label {
 }
 
 @media (max-width: 809px) {
-  .aptp__drawing {
-    width: min(232px, 86%);
+  .aptp__house {
     /* Room for the dimension rail off the left wall. */
-    margin-left: 20px;
+    margin-left: 14px;
+    max-width: calc(100% - 14px);
   }
 
-  .aptp__floor {
-    min-height: 54px;
+  .aptp__dim {
+    left: -14px;
+  }
+
+  .aptp__room {
+    padding: var(--space-4) var(--space-4) var(--space-5);
   }
 
   .aptp__foot {
