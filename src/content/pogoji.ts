@@ -15,8 +15,15 @@
  * clause that can drift.
  *
  * PLACEHOLDERS. Clauses carrying ⟨…⟩ are owner decisions not yet made; each is
- * flagged `todo: true` so the page can mark them and so a reviewer can find
- * them in one pass. Money, VAT status and licence scope are never invented.
+ * flagged `todo: true` and the page marks it »dopolniti« beside the clause, so
+ * a reviewer finds them in one pass. Three remain: 10.1 (urna postavka), 11.7
+ * (navedba avtorstva) and 11.8 (izvorne datoteke). Money, VAT status and licence
+ * scope are never invented.
+ *
+ * The document-wide OSNUTEK banner was REMOVED on the owner’s call (avgust
+ * 2026). The per-clause flags are what is left, so nothing on the page now says
+ * the document as a whole is unfinished — worth knowing before it is published
+ * while any ⟨…⟩ remains.
  *
  * DRAFT: needs owner sign-off and a lawyer's review before it governs anything.
  */
@@ -53,16 +60,18 @@ export const hero = {
   lead: 'Ti pogoji urejajo storitve načrtovanja, izdelave in vzdrževanja spletnih strani. Za posamezne storitve veljajo dodatno posebni pogoji, ki imajo v primeru razlik prednost pred temi.',
 }
 
-/** Rendered as a register block in the first article. Owner-supplied identity;
- *  the registered address is still missing and is marked as such. */
+/** Rendered as a register block in the first article. Owner-supplied identity.
+ *  NO ADDRESS ROW, by the owner's call (avgust 2026): the registered address is
+ *  not stated here. If the document is ever served to consumers, check whether
+ *  the pre-contractual information duties require the seat to appear — the
+ *  footer's provider identity and the privacy policy are the other places it
+ *  would belong. */
 export const provider = {
   name: 'POVSOD, Gregor Anželj, s.p.',
   rows: [
     { label: 'Matična številka', value: '6774644000' },
     { label: 'Davčna številka', value: '31147011' },
   ],
-  addressLabel: 'Naslov',
-  addressTodo: '⟨naslov sedeža⟩',
   emailLabel: 'E-pošta',
 }
 
@@ -126,8 +135,7 @@ export const articles: Article[] = [
       { n: '3.3', text: 'Pogodba je sklenjena s pisno ali elektronsko potrditvijo naročila ali s plačilom avansa.' },
       {
         n: '3.4',
-        text: 'Cene so navedene ⟨z DDV / brez DDV, oziroma navedba, da Izvajalec ni zavezanec za DDV po 1. odstavku 94. člena ZDDV-1⟩. Naročnikom, ki so potrošniki, so cene vedno navedene kot končne.',
-        todo: true,
+        text: 'Izvajalec ni zavezanec za DDV po prvem odstavku 94. člena Zakona o davku na dodano vrednost, zato DDV na računih ni obračunan. Navedene cene so končne.',
       },
     ],
   },
@@ -183,9 +191,16 @@ export const articles: Article[] = [
         text: 'Vsaka faza se zaključi z odobritvijo Naročnika, ki jo je mogoče podati tudi po elektronski pošti. Odobrena faza se šteje za zaključeno; poznejši posegi vanjo se obravnavajo kot sprememba obsega po 7. členu.',
       },
       {
+        // OWNER TO DO: »krog popravkov« still needs a precise definition here —
+        // what one round covers (how many pages of comments, how many rounds of
+        // comments inside one round, what turns a request into a change of scope
+        // under article 7). The apartment module defines it loosely as up to
+        // five pages of proposed corrections; this document defines nothing yet,
+        // and two rounds are now PROMISED, so the definition is load-bearing.
+        // Deliberately a code comment, not a visible flag: authoring reminders
+        // never ship in renderable content.
         n: '6.3',
-        text: 'V ceno je vključenih ⟨število⟩ krogov popravkov na oblikovni koncept. Dodatni krogi se obračunajo po veljavni urni postavki.',
-        todo: true,
+        text: 'V ceno sta vključena dva kroga popravkov na oblikovni koncept. Dodatni krogi se obračunajo po veljavni urni postavki.',
       },
       {
         n: '6.4',
@@ -219,7 +234,7 @@ export const articles: Article[] = [
         n: '8.2',
         text: 'Izvajalec navaja naslednje storitvene roke:',
         items: [
-          'Objava spletne strani: trije delovni dnevi. Rok začne teči, ko sta izpolnjena oba pogoja: Naročnik je potrdil ponudbo in Izvajalcu izročil vsa dogovorjena gradiva v uporabni digitalni obliki.',
+          'Objava spletne strani: trije delovni dnevi. Rok začne teči po dogovorjeni končni podobi, torej po zadnjem naročenem krogu popravkov, in ob pogoju, da je Naročnik potrdil ponudbo ter izročil vsa dogovorjena gradiva v uporabni digitalni obliki. Rok velja za manjše in srednje projekte brez podatkovnih baz.',
           'Manjši popravki: 24 ur v delovnem času, od prejema jasno opisane zahteve.',
           'Odziv na povpraševanje: en delovni dan.',
         ],
@@ -270,8 +285,7 @@ export const articles: Article[] = [
       },
       {
         n: '10.2',
-        text: 'Plačilna dinamika je določena v ponudbi, praviloma ⟨delitev, npr. 50 % avans ob potrditvi in 50 % pred objavo⟩.',
-        todo: true,
+        text: 'Plačilna dinamika je določena v ponudbi, praviloma pa je naslednja: prvi predlog spletne strani je brezplačen in Naročnika ne zavezuje; pred začetkom krogov popravkov Naročnik plača avans v višini 50 odstotkov dogovorjene cene; preostanek zapade v plačilo po objavi spletne strani na domeni Naročnika.',
       },
       { n: '10.3', text: 'Plačilni rok je 14 dni od izdaje računa, razen če je v ponudbi določeno drugače.' },
       {
@@ -296,9 +310,18 @@ export const articles: Article[] = [
     clauses: [
       { n: '11.1', text: 'Do celotnega plačila vse pravice na rezultatu dela ostanejo Izvajalcu.' },
       {
+        // OWNER'S CALL: EXCLUSIVE. Flagged in session, and worth re-reading with
+        // the lawyer, because exclusivity cuts against three things in this very
+        // article: 11.3 (the Izvajalec keeps his frameworks and reusable
+        // components — the boundary between "rezultat dela" and those is what
+        // decides whether this house's shared system may be reused for the next
+        // client), 11.5 (rejected drafts stay with the Izvajalec) and 11.6 (the
+        // reference right). ZASP also asks a written form and a stated scope for
+        // transfers of material rights, which an electronic acceptance of terms
+        // may not satisfy for an EXCLUSIVE grant. Non-exclusive would carry the
+        // same practical value for the client and none of this risk.
         n: '11.2',
-        text: 'Po celotnem plačilu Naročnik pridobi ⟨izključno ali neizključno⟩ ter časovno in krajevno neomejeno pravico do uporabe dogovorjenega rezultata dela za lastne poslovne namene, vključno s pravico do predelave.',
-        todo: true,
+        text: 'Po celotnem plačilu Naročnik pridobi izključno ter časovno in krajevno neomejeno pravico do uporabe dogovorjenega rezultata dela za lastne poslovne namene, vključno s pravico do predelave. Izključnost se nanaša na rezultat dela, izdelan po naročilu, in ne posega v pravice Izvajalca iz točk 11.3, 11.5 in 11.6.',
       },
       {
         n: '11.3',
@@ -332,9 +355,14 @@ export const articles: Article[] = [
     clauses: [
       { n: '12.1', text: 'Izvajalec jamči, da bo rezultat dela ob prevzemu vsebinsko ustrezal potrjeni specifikaciji.' },
       {
+        // OWNER'S CALL: the statutory minimum, i.e. no contractual extension.
+        // Drafted as a REFERENCE rather than a number on purpose. For consumers
+        // the conformity period under ZVPot-1 is mandatory and cannot be
+        // shortened, so naming a shorter figure would simply be void as to them;
+        // for non-consumers the OZ rules on liability for defects apply, and the
+        // exact figure is a lawyer's call, not one to invent here.
         n: '12.2',
-        text: 'Jamstveni rok je ⟨število⟩ mesecev od prevzema. V tem obdobju Izvajalec brezplačno odpravi napake, ki so posledica njegovega dela. Brezplačna odprava napak ni isto kot plačljivi popravki in spremembe po 8.4.',
-        todo: true,
+        text: 'Jamstveni rok s temi pogoji ni podaljšan; veljajo zakonski roki. Za Naročnika, ki je potrošnik, veljajo v celoti zakonske pravice iz naslova neskladnosti po Zakonu o varstvu potrošnikov, ki jih ta dokument ne omejuje in ne skrajšuje. Za Naročnika, ki ni potrošnik, veljajo pravila o odgovornosti za napake po Obligacijskem zakoniku. V jamstvenem roku Izvajalec brezplačno odpravi napake, ki so posledica njegovega dela; brezplačna odprava napak ni isto kot plačljivi popravki in spremembe po točki 8.4.',
       },
       {
         n: '12.3',

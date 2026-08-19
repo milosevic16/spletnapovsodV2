@@ -29,31 +29,17 @@ const props = defineProps<{
   provider?: {
     name: string
     rows: { label: string; value: string }[]
-    addressLabel: string
-    addressTodo: string
     emailLabel: string
   }
   /** Which article id the provider block belongs under. */
   providerIn?: string
 }>()
 
-const todoCount = props.articles.reduce(
-  (n, a) => n + a.clauses.filter((c) => c.todo).length,
-  0,
-)
 </script>
 
 <template>
   <section class="pgd press press--light">
     <div class="container pgd__container">
-      <p v-if="todoCount" class="pgd__draft">
-        <span class="pgd__draft-tag">Osnutek</span>
-        <span class="pgd__draft-text"
-          >Dokument še ni dokončan. Mesta, označena z oglatimi oklepaji, so odločitve, ki jih je
-          treba dopolniti pred objavo.</span
-        >
-      </p>
-
       <article
         v-for="article in props.articles"
         :id="article.id"
@@ -71,10 +57,6 @@ const todoCount = props.articles.reduce(
           <div v-if="props.provider && props.providerIn === article.id" class="pgd__identity">
             <p class="pgd__id-name">{{ props.provider.name }}</p>
             <dl class="pgd__id-rows">
-              <div class="pgd__id-row">
-                <dt class="pgd__id-label">{{ props.provider.addressLabel }}</dt>
-                <dd class="pgd__id-value pgd__todo">{{ props.provider.addressTodo }}</dd>
-              </div>
               <div v-for="row in props.provider.rows" :key="row.label" class="pgd__id-row">
                 <dt class="pgd__id-label">{{ row.label }}</dt>
                 <dd class="pgd__id-value emisija">{{ row.value }}</dd>
