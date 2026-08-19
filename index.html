@@ -136,6 +136,36 @@
           --land-h: calc(0.55 * clamp(8.25rem, 4.9rem + 5.93vw, 10.25rem));
         }
       }
+
+      /* SUBPAGES LAND ON THE MASTHEAD'S HOME MARK, top-left, at every width.
+         Everything above describes the HOME page, whose hero carries the big
+         corner stamp the mark becomes. No other page has that stamp: on
+         /nastanitve and the terms/privacy pages the brand lives in the
+         masthead instead, so the mark was flying to a hero stamp that does not
+         exist — measured on /nastanitve at 1265px, it landed top-RIGHT at
+         y≈107 over the hero photograph while the real logo sat at (64, 8).
+
+         The hook is the mark itself rather than a page class: .masthead__home
+         is v-if="props.home", so it is in the PRERENDERED html of exactly
+         the four subpages and of neither the home page nor 404 — no JS, no
+         route list to keep in sync. (Where :has() is unsupported the rule is
+         simply skipped and the old home-page landing applies: wrong corner,
+         never broken.)
+
+         ONE rule for both widths, because the target is width-invariant: the
+         strip is 45px and .masthead__homemark is 1.7rem on phones and desktop
+         alike. Left follows the .container's own arithmetic — the row is a
+         .container, and the mark is absolutely positioned at its --gutter — so
+         this reproduces that centring rather than guessing at it. Verified
+         against the live target at 390 and 1265; paired with SiteMasthead.vue
+         (.masthead__home / .masthead__homemark) — change there, change here. */
+      body:has(.masthead__home) #veil {
+        --land-left: calc(
+          max(0px, (100% - (var(--container) + 2 * var(--gutter))) / 2) + var(--gutter)
+        );
+        --land-top: calc((45px - 1.7rem) / 2);
+        --land-h: 1.7rem;
+      }
       /* The word: one flex row, everything in em so the fly can scale the
          whole assembly by animating font-size alone. Slightly above centre —
          the optical middle of the field. */
