@@ -1,41 +1,41 @@
 <script setup lang="ts">
 /**
- * The three packages as A BUILDING IN SECTION — all three storeys in full
- * view. The audience runs houses and the tiers ascend, so the schedule IS a
- * drawn guest house: Osnovna the ground floor, Napredna the storey above,
- * Profi under the roof, poché earth below, one gable over everything. Every
- * floor shows its name and summary FROM THE START (the owner's requirement:
- * the three must be equally visible); clicking a floor expands that floor in
- * place — its includes unfold inside the storey, the red section planes
- * appear on its slab lines, and the quiet red wash floods it.
+ * The three packages as A TERRACE OF ROW HOUSES (vrstne hiše) — three attached
+ * houses left to right, EACH A LITTLE BIGGER AND MORE COMPLEX than the last:
+ * Osnovna a plain gable, Napredna taller with a chimney, Profi tallest with
+ * chimney and dormer. Each house holds its own tier. Exactly one stands open
+ * (Osnovna by default): its facade texture lifts, the red cut lines run down
+ * its party walls — the house shown in SECTION, interior exposed — and its
+ * schedule prints inside. Choosing another house minimizes the open one: the
+ * street re-divides (an all-fr grid-template-columns transition; fr↔fr is the
+ * interpolable form — px↔fr snaps), the new interior unfolds, the old one
+ * folds shut.
  *
- * The toggles are INDEPENDENT, not an exclusive accordion, for two reasons:
- * comparison (two tiers open side by side is the real buying question), and
- * scroll honesty — nothing above the click ever collapses, and because each
- * floor's body unfolds BELOW its own header inside the band, the clicked
- * control never moves (the column-reverse stack lays floors top-down from
- * Profi, so growth always happens below the point of interaction).
+ * PHONES keep the stacked building, per the owner: one improved roof on top,
+ * then Osnovna → Napredna → Profi top-to-bottom (DOM order — the previous
+ * column-reverse is gone), ground and earth below. Same exclusive behaviour.
+ * Textures ascend with the tier everywhere: sparse lines → 45° hatch → full
+ * cross-hatch (least to most textured, left to right and top to bottom).
  *
- * DISTINCTNESS AT REST: each floor's left edge is its material strip, hatch
- * density ascending with the tier — sparse lines, 45° section hatch, full
- * cross-hatch — the drawing convention for "more substance", so the three
- * read apart before any interaction. Text never sits on hatch.
+ * SCROLL HONESTY: an exclusive switch collapses content above or beside the
+ * click, so every selection runs the anchor-hold — the clicked control's
+ * viewport drift is measured per frame for the transition's length and taken
+ * back out of the scroll (behavior: 'instant', per the global-smooth trap).
+ * Under reduced motion one corrective pass after the instant relayout does
+ * the whole job.
  *
- * ON ARRIVAL (IntersectionObserver + the mandatory safety net) the house
- * draws itself once: roof stroke, floors hatching in bottom-up, the ground
- * line ruling across the poché. Class-driven one-shot CSS; every keyframe
- * ends on the stylesheet rest, so force-finish or reduced motion land on the
- * finished drawing.
+ * SEMANTICS: a tablist of three houses (exactly one active is what tabs
+ * mean). Roving tabindex; ArrowRight/Down next, ArrowLeft/Up previous (the
+ * street is DOM-ordered in both layouts), Home/End; focus follows selection.
+ * Interiors are tabpanels labelled by their tabs; closed interiors are inert.
  *
- * CONTRACTS: with JS off every floor stands OPEN in flow (the collapsed
- * state exists only once live — progressive disclosure ships expanded);
- * reduced motion gets instant toggles (kill-switch) on the fully drawn
- * house. Buttons are real <h3><button aria-expanded aria-controls> pairs,
- * bodies are labelled regions, closed bodies are inert. Tier ids stay
- * machine identifiers (the contact form's chips derive from them).
+ * CONTRACTS: with JS off all three houses stand OPEN side by side (grid
+ * defaults to three equal tracks; the collapsed state exists only live).
+ * Reduced motion gets the drawn street instantly, switching without motion.
+ * Static HTML carries every string; tier ids stay machine identifiers.
  * NO PRICES (owner's call).
  */
-import { onMounted, onUnmounted, reactive, ref } from 'vue'
+import { nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { packages, type NastInclude, type NastEmphasis, type NastSeo } from '@/content/nastanitve'
 import { createFx, prefersReducedMotion } from '@/lib/fx'
 
@@ -47,28 +47,79 @@ const isSeo = (i: NastInclude): i is NastSeo => typeof i === 'object' && 'points
 const fx = createFx()
 const live = ref(false)
 const drawn = ref(false)
-const drawing = ref<HTMLElement | null>(null)
+const street = ref<HTMLElement | null>(null)
 
-/** Which floors stand open. Live starts all shut (the equal resting state);
- *  with JS off this is never consulted — everything is open in flow. */
-const open = reactive<boolean[]>(packages.items.map(() => false))
+/** The open house. Osnovna by default, per the owner. */
+const open = ref(0)
 
-function toggle(n: number) {
-  open[n] = !open[n]
+/** How much of the street must be visible before it draws itself. */
+const DRAW_VISIBLE = 0.25
+/** Safety net: if the observer never delivers, the street must still exist —
+ *  disconnect FIRST, then force-draw. */
+const DRAW_NET_MS = 4000
+/** The street re-division + unfold length; the anchor-hold runs this + a
+ *  beat. PAIRS with the 420ms transitions in the style block. */
+const SWITCH_MS = 420
+const HOLD_EXTRA_MS = 140
+
+function houseAt(i: number): HTMLElement | undefined {
+  return street.value?.querySelectorAll<HTMLElement>('.aptp__tab')[i]
 }
 
-/** How much of the drawing must be visible before the house draws itself. */
-const DRAW_VISIBLE = 0.25
-/** Safety net: if the observer never delivers (throttled tab, exotic pane),
- *  the house must still exist — disconnect FIRST, then force-draw. */
-const DRAW_NET_MS = 4000
+/**
+ * Hold the clicked control still through the relayout: each frame, whatever
+ * the collapse/expansion moved it by is taken back out of the scroll. One
+ * pass suffices under reduced motion (the relayout is instant there).
+ */
+let holdRaf = 0
+function holdControl(el: HTMLElement) {
+  if (holdRaf) cancelAnimationFrame(holdRaf)
+  const anchor = el.getBoundingClientRect().top
+  const correct = () => {
+    const drift = el.getBoundingClientRect().top - anchor
+    if (Math.abs(drift) > 0.5) window.scrollBy({ top: drift, behavior: 'instant' as ScrollBehavior })
+  }
+  if (prefersReducedMotion()) {
+    nextTick(correct)
+    return
+  }
+  const t0 = performance.now()
+  const step = () => {
+    holdRaf = 0
+    correct()
+    if (performance.now() - t0 < SWITCH_MS + HOLD_EXTRA_MS) holdRaf = fx.raf(step)
+  }
+  holdRaf = fx.raf(step)
+}
+
+function select(n: number) {
+  if (n === open.value) return
+  const btn = houseAt(n)
+  open.value = n
+  if (btn) holdControl(btn)
+}
+
+/** The street is DOM-ordered in both layouts (left→right on desktop, top→
+ *  bottom on phones), so one arrow mapping serves both axes. */
+function onStreetKeys(e: KeyboardEvent) {
+  const count = packages.items.length
+  let next = -1
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = Math.min(open.value + 1, count - 1)
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = Math.max(open.value - 1, 0)
+  else if (e.key === 'Home') next = 0
+  else if (e.key === 'End') next = count - 1
+  if (next < 0 || next === open.value) return
+  e.preventDefault()
+  select(next)
+  nextTick(() => houseAt(next)?.focus())
+}
 
 onMounted(() => {
   live.value = true
 
-  // Reduced motion: the drawn state IS the resting design — no arrival act.
+  // Reduced motion: the drawn street IS the resting design — no arrival act.
   // No IntersectionObserver: never hide what cannot be un-hidden.
-  if (prefersReducedMotion() || !('IntersectionObserver' in window) || !drawing.value) {
+  if (prefersReducedMotion() || !('IntersectionObserver' in window) || !street.value) {
     drawn.value = true
     return
   }
@@ -82,7 +133,7 @@ onMounted(() => {
     },
     { threshold: DRAW_VISIBLE },
   )
-  io.observe(drawing.value)
+  io.observe(street.value)
   fx.setTimeout(() => {
     if (drawn.value) return
     io.disconnect()
@@ -91,6 +142,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (holdRaf) cancelAnimationFrame(holdRaf)
   fx.dispose()
 })
 </script>
@@ -99,106 +151,144 @@ onUnmounted(() => {
   <section
     id="paketi"
     class="aptp press press--light"
-    :class="{ 'aptp--live': live, 'aptp--drawn': drawn }"
+    :class="[`aptp--open-${open}`, { 'aptp--live': live, 'aptp--drawn': drawn }]"
   >
     <div class="container">
       <p class="kicker aptp__kicker">{{ packages.kicker }}</p>
       <h2 class="aptp__title">{{ packages.title }}</h2>
 
-      <!-- THE BUILDING. Roof, three storeys, ground line, below-grade poché.
-           DOM ascends Osnovna → Profi (reading, focus and JS-off order); the
-           stack renders bottom-up, as a building stands. -->
-      <div ref="drawing" class="aptp__house">
-        <svg class="aptp__roof" viewBox="0 0 800 56" preserveAspectRatio="none" aria-hidden="true">
-          <path
-            class="aptp__roofpath"
-            d="M3 54 L400 4 L797 54"
-            pathLength="100"
-            fill="none"
-            stroke="var(--grafit)"
-            stroke-width="1.5"
-            vector-effect="non-scaling-stroke"
-          />
+      <div class="aptp__terrace">
+        <!-- PHONES ONLY: the one building keeps one roof — the improved gable
+             with eaves, chimney and dormer — over the whole stack. -->
+        <svg
+          class="aptp__roof aptp__roof--building"
+          viewBox="0 0 200 60"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <path class="aptp__roofpath" d="M2 58 L100 6 L198 58" pathLength="100" fill="none" stroke="var(--grafit)" stroke-width="1.5" vector-effect="non-scaling-stroke" />
+          <path class="aptp__roofpath" d="M140 32 L140 10 L154 10 L154 25" pathLength="100" fill="none" stroke="var(--grafit)" stroke-width="1.5" vector-effect="non-scaling-stroke" />
+          <path class="aptp__roofpath" d="M52 46 L66 33 L80 46" pathLength="100" fill="none" stroke="var(--grafit)" stroke-width="1.5" vector-effect="non-scaling-stroke" />
         </svg>
 
-        <ol class="aptp__stack">
-          <!-- Dimension rail: extension ticks, no figure — this drawing
-               measures nothing we could honestly put a number on. -->
-          <span class="aptp__dim" aria-hidden="true"></span>
-
+        <ul
+          ref="street"
+          class="aptp__street"
+          :role="live ? 'tablist' : undefined"
+          :aria-label="live ? packages.feedback.streetLabel : undefined"
+          @keydown="live && onStreetKeys($event)"
+        >
           <li
             v-for="(p, n) in packages.items"
             :key="p.id"
-            class="aptp__floor"
-            :class="[`aptp__floor--${p.id}`, { 'aptp__floor--open': !live || open[n] }]"
+            class="aptp__house"
+            :class="[`aptp__house--${p.id}`, { 'aptp__house--open': !live || open === n }]"
             :style="{ '--n': n }"
           >
-            <!-- The floor's material strip: its tier's density, ascending. -->
-            <span class="aptp__strip" aria-hidden="true"></span>
+            <!-- Each house's own roof (desktop street): complexity ascends —
+                 plain gable, +chimney, +chimney and dormer. -->
+            <svg
+              v-if="p.id === 'basic'"
+              class="aptp__roof aptp__roof--house"
+              viewBox="0 0 200 34"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <path class="aptp__roofpath" d="M2 32 L100 6 L198 32" pathLength="100" fill="none" stroke="var(--grafit)" stroke-width="1.5" vector-effect="non-scaling-stroke" />
+            </svg>
+            <svg
+              v-else-if="p.id === 'advanced'"
+              class="aptp__roof aptp__roof--house"
+              viewBox="0 0 200 46"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <path class="aptp__roofpath" d="M2 44 L100 6 L198 44" pathLength="100" fill="none" stroke="var(--grafit)" stroke-width="1.5" vector-effect="non-scaling-stroke" />
+              <path class="aptp__roofpath" d="M138 26 L138 9 L151 9 L151 21" pathLength="100" fill="none" stroke="var(--grafit)" stroke-width="1.5" vector-effect="non-scaling-stroke" />
+            </svg>
+            <svg
+              v-else
+              class="aptp__roof aptp__roof--house"
+              viewBox="0 0 200 58"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <path class="aptp__roofpath" d="M2 56 L100 5 L198 56" pathLength="100" fill="none" stroke="var(--grafit)" stroke-width="1.5" vector-effect="non-scaling-stroke" />
+              <path class="aptp__roofpath" d="M140 30 L140 9 L154 9 L154 23" pathLength="100" fill="none" stroke="var(--grafit)" stroke-width="1.5" vector-effect="non-scaling-stroke" />
+              <path class="aptp__roofpath" d="M50 44 L64 31 L78 44" pathLength="100" fill="none" stroke="var(--grafit)" stroke-width="1.5" vector-effect="non-scaling-stroke" />
+            </svg>
 
-            <!-- The cut planes on the slab lines, present while the floor is
-                 open — the site's red rule with square end ticks. -->
-            <span class="aptp__plane aptp__plane--top" aria-hidden="true"></span>
-            <span class="aptp__plane aptp__plane--bot" aria-hidden="true"></span>
+            <div class="aptp__walls">
+              <!-- The facade texture: the tier's material, densest on Profi.
+                   Lifts when the house is cut open. -->
+              <span class="aptp__facade" aria-hidden="true"></span>
 
-            <div class="aptp__room">
-              <h3 class="aptp__name">
-                <button
-                  v-if="live"
-                  :id="`floor-${p.id}`"
-                  type="button"
-                  class="aptp__toggle"
-                  :aria-expanded="open[n] ? 'true' : 'false'"
-                  :aria-controls="`room-${p.id}`"
-                  @click="toggle(n)"
+              <!-- The cut: red lines with square ticks — down the party walls
+                   on the desktop street, across the slab lines on the phone
+                   stack. Present while the house is open. -->
+              <span class="aptp__plane aptp__plane--a" aria-hidden="true"></span>
+              <span class="aptp__plane aptp__plane--b" aria-hidden="true"></span>
+
+              <div class="aptp__room">
+                <h3 class="aptp__name">
+                  <button
+                    v-if="live"
+                    :id="`tab-${p.id}`"
+                    type="button"
+                    class="aptp__tab"
+                    role="tab"
+                    :aria-selected="open === n ? 'true' : 'false'"
+                    :aria-controls="`room-${p.id}`"
+                    :tabindex="open === n ? 0 : -1"
+                    @click="select(n)"
+                  >
+                    <span class="aptp__tab-name">{{ p.name }}</span>
+                  </button>
+                  <span v-else :id="`tab-${p.id}`" class="aptp__tab">
+                    <span class="aptp__tab-name">{{ p.name }}</span>
+                  </span>
+                </h3>
+
+                <p class="aptp__summary">{{ p.summary }}</p>
+
+                <div
+                  :id="`room-${p.id}`"
+                  class="aptp__body"
+                  :role="live ? 'tabpanel' : undefined"
+                  :aria-labelledby="live ? `tab-${p.id}` : undefined"
+                  :inert="live && open !== n ? true : undefined"
                 >
-                  <span class="aptp__toggle-name">{{ p.name }}</span>
-                  <span class="aptp__glyph" aria-hidden="true"></span>
-                </button>
-                <span v-else :id="`floor-${p.id}`" class="aptp__toggle">
-                  <span class="aptp__toggle-name">{{ p.name }}</span>
-                </span>
-              </h3>
-
-              <p class="aptp__summary">{{ p.summary }}</p>
-
-              <div
-                :id="`room-${p.id}`"
-                class="aptp__body"
-                role="region"
-                :aria-labelledby="`floor-${p.id}`"
-                :inert="live && !open[n] ? true : undefined"
-              >
-                <div class="aptp__body-in">
-                  <ul class="aptp__includes">
-                    <li
-                      v-for="(inc, i) in p.includes"
-                      :key="i"
-                      class="aptp__include"
-                      :class="{ 'aptp__include--seo': isSeo(inc) }"
-                    >
-                      <template v-if="isString(inc)">{{ inc }}</template>
-                      <template v-else-if="isEmphasis(inc)">{{ inc.lead }}<strong>{{ inc.strong }}</strong>{{ inc.tail }}</template>
-                      <details v-else class="aptp__seo">
-                        <summary class="aptp__seo-summary">{{ inc.summary }}</summary>
-                        <div class="aptp__seo-panel">
-                          <p class="aptp__seo-intro">{{ inc.intro }}</p>
-                          <ul class="aptp__seo-list">
-                            <li v-for="pt in inc.points" :key="pt" class="aptp__seo-point">{{ pt }}</li>
-                          </ul>
-                        </div>
-                      </details>
-                    </li>
-                  </ul>
-                  <p v-if="p.footnote" class="aptp__foot">{{ p.footnote }}</p>
+                  <div class="aptp__body-in">
+                    <ul class="aptp__includes">
+                      <li
+                        v-for="(inc, i) in p.includes"
+                        :key="i"
+                        class="aptp__include"
+                        :class="{ 'aptp__include--seo': isSeo(inc) }"
+                      >
+                        <template v-if="isString(inc)">{{ inc }}</template>
+                        <template v-else-if="isEmphasis(inc)">{{ inc.lead }}<strong>{{ inc.strong }}</strong>{{ inc.tail }}</template>
+                        <details v-else class="aptp__seo">
+                          <summary class="aptp__seo-summary">{{ inc.summary }}</summary>
+                          <div class="aptp__seo-panel">
+                            <p class="aptp__seo-intro">{{ inc.intro }}</p>
+                            <ul class="aptp__seo-list">
+                              <li v-for="pt in inc.points" :key="pt" class="aptp__seo-point">{{ pt }}</li>
+                            </ul>
+                          </div>
+                        </details>
+                      </li>
+                    </ul>
+                    <p v-if="p.footnote" class="aptp__foot">{{ p.footnote }}</p>
+                  </div>
                 </div>
               </div>
             </div>
           </li>
-        </ol>
+        </ul>
 
-        <!-- The ground: a heavier line running past the walls, and the
-             below-grade poché the whole site stands things on. -->
+        <!-- The ground the terrace stands on, running past the end walls,
+             and the below-grade poché. -->
         <span class="aptp__groundline" aria-hidden="true"></span>
         <span class="aptp__earth" aria-hidden="true"></span>
       </div>
@@ -232,162 +322,184 @@ onUnmounted(() => {
   text-transform: uppercase;
 }
 
-/* --- the building ----------------------------------------------------------
-   One gable, three storeys, ground and earth. Proportioned as a long pension
-   rather than a cottage: the storeys are full schedule rows. */
-.aptp__house {
-  max-width: 780px;
+/* --- the street -------------------------------------------------------------
+   Terraced: gap 0, party walls shared. Houses stand on one ground line
+   (align-items: end), each taller than the last. */
+.aptp__terrace {
+  max-width: 980px;
 }
 
-.aptp__roof {
-  display: block;
-  width: 100%;
-  height: clamp(34px, 6vw, 56px);
-  margin-bottom: -1px;
-}
-
-/* The walls carry the drawing's heaviest line. */
-.aptp__stack {
-  position: relative;
-  display: flex;
-  /* DOM ascends Osnovna → Profi; the BUILDING puts the ground floor at the
-     bottom. Each floor's body unfolds below its own header, so growth always
-     happens below the click — nothing above ever moves. */
-  flex-direction: column-reverse;
+.aptp__street {
+  display: grid;
+  /* JS-off: three open houses side by side. The live division below. */
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: end;
   margin: 0;
   padding: 0;
   list-style: none;
-  border-inline: 1.5px solid var(--grafit);
 }
 
-/* Dimension rail with end ticks, off the left wall. */
-.aptp__dim {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: -18px;
-  width: 1px;
-  background: var(--mreza-strong);
-  pointer-events: none;
-}
-.aptp__dim::before,
-.aptp__dim::after {
-  content: '';
-  position: absolute;
-  left: -3px;
-  width: 7px;
-  height: 1px;
-  background: var(--mreza-strong);
-}
-.aptp__dim::before {
-  top: 0;
-}
-.aptp__dim::after {
-  bottom: 0;
+/* The live street: one wide house, two narrow. ALL tracks in fr — the only
+   form grid-template-columns can interpolate; px↔fr snaps. Closed widths
+   ascend with the tier (each house a little bigger). PAIRS with the
+   interior width shares below. */
+@media (min-width: 810px) {
+  .aptp--live .aptp__street {
+    transition: grid-template-columns 420ms var(--ease-out);
+  }
+  .aptp--live.aptp--open-0 .aptp__street {
+    grid-template-columns: 1fr 0.22fr 0.27fr;
+  }
+  .aptp--live.aptp--open-1 .aptp__street {
+    grid-template-columns: 0.18fr 1fr 0.27fr;
+  }
+  .aptp--live.aptp--open-2 .aptp__street {
+    grid-template-columns: 0.18fr 0.22fr 1fr;
+  }
 }
 
-/* A storey. Its top border is the slab above it: between storeys in the
-   reversed stack, and the wall plate under the roof for Profi. */
-.aptp__floor {
+.aptp__house {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Party walls: every house draws its left wall; the last draws its right.
+   The heaviest lines in the drawing. */
+.aptp__walls {
   position: relative;
-  display: grid;
-  grid-template-columns: clamp(40px, 8vw, 64px) minmax(0, 1fr);
-  border-top: 1px solid var(--mreza-strong);
-  transition: background-color 280ms var(--ease-out);
+  flex: 1 1 auto;
+  border-left: 1.5px solid var(--grafit);
+  display: flex;
+  flex-direction: column;
+}
+.aptp__house:last-child .aptp__walls {
+  border-right: 1.5px solid var(--grafit);
 }
 
-/* The open floor takes the quiet red wash — the token whose job is
-   "opened ground" — so the cut reads in fill as well as in planes. */
-.aptp__floor--open {
+/* Ascending facades: each closed house a little taller than the previous.
+   The open house grows to its content. */
+@media (min-width: 810px) {
+  .aptp__house--basic .aptp__walls {
+    min-height: 240px;
+  }
+  .aptp__house--advanced .aptp__walls {
+    min-height: 288px;
+  }
+  .aptp__house--profi .aptp__walls {
+    min-height: 336px;
+  }
+}
+
+/* The open house takes the quiet red wash — the "opened ground" token. */
+.aptp__walls {
+  transition: background-color 300ms var(--ease-out);
+}
+.aptp__house--open .aptp__walls {
   background-color: var(--rez-vodni);
 }
 
-/* The material strip: the floor's tier drawn as density. Line work by
-   gradient (the .press technique), never a colour ramp; deepens when open. */
-.aptp__strip {
-  position: relative;
-  border-right: 1px solid var(--mreza-strong);
-  opacity: 0.55;
-  transition: opacity 280ms var(--ease-out);
+/* --- the facade textures -----------------------------------------------------
+   The tier drawn as density, least to most: sparse lines, 45° section hatch,
+   full cross-hatch. Line work by gradient (the .press technique). The open
+   house's facade lifts — the interior is paper. */
+.aptp__facade {
+  position: absolute;
+  inset: 0;
   pointer-events: none;
+  opacity: 0.4;
+  transition: opacity 300ms var(--ease-out);
 }
 
-.aptp__floor--open .aptp__strip {
-  opacity: 0.95;
-}
-
-/* Osnovna — sparse lines: the lightest build. */
-.aptp__floor--basic .aptp__strip {
+.aptp__house--basic .aptp__facade {
   background-image: repeating-linear-gradient(
     45deg,
-    transparent 0 9px,
-    var(--grafit-2) 9px 10px
+    transparent 0 10px,
+    var(--grafit-2) 10px 11px
   );
 }
-
-/* Napredna — the standard 45° section hatch. */
-.aptp__floor--advanced .aptp__strip {
+.aptp__house--advanced .aptp__facade {
   background-image: repeating-linear-gradient(
     45deg,
     transparent 0 5px,
     var(--grafit-2) 5px 6px
   );
 }
-
-/* Profi — cross-hatch: the densest material in the drawing convention. */
-.aptp__floor--profi .aptp__strip {
+.aptp__house--profi .aptp__facade {
   background-image:
     repeating-linear-gradient(45deg, transparent 0 5px, var(--grafit-2) 5px 6px),
     repeating-linear-gradient(-45deg, transparent 0 5px, var(--grafit-2) 5px 6px);
 }
 
-/* The cut planes on the open floor's slab lines: red rules with square end
-   ticks, overhanging the walls the way a section plane runs past the
-   building. They draw across when the floor opens. */
+.aptp__house--open .aptp__facade {
+  opacity: 0;
+}
+
+@media (hover: hover) {
+  .aptp__house:not(.aptp__house--open) .aptp__walls:hover .aptp__facade {
+    opacity: 0.62;
+  }
+}
+
+/* --- the cut ------------------------------------------------------------------
+   Red rules with square end ticks on the OPEN house. Desktop: down the party
+   walls (the section runs vertically through the terrace). Phone: across the
+   slab lines. They draw in when the house opens. */
 .aptp__plane {
   position: absolute;
-  left: -8px;
-  right: -8px;
-  height: 2px;
   background: var(--rez);
   pointer-events: none;
   opacity: 0;
-  transform: scaleX(0);
-  transform-origin: left center;
   transition:
     opacity 240ms var(--ease-out),
-    transform 360ms var(--ease-out);
+    transform 380ms var(--ease-out);
 }
 .aptp__plane::before,
 .aptp__plane::after {
   content: '';
   position: absolute;
-  top: -2px;
   width: 6px;
   height: 6px;
   background: var(--rez);
 }
-.aptp__plane::before {
-  left: 0;
-}
-.aptp__plane::after {
-  right: 0;
-}
-.aptp__plane--top {
-  top: -1px;
-}
-.aptp__plane--bot {
-  bottom: -1px;
-}
-
-.aptp__floor--open .aptp__plane {
+.aptp__house--open .aptp__plane {
   opacity: 1;
-  transform: scaleX(1);
 }
 
-/* The room: the floor's content column. */
+@media (min-width: 810px) {
+  .aptp__plane {
+    top: -6px;
+    bottom: -6px;
+    width: 2px;
+    transform: scaleY(0);
+    transform-origin: center top;
+  }
+  .aptp__plane--a {
+    left: -1.75px;
+  }
+  .aptp__plane--b {
+    right: -1.75px;
+  }
+  .aptp__plane::before {
+    top: 0;
+    left: -2px;
+  }
+  .aptp__plane::after {
+    bottom: 0;
+    left: -2px;
+  }
+  .aptp__house--open .aptp__plane {
+    transform: scaleY(1);
+  }
+}
+
+/* --- the room -------------------------------------------------------------- */
 .aptp__room {
-  padding: var(--space-5) var(--space-5) var(--space-6);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  padding: var(--space-5);
 }
 
 .aptp__name {
@@ -400,14 +512,12 @@ onUnmounted(() => {
   color: var(--grafit);
 }
 
-/* The whole name row is the control: name left, drawn +/- right, 44px met.
-   The h3>button pair is the accordion's canonical accessible shape. */
-.aptp__toggle {
-  display: flex;
+/* The tab is the whole house: the button stretches over the facade, so a
+   click anywhere on a closed house opens it. Its visible face is the name
+   on a paper chip (fills break around lettering). */
+.aptp__tab {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  width: 100%;
   min-height: 44px;
   padding: 0;
   margin: 0;
@@ -418,51 +528,41 @@ onUnmounted(() => {
   text-align: left;
 }
 
-button.aptp__toggle {
+button.aptp__tab {
   cursor: pointer;
 }
 
-button.aptp__toggle:focus-visible {
+button.aptp__tab::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* The open house's tab is just its heading — the stretch target retires so
+   the interior (details, links) is freely clickable. */
+.aptp__house--open button.aptp__tab {
+  cursor: default;
+}
+.aptp__house--open button.aptp__tab::after {
+  content: none;
+}
+
+button.aptp__tab:focus-visible {
   outline: 2px solid var(--grafit);
   outline-offset: 3px;
 }
 
-/* The drawn +/-: two hairlines, the site's disclosure device. The vertical
-   bar fades when open, leaving a minus. Never a dingbat, never an emoji. */
-.aptp__glyph {
+.aptp__tab-name {
   position: relative;
-  flex: 0 0 auto;
-  width: 14px;
-  height: 14px;
+  z-index: 1;
+  padding: 3px 10px;
+  margin-left: -10px;
+  background: var(--list);
+  transition: background-color 300ms var(--ease-out);
 }
-.aptp__glyph::before,
-.aptp__glyph::after {
-  content: '';
-  position: absolute;
-  background: var(--grafit-2);
-  transition: opacity 200ms var(--ease-out);
-}
-.aptp__glyph::after {
-  left: 0;
-  right: 0;
-  top: 6.25px;
-  height: 1.5px;
-}
-.aptp__glyph::before {
-  top: 0;
-  bottom: 0;
-  left: 6.25px;
-  width: 1.5px;
-}
-.aptp__floor--open .aptp__glyph::before {
-  opacity: 0;
-}
-
-@media (hover: hover) {
-  button.aptp__toggle:hover .aptp__glyph::before,
-  button.aptp__toggle:hover .aptp__glyph::after {
-    background: var(--grafit);
-  }
+.aptp__house--open .aptp__tab-name {
+  background: transparent;
 }
 
 .aptp__summary {
@@ -473,14 +573,24 @@ button.aptp__toggle:focus-visible {
   max-width: 58ch;
 }
 
-/* --- the unfolding room ------------------------------------------------------
-   Collapsed state exists ONLY live (JS off ships everything open). The
-   grid-rows transition needs no measurement; the inner wrapper clips. Closed
-   bodies are inert (out of the tab order and off assistive tech). */
+/* Closed houses on the street show the name alone — a 0.2fr column holds no
+   paragraph. Phones keep summaries on every floor. */
+@media (min-width: 810px) {
+  .aptp--live .aptp__house:not(.aptp__house--open) .aptp__summary {
+    display: none;
+  }
+}
+
+/* --- the unfolding interior ---------------------------------------------------
+   Collapsed state exists ONLY live. The grid-rows transition needs no
+   measurement; the inner wrapper clips. Closed interiors are inert. On the
+   street the interior is laid at its FINAL width during the reveal (the
+   share of the street each open house takes — pairs with the fr divisions
+   above), so text never reflows mid-transition. */
 .aptp__body {
   display: grid;
   grid-template-rows: 1fr;
-  transition: grid-template-rows 360ms var(--ease-out);
+  transition: grid-template-rows 420ms var(--ease-out);
 }
 
 .aptp--live .aptp__body[inert] {
@@ -490,6 +600,21 @@ button.aptp__toggle:focus-visible {
 .aptp__body-in {
   overflow: hidden;
   min-height: 0;
+}
+
+@media (min-width: 810px) {
+  .aptp--live.aptp--open-0 .aptp__house--basic .aptp__body-in {
+    width: calc((min(980px, 100vw - 2 * var(--gutter)) - 3px) * 0.671);
+  }
+  .aptp--live.aptp--open-1 .aptp__house--advanced .aptp__body-in {
+    width: calc((min(980px, 100vw - 2 * var(--gutter)) - 3px) * 0.69);
+  }
+  .aptp--live.aptp--open-2 .aptp__house--profi .aptp__body-in {
+    width: calc((min(980px, 100vw - 2 * var(--gutter)) - 3px) * 0.714);
+  }
+  .aptp__body-in {
+    max-width: 62ch;
+  }
 }
 
 .aptp__includes {
@@ -638,18 +763,39 @@ button.aptp__toggle:focus-visible {
   color: var(--grafit-2);
 }
 
-/* The ground line runs past the walls; below it, the earth is poché. */
+/* --- roofs ------------------------------------------------------------------- */
+.aptp__roof {
+  display: block;
+  width: 100%;
+  margin-bottom: -1px;
+  flex: 0 0 auto;
+}
+.aptp__roof--house {
+  height: clamp(26px, 4.5vw, 44px);
+}
+.aptp__house--advanced .aptp__roof--house {
+  height: clamp(34px, 5.5vw, 56px);
+}
+.aptp__house--profi .aptp__roof--house {
+  height: clamp(42px, 6.5vw, 68px);
+}
+/* The building roof exists for the phone stack alone. */
+.aptp__roof--building {
+  display: none;
+}
+
+/* --- ground and earth ---------------------------------------------------------- */
 .aptp__groundline {
   display: block;
-  width: 104%;
-  margin-left: -2%;
+  width: 103%;
+  margin-left: -1.5%;
   height: 2px;
   background: var(--grafit);
 }
 .aptp__earth {
   display: block;
-  width: 104%;
-  margin-left: -2%;
+  width: 103%;
+  margin-left: -1.5%;
   height: 16px;
   background-image: repeating-linear-gradient(
     45deg,
@@ -659,17 +805,16 @@ button.aptp__toggle:focus-visible {
   opacity: 0.45;
 }
 
-/* --- the arrival act --------------------------------------------------------
-   Hidden states exist ONLY once the app is live (never in static HTML), and
-   every keyframe ends on the element's stylesheet rest. */
+/* --- the arrival act -----------------------------------------------------------
+   Hidden states exist ONLY once live (never in static HTML); every keyframe
+   ends on the element's stylesheet rest. */
 .aptp--live:not(.aptp--drawn) .aptp__roofpath {
   stroke-dasharray: 100;
   stroke-dashoffset: 100;
 }
-.aptp--live:not(.aptp--drawn) .aptp__strip,
+.aptp--live:not(.aptp--drawn) .aptp__facade,
 .aptp--live:not(.aptp--drawn) .aptp__groundline,
-.aptp--live:not(.aptp--drawn) .aptp__earth,
-.aptp--live:not(.aptp--drawn) .aptp__dim {
+.aptp--live:not(.aptp--drawn) .aptp__earth {
   opacity: 0;
 }
 
@@ -685,19 +830,13 @@ button.aptp__toggle:focus-visible {
   .aptp--drawn .aptp__earth {
     animation: aptp-earth 500ms var(--ease-out) 350ms both;
   }
-  .aptp--drawn .aptp__dim {
-    animation: aptp-fade 500ms var(--ease-out) 500ms both;
-  }
-  /* The strips hatch in bottom-up: the build ascends. */
-  .aptp--drawn .aptp__strip {
-    animation: aptp-strip 450ms var(--ease-out) both;
+  /* Facades hatch in along the street, left to right. */
+  .aptp--drawn .aptp__facade {
+    animation: aptp-facade 450ms var(--ease-out) both;
     animation-delay: calc(220ms + var(--n, 0) * 140ms);
   }
 }
 
-/* Keyframes end at each element's stylesheet rest — cancel-safe anywhere.
-   Elements resting BELOW opacity 1 (strip .55, earth .45) get from-only
-   keyframes, so the cascade's resting value is the landing. */
 @keyframes aptp-roof {
   from {
     stroke-dashoffset: 100;
@@ -716,15 +855,9 @@ button.aptp__toggle:focus-visible {
     transform: scaleX(1);
   }
 }
-@keyframes aptp-fade {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-@keyframes aptp-strip {
+/* From-only keyframes: these elements rest below opacity 1 (facade .4 or 0
+   when open, earth .45), so the cascade's resting value is the landing. */
+@keyframes aptp-facade {
   from {
     opacity: 0;
   }
@@ -772,19 +905,71 @@ button.aptp__toggle:focus-visible {
   outline-offset: 3px;
 }
 
+/* --- the phone stack -----------------------------------------------------------
+   One building, one improved roof, storeys top-to-bottom in READING order —
+   Osnovna first, per the owner — with the texture densifying downward.
+   Slab lines between storeys; ground and earth close the bottom. */
 @media (max-width: 809px) {
-  .aptp__house {
-    /* Room for the dimension rail off the left wall. */
-    margin-left: 14px;
-    max-width: calc(100% - 14px);
+  .aptp__street {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .aptp__dim {
-    left: -14px;
+  .aptp__roof--building {
+    display: block;
+    height: clamp(44px, 13vw, 60px);
+  }
+  .aptp__roof--house {
+    display: none;
+  }
+
+  .aptp__house + .aptp__house .aptp__walls {
+    border-top: 1px solid var(--mreza-strong);
+  }
+  .aptp__walls {
+    border-right: 1.5px solid var(--grafit);
+  }
+
+  /* The facade texture narrows to the material strip so text never sits on
+     hatch — the stacked structure kept as it was. */
+  .aptp__facade {
+    inset: 0 auto 0 0;
+    width: clamp(36px, 9vw, 48px);
+    border-right: 1px solid var(--mreza-strong);
+    opacity: 0.55;
+  }
+  .aptp__house--open .aptp__facade {
+    opacity: 0.95;
   }
 
   .aptp__room {
+    margin-left: clamp(36px, 9vw, 48px);
     padding: var(--space-4) var(--space-4) var(--space-5);
+  }
+
+  /* The cut runs across the slab lines here. */
+  .aptp__plane {
+    left: -8px;
+    right: -8px;
+    height: 2px;
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+  .aptp__plane--a {
+    top: -1px;
+  }
+  .aptp__plane--b {
+    bottom: -1px;
+  }
+  .aptp__plane::before {
+    left: 0;
+    top: -2px;
+  }
+  .aptp__plane::after {
+    right: 0;
+    top: -2px;
+  }
+  .aptp__house--open .aptp__plane {
+    transform: scaleX(1);
   }
 
   .aptp__foot {
