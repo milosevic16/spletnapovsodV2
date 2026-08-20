@@ -247,8 +247,9 @@ Netlify free plan + private repo: **no Co-Authored-By trailers in commits**.
    vars are read at BUILD time, so a redeploy is required after adding it.
    Confirm too WHICH inbox the key delivers to — Web3Forms sends to the address
    the key was registered with, not to `CONTACT_EMAIL`.
-3. **Contact e-mail** — `info@spletnapovsod.si` is assumed from the domain, unverified
-   (`src/lib/constants.ts`).
+3. ~~**Contact e-mail**~~ — SETTLED (avgust 2026): `studio@spletnapovsod.si`, owner-supplied,
+   in `src/lib/constants.ts`. Still open is item 2's second half: whether the Web3Forms key
+   delivers to that same inbox.
 4. **Company legal facts** (registered name, address, VAT) — needed for the privacy-policy
    page, deliberately NOT built yet (no invented org facts).
 5. **Domain purchase + Netlify project** — canonical origin is one constant (`SITE_ORIGIN`).
