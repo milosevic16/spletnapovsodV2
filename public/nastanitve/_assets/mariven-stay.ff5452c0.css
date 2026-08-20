@@ -1,0 +1,428 @@
+/* ==========================================================================
+   mariven — shared family stylesheet (stay + estate packs)
+
+   Every colour, size, space and timing below is a measured value from
+   designsys/refs/mariven/tokens.css. Tokens are namespaced --mv-* on
+   purpose: render.py injects the design-DNA :root block AFTER the pack
+   stylesheet, so any pack that reused the DNA's own variable names would be
+   silently overridden. The DNA still drives structure (section order and the
+   gallery/reviews/amenities/hero variants) — see the pack README.
+   ========================================================================== */
+
+.mv {
+  /* colour */
+  --mv-shell: #f9f6f3;
+  --mv-ink: #1f3a40;
+  --mv-sea: #0f677d;
+  --mv-bronze: #a1826a;
+  --mv-sand: #bfa58e;
+  --mv-earth: #7d5d46;
+  --mv-hairline: #d1dfe0;
+  --mv-mist: #ecf2f2;
+  --mv-aqua: #99c0c2;
+  --mv-scrim: rgba(0, 0, 0, 0.4);
+  --mv-scrim-deep: rgba(0, 0, 0, 0.5);
+  --mv-scrim-caption: linear-gradient(rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.9) 100%);
+  --mv-border: 1px solid var(--mv-hairline);
+
+  /* type — the family is fixed; the reference's Playfair Display and
+     Bricolage Grotesque are not in this repo's OFL set, so the nearest
+     bundled pair carries the same serif/grotesque contrast. */
+  --mv-display-face: 'Fraunces', Georgia, serif;
+  --mv-body-face: 'Space Grotesk', 'Helvetica Neue', Arial, sans-serif;
+
+  --mv-t-display: 88px;  --mv-lh-display: 1.2;  --mv-ls-display: -0.4px;
+  --mv-t-h1: 56px;       --mv-lh-h1: 1.2;       --mv-ls-h1: -0.15px;
+  --mv-t-h2: 32px;       --mv-lh-h2: 1.4;       --mv-ls-h2: -0.02em;
+  --mv-t-h3: 22px;       --mv-lh-h3: 1.4;       --mv-ls-h3: -0.02em;
+  --mv-t-lead: 18px;     --mv-lh-lead: 1.4;     --mv-ls-lead: 0.25px;
+  --mv-t-body: 16px;     --mv-lh-body: 1.5;     --mv-ls-body: -0.02em;
+  --mv-t-small: 14px;    --mv-lh-small: 1.5;    --mv-ls-small: 0.15px;
+  --mv-t-micro: 12px;    --mv-lh-micro: 1.5;    --mv-ls-micro: normal;
+
+  /* space — 10px unit */
+  --mv-2: 2px;   --mv-4: 4px;   --mv-6: 6px;   --mv-8: 8px;
+  --mv-10: 10px; --mv-12: 12px; --mv-16: 16px; --mv-20: 20px;
+  --mv-24: 24px; --mv-30: 30px; --mv-32: 32px; --mv-40: 40px;
+  --mv-60: 60px; --mv-64: 64px; --mv-80: 80px; --mv-100: 100px;
+  --mv-200: 200px;
+
+  /* layout */
+  --mv-page-max: 1440px;
+  --mv-content-max: 1240px;
+  --mv-measure-wide: 700px;
+  --mv-measure: 600px;
+  --mv-measure-narrow: 400px;
+  --mv-gutter: var(--mv-100);
+  --mv-section-pad: var(--mv-100);
+  --mv-nav-h: 78px;
+  --mv-card-ratio: 1.21667;
+
+  /* shape — square everywhere; radius only makes circles */
+  --mv-radius: 0;
+  --mv-round: 999px;
+  --mv-control: 40px;
+
+  /* rules */
+  --mv-rule-l: linear-gradient(270deg, var(--mv-hairline) 0%, var(--mv-shell) 100%);
+  --mv-rule-r: linear-gradient(90deg, var(--mv-hairline) 0%, var(--mv-shell) 100%);
+  --mv-rule-c: linear-gradient(270deg, var(--mv-mist) 0%, var(--mv-ink) 50%, var(--mv-mist) 100%);
+
+  /* motion — measured; see designsys/refs/mariven/motion.md */
+  --mv-dur-hover: 200ms;
+  --mv-dur-swap: 480ms;
+  --mv-dur-card: 500ms;
+  --mv-dur-nav: 500ms;
+  --mv-dur-enter: 890ms;
+  --mv-dur-enter-fade: 1190ms;
+  --mv-delay-enter: 200ms;
+  --mv-ease-hover: cubic-bezier(0.44, 0, 0.56, 1);
+  --mv-ease-swap: cubic-bezier(0.00, 0.13, 0.00, 1.16);
+  --mv-ease-card: cubic-bezier(0.31, 0.21, 0.04, 0.94);
+  --mv-ease-nav: cubic-bezier(0.14, 0.45, 0.11, 1.10);
+  --mv-ease-enter: cubic-bezier(0.02, -0.08, 0.20, 1.36);
+  --mv-enter-lift: 40px;
+  --mv-card-scale: 1.05;
+  --mv-card-rise: 80px;
+}
+
+/* ------------------------------------------------------------------ base */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body.mv {
+  margin: 0;
+  background: var(--mv-shell);
+  color: var(--mv-ink);
+  font-family: var(--mv-body-face);
+  font-size: var(--mv-t-body);
+  line-height: var(--mv-lh-body);
+  letter-spacing: var(--mv-ls-body);
+  -webkit-font-smoothing: antialiased;
+}
+.mv ::selection { background: var(--mv-hairline); color: var(--mv-ink); }
+.mv img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.mv ul, .mv ol { list-style: none; margin: 0; padding: 0; }
+/* :not(.mv-btn) — `.mv a` (0,1,1) otherwise outranks the button
+   colour rules below (0,1,0), so .mv-btn--solid's light label
+   inherited the ink it sits on and rendered invisible. */
+.mv a:not(.mv-btn) { color: inherit; text-decoration: none; }
+.mv a.mv-btn { text-decoration: none; }
+.mv dl, .mv dd, .mv figure, .mv blockquote { margin: 0; }
+.mv .icon { width: 1em; height: 1em; flex: none; }
+
+/* ------------------------------------------------------------ type roles */
+
+.mv-display, .mv-h1, .mv-h2, .mv-h3 {
+  font-family: var(--mv-display-face); font-weight: 400; margin: 0;
+}
+.mv-display { font-size: var(--mv-t-display); line-height: var(--mv-lh-display); letter-spacing: var(--mv-ls-display); }
+.mv-h1 { font-size: var(--mv-t-h1); line-height: var(--mv-lh-h1); letter-spacing: var(--mv-ls-h1); }
+.mv-h2 { font-size: var(--mv-t-h2); line-height: var(--mv-lh-h2); letter-spacing: var(--mv-ls-h2); }
+.mv-h3 { font-size: var(--mv-t-h3); line-height: var(--mv-lh-h3); letter-spacing: var(--mv-ls-h3); }
+
+.mv-lead  { font-size: var(--mv-t-lead);  line-height: var(--mv-lh-lead);  letter-spacing: var(--mv-ls-lead);  margin: 0; }
+.mv-body  { font-size: var(--mv-t-body);  line-height: var(--mv-lh-body);  letter-spacing: var(--mv-ls-body);  margin: 0; }
+.mv-small { font-size: var(--mv-t-small); line-height: var(--mv-lh-small); letter-spacing: var(--mv-ls-small); margin: 0; }
+.mv-micro { font-size: var(--mv-t-micro); line-height: var(--mv-lh-micro); letter-spacing: var(--mv-ls-micro); color: var(--mv-sand); margin: 0; }
+
+.mv-eyebrow { font-size: var(--mv-t-body); line-height: var(--mv-lh-body); letter-spacing: var(--mv-ls-body); color: var(--mv-sea); margin: 0; }
+.mv-eyebrow--light { color: var(--mv-shell); }
+.mv-label { font-size: var(--mv-t-micro); line-height: var(--mv-lh-micro); color: var(--mv-bronze); margin: 0 0 var(--mv-16); }
+.mv-on-dark { color: var(--mv-shell); }
+
+/* --------------------------------------------------------------- layout */
+
+.mv-section {
+  padding: var(--mv-section-pad) var(--mv-gutter);
+  max-width: var(--mv-page-max);
+  margin-inline: auto;
+  width: 100%;
+}
+.mv-section--opener { padding-top: var(--mv-200); }
+.mv-section--tight { padding-block: var(--mv-64); }
+
+.mv-stack { display: flex; flex-direction: column; gap: var(--mv-24); align-items: flex-start; }
+.mv-stack--centred { align-items: center; text-align: center; margin-inline: auto; }
+.mv-measure { max-width: var(--mv-measure); }
+.mv-measure-narrow { max-width: var(--mv-measure-narrow); }
+
+.mv-head {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  gap: var(--mv-40); padding-bottom: var(--mv-100);
+}
+.mv-split { display: grid; grid-template-columns: 1fr 1fr; gap: var(--mv-64); align-items: center; }
+
+/* ------------------------------------------------------------------ nav */
+
+.mv-nav {
+  position: fixed; inset: 0 0 auto; z-index: 10;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--mv-10); height: var(--mv-nav-h);
+  padding: var(--mv-24) var(--mv-40);
+  color: var(--mv-shell);
+  background-image: linear-gradient(rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0) 100%);
+  transition: transform var(--mv-dur-nav) var(--mv-ease-nav),
+              opacity var(--mv-dur-nav) var(--mv-ease-nav);
+}
+.mv-nav.is-past {
+  color: var(--mv-ink);                 /* snaps in one frame, as measured */
+  background-image: none; background-color: var(--mv-shell);
+  border-bottom: var(--mv-border);
+}
+.mv-nav.is-hidden { transform: translateY(-100px); opacity: 0; }
+.mv-nav__mark { font-family: var(--mv-display-face); font-size: var(--mv-t-h3); }
+.mv-nav__links { display: flex; gap: var(--mv-32); font-size: var(--mv-t-small); }
+
+/* ----------------------------------------------------------------- hero */
+
+/* Always the full first screen: viewport-relative, never a fixed pixel
+   height (a fixed 900px left a shell-coloured gap under the photo on tall
+   screens and overflowed short ones — the "hero doesn't fullscreen" bug).
+   100vh is the fallback; svh corrects for mobile browser chrome. */
+.mv-hero {
+  position: relative; min-height: 100vh; min-height: 100svh;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center; overflow: hidden;
+  padding: var(--mv-100) var(--mv-gutter) var(--mv-40);
+}
+.mv-hero__media { position: absolute; inset: 0; }
+.mv-hero__media img { width: 100%; height: 100%; object-fit: cover; }
+.mv-hero__scrim { position: absolute; inset: 0; background: var(--mv-scrim); }
+.mv-hero__body {
+  position: relative; display: flex; flex-direction: column; align-items: center;
+  gap: var(--mv-32); max-width: var(--mv-measure-wide); color: var(--mv-shell);
+}
+.mv-hero__marks {
+  display: flex; gap: var(--mv-24); flex-wrap: wrap; justify-content: center;
+  font-size: var(--mv-t-small); letter-spacing: var(--mv-ls-small); margin: 0;
+}
+.mv-hero__marks span { display: inline-flex; align-items: center; gap: var(--mv-8); }
+
+/* The banded variant (media inset by 40px) is retired for the stay pack:
+   the inset frame read as "the hero photo doesn't fill the screen". The
+   manifest now only deals fullbleed, so no rule for it remains here. */
+
+/* --------------------------------------------------------------- ledger */
+
+.mv-ledger {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+  gap: var(--mv-40); max-width: var(--mv-content-max); margin-inline: auto;
+}
+.mv-ledger div { display: flex; flex-direction: column; gap: var(--mv-4); padding-top: var(--mv-16); border-top: var(--mv-border); }
+.mv-ledger dt { font-size: var(--mv-t-micro); color: var(--mv-bronze); }
+.mv-ledger dd { font-family: var(--mv-display-face); font-size: var(--mv-t-h2); line-height: 1.1; }
+
+/* -------------------------------------------------------------- gallery */
+
+.mv-gallery { display: grid; grid-template-columns: 1fr 1fr; gap: var(--mv-40); }
+.mv-shot {
+  position: relative; overflow: hidden; aspect-ratio: var(--mv-card-ratio);
+}
+.mv-shot__scrim { position: absolute; inset: auto 0 0; height: 200px; background: var(--mv-scrim-caption); pointer-events: none; }
+.mv-shot figcaption { position: absolute; inset: auto var(--mv-30) var(--mv-30); color: var(--mv-shell); }
+
+/* The one hover the system spends its budget on: photo to 1.05.
+   Measured — designsys/refs/mariven/motion.md §7. */
+.mv-shot img { transition: transform var(--mv-dur-card) var(--mv-ease-card); }
+.mv-shot:hover img { transform: scale(var(--mv-card-scale)); }
+
+/* masonry variant: alternate the tall cell so the wall breathes */
+.gal-masonry .mv-gallery { grid-auto-rows: 1fr; }
+.gal-masonry .mv-shot:nth-child(4n+1) { aspect-ratio: 0.9; }
+.gal-masonry .mv-shot:nth-child(4n+4) { aspect-ratio: 0.9; }
+
+/* filmstrip variant: one horizontal scroller instead of a wall */
+.gal-filmstrip .mv-gallery {
+  display: flex; gap: var(--mv-40); overflow-x: auto; scroll-snap-type: x mandatory;
+  padding-bottom: var(--mv-20);
+}
+.gal-filmstrip .mv-shot {
+  flex: 0 0 min(var(--mv-measure), 78vw); scroll-snap-align: start;
+}
+
+/* ------------------------------------------------------------ amenities */
+
+.mv-amenities { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--mv-24) var(--mv-40); }
+.mv-amenities li {
+  display: flex; align-items: center; gap: var(--mv-12);
+  padding-bottom: var(--mv-12); border-bottom: var(--mv-border);
+  font-size: var(--mv-t-small); letter-spacing: var(--mv-ls-small);
+}
+.mv-amenities .icon { width: 18px; height: 18px; color: var(--mv-sea); }
+.am-two-col .mv-amenities { grid-template-columns: 1fr 1fr; }
+
+/* chips variant: the same facts as inline pills on the hairline */
+.am-chips .mv-amenities { display: flex; flex-wrap: wrap; gap: var(--mv-12); }
+.am-chips .mv-amenities li {
+  padding: var(--mv-8) var(--mv-16); border: var(--mv-border); border-bottom: var(--mv-border);
+  border-radius: var(--mv-round);
+}
+
+/* -------------------------------------------------------------- reviews */
+
+.mv-reviews { display: grid; grid-template-columns: 1fr 1fr; gap: var(--mv-64) var(--mv-40); }
+.mv-review { display: flex; flex-direction: column; gap: var(--mv-16); }
+.mv-review blockquote { font-family: var(--mv-display-face); }
+.mv-review figcaption { color: var(--mv-bronze); }
+.rev-quotes .mv-reviews { grid-template-columns: 1fr; max-width: var(--mv-measure-wide); margin-inline: auto; text-align: center; }
+.rev-quotes .mv-review { align-items: center; }
+/* strip variant: a single scrolling row of quotes */
+.rev-strip .mv-reviews {
+  display: flex; gap: var(--mv-40); overflow-x: auto; scroll-snap-type: x mandatory;
+  padding-bottom: var(--mv-20);
+}
+.rev-strip .mv-review {
+  flex: 0 0 min(var(--mv-measure-narrow), 82vw); scroll-snap-align: start;
+}
+.mv-rating { display: inline-flex; align-items: center; gap: var(--mv-8); color: var(--mv-bronze); }
+
+/* ---------------------------------------------------------------- split */
+
+.mv-split__media { position: relative; overflow: hidden; aspect-ratio: var(--mv-card-ratio); }
+.mv-split__media figcaption { position: absolute; inset: auto var(--mv-30) var(--mv-30); color: var(--mv-shell); }
+.mv-split__media img { transition: transform var(--mv-dur-card) var(--mv-ease-card); }
+.mv-split__media:hover img { transform: scale(var(--mv-card-scale)); }
+
+.mv-facts { display: grid; grid-template-columns: 1fr 1fr; gap: var(--mv-16) var(--mv-40); width: 100%; }
+.mv-facts div { display: flex; justify-content: space-between; gap: var(--mv-16); padding-bottom: var(--mv-8); border-bottom: var(--mv-border); }
+.mv-facts dt { color: var(--mv-bronze); font-size: var(--mv-t-small); }
+.mv-facts dd { font-size: var(--mv-t-small); text-align: right; }
+
+/* -------------------------------------------------------------- buttons */
+
+.mv-btn {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  overflow: hidden; padding: var(--mv-12) var(--mv-24);
+  border: var(--mv-border); border-radius: var(--mv-radius);
+  background: transparent; color: var(--mv-ink);
+  font-family: var(--mv-body-face); font-size: var(--mv-t-lead);
+  line-height: var(--mv-lh-lead); letter-spacing: var(--mv-ls-lead);
+  cursor: pointer;
+}
+.mv-btn::before {
+  content: ""; position: absolute; inset: 0; background: var(--mv-ink); opacity: 0;
+  transition: opacity var(--mv-dur-swap) var(--mv-ease-swap);
+}
+.mv-btn__label { position: relative; display: grid; }
+.mv-btn__label > span { grid-area: 1 / 1; transition: opacity var(--mv-dur-swap) var(--mv-ease-swap); }
+.mv-btn__label > span:last-child { opacity: 0; color: var(--mv-shell); }
+.mv-btn:hover::before { opacity: 1; }
+.mv-btn:hover .mv-btn__label > span:first-child { opacity: 0; }
+.mv-btn:hover .mv-btn__label > span:last-child { opacity: 1; }
+
+.mv-btn--ghost {
+  color: var(--mv-shell); border-color: rgba(249, 246, 243, 0.5);
+  font-size: var(--mv-t-small); padding: var(--mv-8) var(--mv-16);
+}
+.mv-btn--ghost::before { background: var(--mv-shell); }
+.mv-btn--ghost:hover { color: var(--mv-ink); }
+.mv-nav.is-past .mv-btn--ghost { color: var(--mv-ink); border-color: var(--mv-hairline); }
+.mv-nav.is-past .mv-btn--ghost::before { background: var(--mv-ink); }
+.mv-nav.is-past .mv-btn--ghost:hover { color: var(--mv-shell); }
+
+.mv-btn--solid {
+  background: var(--mv-ink); color: var(--mv-shell); border-color: var(--mv-ink);
+  transition: filter var(--mv-dur-hover) var(--mv-ease-hover);
+}
+.mv-btn--solid:hover { filter: brightness(0.8); }
+
+/* ---------------------------------------------------------------- rules */
+
+.mv-rule { height: 1px; width: 100%; }
+.mv-rule--centred { background: var(--mv-rule-c); }
+.mv-rule--ornament {
+  display: flex; align-items: center; justify-content: center;
+  max-width: var(--mv-content-max); margin: 0 auto; height: auto; background: none;
+}
+.mv-rule--ornament::before, .mv-rule--ornament::after { content: ""; flex: 1; height: 1px; }
+.mv-rule--ornament::before { background: var(--mv-rule-r); }
+.mv-rule--ornament::after { background: var(--mv-rule-l); }
+.mv-rule__mark {
+  width: var(--mv-8); height: var(--mv-8); flex: none;
+  border: var(--mv-border); border-radius: var(--mv-round);
+  margin-inline: var(--mv-10);
+}
+
+/* ------------------------------------------------------------------ cta */
+
+.mv-cta__actions { display: flex; gap: var(--mv-16); flex-wrap: wrap; justify-content: center; }
+
+/* --------------------------------------------------------------- footer */
+
+.mv-footer { padding: 0 var(--mv-40); max-width: var(--mv-page-max); margin-inline: auto; }
+.mv-footer__inner { padding-block: var(--mv-80); display: flex; flex-direction: column; gap: var(--mv-80); }
+.mv-footer__brand { text-align: center; display: flex; flex-direction: column; gap: var(--mv-4); align-items: center; }
+.mv-footer__cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--mv-40); }
+.mv-footer__cols ul { display: flex; flex-direction: column; gap: var(--mv-24); font-size: var(--mv-t-small); }
+.mv-footer__base { display: flex; justify-content: space-between; gap: var(--mv-20); padding-top: var(--mv-32); border-top: var(--mv-border); }
+
+/* ------------------------------------------------------------ entrances */
+
+/* Only hidden once JS has confirmed it is running, so a no-JS browser or a
+   crawler sees the finished page. Timing and distance are measured. */
+.js .mv-section .reveal,
+.js .mv-hero .reveal,
+.js .mv-footer .reveal {
+  opacity: 0; transform: translateY(var(--mv-enter-lift));
+  transition: opacity var(--mv-dur-enter-fade) var(--mv-ease-enter),
+              transform var(--mv-dur-enter) var(--mv-ease-enter);
+}
+.js .mv-section .reveal.in,
+.js .mv-hero .reveal.in,
+.js .mv-footer .reveal.in { opacity: 1; transform: none; }
+
+/* ---------------------------------------------------------- breakpoints */
+
+@media (max-width: 1439.98px) {
+  .mv {
+    --mv-t-display: 64px; --mv-t-h1: 45px; --mv-t-h2: 28px; --mv-t-h3: 20px;
+    --mv-t-lead: 16px; --mv-t-body: 14px; --mv-t-small: 13px;
+    --mv-gutter: var(--mv-40);
+  }
+  .mv-amenities { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 809.98px) {
+  .mv {
+    --mv-t-display: 48px; --mv-t-h1: 32px; --mv-t-h2: 24px; --mv-t-h3: 18px;
+    --mv-t-lead: 14px; --mv-t-body: 14px; --mv-t-small: 12px;
+    --mv-gutter: var(--mv-20);
+  }
+  .mv-nav { padding-inline: var(--mv-20); }
+  .mv-nav__links { display: none; }
+  .mv-reviews { grid-template-columns: 1fr; gap: var(--mv-20) var(--mv-40); }
+  /* Mobile gallery, borrowed from profit-stay's rhythm: a full-width lead
+     shot, then photos paired two-up on a tight seam — not one long single
+     column. Filmstrip keeps its own flex scroller (higher specificity). */
+  .mv-gallery { grid-template-columns: 1fr 1fr; gap: var(--mv-12); }
+  .mv-gallery .mv-shot:first-child { grid-column: 1 / -1; aspect-ratio: 16 / 10; }
+  .gal-masonry .mv-shot:nth-child(4n+1),
+  .gal-masonry .mv-shot:nth-child(4n+4) { aspect-ratio: var(--mv-card-ratio); }
+  .gal-masonry .mv-shot:first-child { aspect-ratio: 16 / 10; }
+  /* captions are unreadable on the half-width cells — lead shot keeps its */
+  .mv-gallery .mv-shot:not(:first-child) figcaption,
+  .mv-gallery .mv-shot:not(:first-child) .mv-shot__scrim { display: none; }
+  .mv-split { grid-template-columns: 1fr; gap: var(--mv-40); }
+  .mv-head { flex-direction: column; align-items: flex-start; padding-bottom: var(--mv-40); }
+  .mv-ledger { grid-auto-flow: row; grid-template-columns: 1fr 1fr; gap: var(--mv-20); }
+  .mv-amenities, .mv-facts { grid-template-columns: 1fr; }
+  .mv-footer { padding-inline: var(--mv-20); }
+  .mv-footer__cols { grid-template-columns: 1fr 1fr; gap: var(--mv-40) var(--mv-20); }
+  .mv-footer__base { flex-direction: column; gap: var(--mv-8); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js .mv .reveal, .js .mv .reveal.in { opacity: 1; transform: none; transition: none; }
+  .mv-nav, .mv-btn::before, .mv-btn__label > span, .mv-btn--solid,
+  .mv-shot img, .mv-split__media img { transition: none; }
+}
+
+/* ------------------------------------------------------------------ map
+   Small Google Maps embed just before the enquiry section. Square frame,
+   hairline border — the family's shape language. */
+.mv-map .map-embed { margin-top: var(--mv-32); border: var(--mv-border); }
+.map-embed iframe { display: block; width: 100%; height: 360px; border: 0; }
+@media (max-width: 809.98px) {
+  .map-embed iframe { height: 260px; }
+}

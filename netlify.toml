@@ -66,6 +66,15 @@
   [headers.values]
     Cache-Control = "no-cache"
 
+# Per-lead demo pages under hashed paths (/nastanitve/<hash>/, campaign demos
+# copied from the scrape_airbnb build; noindex meta on every page). Same rule
+# as /primeri/*: their fonts.css and fonts/ are NOT immutable-named, so no
+# browser may hold them the way /assets/* is held.
+[[headers]]
+  for = "/nastanitve/*"
+  [headers.values]
+    Cache-Control = "no-cache"
+
 # Same as nastanitve: the rule on the .html file does not cover a visit to
 # /zasebnost, so both request paths get an explicit no-cache HTML rule.
 [[headers]]
