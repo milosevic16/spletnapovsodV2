@@ -174,6 +174,27 @@ One-off scripts (committed, NOT part of the host build):
   Archivo); the image IS the signature: the composed 45/55 cut drawing. Touch icon +
   favicon carry the same mark (sheet, red plane, poché below).
 
+## Demo visit notifications (nastanitve)
+
+Every per-lead demo page under `public/nastanitve/<hash>/` reports opens.
+`public/nastanitve/_assets/obisk.js` (cookie-free, storage-free; fires once per
+page load after the first interaction or 12 s visible; skips localhost, file:
+and framed views) POSTs to `/.netlify/functions/obisk`
+(`netlify/functions/obisk.mjs`), which drops bot UAs and non-demo paths and
+emails the open through Web3Forms — same `VITE_WEB3FORMS_KEY`, read at RUNTIME
+from the Netlify env; delivery goes to the key's registered inbox (Web3Forms
+does not let the sender choose a recipient). Raw IP is never forwarded, only
+Netlify's city-level geo. Each demo footer carries a small-print disclosure
+linking /zasebnost#piskotki; the piskotki clause and the Web3Forms processor
+row in `src/content/zasebnost.ts` were scoped to match, and the clause's claims
+(no cookies, no storage, no raw IP in the note, footer line on every demo page)
+are load-bearing — keep them true of this code. The demo pages come from the
+scrape_airbnb build: a refresh from there clobbers the script tag, the footer
+line and `_assets/obisk.js`, so re-apply all three (or port the beacon into
+that build). Link-preview fetchers are filtered twice (interaction gate + UA
+list) but a JS-executing scanner can still slip through; read a same-minute
+open with doubt. No dedup by design: every open is one email.
+
 ## Deploy (when the owner is ready)
 
 GitHub holds the source; **Netlify does all the building and deploying**. Push to the
@@ -239,9 +260,11 @@ Netlify free plan + private repo: **no Co-Authored-By trailers in commits**.
    delovnem dnevu", "objava v 3 delovnih dneh" + scope note, "popravki v 24 urah", AND
    the redesign's new strings (chamber labels/glosses, ledger titles, plate labels,
    »Globina reza«).
-2. **Web3Forms access key** — key supplied and wired LOCALLY (avgust 2026): it lives
-   in `.env.local` (gitignored) and the form is verified working end to end against
-   the live API. STILL OPEN: the same `VITE_WEB3FORMS_KEY` must be added to the
+2. **Web3Forms access key** — key supplied and wired LOCALLY (avgust 2026): it lived
+   in `.env.local` (gitignored) and the form was verified working end to end against
+   the live API. (21. avgust 2026: `.env.local` is GONE from this machine — the key
+   exists only wherever the owner keeps it; local form/beacon email tests need it
+   re-supplied. The obisk function reads the same var at runtime.) STILL OPEN: the same `VITE_WEB3FORMS_KEY` must be added to the
    Netlify env (owner's dashboard — nobody else can set it), or every deployed
    build ships without a key and the form fails closed with its error line. Env
    vars are read at BUILD time, so a redeploy is required after adding it.

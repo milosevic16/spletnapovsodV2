@@ -9,6 +9,12 @@
       "port": 4272
     },
     {
+      "name": "dist-static",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "4273", "-d", "dist"],
+      "port": 4273
+    },
+    {
       "name": "dev",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],

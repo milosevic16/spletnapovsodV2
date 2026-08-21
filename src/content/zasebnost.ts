@@ -17,6 +17,10 @@
  *     verbatim from the Web3Forms DPA (v1.0, 13 Jul 2026), read directly.
  *   - The supervisory-authority block is the verified public contact of the
  *     Informacijski pooblaščenec.
+ *   - The demo-page visit notification (clause »piskotki«, last paragraph)
+ *     describes netlify/functions/obisk.mjs + public/nastanitve/_assets/obisk.js.
+ *     Its claims (no cookies, no storage, no raw IP in the note, a footer
+ *     disclosure on every demo page) must stay true of that code.
  *
  * THE OUTREACH DATASET (clause »trzenje«) is the Art. 14 notice for prospect
  * data we did NOT collect from the person. It is load-bearing rather than
@@ -140,8 +144,9 @@ export const clauses: Clause[] = [
     cite: 'ZEKom-2 · Direktiva 2002/58, člen 5(3)',
     title: 'Piškotki in sledenje',
     body: [
-      'To spletno mesto ne uporablja piškotkov. Ne nameščamo analitike, sledilnih skript, oglasnih pikslov ali vtičnikov družbenih omrežij.',
+      'To spletno mesto ne uporablja piškotkov. Ne nameščamo analitike, oglasnih pikslov ali vtičnikov družbenih omrežij.',
       'V lokalni shrambi brskalnika hranimo en sam funkcijski zapis z imenom sp-veil-seen, časovni žig zadnjega obiska, ki uvodno animacijo predvaja samo obiskovalcem, ki jih dlje časa ni bilo. Zapis ostane v vašem brskalniku, ne vsebuje osebnih podatkov in se nikamor ne pošilja. Ker gre za nujno funkcijsko shrambo brez sledenja, pasice za privolitev ne prikazujemo. To lahko preverite sami v razvijalskih orodjih brskalnika.',
+      'Izjema so predstavitvene demo strani pod naslovom spletnapovsod.si/nastanitve, ki jih pripravimo za posamezne nastanitvene obrate in povezavo nanje pošljemo neposredno prejemniku. Taka stran nam ob odprtju enkrat sporoči obisk, in sicer čas, naslov odprte strani, približno lokacijo na ravni kraja, izpeljano iz naslova IP, ter osnovne podatke o brskalniku in napravi. Obvestilo prejmemo po e-pošti prek obdelovalca Web3Forms, naslova IP pa ne shranimo in ga obvestilo ne vsebuje. Tudi te strani ne uporabljajo piškotkov in v vaš brskalnik ničesar ne shranijo. Pravna podlaga je zakoniti interes iz razdelka o neposrednem trženju, opozorilo na beleženje obiska pa je zapisano tudi v nogi vsake take strani.',
     ],
   },
   {
@@ -179,7 +184,7 @@ export const processorGroups: { label: string; items: Processor[] }[] = [
       },
       {
         name: 'Web3Forms (Web3Creative)',
-        purpose: 'Sprejem in dostava oddanih obrazcev',
+        purpose: 'Sprejem in dostava oddanih obrazcev in obvestil o obisku demo strani',
         where: 'EU in ZDA',
       },
     ],
