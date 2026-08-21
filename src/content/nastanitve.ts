@@ -117,13 +117,6 @@ export const examples = {
       alt: 'Primer strani s celozaslonsko fotografijo, imenom nastanitve in pasom s podatki.',
     },
     {
-      id: 'primer-mariven',
-      demo: '/primeri/mariven-stay/index.html',
-      name: 'Rezidenca',
-      gloss: 'Umirjena serifna tipografija, ime nastanitve na sredini fotografije.',
-      alt: 'Primer strani z imenom nastanitve na sredini celozaslonske fotografije.',
-    },
-    {
       id: 'primer-atelier',
       demo: '/primeri/atelier/index.html',
       name: 'Atelje',
