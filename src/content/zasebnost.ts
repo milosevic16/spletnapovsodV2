@@ -18,9 +18,11 @@
  *   - The supervisory-authority block is the verified public contact of the
  *     Informacijski pooblaščenec.
  *   - The demo-page visit notification (clause »piskotki«, last paragraph)
- *     describes netlify/functions/obisk.mjs + public/nastanitve/_assets/obisk.js.
- *     Its claims (no cookies, no storage, no raw IP in the note, a footer
- *     disclosure on every demo page) must stay true of that code.
+ *     describes public/nastanitve/_assets/obisk.js: browser-direct submission
+ *     to Web3Forms (a server relay is impossible — Web3Forms 403s datacenter
+ *     IPs). Its claims (no cookies, no storage, Web3Forms receives the IP and
+ *     stamps it into the note, a footer disclosure on every demo page) must
+ *     stay true of that code.
  *
  * THE OUTREACH DATASET (clause »trzenje«) is the Art. 14 notice for prospect
  * data we did NOT collect from the person. It is load-bearing rather than
@@ -146,7 +148,7 @@ export const clauses: Clause[] = [
     body: [
       'To spletno mesto ne uporablja piškotkov. Ne nameščamo analitike, oglasnih pikslov ali vtičnikov družbenih omrežij.',
       'V lokalni shrambi brskalnika hranimo en sam funkcijski zapis z imenom sp-veil-seen, časovni žig zadnjega obiska, ki uvodno animacijo predvaja samo obiskovalcem, ki jih dlje časa ni bilo. Zapis ostane v vašem brskalniku, ne vsebuje osebnih podatkov in se nikamor ne pošilja. Ker gre za nujno funkcijsko shrambo brez sledenja, pasice za privolitev ne prikazujemo. To lahko preverite sami v razvijalskih orodjih brskalnika.',
-      'Izjema so predstavitvene demo strani pod naslovom spletnapovsod.si/nastanitve, ki jih pripravimo za posamezne nastanitvene obrate in povezavo nanje pošljemo neposredno prejemniku. Taka stran nam ob odprtju enkrat sporoči obisk, in sicer čas, naslov odprte strani, približno lokacijo na ravni kraja, izpeljano iz naslova IP, ter osnovne podatke o brskalniku in napravi. Obvestilo prejmemo po e-pošti prek obdelovalca Web3Forms, naslova IP pa ne shranimo in ga obvestilo ne vsebuje. Tudi te strani ne uporabljajo piškotkov in v vaš brskalnik ničesar ne shranijo. Pravna podlaga je zakoniti interes iz razdelka o neposrednem trženju, opozorilo na beleženje obiska pa je zapisano tudi v nogi vsake take strani.',
+      'Izjema so predstavitvene demo strani pod naslovom spletnapovsod.si/nastanitve, ki jih pripravimo za posamezne nastanitvene obrate in povezavo nanje pošljemo neposredno prejemniku. Taka stran nam ob odprtju enkrat sporoči obisk: brskalnik pošlje obdelovalcu Web3Forms čas odprtja, naslov odprte strani, časovni pas ter osnovne podatke o brskalniku in napravi, obvestilo pa prejmemo po e-pošti. Web3Forms ob tem, enako kot pri kontaktnem obrazcu, zabeleži naslov IP obiskovalca in ga pripiše obvestilu; sami ga ne obdelujemo naprej in ga ne uporabljamo za profiliranje. Tudi te strani ne uporabljajo piškotkov in v vaš brskalnik ničesar ne shranijo. Pravna podlaga je zakoniti interes iz razdelka o neposrednem trženju, opozorilo na beleženje obiska pa je zapisano tudi v nogi vsake take strani.',
     ],
   },
   {

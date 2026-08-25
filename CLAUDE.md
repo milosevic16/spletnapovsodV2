@@ -179,21 +179,28 @@ One-off scripts (committed, NOT part of the host build):
 Every per-lead demo page under `public/nastanitve/<hash>/` reports opens.
 `public/nastanitve/_assets/obisk.js` (cookie-free, storage-free; fires once per
 page load after the first interaction or 12 s visible; skips localhost, file:
-and framed views) POSTs to `/.netlify/functions/obisk`
-(`netlify/functions/obisk.mjs`), which drops bot UAs and non-demo paths and
-emails the open through Web3Forms — same `VITE_WEB3FORMS_KEY`, read at RUNTIME
-from the Netlify env; delivery goes to the key's registered inbox (Web3Forms
-does not let the sender choose a recipient). Raw IP is never forwarded, only
-Netlify's city-level geo. Each demo footer carries a small-print disclosure
-linking /zasebnost#piskotki; the piskotki clause and the Web3Forms processor
-row in `src/content/zasebnost.ts` were scoped to match, and the clause's claims
-(no cookies, no storage, no raw IP in the note, footer line on every demo page)
-are load-bearing — keep them true of this code. The demo pages come from the
+and framed views) submits DIRECTLY from the visitor's browser to the Web3Forms
+API — the same path the contact form uses. **A server-side relay is impossible:
+Web3Forms 403s submissions from datacenter IPs** (measured from a Netlify
+function, avgust 2026 — the relay was built, diagnosed via function logs and a
+residential-IP control test, and removed; cost one debugging round). The repo
+copy of obisk.js holds the placeholder `__VITE_WEB3FORMS_KEY__`;
+`scripts/postbuild.mjs` injects the real key from `VITE_WEB3FORMS_KEY` (build
+env) into the dist copy, so the key stays out of git and a keyless build ships
+a beacon that stays dark by its own placeholder guard. Delivery goes to the
+key's registered inbox (Web3Forms does not let the sender choose a recipient),
+and Web3Forms itself stamps the visitor's IP into the delivered note. Each demo
+footer carries a small-print disclosure linking /zasebnost#piskotki; the
+piskotki clause and the Web3Forms processor row in `src/content/zasebnost.ts`
+were scoped to match, and the clause's claims (no cookies, no storage, IP
+reaches Web3Forms and appears in the note, footer line on every demo page) are
+load-bearing — keep them true of this code. The demo pages come from the
 scrape_airbnb build: a refresh from there clobbers the script tag, the footer
 line and `_assets/obisk.js`, so re-apply all three (or port the beacon into
-that build). Link-preview fetchers are filtered twice (interaction gate + UA
-list) but a JS-executing scanner can still slip through; read a same-minute
-open with doubt. No dedup by design: every open is one email.
+that build). Link-preview fetchers are filtered by the interaction gate plus
+Web3Forms' own spam filtering, but a JS-executing scanner can still slip
+through; read a same-minute open with doubt. No dedup by design: every open is
+one email.
 
 ## Deploy (when the owner is ready)
 
@@ -260,16 +267,16 @@ Netlify free plan + private repo: **no Co-Authored-By trailers in commits**.
    delovnem dnevu", "objava v 3 delovnih dneh" + scope note, "popravki v 24 urah", AND
    the redesign's new strings (chamber labels/glosses, ledger titles, plate labels,
    »Globina reza«).
-2. **Web3Forms access key** — key supplied and wired LOCALLY (avgust 2026): it lived
-   in `.env.local` (gitignored) and the form was verified working end to end against
-   the live API. (21. avgust 2026: `.env.local` is GONE from this machine — the key
-   exists only wherever the owner keeps it; local form/beacon email tests need it
-   re-supplied. The obisk function reads the same var at runtime.) STILL OPEN: the same `VITE_WEB3FORMS_KEY` must be added to the
-   Netlify env (owner's dashboard — nobody else can set it), or every deployed
-   build ships without a key and the form fails closed with its error line. Env
-   vars are read at BUILD time, so a redeploy is required after adding it.
-   Confirm too WHICH inbox the key delivers to — Web3Forms sends to the address
-   the key was registered with, not to `CONTACT_EMAIL`.
+2. ~~**Web3Forms access key**~~ — SETTLED (25. avgust 2026): `VITE_WEB3FORMS_KEY`
+   lives in the Netlify env (all scopes, all deploy contexts) and delivery was
+   verified end to end against production. Both the form and the demo-visit
+   beacon deliver to the inbox the key was REGISTERED with (the owner's Gmail),
+   NOT to `studio@spletnapovsod.si` — Web3Forms always sends to the key's
+   registration address. To repoint delivery: register a new key for studio@,
+   swap the env value, redeploy (the form bakes the key at build; postbuild
+   injects it into the beacon). `.env.local` is still gone on this machine, so
+   local email tests need the key re-supplied — or read it from the deployed
+   client bundle, where it is public by design.
 3. ~~**Contact e-mail**~~ — SETTLED (avgust 2026): `studio@spletnapovsod.si`, owner-supplied,
    in `src/lib/constants.ts`. Still open is item 2's second half: whether the Web3Forms key
    delivers to that same inbox.

@@ -338,6 +338,26 @@ writeFileSync(join(dist, 'sitemap.xml'), sitemap)
 writeFileSync(join(dist, 'robots.txt'), robotsContent)
 
 // --------------------------------------------------------------------------
+// 5. Demo-visit beacon key injection. The repo copy of obisk.js holds only a
+// placeholder (the public client key never lives in git); the dist copy gets
+// the real value from the build env. Web3Forms 403s datacenter IPs, so the
+// beacon submits browser-direct and there is no server relay to hold the key.
+// Without the env var the beacon ships dark by its own placeholder guard.
+// --------------------------------------------------------------------------
+const beaconPath = join(dist, 'nastanitve', '_assets', 'obisk.js')
+if (existsSync(beaconPath)) {
+  const beaconKey = process.env.VITE_WEB3FORMS_KEY
+  const beaconSrc = readFileSync(beaconPath, 'utf8')
+  if (!beaconSrc.includes("'__VITE_WEB3FORMS_KEY__'")) {
+    failures.push('obisk.js: key placeholder missing — beacon can never arm')
+  } else if (beaconKey) {
+    writeFileSync(beaconPath, beaconSrc.replace("'__VITE_WEB3FORMS_KEY__'", JSON.stringify(beaconKey)))
+  } else {
+    console.warn('postbuild: VITE_WEB3FORMS_KEY unset — demo-visit beacon ships dark')
+  }
+}
+
+// --------------------------------------------------------------------------
 if (failures.length) {
   console.error(`\npostbuild: ${failures.length} guard failure(s):`)
   for (const f of failures) console.error('  ✗ ' + f)

@@ -10,15 +10,6 @@
   # It still lives in a Netlify env var (VITE_WEB3FORMS_KEY), never in the repo.
   SECRETS_SCAN_OMIT_KEYS = "VITE_WEB3FORMS_KEY"
 
-# --- Functions -------------------------------------------------------------
-# One serverless function: obisk, the demo-page visit notification. Each
-# per-lead /nastanitve/<hash>/ open is emailed through Web3Forms with the same
-# VITE_WEB3FORMS_KEY the contact form uses — the function reads it at RUNTIME
-# from the site env, so notes flow only once the var exists in Netlify.
-
-[functions]
-  directory = "netlify/functions"
-
 # --- Headers ---------------------------------------------------------------
 # Header rules match the REQUEST path, not the served file: every HTML-serving
 # path gets its own no-cache rule so no browser holds a stale shell pointing at
