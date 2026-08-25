@@ -1,0 +1,383 @@
+/* ==========================================================================
+   placebo — family stylesheet (stay pack)
+
+   Every colour, size, space and timing is a measured value from
+   designsys/refs/rumaya/tokens.css (source: rumaya.framer.ai). Tokens are
+   namespaced --pb-* on purpose: render.py injects the design-DNA :root
+   AFTER this stylesheet, so a pack reusing the DNA's variable names would
+   be silently overridden. The DNA drives structure only (section order,
+   gallery/reviews/amenities variants) — see the pack template header.
+
+   Face substitutions (the reference's faces are not in the repo's OFL
+   set): Instrument Serif → Newsreader, Inter Display → Inter. Italic
+   emphasis words survive as synthesized oblique — the family has no
+   italic axis, and the reference never uses bold, so nothing else is lost.
+   ========================================================================== */
+
+.pb {
+  /* colour — the site's own declared body tokens, verbatim */
+  --pb-cream: #fef9f3;    /* page ground; light text on dark */
+  --pb-brick: #8b3126;    /* heading ink AND filled-panel bg */
+  --pb-oxblood: #46130d;  /* dark section ground */
+  --pb-clay: #724f48;     /* muted body text on cream */
+  --pb-sand: #e7ded3;     /* hairlines */
+  --pb-beige: #e8d9cf;    /* muted text on dark */
+  --pb-grey: #a89f94;     /* quiet meta text */
+  --pb-scrim: rgba(0, 0, 0, 0.5);
+  --pb-hairline: 1px solid var(--pb-sand);
+  --pb-hairline-dark: 1px solid rgba(254, 249, 243, 0.22);
+
+  /* type — one serif at one weight; emphasis is an italic word, never bold */
+  --pb-serif: 'Newsreader', Georgia, serif;
+  --pb-sans: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+
+  --pb-t-display: 120px; /* lh 0.9  ls -1% */
+  --pb-t-h2: 80px;       /* lh 0.9  ls -1% */
+  --pb-t-h3: 64px;
+  --pb-t-quote: 32px;    /* lh 1.0 */
+  --pb-t-brand: 30px;    /* lh 1.0  ls -3% */
+  --pb-t-lead: 24px;     /* lh 1.2–1.4 */
+  --pb-t-serif-sm: 20px; /* lh 1.0  ls -3% */
+  --pb-t-body: 16px;     /* Inter 500, lh 1.4, ls -1% */
+  --pb-t-form: 14px;
+
+  --pb-lh-display: 0.9;
+  --pb-ls-tight: -0.01em;
+  --pb-ls-tighter: -0.03em;
+
+  /* space — measured 10px base (73% adherence), 12/24/48 secondary family */
+  --pb-4: 4px;   --pb-8: 8px;   --pb-10: 10px; --pb-12: 12px;
+  --pb-16: 16px; --pb-20: 20px; --pb-24: 24px; --pb-30: 30px;
+  --pb-40: 40px; --pb-48: 48px; --pb-64: 64px; --pb-80: 80px;
+  --pb-112: 112px;
+
+  /* layout */
+  --pb-page-pad: 20px;
+  --pb-content-max: 1400px;
+  --pb-nav-h: 72px;
+
+  /* shape — square and flat; the source's only radius was the Framer badge */
+  --pb-radius: 0;
+
+  /* motion — two curves carry the system (motion.md) */
+  --pb-ease-enter: cubic-bezier(0.25, 1, 0.5, 1);
+  --pb-ease-sweep: cubic-bezier(0.87, 0, 0.13, 1);
+  --pb-ease-zoom: cubic-bezier(0.75, 0.01, 0.25, 1);
+  --pb-dur-enter: 1000ms;
+  --pb-dur-zoom: 1500ms;
+  --pb-dur-sweep: 500ms;
+  --pb-dur-sweep-out: 800ms;
+  --pb-stagger: 100ms;
+  --pb-enter-rise: 70px;
+  --pb-enter-drop: -20px;
+  --pb-hero-scale: 1.1;
+  --pb-card-scale: 1.05;
+  --pb-ticker-speed: 98; /* px per second */
+}
+
+/* ------------------------------------------------------------------ base */
+
+.pb *, .pb *::before, .pb *::after { box-sizing: border-box; }
+
+body.pb {
+  margin: 0;
+  background: var(--pb-cream);
+  color: var(--pb-brick);
+  font-family: var(--pb-sans);
+  font-size: var(--pb-t-body);
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: var(--pb-ls-tight);
+  -webkit-font-smoothing: antialiased;
+}
+
+.pb h1, .pb h2, .pb h3, .pb p, .pb dl, .pb dd, .pb figure, .pb blockquote, .pb ul {
+  margin: 0; padding: 0;
+}
+.pb ul { list-style: none; }
+.pb img { max-width: 100%; display: block; }
+.pb .icon { width: 1em; height: 1em; flex: none; fill: currentColor; }
+.pb em { font-style: italic; font-weight: inherit; }
+
+/* ------------------------------------------------------------------ type */
+
+.pb-display {
+  font-family: var(--pb-serif); font-weight: 400;
+  font-size: var(--pb-t-display); line-height: var(--pb-lh-display);
+  letter-spacing: var(--pb-ls-tight);
+}
+.pb-h2 {
+  font-family: var(--pb-serif); font-weight: 400;
+  font-size: var(--pb-t-h2); line-height: var(--pb-lh-display);
+  letter-spacing: var(--pb-ls-tight);
+}
+.pb-quote {
+  font-family: var(--pb-serif); font-weight: 400;
+  font-size: var(--pb-t-quote); line-height: 1.15;
+  letter-spacing: var(--pb-ls-tight);
+}
+.pb-serif-lead {
+  font-family: var(--pb-serif); font-weight: 400;
+  font-size: var(--pb-t-lead); line-height: 1.3;
+  letter-spacing: var(--pb-ls-tight);
+}
+.pb-serif-sm {
+  font-family: var(--pb-serif); font-weight: 400;
+  font-size: var(--pb-t-serif-sm); line-height: 1.1;
+  letter-spacing: var(--pb-ls-tight);
+}
+.pb-eyebrow {
+  font-size: var(--pb-t-body); line-height: 1;
+  letter-spacing: var(--pb-ls-tight);
+  display: flex; align-items: center; gap: var(--pb-8);
+}
+.pb-body { color: var(--pb-clay); max-width: 60ch; }
+.pb-accent { color: var(--pb-brick); }
+.pb-on-cream { color: var(--pb-cream); }
+.pb-muted-dark { color: var(--pb-beige); }
+.pb-measure { max-width: 560px; }
+.pb-centred { text-align: center; align-items: center; }
+.pb-centred .pb-eyebrow { justify-content: center; }
+
+@media (max-width: 834px) {
+  .pb { --pb-t-display: 80px; --pb-t-h2: 56px; --pb-t-quote: 30px; }
+}
+@media (max-width: 480px) {
+  .pb { --pb-t-display: 48px; --pb-t-h2: 42px; --pb-t-quote: 26px;
+        --pb-t-body: 14px; --pb-t-lead: 20px; --pb-112: 80px; }
+}
+
+/* ------------------------------------------------------------------- nav
+   Fixed; cream text over the hero, swaps to the solid scheme once past it
+   (.is-past via JS), hides while scrolling down (.is-hidden). */
+
+.pb-nav {
+  position: fixed; inset: 0 0 auto 0; z-index: 10;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--pb-20);
+  min-height: var(--pb-nav-h);
+  padding: var(--pb-20) var(--pb-page-pad);
+  color: var(--pb-cream);
+  transition: transform var(--pb-dur-sweep) var(--pb-ease-sweep),
+              background var(--pb-dur-sweep) var(--pb-ease-sweep),
+              color var(--pb-dur-sweep) var(--pb-ease-sweep);
+}
+.pb-nav.is-past { background: var(--pb-cream); color: var(--pb-brick); }
+.pb-nav.is-hidden { transform: translateY(-100%); }
+.pb-nav__mark {
+  font-family: var(--pb-serif); font-weight: 400;
+  font-size: var(--pb-t-brand); line-height: 1;
+  letter-spacing: var(--pb-ls-tighter);
+  color: inherit; text-decoration: none;
+}
+.pb-nav__links { display: flex; gap: var(--pb-24); }
+.pb-nav__cta { font-family: var(--pb-serif); font-size: var(--pb-t-serif-sm); }
+@media (max-width: 834px) { .pb-nav__links { display: none; } }
+
+/* ------------------------------------------------------------------ links
+   Measured underline sweep: the resting line scales out over 800ms while
+   its replacement sweeps in over 500ms, both on the sweep curve. */
+
+.pb-link {
+  position: relative; display: inline-block;
+  color: inherit; text-decoration: none; padding-bottom: 3px;
+}
+.pb-link::before, .pb-link::after {
+  content: ""; position: absolute; left: 0; bottom: 0;
+  width: 100%; height: 1px; background: currentColor;
+  transform-origin: left center;
+}
+.pb-link::before { transition: transform var(--pb-dur-sweep-out) var(--pb-ease-sweep); }
+.pb-link::after { transform: scaleX(0); transition: transform var(--pb-dur-sweep) var(--pb-ease-sweep) 120ms; }
+.pb-link:hover::before, .pb-link:focus-visible::before { transform: scaleX(0); }
+.pb-link:hover::after, .pb-link:focus-visible::after { transform: scaleX(1); }
+
+/* ------------------------------------------------------------------ hero */
+
+.pb-hero { position: relative; min-height: 100svh; display: grid; align-items: end; overflow: hidden; }
+.pb-hero__media, .pb-hero__media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.js .pb-hero__media img { animation: pb-settle var(--pb-dur-zoom) var(--pb-ease-zoom) both; }
+.pb-hero__scrim {
+  position: absolute; inset: 0;
+  background: linear-gradient(rgba(0, 0, 0, 0.12) 35%, var(--pb-scrim));
+}
+.pb-hero__body {
+  position: relative; display: grid; gap: var(--pb-16);
+  width: 100%; max-width: var(--pb-content-max);
+  margin: 0 auto;
+  padding: var(--pb-48) var(--pb-page-pad);
+}
+.pb-hero__marks {
+  display: flex; gap: var(--pb-20);
+  color: var(--pb-cream); font-size: var(--pb-t-body);
+}
+.pb-hero__marks span { display: inline-flex; align-items: center; gap: var(--pb-8); }
+@keyframes pb-settle { from { transform: scale(var(--pb-hero-scale)); } to { transform: none; } }
+
+/* ---------------------------------------------------------------- layout */
+
+.pb-section {
+  max-width: var(--pb-content-max); margin: 0 auto;
+  padding: var(--pb-112) var(--pb-page-pad);
+  display: grid; gap: var(--pb-24); align-content: start;
+}
+.pb-section--tight { padding-block: var(--pb-64); }
+.pb-section--in-dark { padding-block: var(--pb-112); }
+.pb-rule {
+  border: 0; height: 1px; background: var(--pb-sand);
+  max-width: calc(var(--pb-content-max) - 2 * var(--pb-page-pad));
+  margin: 0 auto; width: calc(100% - 2 * var(--pb-page-pad));
+}
+.pb-stack { display: grid; gap: var(--pb-16); }
+.pb-dark { background: var(--pb-oxblood); }
+.pb-panel {
+  background: var(--pb-brick); color: var(--pb-cream);
+  padding: var(--pb-112) var(--pb-page-pad);
+  display: grid; gap: var(--pb-30); justify-items: center; text-align: center;
+}
+.pb-panel__actions { display: flex; flex-wrap: wrap; gap: var(--pb-30); justify-content: center; }
+
+/* --------------------------------------------------------------- ledger */
+
+.pb-ledger {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  border-top: var(--pb-hairline);
+}
+.pb-ledger div {
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: var(--pb-10);
+  padding: var(--pb-20) var(--pb-10) var(--pb-20) 0;
+  border-bottom: var(--pb-hairline);
+}
+.pb-ledger dt { font-size: var(--pb-t-body); color: var(--pb-clay); }
+.pb-ledger dd {
+  font-family: var(--pb-serif); font-size: var(--pb-t-quote); line-height: 1;
+}
+
+/* --------------------------------------------------------------- plates
+   Gallery. Photos REST at scale 1.05 and relax to 1.0 on hover (measured
+   on the reference's room cards); the caption row nudges up 8px. */
+
+.pb-plates {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: var(--pb-48) var(--pb-20);
+}
+.pb-plate { display: grid; gap: var(--pb-12); }
+.pb-plate__media { overflow: hidden; aspect-ratio: 4 / 3; }
+.pb-plate__media img {
+  width: 100%; height: 100%; object-fit: cover;
+  transform: scale(var(--pb-card-scale));
+  transition: transform var(--pb-dur-sweep) var(--pb-ease-sweep);
+}
+.pb-plate:hover .pb-plate__media img { transform: scale(1); }
+.pb-plate__row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: var(--pb-10);
+  border-bottom: var(--pb-hairline); padding-bottom: var(--pb-10);
+  transition: transform var(--pb-dur-sweep) var(--pb-ease-sweep);
+}
+.pb-plate:hover .pb-plate__row { transform: translateY(-8px); }
+.pb-plate__row .pb-serif-sm {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+@media (max-width: 834px) { .pb-plates { grid-template-columns: 1fr; } }
+
+/* --------------------------------------------------------------- ticker
+   Measured 98 px/s leftward drift that does not pause on hover. The JS
+   sets --pb-ticker-dur from the track's real width; the track is
+   duplicated once by JS for the seamless loop. Without JS it is a
+   plain scrollable strip. */
+
+.pb-ticker { overflow-x: auto; margin-inline: calc(-1 * var(--pb-page-pad)); }
+.js .pb-ticker { overflow: hidden; }
+.pb-ticker__track { display: flex; gap: var(--pb-20); width: max-content; }
+.js .pb-ticker__track {
+  animation: pb-drift var(--pb-ticker-dur, 60s) linear infinite;
+}
+.pb-ticker__cell { flex: none; width: min(38vw, 460px); aspect-ratio: 4 / 3; }
+.pb-ticker__cell img { width: 100%; height: 100%; object-fit: cover; }
+@keyframes pb-drift { from { transform: none; } to { transform: translateX(-50%); } }
+
+/* ------------------------------------------------------------- amenities */
+
+.pb-amenities { display: grid; border-top: var(--pb-hairline); }
+.am-columns .pb-amenities { grid-template-columns: repeat(2, 1fr); column-gap: var(--pb-48); }
+.pb-amenities li {
+  display: flex; align-items: center; gap: var(--pb-12);
+  padding: var(--pb-16) 0;
+  border-bottom: var(--pb-hairline);
+}
+.pb-amenities .icon { width: 18px; height: 18px; color: var(--pb-brick); }
+@media (max-width: 834px) { .am-columns .pb-amenities { grid-template-columns: 1fr; } }
+
+/* --------------------------------------------------------------- reviews */
+
+.pb-quote-block { display: grid; gap: var(--pb-16); justify-items: center; max-width: 760px; }
+.pb-review-rows { display: grid; border-top: var(--pb-hairline); }
+.pb-review-row {
+  display: grid; gap: var(--pb-12);
+  padding: var(--pb-30) 0; border-bottom: var(--pb-hairline);
+}
+.pb-review-row .pb-quote { max-width: 760px; }
+
+/* ----------------------------------------------------------------- facts */
+
+.pb-facts { display: grid; max-width: 560px; border-top: var(--pb-hairline-dark); }
+.pb-facts div {
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: var(--pb-10);
+  padding: var(--pb-16) 0; border-bottom: var(--pb-hairline-dark);
+}
+
+/* ------------------------------------------------------------------- map */
+
+.pb-map .map-embed { border: var(--pb-hairline); }
+.map-embed iframe { display: block; width: 100%; height: 360px; border: 0; filter: sepia(0.25) saturate(0.8); }
+@media (max-width: 834px) { .map-embed iframe { height: 260px; } }
+
+/* ---------------------------------------------------------------- footer */
+
+.pb-footer {
+  background: var(--pb-oxblood); color: var(--pb-cream);
+  padding: var(--pb-112) var(--pb-page-pad) 0;
+  overflow: hidden;
+}
+.pb-footer__cols {
+  max-width: var(--pb-content-max); margin: 0 auto var(--pb-80);
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--pb-30);
+}
+.pb-footer__list { display: grid; gap: var(--pb-10); margin-top: var(--pb-16); }
+.pb-wordmark {
+  font-family: var(--pb-serif); font-weight: 400;
+  font-size: clamp(40px, 12vw, 220px); line-height: 0.8;
+  letter-spacing: var(--pb-ls-tighter);
+  text-align: center; margin-bottom: -0.1em;
+}
+@media (max-width: 834px) { .pb-footer__cols { grid-template-columns: 1fr; } }
+
+/* ------------------------------------------------------------- entrances
+   Measured choreography: 1000ms tweens on the enter curve; hero copy
+   rises from 70px with delays 1.0/1.1/1.2s on load; scrolled-to blocks
+   reveal on the same tween with +100ms sibling steps. Content is only
+   hidden under .js, so no-JS readers and crawlers see the full page. */
+
+.js .reveal {
+  opacity: 0.001; transform: translateY(var(--pb-enter-rise));
+}
+.js .pb-nav .reveal { transform: translateY(var(--pb-enter-drop)); }
+.js .reveal.in {
+  opacity: 1; transform: none;
+  transition: opacity var(--pb-dur-enter) var(--pb-ease-enter),
+              transform var(--pb-dur-enter) var(--pb-ease-enter);
+}
+.js .reveal.in:nth-child(2) { transition-delay: var(--pb-stagger); }
+.js .reveal.in:nth-child(3) { transition-delay: calc(2 * var(--pb-stagger)); }
+.js .reveal.in:nth-child(n + 4) { transition-delay: calc(3 * var(--pb-stagger)); }
+
+@media (prefers-reduced-motion: reduce) {
+  .js .reveal { opacity: 1; transform: none; transition: none; }
+  .js .pb-hero__media img { animation: none; }
+  .js .pb-ticker__track { animation: none; }
+  .pb-plate__media img, .pb-plate__row, .pb-link::before, .pb-link::after,
+  .pb-nav { transition: none; }
+}
