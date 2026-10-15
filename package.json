@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@netlify/blobs": "11.1.1",
     "@unhead/vue": "^2.1.17",
     "vue": "^3.5.41",
     "vue-router": "^5.2.0"

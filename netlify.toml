@@ -10,6 +10,16 @@
   # It still lives in a Netlify env var (VITE_WEB3FORMS_KEY), never in the repo.
   SECRETS_SCAN_OMIT_KEYS = "VITE_WEB3FORMS_KEY"
 
+# --- Functions -------------------------------------------------------------
+# The demo-visit collector: obisk (beacon snapshots → Netlify Blobs store
+# "obisk"), obisk-export (Bearer OBISK_EXPORT_TOKEN, read by scrape_airbnb's
+# campaign/pull_visits.py) and obisk-purge (daily 12-month retention sweep).
+# OBISK_SALT keys the network-prefix hash. All three read their env at RUNTIME.
+# Served at /.netlify/functions/*, which the catch-all 404 below never touches.
+
+[functions]
+  directory = "netlify/functions"
+
 # --- Headers ---------------------------------------------------------------
 # Header rules match the REQUEST path, not the served file: every HTML-serving
 # path gets its own no-cache rule so no browser holds a stale shell pointing at

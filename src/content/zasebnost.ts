@@ -17,12 +17,16 @@
  *     verbatim from the Web3Forms DPA (v1.0, 13 Jul 2026), read directly.
  *   - The supervisory-authority block is the verified public contact of the
  *     Informacijski pooblaščenec.
- *   - The demo-page visit notification (clause »piskotki«, last paragraph)
- *     describes public/nastanitve/_assets/obisk.js: browser-direct submission
- *     to Web3Forms (a server relay is impossible — Web3Forms 403s datacenter
- *     IPs). Its claims (no cookies, no storage, Web3Forms receives the IP and
- *     stamps it into the note, a footer disclosure on every demo page) must
- *     stay true of that code.
+ *   - The demo-page visit summary (clause »piskotki«, last two paragraphs)
+ *     describes public/nastanitve/_assets/obisk.js and its collector,
+ *     netlify/functions/obisk.mjs: what the page measures, snapshots to the
+ *     collector on Netlify (town-level geo + a salted network-prefix hash,
+ *     never the raw IP; 12-month purge in obisk-purge.mjs), and the summary
+ *     mailed browser-direct to Web3Forms (a server relay is impossible —
+ *     Web3Forms 403s datacenter IPs). Its claims (the measured items, no
+ *     cookies, no storage, raw IP not kept by us, Web3Forms stamps the IP into
+ *     the note, 12 months, a footer disclosure on every demo page) must stay
+ *     true of that code.
  *
  * THE OUTREACH DATASET (clause »trzenje«) is the Art. 14 notice for prospect
  * data we did NOT collect from the person. It is load-bearing rather than
@@ -148,7 +152,8 @@ export const clauses: Clause[] = [
     body: [
       'To spletno mesto ne uporablja piškotkov. Ne nameščamo analitike, oglasnih pikslov ali vtičnikov družbenih omrežij.',
       'V lokalni shrambi brskalnika hranimo en sam funkcijski zapis z imenom sp-veil-seen, časovni žig zadnjega obiska, ki uvodno animacijo predvaja samo obiskovalcem, ki jih dlje časa ni bilo. Zapis ostane v vašem brskalniku, ne vsebuje osebnih podatkov in se nikamor ne pošilja. Ker gre za nujno funkcijsko shrambo brez sledenja, pasice za privolitev ne prikazujemo. To lahko preverite sami v razvijalskih orodjih brskalnika.',
-      'Izjema so predstavitvene demo strani pod naslovom spletnapovsod.si/nastanitve, ki jih pripravimo za posamezne nastanitvene obrate in povezavo nanje pošljemo neposredno prejemniku. Taka stran nam ob odprtju enkrat sporoči obisk: brskalnik pošlje obdelovalcu Web3Forms čas odprtja, naslov odprte strani, časovni pas ter osnovne podatke o brskalniku in napravi, obvestilo pa prejmemo po e-pošti. Web3Forms ob tem, enako kot pri kontaktnem obrazcu, zabeleži naslov IP obiskovalca in ga pripiše obvestilu; sami ga ne obdelujemo naprej in ga ne uporabljamo za profiliranje. Tudi te strani ne uporabljajo piškotkov in v vaš brskalnik ničesar ne shranijo. Pravna podlaga je zakoniti interes iz razdelka o neposrednem trženju, opozorilo na beleženje obiska pa je zapisano tudi v nogi vsake take strani.',
+      'Izjema so predstavitvene demo strani pod naslovom spletnapovsod.si/nastanitve, ki jih pripravimo za posamezne nastanitvene obrate in povezavo nanje pošljemo neposredno prejemniku. Taka stran beleži, kako je bila uporabljena: čas in trajanje obiska, koliko časa je bila stran vidna in koliko od tega je obiskovalec dejavno brskal, koliko časa je bil na zaslonu posamezen razdelek, kako daleč je stran pomaknil, odpiranje fotografij ter klike na kontaktne povezave in zemljevid. Zabeleži tudi, ali je obiskovalec kopiral e-naslov ali telefonsko številko, ne pa kopiranega besedila. Brskalnik ob tem pošlje osnovne podatke o napravi: vrsto naprave in brskalnika, velikost zaslona, jezik in časovni pas.',
+      'Te podatke brskalnik med obiskom pošilja na naš strežnik pri ponudniku gostovanja Netlify. Iz naslova IP tam izpeljemo približno lokacijo na ravni kraja in zgoščeno oznako omrežja, s katero ločimo ponovne obiske in različne naprave; samega naslova IP ne shranimo. Povzetek obiska nam brskalnik pošlje po e-pošti prek obdelovalca Web3Forms, ki ob tem, enako kot pri kontaktnem obrazcu, zabeleži naslov IP obiskovalca in ga pripiše obvestilu. Podatke o obiskih uporabljamo le za oceno zanimanja in pripravo nadaljnjega stika s prejemnikom ponudbe ter jih hranimo največ 12 mesecev. Tudi te strani ne uporabljajo piškotkov in v vaš brskalnik ničesar ne shranijo. Pravna podlaga je zakoniti interes iz razdelka o neposrednem trženju, opozorilo na beleženje obiska pa je zapisano tudi v nogi vsake take strani.',
     ],
   },
   {
@@ -181,12 +186,12 @@ export const processorGroups: { label: string; items: Processor[] }[] = [
     items: [
       {
         name: 'Netlify',
-        purpose: 'Gostovanje spletnega mesta in strežniški dnevniki',
+        purpose: 'Gostovanje spletnega mesta, strežniški dnevniki ter sprejem in hramba podatkov o obiskih demo strani',
         where: 'ZDA in globalno',
       },
       {
         name: 'Web3Forms (Web3Creative)',
-        purpose: 'Sprejem in dostava oddanih obrazcev in obvestil o obisku demo strani',
+        purpose: 'Sprejem in dostava oddanih obrazcev in povzetkov obiskov demo strani',
         where: 'EU in ZDA',
       },
     ],

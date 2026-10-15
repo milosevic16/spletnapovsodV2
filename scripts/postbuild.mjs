@@ -341,8 +341,10 @@ writeFileSync(join(dist, 'robots.txt'), robotsContent)
 // 5. Demo-visit beacon key injection. The repo copy of obisk.js holds only a
 // placeholder (the public client key never lives in git); the dist copy gets
 // the real value from the build env. Web3Forms 403s datacenter IPs, so the
-// beacon submits browser-direct and there is no server relay to hold the key.
-// Without the env var the beacon ships dark by its own placeholder guard.
+// visit summary is mailed browser-direct; the collector function
+// (netlify/functions/obisk.mjs) never holds the key. Without the env var the
+// beacon mails nothing by its own placeholder guard (the collector still
+// records).
 // --------------------------------------------------------------------------
 const beaconPath = join(dist, 'nastanitve', '_assets', 'obisk.js')
 if (existsSync(beaconPath)) {

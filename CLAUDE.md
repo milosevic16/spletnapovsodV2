@@ -176,31 +176,58 @@ One-off scripts (committed, NOT part of the host build):
 
 ## Demo visit notifications (nastanitve)
 
-Every per-lead demo page under `public/nastanitve/<hash>/` reports opens.
-`public/nastanitve/_assets/obisk.js` (cookie-free, storage-free; fires once per
-page load after the first interaction or 12 s visible; skips localhost, file:
-and framed views) submits DIRECTLY from the visitor's browser to the Web3Forms
-API — the same path the contact form uses. **A server-side relay is impossible:
-Web3Forms 403s submissions from datacenter IPs** (measured from a Netlify
-function, avgust 2026 — the relay was built, diagnosed via function logs and a
-residential-IP control test, and removed; cost one debugging round). The repo
-copy of obisk.js holds the placeholder `__VITE_WEB3FORMS_KEY__`;
-`scripts/postbuild.mjs` injects the real key from `VITE_WEB3FORMS_KEY` (build
-env) into the dist copy, so the key stays out of git and a keyless build ships
-a beacon that stays dark by its own placeholder guard. Delivery goes to the
-key's registered inbox (Web3Forms does not let the sender choose a recipient),
-and Web3Forms itself stamps the visitor's IP into the delivered note. Each demo
-footer carries a small-print disclosure linking /zasebnost#piskotki; the
-piskotki clause and the Web3Forms processor row in `src/content/zasebnost.ts`
-were scoped to match, and the clause's claims (no cookies, no storage, IP
-reaches Web3Forms and appears in the note, footer line on every demo page) are
-load-bearing — keep them true of this code. The demo pages come from the
-scrape_airbnb build: a refresh from there clobbers the script tag, the footer
-line and `_assets/obisk.js`, so re-apply all three (or port the beacon into
-that build). Link-preview fetchers are filtered by the interaction gate plus
-Web3Forms' own spam filtering, but a JS-executing scanner can still slip
-through; read a same-minute open with doubt. No dedup by design: every open is
-one email.
+Every per-lead demo page under `public/nastanitve/<hash>/` loads
+`public/nastanitve/_assets/obisk.js`, which measures each VISIT in memory only
+(cookie-free, storage-free) and reports it two ways. A visit starts after the
+first interaction or 12 s visible (skips localhost, file: and framed views) and
+ends at a 20-minute pause (hidden, or visible without input); the next activity
+is a new visit with a fresh id. Measured: wall / visible / active time (active =
+input in the last 30 s), time per section (the section under the viewport's
+centre line; both packs share the ids top, gallery, amenities, location,
+reviews, host, enquire plus the id-less opener `intro` and the `Map` section;
+the open lightbox counts as `lightbox`), max scroll, lightbox opens / steps /
+distinct photos (read off `.lb-count`), clicks on mailto / tel / maps / anchors /
+other links, and copies (kind only, never the text).
+
+1. **Collector** — snapshots go to `/.netlify/functions/obisk`
+   (`netlify/functions/obisk.mjs`, pure logic + tests in `netlify/lib/`) and
+   into the Netlify Blobs store `obisk`: `v/<hash>/<visitId>` per visit,
+   `h/<hash>` the page's visit index (`t/`, `th/` for `?obisk=test` visits).
+   Writes are conditional (etag / onlyIfNew) because a visit's snapshots race.
+   The raw IP is never stored: only Netlify's town-level geo and a hash of the
+   network prefix salted with `OBISK_SALT`. The index numbers visits and
+   yields the one-person-or-several verdict and people range, which go back
+   to the browser in the start answer — coarse codes only, never another
+   visitor's town or device. `obisk-export.mjs` (Bearer `OBISK_EXPORT_TOKEN`)
+   feeds scrape_airbnb's `campaign/pull_visits.py`; `obisk-purge.mjs` deletes
+   visits older than 12 months daily.
+2. **Mail** — the summary goes DIRECTLY from the visitor's browser to Web3Forms
+   when the page is hidden: max two per visit (the second only after 30 s more
+   active time). **A server-side relay is impossible: Web3Forms 403s
+   submissions from datacenter IPs** (measured from a Netlify function, avgust
+   2026 — the relay was built, diagnosed and removed; cost one debugging
+   round). The subject MUST keep the `Demo odprt: ` prefix: the owner's inbox
+   forwards on it. The repo copy holds the placeholder `__VITE_WEB3FORMS_KEY__`;
+   `scripts/postbuild.mjs` injects `VITE_WEB3FORMS_KEY` into the dist copy
+   (a keyless build mails nothing; the collector still records). Delivery goes
+   to the key's registered inbox, and Web3Forms stamps the visitor's IP into
+   the note. The mails share the contact form's key and its monthly quota.
+
+`?obisk=test` marks a visit as a test (kept apart, »[TEST]« in the subject);
+`?obisk=debug` also runs on localhost, logs every payload, and mails only with
+`&mail=1`. Unit tests: `node --test netlify/lib/*.test.mjs`.
+
+Each demo footer carries a small-print disclosure linking /zasebnost#piskotki;
+the piskotki clause and the Netlify and Web3Forms processor rows in
+`src/content/zasebnost.ts` are scoped to match, and the clause's claims (the
+measured items, no cookies, no storage, raw IP not kept, Web3Forms stamps the
+IP, 12 months, footer line on every demo page) are load-bearing — keep them
+true of this code. The demo pages come from the scrape_airbnb build: a refresh
+from there clobbers the script tag, the footer line and `_assets/obisk.js`, so
+re-apply all three (or port the beacon into that build). Link-preview fetchers
+are filtered by the interaction gate plus the collector's bot-UA list, but a
+JS-executing scanner can still slip through; read a same-minute visit with
+doubt.
 
 ## Deploy (when the owner is ready)
 
