@@ -26,6 +26,7 @@
  * DRAFT: needs owner sign-off and a lawyer's review before it governs anything.
  */
 import type { NavItem } from './home'
+import { SITE_NAME } from '@/lib/constants'
 
 export interface Clause {
   /** The clause number as it appears in the document, e.g. "8.3". */
@@ -58,18 +59,9 @@ export const hero = {
   lead: 'Ti pogoji urejajo storitve načrtovanja, izdelave in vzdrževanja spletnih strani. Za posamezne storitve veljajo dodatno posebni pogoji, ki imajo v primeru razlik prednost pred temi.',
 }
 
-/** Rendered as a register block in the first article. Owner-supplied identity.
- *  NO ADDRESS ROW, by the owner's call (avgust 2026): the registered address is
- *  not stated here. If the document is ever served to consumers, check whether
- *  the pre-contractual information duties require the seat to appear — the
- *  footer's provider identity and the privacy policy are the other places it
- *  would belong. */
+/** Brand and contact details, rendered in the first article. */
 export const provider = {
-  name: 'POVSOD, Gregor Anželj, s.p.',
-  rows: [
-    { label: 'Matična številka', value: '6774644000' },
-    { label: 'Davčna številka', value: '31147011' },
-  ],
+  name: SITE_NAME,
   emailLabel: 'E-pošta',
 }
 

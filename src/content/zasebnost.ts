@@ -4,11 +4,8 @@
  * identifiers (anchor ids) stay ASCII, like the nastanitve subpage.
  *
  * SOURCE OF THE FACTS, and their status:
- *   - Provider identity (POVSOD, Gregor Anželj, s.p.; MŠ 6774644000;
- *     DŠ 31147011) is owner-supplied and used verbatim. DŠ is the tax number;
- *     it is NOT presented as a VAT id (no "SI" prefix) because the owner did
- *     not state VAT registration. If the s.p. is VAT-registered this becomes
- *     "ID za DDV: SI31147011".
+ *   - The provider block shows the site brand and contact e-mail only, by
+ *     the owner's decision (november 2026).
  *   - The registered ADDRESS and a PHONE are not yet supplied, so they are
  *     omitted rather than invented (the no-fabricated-org-facts rule). ZEPT
  *     wants a postal address on an imprint; add it before production.
@@ -51,6 +48,7 @@
  * hook, no exclamation marks. DRAFT: needs owner + legal sign-off before launch.
  */
 import type { NavItem } from './home'
+import { SITE_NAME } from '@/lib/constants'
 
 export interface Clause {
   /** ASCII anchor id — the masthead/footer stops point here. */
@@ -82,15 +80,9 @@ export const hero = {
   lead: 'To spletno mesto zbira osebne podatke prek kontaktnega obrazca, ločeno pa vodimo zbirko javno objavljenih kontaktnih podatkov nastanitvenih obratov za predstavitev svojih storitev. Spodaj je opisano, katere podatke obdelamo, s kakšnim namenom, kako dolgo jih hranimo in katere pravice imate.',
 }
 
-/** The provider / controller identity, rendered as a small register block in
- *  the first clause. Numbers are pure digits, so the content guard skips them;
- *  the labels and the name are checked and must render. */
+/** Brand and contact details, rendered in the first clause. */
 export const provider = {
-  name: 'POVSOD, Gregor Anželj, s.p.',
-  rows: [
-    { label: 'Matična številka', value: '6774644000' },
-    { label: 'Davčna številka', value: '31147011' },
-  ],
+  name: SITE_NAME,
   emailLabel: 'E-pošta',
 }
 

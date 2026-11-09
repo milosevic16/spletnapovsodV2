@@ -21,16 +21,6 @@ const year = new Date().getFullYear()
         <div class="footer__brand">
           <span class="footer__wordmark">SpletnaPovsod</span>
           <p class="footer__tagline">{{ footer.tagline }}</p>
-
-          <!-- Provider identity, on every page (ZEPT). Numbers in the mono
-               register: checkable public identifiers, like the e-mail below. -->
-          <div class="footer__business">
-            <p class="footer__business-name">{{ footer.business.name }}</p>
-            <p v-for="row in footer.business.rows" :key="row.label" class="footer__business-row">
-              <span class="footer__business-label">{{ row.label }}</span>
-              <span class="footer__business-value emisija">{{ row.value }}</span>
-            </p>
-          </div>
         </div>
 
         <nav class="footer__nav" aria-label="Navigacija v nogi">
@@ -86,37 +76,6 @@ const year = new Date().getFullYear()
   margin-top: 0.4rem;
   font-size: 0.9rem;
   max-width: 34ch;
-}
-
-.footer__business {
-  margin-top: 1.5rem;
-  display: grid;
-  gap: 0.3rem;
-}
-
-.footer__business-name {
-  margin: 0;
-  font-family: var(--font-display);
-  font-weight: 500;
-  font-size: 0.9rem;
-  color: var(--list);
-}
-
-.footer__business-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem 0.6rem;
-  margin: 0;
-  font-size: 0.8rem;
-}
-
-.footer__business-label {
-  min-width: 6.5rem;
-  color: var(--papir-dim);
-}
-
-.footer__business-value {
-  color: var(--list);
 }
 
 .footer__nav {

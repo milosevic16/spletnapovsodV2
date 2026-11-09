@@ -512,21 +512,6 @@ export const contact = {
 export const footer = {
   tagline: 'Profesionalne, hitre in dostopne spletne rešitve.',
   emailLabel: 'Pišite nam',
-  /**
-   * Provider identity, shown in every footer (ZEPT provider-identification and
-   * good GDPR practice). Owner-supplied and used verbatim; the registered
-   * address and a phone are not yet provided, so they are omitted rather than
-   * invented. DŠ is the tax number, NOT presented as a VAT id. Registration
-   * numbers are pure digits, so the content guard skips them; the name renders
-   * on every page including home, which is what the home guard checks.
-   */
-  business: {
-    name: 'POVSOD, Gregor Anželj, s.p.',
-    rows: [
-      { label: 'Matična št.', value: '6774644000' },
-      { label: 'Davčna št.', value: '31147011' },
-    ],
-  },
   /** The footer link to the privacy subpage. A real /zasebnost route link, so
    *  it is crawlable and the global click interceptor upgrades it to SPA nav. */
   /**

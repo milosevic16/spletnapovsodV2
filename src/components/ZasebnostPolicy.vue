@@ -9,10 +9,8 @@
  * Every clause article carries its own ASCII id so the masthead and footer
  * stops jump to it; scroll-margin-top clears the fixed header on that jump.
  *
- * The one mono treatment here is .emisija on the checkable identifiers, e-mails
- * and phone. That honours the contract by its own principle: if it is mono it
- * is checkable, and a registration number or a public authority phone is
- * exactly that. Claims and headings stay in the type register.
+ * The mono treatment here is .emisija on checkable e-mails and phone numbers.
+ * Claims and headings stay in the type register.
  */
 import { clauses, provider, processorGroups, authority, updated } from '@/content/zasebnost'
 import { CONTACT_EMAIL } from '@/lib/constants'
@@ -36,10 +34,6 @@ import { CONTACT_EMAIL } from '@/lib/constants'
           <div v-if="clause.id === 'podatki'" class="zas__identity">
             <p class="zas__id-name">{{ provider.name }}</p>
             <dl class="zas__id-rows">
-              <div v-for="row in provider.rows" :key="row.label" class="zas__id-row">
-                <dt class="zas__id-label">{{ row.label }}</dt>
-                <dd class="zas__id-value emisija">{{ row.value }}</dd>
-              </div>
               <div class="zas__id-row">
                 <dt class="zas__id-label">{{ provider.emailLabel }}</dt>
                 <dd class="zas__id-value">

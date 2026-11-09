@@ -28,7 +28,6 @@ const props = defineProps<{
    *  re-state the party. */
   provider?: {
     name: string
-    rows: { label: string; value: string }[]
     emailLabel: string
   }
   /** Which article id the provider block belongs under. */
@@ -57,10 +56,6 @@ const props = defineProps<{
           <div v-if="props.provider && props.providerIn === article.id" class="pgd__identity">
             <p class="pgd__id-name">{{ props.provider.name }}</p>
             <dl class="pgd__id-rows">
-              <div v-for="row in props.provider.rows" :key="row.label" class="pgd__id-row">
-                <dt class="pgd__id-label">{{ row.label }}</dt>
-                <dd class="pgd__id-value emisija">{{ row.value }}</dd>
-              </div>
               <div class="pgd__id-row">
                 <dt class="pgd__id-label">{{ props.provider.emailLabel }}</dt>
                 <dd class="pgd__id-value">
