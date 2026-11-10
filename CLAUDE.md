@@ -298,13 +298,13 @@ Netlify free plan + private repo: **no Co-Authored-By trailers in commits**.
    lives in the Netlify env (all scopes, all deploy contexts) and delivery was
    verified end to end against production. Both the form and the demo-visit
    beacon deliver to the inbox the key was REGISTERED with (the owner's Gmail),
-   NOT to `studio@spletnapovsod.si` — Web3Forms always sends to the key's
+   NOT to `studio@spletnepovsod.si` — Web3Forms always sends to the key's
    registration address. To repoint delivery: register a new key for studio@,
    swap the env value, redeploy (the form bakes the key at build; postbuild
    injects it into the beacon). `.env.local` is still gone on this machine, so
    local email tests need the key re-supplied — or read it from the deployed
    client bundle, where it is public by design.
-3. ~~**Contact e-mail**~~ — SETTLED (avgust 2026): `studio@spletnapovsod.si`, owner-supplied,
+3. ~~**Contact e-mail**~~ — SETTLED (updated november 2026): `studio@spletnepovsod.si`, owner-supplied,
    in `src/lib/constants.ts`. Still open is item 2's second half: whether the Web3Forms key
    delivers to that same inbox.
 4. **Company legal facts** (registered name, address, VAT) — needed for the privacy-policy

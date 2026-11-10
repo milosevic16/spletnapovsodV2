@@ -18,5 +18,5 @@ export const SITE_NAME = 'SpletnaPovsod'
  * a value in this repo. Changing this constant does NOT redirect form
  * submissions — that pairing is still on the owner checklist.
  */
-export const CONTACT_EMAIL = 'studio@spletnapovsod.si'
+export const CONTACT_EMAIL = 'studio@spletnepovsod.si'
 
